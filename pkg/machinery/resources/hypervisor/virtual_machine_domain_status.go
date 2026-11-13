@@ -34,6 +34,13 @@ type VirtualMachineDomainStatusSpec struct {
 	MemoryKiB    uint64                                     `yaml:"memoryKiB" protobuf:"6"`
 	VCPUs        uint32                                     `yaml:"vCPUs" protobuf:"7"`
 	Interfaces   []VirtualMachineGuestInterfaceSpec         `yaml:"interfaces,omitempty" protobuf:"8"`
+	// DefinitionDigest is the digest of the definition the domain records it runs, empty for a
+	// domain without a Talos ownership marker. Recorded only once a definition has been applied in
+	// full, so a medium change still waiting on the guest leaves it naming the previous one.
+	DefinitionDigest string `yaml:"definitionDigest,omitempty" protobuf:"9"`
+	// ConfigurationDigest is the same definition digested without the fields a hardware profile
+	// controls, which a running domain picks up only at its next stop and start.
+	ConfigurationDigest string `yaml:"configurationDigest,omitempty" protobuf:"10"`
 }
 
 // VirtualMachineGuestInterfaceSpec is one guest interface reported by the qemu-guest-agent.

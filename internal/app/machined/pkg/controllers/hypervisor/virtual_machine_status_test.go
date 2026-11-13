@@ -121,6 +121,10 @@ func (c *boundedDomainClient) Info(libvirtdomain.Domain) (libvirtdomain.Info, er
 	panic("bounded client used for info")
 }
 
+func (c *boundedDomainClient) Definition(libvirtdomain.Domain) (libvirtdomain.Definition, error) {
+	panic("bounded client used for definition")
+}
+
 func (c *boundedDomainClient) Start(libvirtdomain.Domain, string, ...libvirtdomain.StartOption) error {
 	panic("bounded client used for start")
 }
@@ -773,6 +777,45 @@ func (s *VirtualMachineStatusSuite) TestStoppedAndRunningAreObserved() {
 	s.Create(second)
 	s.assertStatus("vm2", "stopped", hypervisorhelpers.VirtualMachineStageReady, "")
 	s.assertStatus("vm1", "running", hypervisorhelpers.VirtualMachineStageReady, "")
+}
+
+// A running domain which still records the definition it was started on is not ready for the one
+// its domain spec now carries: a medium change refused by a guest holding its tray shut leaves the
+// domain spec current and the domain on the previous medium until a retry goes through.
+func (s *VirtualMachineStatusSuite) TestRunningStatusWaitsForTheDomainToApplyItsDefinition() {
+	name := "vm1"
+	domain := libvirtdomain.Domain{Name: name, UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), name)}
+
+	s.client.mu.Lock()
+	s.client.domains[name] = domain
+	s.client.texts[name] = `<domain><name>vm1</name></domain>`
+	s.client.mu.Unlock()
+
+	s.Create(newRenderableSpec(name, "running"))
+	s.start()
+
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStagePending, "domain has not applied its definition yet")
+
+	var current string
+
+	s.Require().Eventually(func() bool {
+		spec, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](s.Ctx(), s.State(), name)
+		if err != nil {
+			return false
+		}
+
+		current = spec.TypedSpec().DomainXML
+
+		return current != ""
+	}, 5*time.Second, 10*time.Millisecond)
+
+	s.client.mu.Lock()
+	s.client.texts[name] = current
+	s.client.mu.Unlock()
+
+	s.events <- struct{}{}
+
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStageReady, "")
 }
 
 // Guest-agent interfaces surface on the VirtualMachineStatus, loopback addresses are dropped

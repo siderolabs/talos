@@ -9786,6 +9786,8 @@ VirtualMachineDomainStatusSpec describes a domain as observed in libvirt.
 | memory_ki_b | [uint64](#uint64) |  |  |
 | vcp_us | [uint32](#uint32) |  |  |
 | interfaces | [VirtualMachineGuestInterfaceSpec](#talos.resource.definitions.hypervisor.VirtualMachineGuestInterfaceSpec) | repeated |  |
+| definition_digest | [string](#string) |  | DefinitionDigest is the digest of the definition the domain records it runs, empty for a domain without a Talos ownership marker. Recorded only once a definition has been applied in full, so a medium change still waiting on the guest leaves it naming the previous one. |
+| configuration_digest | [string](#string) |  | ConfigurationDigest is the same definition digested without the fields a hardware profile controls, which a running domain picks up only at its next stop and start. |
 
 
 

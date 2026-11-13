@@ -104,8 +104,10 @@ type VirtualMachineDisk struct {
 	//     configuration never deletes the volume, so re-declaring the same virtual machine and disk
 	//     names in the same pool reattaches the same data.
 	//
-	//     Required for both `disk` and `cdrom`. CD-ROM media is copied from the content library
-	//     into an independent volume in this pool, not attached directly from the library.
+	//     Required for a `disk` and for a `cdrom` provisioned `fromImage`. CD-ROM media is copied
+	//     from the content library into an independent volume in this pool, not attached directly
+	//     from the library. Optional on an empty `cdrom` (provisioned `blank`), which has no
+	//     volume; loading a medium into it later requires a pool.
 	//   examples:
 	//     - value: '"pool1"'
 	DiskPool string `yaml:"pool,omitempty"`
@@ -177,7 +179,10 @@ type VirtualMachineDiskProvision struct {
 	//   description: |
 	//     Create an empty volume, formatted per `format`.
 	//
-	//     Not allowed on a `cdrom`, which has no meaningful empty contents.
+	//     On a `cdrom` there is no volume to create: this is an empty drive, no medium in it, and
+	//     `pool` may be omitted. Loading and ejecting a medium is changing this disk between `blank` and
+	//     `fromImage`, which is applied to a running virtual machine without restarting it. A
+	//     `bootOrder` on an empty drive is a boot entry the firmware tries and fails.
 	BlankConfig *VirtualMachineDiskBlank `yaml:"blank,omitempty"`
 	//   description: |
 	//     Attach read-only CD-ROM media from a content library.
@@ -190,9 +195,9 @@ type VirtualMachineDiskProvision struct {
 	FromImageConfig *VirtualMachineDiskFromImage `yaml:"fromImage,omitempty"`
 }
 
-// VirtualMachineDiskBlank provisions an empty volume.
+// VirtualMachineDiskBlank provisions an empty volume, or on a cdrom an empty drive.
 //
-// It carries no settings: the volume's size and format are the disk's own.
+// It carries no settings: the volume's size and format are the disk's own, and a cdrom has neither.
 type VirtualMachineDiskBlank struct{}
 
 // VirtualMachineDiskFromImage references media in a content library.
@@ -294,6 +299,13 @@ func (d *VirtualMachineDisk) Provision() config.VirtualMachineDiskProvisionConfi
 	return &d.ProvisionConfig
 }
 
+// isEmptyDrive reports whether the disk is a cdrom with no medium in it: an empty drive, backed by
+// no volume.
+func (d *VirtualMachineDisk) isEmptyDrive() bool {
+	return d.Type() == hypervisorhelpers.VirtualMachineDiskTypeCDROM &&
+		d.ProvisionConfig.BlankConfig != nil && d.ProvisionConfig.FromImageConfig == nil
+}
+
 // Blank implements config.VirtualMachineDiskProvisionConfig interface.
 func (p *VirtualMachineDiskProvision) Blank() bool {
 	return p.BlankConfig != nil
@@ -350,7 +362,9 @@ func (d *VirtualMachineDisk) Validate(index int) (string, error) {
 		}
 	}
 
-	if d.DiskPool == "" {
+	// An empty cdrom drive has no volume, so it needs no pool. A pool given to it anyway is still
+	// checked above, as loading a medium later puts the volume there.
+	if d.DiskPool == "" && !d.isEmptyDrive() {
 		validationErrors = errors.Join(validationErrors, fmt.Errorf("disks[%d]: pool is required", index))
 	}
 
@@ -417,10 +431,8 @@ func (d *VirtualMachineDisk) validateProvision(index int) error {
 	case d.ProvisionConfig.BlankConfig == nil && d.ProvisionConfig.FromImageConfig == nil:
 		return fmt.Errorf("disks[%d]: provision: exactly one of blank or fromImage must be set", index)
 	case d.ProvisionConfig.BlankConfig != nil:
-		if d.Type() == hypervisorhelpers.VirtualMachineDiskTypeCDROM {
-			return fmt.Errorf("disks[%d]: provision.blank: a cdrom has no contents of its own", index)
-		}
-
+		// A blank cdrom is an empty drive rather than an empty volume: nothing is provisioned, and
+		// the guest is shown a drive with its tray open.
 		return nil
 	}
 

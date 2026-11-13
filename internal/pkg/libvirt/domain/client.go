@@ -14,6 +14,7 @@ import (
 	"net"
 	"net/netip"
 	"slices"
+	"strings"
 	"time"
 
 	libvirt "github.com/digitalocean/go-libvirt"
@@ -25,7 +26,16 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
-const operationTimeout = 5 * time.Second
+const (
+	// operationTimeout bounds connecting to the daemon, and a bounded session for as long as it
+	// does nothing slower than an ordinary RPC.
+	operationTimeout = 5 * time.Second
+	// mediaChangeTimeout bounds one medium change. Longer than an ordinary RPC because libvirt waits
+	// on the guest to open a tray before it inserts a new medium, which it gives up to ten seconds of
+	// back-off. Granted per change, so several of them in one session do not starve each other or
+	// the work which follows.
+	mediaChangeTimeout = 15 * time.Second
+)
 
 // Connector opens bounded sessions against one modular QEMU daemon.
 type Connector struct {
@@ -41,16 +51,34 @@ func New(socket, uri string) *Connector {
 // Open bounds dialing, handshake, operations, and disconnect. go-libvirt RPCs
 // have no context argument, so cancellation closes the transport.
 func (c *Connector) Open(ctx context.Context) (Client, error) {
-	sessionCtx, cancel := context.WithTimeout(ctx, operationTimeout)
+	dialCtx, dialCancel := context.WithTimeout(ctx, operationTimeout)
+	defer dialCancel()
 
-	conn, err := (&net.Dialer{}).DialContext(sessionCtx, "unix", c.socket)
+	conn, err := (&net.Dialer{}).DialContext(dialCtx, "unix", c.socket)
 	if err != nil {
-		cancel()
-
 		return nil, err
 	}
 
-	return c.OpenConn(sessionCtx, conn, cancel)
+	stopDialClose := context.AfterFunc(dialCtx, func() { closeTransport(conn) })
+	defer stopDialClose()
+
+	// A watchdog rather than a fixed deadline, so the session can be granted more time for a slow
+	// operation without every other session paying for it: a hung daemon still ends it after
+	// operationTimeout.
+	sessionCtx, cancel := context.WithCancel(ctx)
+	watchdog := time.AfterFunc(operationTimeout, cancel)
+
+	client, err := c.openConn(sessionCtx, conn, func() {
+		watchdog.Stop()
+		cancel()
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	client.watchdog = watchdog
+
+	return client, nil
 }
 
 // OpenPersistent opens one inventory session for an event-driven controller.
@@ -75,6 +103,15 @@ func (c *Connector) OpenPersistent(ctx context.Context) (Client, error) {
 // OpenConn connects over an already-connected transport for this connector.
 // It takes ownership of conn and cancel; ctx must bound the full session.
 func (c *Connector) OpenConn(ctx context.Context, conn net.Conn, cancel context.CancelFunc) (Client, error) {
+	client, err := c.openConn(ctx, conn, cancel)
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
+}
+
+func (c *Connector) openConn(ctx context.Context, conn net.Conn, cancel context.CancelFunc) (*client, error) {
 	rpc := libvirt.NewWithDialer(dialers.NewAlreadyConnected(conn))
 	client := &client{rpc: rpc, conn: conn, cancel: cancel}
 
@@ -136,6 +173,7 @@ type Client interface {
 	Active(Domain) (bool, error)
 	Info(Domain) (Info, error)
 	GuestInterfaces(Domain) ([]GuestInterface, error)
+	Definition(Domain) (Definition, error)
 	Start(Domain, string, ...StartOption) error
 	Shutdown(Domain) error
 	Reboot(Domain) error
@@ -146,6 +184,7 @@ type Client interface {
 type domainRPC interface {
 	listRPC
 	definitionRPC
+	hotplugRPC
 	lifecycleRPC
 }
 
@@ -158,6 +197,12 @@ type definitionRPC interface {
 	DomainGetXMLDesc(libvirt.Domain, libvirt.DomainXMLFlags) (string, error)
 	DomainIsPersistent(libvirt.Domain) (int32, error)
 	DomainCreateXML(string, libvirt.DomainCreateFlags) (libvirt.Domain, error)
+}
+
+// hotplugRPC changes a running domain in place, rather than replacing its definition.
+type hotplugRPC interface {
+	DomainUpdateDeviceFlags(libvirt.Domain, string, libvirt.DomainDeviceModifyFlags) error
+	DomainSetMetadata(libvirt.Domain, int32, libvirt.OptString, libvirt.OptString, libvirt.OptString, libvirt.DomainModificationImpact) error
 }
 
 type lifecycleRPC interface {
@@ -178,6 +223,16 @@ type client struct {
 	cancel     context.CancelFunc
 	stopClose  func() bool
 	disconnect func() error
+	// watchdog ends a bounded session which has run out of time, by canceling it. Nil for a
+	// persistent session, which has no such bound.
+	watchdog *time.Timer
+}
+
+// extend gives a bounded session d from now before it is ended. A persistent session is left alone.
+func (c *client) extend(d time.Duration) {
+	if c.watchdog != nil {
+		c.watchdog.Reset(d)
+	}
 }
 
 func (c *client) Close() {
@@ -359,14 +414,15 @@ func Admit(opts ...StartOption) error {
 	return nil
 }
 
-// Start creates an active transient domain or replaces an owned domain when its
-// definition changes. Replacing a running domain interrupts the guest.
+// Start creates an active transient domain, changes the medium of a running one when that is all
+// the new definition asks for, or else replaces it. Replacing a running domain interrupts the
+// guest; changing a medium does not.
 func (c *client) Start(d Domain, renderedXML string, opts ...StartOption) error {
 	if err := validateDomain(d); err != nil {
 		return err
 	}
 
-	desired, digest, err := domainDefinition(d, renderedXML)
+	desired, err := domainDefinition(d, renderedXML)
 	if err != nil {
 		return err
 	}
@@ -376,26 +432,212 @@ func (c *client) Start(d Domain, renderedXML string, opts ...StartOption) error 
 		return err
 	}
 
-	restart, err := c.needsRestart(found, exists, digest)
+	plan, live, err := c.planChange(found, exists, desired)
 	if err != nil {
 		return err
 	}
 
-	if !restart {
+	switch plan {
+	case changeNone:
 		return nil
+	case changeMedia:
+		// Deliberately not admitted: an admission check guards what a new domain would take from
+		// the host, and a medium changing in a drive the running domain already has takes nothing.
+		// Calling Admit here would stop guests over inventory that has not moved.
+		if err = c.changeMedia(found, live, desired); err != nil {
+			return fmt.Errorf("%w: %w", ErrMediaChange, err)
+		}
+
+		return nil
+	case changeRestart:
 	}
 
-	if err = Admit(opts...); err != nil {
+	return c.replace(d, desired, exists, opts...)
+}
+
+// replace defines the domain, taking any existing one down first. A guest in it is interrupted.
+func (c *client) replace(d Domain, desired definition, exists bool, opts ...StartOption) error {
+	if err := Admit(opts...); err != nil {
 		return err
 	}
 
 	if exists {
-		if err = c.Remove(d); err != nil {
+		if err := c.Remove(d); err != nil {
 			return err
 		}
 	}
 
-	return c.createTransient(d, desired)
+	return c.createTransient(d, desired.text)
+}
+
+// ErrMediaChange marks a medium that could not be changed on the running domain, most often a guest
+// which has locked its tray. The guest is left as it is and the change is retried, so this is a
+// condition to wait on rather than a reason to stop anything.
+var ErrMediaChange = errors.New("failed to change the medium of a running domain")
+
+// changeMedia loads, swaps or ejects the medium of every hot-pluggable drive whose source moved.
+func (c *client) changeMedia(found libvirt.Domain, live libvirtxml.Domain, desired definition) error {
+	changes, err := pendingMediaChanges(live, desired.desc)
+	if err != nil {
+		return fmt.Errorf("domain %q: %w", found.Name, err)
+	}
+
+	for _, change := range changes {
+		name := change.desired.Alias.Name
+
+		update, err := mediaChangeXML(change.current, change.desired)
+		if err != nil {
+			return err
+		}
+
+		// Live only: a transient domain has no persistent definition to also change. Not forced
+		// either, so a guest which has locked its tray is reported rather than overruled.
+		c.extend(mediaChangeTimeout)
+		err = c.rpc.DomainUpdateDeviceFlags(found, update, libvirt.DomainDeviceModifyLive)
+		c.extend(operationTimeout)
+
+		if err != nil {
+			return fmt.Errorf("failed to change the medium of drive %q of domain %q: %w", name, found.Name, err)
+		}
+	}
+
+	// Written last. Until it lands the domain still carries the previous digests, and the next pass
+	// finds every medium already where it wants it and does nothing but write this again.
+	return c.setDefinitionMetadata(found, desired)
+}
+
+// mediumChange is one hot-pluggable drive whose running medium is not the desired one.
+type mediumChange struct {
+	current *libvirtxml.DomainDisk
+	desired *libvirtxml.DomainDisk
+}
+
+// pendingMediaChanges lists the hot-pluggable drives of the desired description whose medium in the
+// running domain differs from the one the description puts in them.
+//
+// Drives are matched by alias: a hot-pluggable drive always carries one DeviceAlias produced, and
+// libvirt keeps it on the running domain. A drive the running domain does not have is an error, as
+// no medium change can reach it.
+func pendingMediaChanges(live libvirtxml.Domain, desired *libvirtxml.Domain) ([]mediumChange, error) {
+	if desired == nil || desired.Devices == nil {
+		return nil, nil
+	}
+
+	running := map[string]*libvirtxml.DomainDisk{}
+
+	if live.Devices != nil {
+		for i := range live.Devices.Disks {
+			if disk := &live.Devices.Disks[i]; configOwned(disk.Alias) {
+				running[disk.Alias.Name] = disk
+			}
+		}
+	}
+
+	var changes []mediumChange
+
+	for i := range desired.Devices.Disks {
+		disk := &desired.Devices.Disks[i]
+		if !hotPluggableMedium(disk) {
+			continue
+		}
+
+		current, present := running[disk.Alias.Name]
+		if !present {
+			return nil, fmt.Errorf("the running domain has no drive %q", disk.Alias.Name)
+		}
+
+		if diskSourceFile(current) != diskSourceFile(disk) {
+			changes = append(changes, mediumChange{current: current, desired: disk})
+		}
+	}
+
+	return changes, nil
+}
+
+// mediaChangeXML is the running device with a new medium in it.
+//
+// Built from the running device rather than the rendered one because libvirt refuses an update
+// whose element differs from what is running in any of the many fields the caller did not mean to
+// change -- including the open tray an eject leaves behind, which no freshly rendered element
+// carries. The core digest has already established that the two agree about everything but the
+// medium, so taking the rest from the running device hides no difference.
+func mediaChangeXML(current, desired *libvirtxml.DomainDisk) (string, error) {
+	update := *current
+	update.Source = desired.Source
+	update.Address = nil
+	update.BackingStore = nil
+	update.Mirror = nil
+
+	// libvirt accepts the alias it was given and rejects the one it assigned itself, so keep ours
+	// -- which is also how it recognizes the device -- and drop anything else.
+	if !configOwned(update.Alias) {
+		update.Alias = nil
+	}
+
+	text, err := xml.Marshal(&update)
+	if err != nil {
+		return "", fmt.Errorf("marshal disk update: %w", err)
+	}
+
+	return string(text), nil
+}
+
+// normalizeEmptySources drops the source of every drive which has no medium in it.
+//
+// Reading XML back gives a drive with no source element a source carrying no file, because the
+// element is optional but its type is not. Writing that out again produces an empty source element
+// rather than none, so canonicalize it away: one spelling of an empty drive keeps the digests, the
+// definition libvirt is handed and the update elements all saying the same thing.
+func normalizeEmptySources(desc *libvirtxml.Domain) {
+	if desc.Devices == nil {
+		return
+	}
+
+	for i := range desc.Devices.Disks {
+		disk := &desc.Devices.Disks[i]
+		if disk.Source != nil && disk.Source.File != nil && disk.Source.File.File == "" {
+			disk.Source = nil
+		}
+	}
+}
+
+// diskSourceFile is the host file a drive reads, or empty when there is no medium in it.
+func diskSourceFile(disk *libvirtxml.DomainDisk) string {
+	if disk.Source == nil || disk.Source.File == nil {
+		return ""
+	}
+
+	return disk.Source.File.File
+}
+
+// aliasPrefix marks a device the machine configuration declares, as opposed to one the renderer
+// adds on its own account. libvirt reserves the "ua-" prefix for aliases its callers set, and
+// carries them through to the running domain, so one is both a mark and a stable device identity.
+const aliasPrefix = "ua-talos-"
+
+// DeviceAlias names a device the machine configuration declares. Renderers set it; it is what tells
+// this package which devices a definition change is allowed to be applied to in place.
+//
+// kind and name must be the character set libvirt allows an alias, which is letters, digits,
+// hyphens and underscores.
+func DeviceAlias(kind, name string) string {
+	return aliasPrefix + kind + "-" + name
+}
+
+// configOwned reports whether an alias is one DeviceAlias produced.
+func configOwned(alias *libvirtxml.DomainAlias) bool {
+	return alias != nil && strings.HasPrefix(alias.Name, aliasPrefix)
+}
+
+// hotPluggableMedium reports whether a drive's medium may be changed in place.
+//
+// Two conditions, and both are load-bearing. The drive has to be one the machine configuration
+// declares, because a drive the renderer added for its own purposes -- a cloud-init seed -- is
+// boot-time intent, and swapping it under a running guest would not be applying it. And it has to
+// be a cdrom, because libvirt changes the source of removable drives only, so treating a fixed disk
+// as one would leave a definition change unapplied rather than apply it.
+func hotPluggableMedium(disk *libvirtxml.DomainDisk) bool {
+	return configOwned(disk.Alias) && disk.Device == "cdrom"
 }
 
 func (c *client) createTransient(d Domain, desired string) error {
@@ -420,61 +662,120 @@ func (c *client) createTransient(d Domain, desired string) error {
 	return nil
 }
 
-const metadataNamespace = "https://talos.dev/libvirt/domain"
+const (
+	metadataNamespace = "https://talos.dev/libvirt/domain"
+	metadataPrefix    = "talos"
+)
 
-type definitionDigests struct {
-	Full          string `xml:",chardata"`
-	Configuration string `xml:"configuration,attr"`
+// definitionMetadata is the marker Talos writes into a domain it owns.
+//
+// Digest covers the whole definition. Configuration covers it with the fields a hardware profile
+// controls left out, so a profile-only edit can wait for the next stop/start. Core covers the same
+// definition with the medium of every hot-pluggable drive left out, so a desired definition which
+// matches the running one in Core but not in Digest is one that differs only in media, and can be
+// reached without restarting the guest. A definition with no hot-pluggable drive carries no Core,
+// and so is never changed in place.
+type definitionMetadata struct {
+	XMLName       xml.Name `xml:"https://talos.dev/libvirt/domain definition"`
+	Configuration string   `xml:"configuration,attr,omitempty"`
+	Core          string   `xml:"core,attr,omitempty"`
+	Digest        string   `xml:",chardata"`
 }
 
-func domainDefinition(d Domain, renderedXML string) (string, definitionDigests, error) {
+// definition is one rendered domain XML, prepared for libvirt and digested.
+type definition struct {
+	// desc is the canonical description, before the ownership marker was added to it.
+	desc *libvirtxml.Domain
+	// text is what libvirt is handed, marker included.
+	text          string
+	full          string
+	configuration string
+	core          string
+}
+
+// changePlan is how a desired definition can be reached from what is running.
+type changePlan int
+
+const (
+	// changeNone is a running domain which already matches.
+	changeNone changePlan = iota
+	// changeMedia is a running domain which differs only in the media of hot-pluggable drives.
+	changeMedia
+	// changeRestart is a domain which has to be replaced, interrupting any guest in it.
+	changeRestart
+)
+
+func domainDefinition(d Domain, renderedXML string) (definition, error) {
 	var desc libvirtxml.Domain
 
 	if err := desc.Unmarshal(renderedXML); err != nil {
-		return "", definitionDigests{}, fmt.Errorf("invalid domain XML: %w", err)
+		return definition{}, fmt.Errorf("invalid domain XML: %w", err)
 	}
 
 	if desc.Name != d.Name {
-		return "", definitionDigests{}, fmt.Errorf("domain XML name %q does not match %q", desc.Name, d.Name)
+		return definition{}, fmt.Errorf("domain XML name %q does not match %q", desc.Name, d.Name)
 	}
 
 	desc.UUID = d.UUID.String()
+
+	normalizeEmptySources(&desc)
 
 	// Serial capture belongs to the owned backend definition, where the host-specific
 	// identity is known. Keep the PTY for exclusive live attachment and let virtlogd
 	// bound retention. Never accept a log path from the rendered input.
 	setSerialCapture(&desc, d.UUID)
 
-	canonical, err := desc.Marshal()
+	// All digests are taken before the marker is added.
+	full, configuration, err := definitionDigests(desc)
 	if err != nil {
-		return "", definitionDigests{}, fmt.Errorf("marshal domain XML: %w", err)
+		return definition{}, err
 	}
 
-	configuration, err := profileIndependentDigest(desc)
+	core, err := coreDigest(desc)
 	if err != nil {
-		return "", definitionDigests{}, err
+		return definition{}, err
 	}
 
-	digests := definitionDigests{
-		Full:          fmt.Sprintf("%x", sha256.Sum256([]byte(canonical))),
-		Configuration: configuration,
+	result := definition{
+		desc:          &desc,
+		full:          full,
+		configuration: configuration,
+		core:          core,
+	}
+
+	if result.text, err = markedDefinition(desc, result); err != nil {
+		return definition{}, err
+	}
+
+	return result, nil
+}
+
+// markedDefinition is the definition libvirt is handed: the canonical description with the
+// ownership marker added to its metadata.
+//
+// Marshaled from a copy, so the description the media path reads stays the canonical one the
+// digests were taken over.
+func markedDefinition(desc libvirtxml.Domain, digests definition) (string, error) {
+	marker, err := definitionMarker(digests)
+	if err != nil {
+		return "", err
 	}
 
 	if desc.Metadata == nil {
 		desc.Metadata = &libvirtxml.DomainMetadata{}
+	} else {
+		metadata := *desc.Metadata
+		desc.Metadata = &metadata
 	}
 
-	desc.Metadata.XML += fmt.Sprintf(
-		`<talos:definition xmlns:talos="%s" configuration="%s">%s</talos:definition>`,
-		metadataNamespace, digests.Configuration, digests.Full,
-	)
+	desc.Metadata.XML += marker
 
-	definition, err := desc.Marshal()
+	text, err := desc.Marshal()
 	if err != nil {
-		return "", definitionDigests{}, fmt.Errorf("marshal domain metadata: %w", err)
+		return "", fmt.Errorf("marshal domain metadata: %w", err)
 	}
 
-	return definition, digests, nil
+	return text, nil
 }
 
 func setSerialCapture(desc *libvirtxml.Domain, id uuid.UUID) {
@@ -493,10 +794,25 @@ func setSerialCapture(desc *libvirtxml.Domain, id uuid.UUID) {
 	}
 }
 
-// profileIndependentDigest excludes only fields controlled by a hardware profile.
-// Topology, vCPU count, tuning, memory, devices and all other VM intent remain in
-// this digest so a profile edit cannot hide an unrelated definition change.
-func profileIndependentDigest(desc libvirtxml.Domain) (string, error) {
+// definitionDigests reports the full and the profile-independent digest of a description.
+func definitionDigests(desc libvirtxml.Domain) (full, configuration string, err error) {
+	canonical, err := desc.Marshal()
+	if err != nil {
+		return "", "", fmt.Errorf("marshal domain XML: %w", err)
+	}
+
+	configuration, err = profileIndependentDigest(desc)
+	if err != nil {
+		return "", "", err
+	}
+
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(canonical))), configuration, nil
+}
+
+// withoutProfile is a copy of desc with the fields a hardware profile controls left out.
+//
+// Only OS and CPU are copied; everything else, devices included, is shared with desc.
+func withoutProfile(desc libvirtxml.Domain) libvirtxml.Domain {
 	if desc.OS != nil && desc.OS.Type != nil {
 		os := *desc.OS
 		kind := *os.Type
@@ -516,7 +832,16 @@ func profileIndependentDigest(desc libvirtxml.Domain) (string, error) {
 		desc.CPU = &cpu
 	}
 
-	canonical, err := desc.Marshal()
+	return desc
+}
+
+// profileIndependentDigest excludes only fields controlled by a hardware profile.
+// Topology, vCPU count, tuning, memory, devices and all other VM intent remain in
+// this digest so a profile edit cannot hide an unrelated definition change.
+func profileIndependentDigest(desc libvirtxml.Domain) (string, error) {
+	masked := withoutProfile(desc)
+
+	canonical, err := masked.Marshal()
 	if err != nil {
 		return "", fmt.Errorf("marshal profile-independent domain XML: %w", err)
 	}
@@ -524,70 +849,239 @@ func profileIndependentDigest(desc libvirtxml.Domain) (string, error) {
 	return fmt.Sprintf("%x", sha256.Sum256([]byte(canonical))), nil
 }
 
-func (c *client) needsRestart(found libvirt.Domain, exists bool, desired definitionDigests) (bool, error) {
-	if !exists {
-		return true, nil
+// coreDigest hashes the definition with the medium of every hot-pluggable drive and the fields a
+// hardware profile controls left out.
+//
+// The profile fields are left out for the same reason the configuration digest leaves them out: a
+// profile edit waits for the next stop/start, and a medium changed while one is waiting must still
+// be changed in place rather than restart the guest early.
+//
+// Empty when there is nothing hot-pluggable in it, which reads downstream as "never change this one
+// in place".
+func coreDigest(desc libvirtxml.Domain) (string, error) {
+	if desc.Devices == nil {
+		return "", nil
 	}
 
-	current, err := c.definitionMetadata(found)
+	// Masked on a copy of the disks rather than a reparse of the canonical text: the stability of
+	// unmarshalling what libvirtxml marshaled is not something it promises, and a digest which
+	// disagreed with itself would restart every guest on every pass.
+	devices := *desc.Devices
+	devices.Disks = slices.Clone(devices.Disks)
+	masked := false
+
+	for i := range devices.Disks {
+		if hotPluggableMedium(&devices.Disks[i]) {
+			devices.Disks[i].Source = nil
+			masked = true
+		}
+	}
+
+	if !masked {
+		return "", nil
+	}
+
+	desc.Devices = &devices
+	core := withoutProfile(desc)
+
+	canonical, err := core.Marshal()
 	if err != nil {
-		return false, err
+		return "", fmt.Errorf("marshal masked domain XML: %w", err)
+	}
+
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(canonical))), nil
+}
+
+// definitionMarker renders the ownership marker. Never empty: libvirt takes an empty element as a
+// request to delete the metadata, and the marker is what proves this machine owns the domain.
+func definitionMarker(digests definition) (string, error) {
+	if digests.full == "" {
+		return "", errors.New("refusing to write an empty ownership marker")
+	}
+
+	text, err := xml.Marshal(definitionMetadata{
+		Configuration: digests.configuration,
+		Core:          digests.core,
+		Digest:        digests.full,
+	})
+	if err != nil {
+		return "", fmt.Errorf("marshal domain metadata: %w", err)
+	}
+
+	return string(text), nil
+}
+
+// setDefinitionMetadata rewrites the ownership marker of a running domain in place.
+func (c *client) setDefinitionMetadata(found libvirt.Domain, desired definition) error {
+	marker, err := definitionMarker(desired)
+	if err != nil {
+		return err
+	}
+
+	// Matched by namespace, so this replaces the marker and leaves any other metadata alone. Live
+	// only: a transient domain has no persistent definition to write to, and asking for one fails.
+	if err = c.rpc.DomainSetMetadata(found, int32(libvirt.DomainMetadataElement),
+		libvirt.OptString{marker}, libvirt.OptString{metadataPrefix}, libvirt.OptString{metadataNamespace},
+		libvirt.DomainAffectLive,
+	); err != nil {
+		return fmt.Errorf("failed to record the definition of domain %q: %w", found.Name, err)
+	}
+
+	return nil
+}
+
+// planChange decides how the running domain reaches the desired definition, and reports the running
+// description it read on the way so the media path does not have to read it again.
+func (c *client) planChange(found libvirt.Domain, exists bool, desired definition) (changePlan, libvirtxml.Domain, error) {
+	if !exists {
+		return changeRestart, libvirtxml.Domain{}, nil
+	}
+
+	live, current, err := c.liveDefinition(found)
+	if err != nil {
+		return changeRestart, live, err
 	}
 
 	persistent, err := c.rpc.DomainIsPersistent(found)
 	if err != nil {
-		return false, err
+		return changeRestart, live, err
 	}
 
 	if persistent != 0 {
-		return true, nil
+		return changeRestart, live, nil
 	}
 
 	active, err := c.rpc.DomainIsActive(found)
 	if err != nil {
-		return false, err
+		return changeRestart, live, err
 	}
 
 	if active == 0 {
-		return true, nil
+		return changeRestart, live, nil
 	}
 
-	// A profile-only edit takes effect at the next stop/start. Both digests are
-	// stored by libvirt, so this survives a machined reconnect without pretending
-	// libvirt's expanded live CPU XML is identical to the requested profile.
-	return current.Full != desired.Full &&
-		(current.Configuration == "" || current.Configuration != desired.Configuration), nil
+	// The marker is written only once every medium has been changed, so a change which failed part
+	// way leaves it naming the previous definition while some drives already hold the new media.
+	// A marker which matches is therefore believed only once the running drives agree with it.
+	changes, err := pendingMediaChanges(live, desired.desc)
+	if err != nil {
+		// A configured drive is missing from the running domain, detached out of band: no medium
+		// change can reach it, so retrying one would never converge. Replace the domain instead.
+		return changeRestart, live, nil //nolint:nilerr
+	}
+
+	return decideChange(current, desired, len(changes) == 0), live, nil
 }
 
-func (c *client) definitionMetadata(found libvirt.Domain) (definitionDigests, error) {
-	currentXML, err := c.rpc.DomainGetXMLDesc(found, 0)
-	if err != nil {
-		return definitionDigests{}, err
+// decideChange compares the ownership marker of an active domain with the desired definition.
+// inSync reports whether the media in the running drives agree with the desired ones.
+func decideChange(current definitionMetadata, desired definition, inSync bool) changePlan {
+	switch {
+	case inSync && current.recorded().Runs(desired.recorded()):
+		return changeNone
+	case desired.core != "" && current.Core == desired.core:
+		return changeMedia
+	default:
+		return changeRestart
 	}
+}
 
+// liveDefinition reads a running domain and the ownership marker Talos left in it.
+func (c *client) liveDefinition(found libvirt.Domain) (libvirtxml.Domain, definitionMetadata, error) {
 	var current libvirtxml.Domain
 
+	currentXML, err := c.rpc.DomainGetXMLDesc(found, 0)
+	if err != nil {
+		return current, definitionMetadata{}, err
+	}
+
 	if err = current.Unmarshal(currentXML); err != nil {
-		return definitionDigests{}, err
+		return current, definitionMetadata{}, err
 	}
 
 	if current.Metadata == nil {
-		return definitionDigests{}, fmt.Errorf("domain %q has no Talos ownership metadata", found.Name)
+		return current, definitionMetadata{}, fmt.Errorf("domain %q %w", found.Name, errNotOwned)
 	}
 
-	var metadata struct {
-		Definition definitionDigests `xml:"https://talos.dev/libvirt/domain definition"`
+	var wrapper struct {
+		Definition definitionMetadata `xml:"https://talos.dev/libvirt/domain definition"`
 	}
 
-	if err = xml.Unmarshal([]byte("<metadata>"+current.Metadata.XML+"</metadata>"), &metadata); err != nil {
-		return definitionDigests{}, fmt.Errorf("invalid domain metadata: %w", err)
+	if err = xml.Unmarshal([]byte("<metadata>"+current.Metadata.XML+"</metadata>"), &wrapper); err != nil {
+		return current, definitionMetadata{}, fmt.Errorf("invalid domain metadata: %w", err)
 	}
 
-	if metadata.Definition.Full == "" {
-		return definitionDigests{}, fmt.Errorf("domain %q has no Talos ownership metadata", found.Name)
+	if wrapper.Definition.Digest == "" {
+		return current, definitionMetadata{}, fmt.Errorf("domain %q %w", found.Name, errNotOwned)
 	}
 
-	return metadata.Definition, nil
+	return current, wrapper.Definition, nil
+}
+
+// errNotOwned marks a domain which carries no Talos ownership marker.
+var errNotOwned = errors.New("has no Talos ownership metadata")
+
+// Definition is what a domain records, in its ownership marker, about the definition it runs.
+type Definition struct {
+	// Digest covers the whole definition.
+	Digest string
+	// Configuration covers it with the fields a hardware profile controls left out.
+	Configuration string
+}
+
+// recorded is the part of the marker which says what the domain runs.
+func (m definitionMetadata) recorded() Definition {
+	return Definition{Digest: m.Digest, Configuration: m.Configuration}
+}
+
+// Runs reports whether a domain recording this already runs desired, as Start judges it: the whole
+// of it, or all of it but a hardware profile edit, which waits for the next stop and start. Both
+// digests are stored by libvirt, so this survives a machined reconnect without pretending libvirt's
+// expanded live CPU XML is identical to the requested profile.
+//
+// The marker is written only once a medium change has gone through in full, so a domain still
+// waiting on a guest to release its tray does not run the definition which asked for it.
+func (r Definition) Runs(desired Definition) bool {
+	return r.Digest == desired.Digest || (r.Configuration != "" && r.Configuration == desired.Configuration)
+}
+
+// DefinitionOf is what a domain started on renderedXML records about the definition it runs.
+func DefinitionOf(d Domain, renderedXML string) (Definition, error) {
+	desired, err := domainDefinition(d, renderedXML)
+	if err != nil {
+		return Definition{}, err
+	}
+
+	return desired.recorded(), nil
+}
+
+// recorded is what a domain started on this definition records.
+func (d definition) recorded() Definition {
+	return Definition{Digest: d.full, Configuration: d.configuration}
+}
+
+// Definition reads what a domain records about the definition it runs. A domain which carries no
+// ownership marker records nothing, and reports the zero Definition.
+func (c *client) Definition(domain Domain) (Definition, error) {
+	found, exists, err := c.lookup(domain)
+	if err != nil {
+		return Definition{}, err
+	}
+
+	if !exists {
+		return Definition{}, fmt.Errorf("domain %q disappeared before reading its definition", domain.Name)
+	}
+
+	_, current, err := c.liveDefinition(found)
+	if errors.Is(err, errNotOwned) {
+		return Definition{}, nil
+	}
+
+	if err != nil {
+		return Definition{}, err
+	}
+
+	return current.recorded(), nil
 }
 
 func (c *client) removeManagedSave(found libvirt.Domain) error {
@@ -627,7 +1121,7 @@ func (c *client) owned(d Domain) (libvirt.Domain, bool, error) {
 		return libvirt.Domain{}, false, err
 	}
 
-	if _, err = c.definitionMetadata(found); err != nil {
+	if _, _, err = c.liveDefinition(found); err != nil {
 		return libvirt.Domain{}, false, err
 	}
 
@@ -721,7 +1215,7 @@ func (c *client) Remove(d Domain) error {
 		return err
 	}
 
-	if _, err = c.definitionMetadata(found); err != nil {
+	if _, _, err = c.liveDefinition(found); err != nil {
 		return err
 	}
 

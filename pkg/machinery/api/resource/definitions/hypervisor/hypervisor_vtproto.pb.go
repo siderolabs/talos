@@ -1042,6 +1042,20 @@ func (m *VirtualMachineDomainStatusSpec) MarshalToSizedBufferVT(dAtA []byte) (in
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if len(m.ConfigurationDigest) > 0 {
+		i -= len(m.ConfigurationDigest)
+		copy(dAtA[i:], m.ConfigurationDigest)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.ConfigurationDigest)))
+		i--
+		dAtA[i] = 0x52
+	}
+	if len(m.DefinitionDigest) > 0 {
+		i -= len(m.DefinitionDigest)
+		copy(dAtA[i:], m.DefinitionDigest)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.DefinitionDigest)))
+		i--
+		dAtA[i] = 0x4a
+	}
 	if len(m.Interfaces) > 0 {
 		for iNdEx := len(m.Interfaces) - 1; iNdEx >= 0; iNdEx-- {
 			size, err := m.Interfaces[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
@@ -2438,6 +2452,14 @@ func (m *VirtualMachineDomainStatusSpec) SizeVT() (n int) {
 			l = e.SizeVT()
 			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 		}
+	}
+	l = len(m.DefinitionDigest)
+	if l > 0 {
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	l = len(m.ConfigurationDigest)
+	if l > 0 {
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
 	n += len(m.unknownFields)
 	return n
@@ -5838,6 +5860,70 @@ func (m *VirtualMachineDomainStatusSpec) UnmarshalVT(dAtA []byte) error {
 			if err := m.Interfaces[len(m.Interfaces)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
+			iNdEx = postIndex
+		case 9:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DefinitionDigest", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.DefinitionDigest = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 10:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ConfigurationDigest", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ConfigurationDigest = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

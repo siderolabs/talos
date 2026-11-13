@@ -14,6 +14,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 
+	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
 
@@ -80,7 +81,16 @@ const diskStatusIDDigestLength = 12
 func VirtualMachineDiskStatusID(virtualMachine string, disk VirtualMachineDiskSpec) resource.ID {
 	var parts []string
 
-	if disk.Provision.Blank {
+	switch {
+	case disk.Provision.Blank && disk.Type == hypervisorhelpers.VirtualMachineDiskTypeCDROM.String():
+		// An empty drive is provisioned from nothing, so nothing else is in. It must not share its
+		// ID with a blank disk of the same name, pool and format: a disk changed into an empty drive
+		// would then rewrite, rather than replace, the status a running domain holds the disk's
+		// volume through, before the restart which takes that volume out of the guest.
+		//
+		// "drive=empty" cannot collide with either branch below: neither starts with it.
+		parts = []string{"drive=empty"}
+	case disk.Provision.Blank:
 		// Pool and format are in, because each changes the file the domain is pointed at -- and
 		// format changes its driver type too -- so a running domain must be re-rendered onto a new
 		// status rather than silently retargeted.
@@ -94,7 +104,7 @@ func VirtualMachineDiskStatusID(virtualMachine string, disk VirtualMachineDiskSp
 		// "provision=blank" cannot collide with the image branch below: '=' is outside the charset
 		// a library name is validated against.
 		parts = []string{"provision=blank", disk.Pool, disk.Format}
-	} else {
+	default:
 		var image VirtualMachineDiskFromImageSpec
 
 		if disk.Provision.FromImage != nil {
@@ -108,7 +118,14 @@ func VirtualMachineDiskStatusID(virtualMachine string, disk VirtualMachineDiskSp
 
 	sum := sha256.Sum256([]byte(strings.Join(parts, "\x00")))
 
-	return virtualMachine + "/" + disk.Name + "@" + hex.EncodeToString(sum[:])[:diskStatusIDDigestLength]
+	return VirtualMachineDiskStatusIDPrefix(virtualMachine, disk.Name) + hex.EncodeToString(sum[:])[:diskStatusIDDigestLength]
+}
+
+// VirtualMachineDiskStatusIDPrefix is the part of every VirtualMachineDiskStatusID of one disk of a
+// virtual machine which does not depend on what the disk is provisioned from. Two IDs sharing it
+// name the same disk, provisioned the same way or not.
+func VirtualMachineDiskStatusIDPrefix(virtualMachine, disk string) string {
+	return virtualMachine + "/" + disk + "@"
 }
 
 // NewVirtualMachineDiskStatus initializes a VirtualMachineDiskStatus resource.

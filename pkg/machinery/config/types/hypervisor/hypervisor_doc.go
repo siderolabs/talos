@@ -524,7 +524,7 @@ func (VirtualMachineDisk) Doc() *encoder.Doc {
 				Name:        "pool",
 				Type:        "string",
 				Note:        "",
-				Description: "Name of the `StoragePoolConfig` document this disk's volume lives in.\n\nThe pool is declared separately and is not provisioned by this document, but it must be\ndeclared: a disk naming a pool no `StoragePoolConfig` document declares is a configuration\nerror.\n\nThe volume is named after this virtual machine and this disk, so a volume of that name\nalready in the pool is adopted with its existing contents. Removing the disk from the\nconfiguration never deletes the volume, so re-declaring the same virtual machine and disk\nnames in the same pool reattaches the same data.\n\nRequired for both `disk` and `cdrom`. CD-ROM media is copied from the content library\ninto an independent volume in this pool, not attached directly from the library.",
+				Description: "Name of the `StoragePoolConfig` document this disk's volume lives in.\n\nThe pool is declared separately and is not provisioned by this document, but it must be\ndeclared: a disk naming a pool no `StoragePoolConfig` document declares is a configuration\nerror.\n\nThe volume is named after this virtual machine and this disk, so a volume of that name\nalready in the pool is adopted with its existing contents. Removing the disk from the\nconfiguration never deletes the volume, so re-declaring the same virtual machine and disk\nnames in the same pool reattaches the same data.\n\nRequired for a `disk` and for a `cdrom` provisioned `fromImage`. CD-ROM media is copied\nfrom the content library into an independent volume in this pool, not attached directly\nfrom the library. Optional on an empty `cdrom` (provisioned `blank`), which has no\nvolume; loading a medium into it later requires a pool.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the `StoragePoolConfig` document this disk's volume lives in." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
@@ -606,7 +606,7 @@ func (VirtualMachineDiskProvision) Doc() *encoder.Doc {
 				Name:        "blank",
 				Type:        "VirtualMachineDiskBlank",
 				Note:        "",
-				Description: "Create an empty volume, formatted per `format`.\n\nNot allowed on a `cdrom`, which has no meaningful empty contents.",
+				Description: "Create an empty volume, formatted per `format`.\n\nOn a `cdrom` there is no volume to create: this is an empty drive, no medium in it, and\n`pool` may be omitted. Loading and ejecting a medium is changing this disk between `blank` and\n`fromImage`, which is applied to a running virtual machine without restarting it. A\n`bootOrder` on an empty drive is a boot entry the firmware tries and fails.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Create an empty volume, formatted per `format`." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
@@ -625,8 +625,8 @@ func (VirtualMachineDiskProvision) Doc() *encoder.Doc {
 func (VirtualMachineDiskBlank) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "VirtualMachineDiskBlank",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineDiskBlank provisions an empty volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "VirtualMachineDiskBlank provisions an empty volume.",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineDiskBlank provisions an empty volume, or on a cdrom an empty drive." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineDiskBlank provisions an empty volume, or on a cdrom an empty drive.",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "VirtualMachineDiskProvision",
