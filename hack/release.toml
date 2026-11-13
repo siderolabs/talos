@@ -224,6 +224,40 @@ After a reboot, the virtual machine follows the `powerState` of its `VirtualMach
 The commands require the `os:admin` or `os:operator` role.
 """
 
+    [notes.vm_pci_passthrough]
+        title = "Virtual Machine PCI Passthrough"
+        description = """Host PCI devices can now be passed through to a virtual machine with `hostDevices.pci`:
+
+```yaml
+apiVersion: v1alpha1
+kind: KernelModuleConfig
+name: vfio_pci
+---
+apiVersion: v1alpha1
+kind: KernelModuleConfig
+name: vfio_iommu_type1
+---
+apiVersion: v1alpha1
+kind: PCIDriverRebindConfig
+name: 0000:41:00.0
+targetDriver: vfio-pci
+---
+apiVersion: v1alpha1
+kind: VirtualMachineConfig
+name: vm1
+hostDevices:
+  pci:
+    - address: 0000:41:00.0
+```
+
+Devices are attached unmanaged: Talos binds them to `vfio-pci` itself, through `PCIDriverRebindConfig`, and the
+`vfio_iommu_type1` module must be loaded explicitly. A virtual machine whose device is not present or not on
+`vfio-pci` yet is held back, and `VirtualMachineStatus` says which device it is waiting for.
+
+Virtual machines with passed-through devices are created with the PIT's missed-tick re-injection disabled
+(`tickpolicy="discard"`), so that on AMD hosts the interrupts of their devices are posted to the guest.
+"""
+
     [notes.cpu_scaling_config]
         title = "CPU Scaling Configuration"
         description = """\

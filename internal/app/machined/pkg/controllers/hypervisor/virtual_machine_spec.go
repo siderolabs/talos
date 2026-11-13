@@ -135,6 +135,7 @@ func projectVirtualMachineSpec(vm configcfg.VirtualMachineConfig) hypervisor.Vir
 			Model:   vm.Video().Model(),
 			VRAMMiB: vm.Video().VRAMMiB(),
 		},
+		PCIDevices: projectPCIDevices(vm),
 	}
 
 	topology := vm.CPU().Topology()
@@ -202,6 +203,25 @@ func projectVirtualMachineSpec(vm configcfg.VirtualMachineConfig) hypervisor.Vir
 	}
 
 	return spec
+}
+
+// projectPCIDevices projects the host PCI devices a virtual machine passes through.
+func projectPCIDevices(vm configcfg.VirtualMachineConfig) []hypervisor.VirtualMachinePCIDeviceSpec {
+	configured := vm.HostDevices().PCI()
+	if len(configured) == 0 {
+		return nil
+	}
+
+	devices := make([]hypervisor.VirtualMachinePCIDeviceSpec, 0, len(configured))
+
+	for _, device := range configured {
+		devices = append(devices, hypervisor.VirtualMachinePCIDeviceSpec{
+			Address:   device.Address(),
+			BootOrder: device.BootOrder(),
+		})
+	}
+
+	return devices
 }
 
 // projectCloudInit preserves the guest's opaque seed payload in the backend-neutral intent.

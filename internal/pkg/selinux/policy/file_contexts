@@ -6,6 +6,7 @@
 /usr/bin(/.*)?	system_u:object_r:bin_exec_t:s0
 /usr/lib(/.*)?	system_u:object_r:lib_t:s0
 /dev/tap[0-9]+	-c	system_u:object_r:tap_device_t:s0
+/dev/vfio/[0-9]+	-c	system_u:object_r:vfio_device_t:s0
 /usr/lib/udev/[^/.]+	--	system_u:object_r:udev_exec_t:s0
 /etc/kubernetes(/.*)?	system_u:object_r:k8s_conf_t:s0
 /opt/containerd(/.*)?	system_u:object_r:containerd_plugin_t:s0
@@ -24,6 +25,7 @@
 /lib/modules	system_u:object_r:module_t:s0
 /usr/bin/runc	system_u:object_r:containerd_exec_t:s0
 /usr/bin/init	--	system_u:object_r:init_exec_t:s0
+/dev/vfio/vfio	-c	system_u:object_r:vfio_device_t:s0
 /usr/bin/udevadm	--	system_u:object_r:udev_exec_t:s0
 /usr/bin/modprobe	--	system_u:object_r:modprobe_exec_t:s0
 /usr/bin/containerd	system_u:object_r:containerd_exec_t:s0
