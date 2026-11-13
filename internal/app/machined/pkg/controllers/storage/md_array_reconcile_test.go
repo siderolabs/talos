@@ -214,6 +214,15 @@ func (f *fakeMDProvisioner) grown(device string) (int, bool) {
 	return n, ok
 }
 
+// with runs fn under the fake's lock, for tests that seed or inspect fixture
+// state while the controller runtime is running.
+func (f *fakeMDProvisioner) with(fn func(f *fakeMDProvisioner)) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	fn(f)
+}
+
 func (f *fakeMDProvisioner) reset() {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -296,12 +305,14 @@ func (suite *MDArrayReconcileSuite) TestCreatesArrayFromScratch() {
 }
 
 func (suite *MDArrayReconcileSuite) TestExtendsExistingArray() {
-	suite.md.findByMember["/dev/nvme0n1"] = "/dev/md0"
-	suite.md.details["/dev/md0"] = md.Detail{
-		Level:       "raid1",
-		RaidDevices: 2,
-		Members:     []string{"/dev/nvme0n1", "/dev/nvme1n1"},
-	}
+	suite.md.with(func(f *fakeMDProvisioner) {
+		f.findByMember["/dev/nvme0n1"] = "/dev/md0"
+		f.details["/dev/md0"] = md.Detail{
+			Level:       "raid1",
+			RaidDevices: 2,
+			Members:     []string{"/dev/nvme0n1", "/dev/nvme1n1"},
+		}
+	})
 
 	createDisk(&suite.DefaultSuite, "nvme0n1", "/dev/nvme0n1", "nvme")
 	createDisk(&suite.DefaultSuite, "nvme1n1", "/dev/nvme1n1", "nvme")
@@ -325,12 +336,14 @@ func (suite *MDArrayReconcileSuite) TestExtendsExistingArray() {
 }
 
 func (suite *MDArrayReconcileSuite) TestNoOpWhenObservedMatchesDesired() {
-	suite.md.findByMember["/dev/nvme0n1"] = "/dev/md0"
-	suite.md.details["/dev/md0"] = md.Detail{
-		Level:       "raid1",
-		RaidDevices: 2,
-		Members:     []string{"/dev/nvme0n1", "/dev/nvme1n1"},
-	}
+	suite.md.with(func(f *fakeMDProvisioner) {
+		f.findByMember["/dev/nvme0n1"] = "/dev/md0"
+		f.details["/dev/md0"] = md.Detail{
+			Level:       "raid1",
+			RaidDevices: 2,
+			Members:     []string{"/dev/nvme0n1", "/dev/nvme1n1"},
+		}
+	})
 
 	createDisk(&suite.DefaultSuite, "nvme0n1", "/dev/nvme0n1", "nvme")
 	createDisk(&suite.DefaultSuite, "nvme1n1", "/dev/nvme1n1", "nvme")
@@ -349,13 +362,15 @@ func (suite *MDArrayReconcileSuite) TestNoOpWhenObservedMatchesDesired() {
 }
 
 func (suite *MDArrayReconcileSuite) TestRebuildingWhileSyncing() {
-	suite.md.findByMember["/dev/nvme0n1"] = "/dev/md0"
-	suite.md.details["/dev/md0"] = md.Detail{
-		Level:       "raid1",
-		RaidDevices: 2,
-		Members:     []string{"/dev/nvme0n1", "/dev/nvme1n1"},
-	}
-	suite.md.syncAction["/dev/md0"] = md.SyncActionResync
+	suite.md.with(func(f *fakeMDProvisioner) {
+		f.findByMember["/dev/nvme0n1"] = "/dev/md0"
+		f.details["/dev/md0"] = md.Detail{
+			Level:       "raid1",
+			RaidDevices: 2,
+			Members:     []string{"/dev/nvme0n1", "/dev/nvme1n1"},
+		}
+		f.syncAction["/dev/md0"] = md.SyncActionResync
+	})
 
 	createDisk(&suite.DefaultSuite, "nvme0n1", "/dev/nvme0n1", "nvme")
 	createDisk(&suite.DefaultSuite, "nvme1n1", "/dev/nvme1n1", "nvme")
@@ -371,13 +386,15 @@ func (suite *MDArrayReconcileSuite) TestRebuildingWhileSyncing() {
 }
 
 func (suite *MDArrayReconcileSuite) TestReportsSyncActionAsRebuilding() {
-	suite.md.findByMember["/dev/nvme0n1"] = "/dev/md0"
-	suite.md.details["/dev/md0"] = md.Detail{
-		Level:       "raid1",
-		RaidDevices: 2,
-		Members:     []string{"/dev/nvme0n1", "/dev/nvme1n1"},
-	}
-	suite.md.syncAction["/dev/md0"] = md.SyncActionRecover
+	suite.md.with(func(f *fakeMDProvisioner) {
+		f.findByMember["/dev/nvme0n1"] = "/dev/md0"
+		f.details["/dev/md0"] = md.Detail{
+			Level:       "raid1",
+			RaidDevices: 2,
+			Members:     []string{"/dev/nvme0n1", "/dev/nvme1n1"},
+		}
+		f.syncAction["/dev/md0"] = md.SyncActionRecover
+	})
 
 	createDisk(&suite.DefaultSuite, "nvme0n1", "/dev/nvme0n1", "nvme")
 	createDisk(&suite.DefaultSuite, "nvme1n1", "/dev/nvme1n1", "nvme")
@@ -470,33 +487,32 @@ func (suite *MDArrayReconcileSuite) createSerialMirrorSpecs() {
 // observeSerialMirror changes only the simulated mdadm/sysfs observation. The
 // production controller still decides whether to create, add, or grow an array.
 func (suite *MDArrayReconcileSuite) observeSerialMirror(name, device string, members []string, action md.SyncAction) {
-	suite.md.mu.Lock()
-	defer suite.md.mu.Unlock()
-
-	metadata := "1.0"
-	if name == "data" {
-		metadata = "1.2"
-	}
-
-	suite.md.details[device] = md.Detail{
-		Level:       "raid1",
-		RaidDevices: 2,
-		Members:     append([]string(nil), members...),
-		Name:        "talos:" + name,
-		UUID:        "test-" + name,
-		Metadata:    metadata,
-	}
-	suite.md.syncAction[device] = action
-
-	for member, arrayDevice := range suite.md.findByMember {
-		if arrayDevice == device {
-			delete(suite.md.findByMember, member)
+	suite.md.with(func(f *fakeMDProvisioner) {
+		metadata := "1.0"
+		if name == "data" {
+			metadata = "1.2"
 		}
-	}
 
-	for _, member := range members {
-		suite.md.findByMember[member] = device
-	}
+		f.details[device] = md.Detail{
+			Level:       "raid1",
+			RaidDevices: 2,
+			Members:     append([]string(nil), members...),
+			Name:        "talos:" + name,
+			UUID:        "test-" + name,
+			Metadata:    metadata,
+		}
+		f.syncAction[device] = action
+
+		for member, arrayDevice := range f.findByMember {
+			if arrayDevice == device {
+				delete(f.findByMember, member)
+			}
+		}
+
+		for _, member := range members {
+			f.findByMember[member] = device
+		}
+	})
 }
 
 func (suite *MDArrayReconcileSuite) assertSerialMirror(name string, members []string, phase storageres.MDArrayPhase, action md.SyncAction) {
@@ -523,17 +539,18 @@ func (suite *MDArrayReconcileSuite) assertSerialMirror(name string, members []st
 // assertNoSerialMirrorMutations checks every array, not just the expected name,
 // so an unintended mutation of the other mirror or a decoy cannot pass.
 func (suite *MDArrayReconcileSuite) assertNoSerialMirrorMutations() {
-	suite.md.mu.Lock()
-	defer suite.md.mu.Unlock()
-
-	suite.Assert().Empty(suite.md.creates)
-	suite.Assert().Empty(suite.md.adds)
-	suite.Assert().Empty(suite.md.grows)
+	suite.md.with(func(f *fakeMDProvisioner) {
+		suite.Assert().Empty(f.creates)
+		suite.Assert().Empty(f.adds)
+		suite.Assert().Empty(f.grows)
+	})
 }
 
 func (suite *MDArrayReconcileSuite) TestCreatesIndependentMirrorsByExactSerial() {
-	suite.md.createNodes["boot"] = bootTestDevice
-	suite.md.createNodes["data"] = dataTestDevice
+	suite.md.with(func(f *fakeMDProvisioner) {
+		f.createNodes["boot"] = bootTestDevice
+		f.createNodes["data"] = dataTestDevice
+	})
 
 	// All disks have the same transport. Discovery order, device order, serial
 	// prefixes, and an absent serial must not broaden either exact selector.
@@ -551,15 +568,14 @@ func (suite *MDArrayReconcileSuite) TestCreatesIndependentMirrorsByExactSerial()
 	suite.assertSerialMirror("boot", []string{"/dev/vdb", "/dev/vdd"}, storageres.MDArrayPhaseReady, md.SyncActionIdle)
 	suite.assertSerialMirror("data", []string{"/dev/vdc", "/dev/vdf"}, storageres.MDArrayPhaseReady, md.SyncActionIdle)
 
-	suite.md.mu.Lock()
-	defer suite.md.mu.Unlock()
-
-	suite.Assert().Equal(map[string]md.CreateOptions{
-		"boot": {Level: 1, Metadata: "1.0", RaidDevices: 2, Devices: []string{"/dev/vdb", "/dev/vdd"}},
-		"data": {Level: 1, Metadata: "1.2", RaidDevices: 2, Devices: []string{"/dev/vdc", "/dev/vdf"}},
-	}, suite.md.creates)
-	suite.Assert().Empty(suite.md.adds)
-	suite.Assert().Empty(suite.md.grows)
+	suite.md.with(func(f *fakeMDProvisioner) {
+		suite.Assert().Equal(map[string]md.CreateOptions{
+			"boot": {Level: 1, Metadata: "1.0", RaidDevices: 2, Devices: []string{"/dev/vdb", "/dev/vdd"}},
+			"data": {Level: 1, Metadata: "1.2", RaidDevices: 2, Devices: []string{"/dev/vdc", "/dev/vdf"}},
+		}, f.creates)
+		suite.Assert().Empty(f.adds)
+		suite.Assert().Empty(f.grows)
+	})
 }
 
 func (suite *MDArrayReconcileSuite) TestSerialMirrorsIgnoreRenamedReorderedDevices() {
@@ -682,25 +698,26 @@ func (suite *MDArrayReconcileSuite) TestTwoMemberSerialMirrorRejoinsWithoutGrowi
 	suite.assertSerialMirror("boot", members, storageres.MDArrayPhaseReady, md.SyncActionIdle)
 	suite.assertSerialMirror("data", []string{"/dev/vdc", "/dev/vdd"}, storageres.MDArrayPhaseReady, md.SyncActionIdle)
 
-	suite.md.mu.Lock()
-	defer suite.md.mu.Unlock()
-
-	suite.Assert().Empty(suite.md.creates, "rejoin must retain the original arrays")
-	suite.Assert().Equal(map[string]map[string]struct{}{
-		bootTestDevice: {"/dev/vdf": {}},
-	}, suite.md.adds)
-	suite.Assert().Empty(suite.md.grows, "rejoining a missing slot must retain two configured RAID devices")
+	suite.md.with(func(f *fakeMDProvisioner) {
+		suite.Assert().Empty(f.creates, "rejoin must retain the original arrays")
+		suite.Assert().Equal(map[string]map[string]struct{}{
+			bootTestDevice: {"/dev/vdf": {}},
+		}, f.adds)
+		suite.Assert().Empty(f.grows, "rejoining a missing slot must retain two configured RAID devices")
+	})
 }
 
 func (suite *MDArrayReconcileSuite) TestReportsUnmanagedDiscoveredArray() {
-	suite.md.details["/dev/md127"] = md.Detail{
-		Level:       "raid1",
-		RaidDevices: 2,
-		Members:     []string{"/dev/nvme0n1", "/dev/nvme1n1"},
-		UUID:        "1234-uuid",
-		Name:        "talos:boot",
-	}
-	suite.md.arrays = []string{"/dev/md127"}
+	suite.md.with(func(f *fakeMDProvisioner) {
+		f.details["/dev/md127"] = md.Detail{
+			Level:       "raid1",
+			RaidDevices: 2,
+			Members:     []string{"/dev/nvme0n1", "/dev/nvme1n1"},
+			UUID:        "1234-uuid",
+			Name:        "talos:boot",
+		}
+		f.arrays = []string{"/dev/md127"}
+	})
 
 	// no MDArraySpec exists for this array; creating an unrelated disk just gives the
 	// controller an input event to react to.
@@ -722,12 +739,14 @@ func (suite *MDArrayReconcileSuite) TestReportsUnmanagedDiscoveredArray() {
 }
 
 func (suite *MDArrayReconcileSuite) TestSkipsUnmanagedArrayWithUnsupportedLevel() {
-	suite.md.details["/dev/md127"] = md.Detail{
-		Level:       "raid5",
-		RaidDevices: 3,
-		Members:     []string{"/dev/nvme0n1", "/dev/nvme1n1", "/dev/nvme2n1"},
-	}
-	suite.md.arrays = []string{"/dev/md127"}
+	suite.md.with(func(f *fakeMDProvisioner) {
+		f.details["/dev/md127"] = md.Detail{
+			Level:       "raid5",
+			RaidDevices: 3,
+			Members:     []string{"/dev/nvme0n1", "/dev/nvme1n1", "/dev/nvme2n1"},
+		}
+		f.arrays = []string{"/dev/md127"}
+	})
 
 	createDisk(&suite.DefaultSuite, "nvme0n1", "/dev/nvme0n1", "nvme")
 
@@ -735,8 +754,10 @@ func (suite *MDArrayReconcileSuite) TestSkipsUnmanagedArrayWithUnsupportedLevel(
 }
 
 func (suite *MDArrayReconcileSuite) TestSkipsUnmanagedArrayWithUnknownLevel() {
-	suite.md.details["/dev/md127"] = md.Detail{Name: "talos:boot", UUID: "1234-uuid"}
-	suite.md.arrays = []string{"/dev/md127"}
+	suite.md.with(func(f *fakeMDProvisioner) {
+		f.details["/dev/md127"] = md.Detail{Name: "talos:boot", UUID: "1234-uuid"}
+		f.arrays = []string{"/dev/md127"}
+	})
 
 	createDisk(&suite.DefaultSuite, "nvme0n1", "/dev/nvme0n1", "nvme")
 
@@ -744,8 +765,10 @@ func (suite *MDArrayReconcileSuite) TestSkipsUnmanagedArrayWithUnknownLevel() {
 }
 
 func (suite *MDArrayReconcileSuite) TestUnmanagedArrayFallsBackToUUID() {
-	suite.md.details["/dev/md127"] = md.Detail{Level: "raid1", UUID: "aaaa:bbbb:cccc:dddd", Members: []string{"/dev/nvme0n1"}}
-	suite.md.arrays = []string{"/dev/md127"}
+	suite.md.with(func(f *fakeMDProvisioner) {
+		f.details["/dev/md127"] = md.Detail{Level: "raid1", UUID: "aaaa:bbbb:cccc:dddd", Members: []string{"/dev/nvme0n1"}}
+		f.arrays = []string{"/dev/md127"}
+	})
 
 	createDisk(&suite.DefaultSuite, "nvme0n1", "/dev/nvme0n1", "nvme")
 
@@ -758,8 +781,10 @@ func (suite *MDArrayReconcileSuite) TestDegradedManagedArrayWaitingForMembersIsN
 	// only one member disk is present: the spec waits, but the kernel already assembled the degraded array.
 	createDisk(&suite.DefaultSuite, "nvme0n1", "/dev/nvme0n1", "nvme")
 
-	suite.md.details["/dev/md127"] = md.Detail{Level: "raid1", Name: "talos:data", UUID: "1234-uuid", Members: []string{"/dev/nvme0n1"}}
-	suite.md.arrays = []string{"/dev/md127"}
+	suite.md.with(func(f *fakeMDProvisioner) {
+		f.details["/dev/md127"] = md.Detail{Level: "raid1", Name: "talos:data", UUID: "1234-uuid", Members: []string{"/dev/nvme0n1"}}
+		f.arrays = []string{"/dev/md127"}
+	})
 
 	suite.createArraySpec("data", `disk.transport == "nvme"`)
 
@@ -775,9 +800,11 @@ func (suite *MDArrayReconcileSuite) TestDegradedForeignNamedArrayWaitingForMembe
 	// the array was stamped by another tool (different homehost), so only its member disk ties it to the spec.
 	createDisk(&suite.DefaultSuite, "nvme0n1", "/dev/nvme0n1", "nvme")
 
-	suite.md.details["/dev/md127"] = md.Detail{Level: "raid1", Name: "installer:boot", UUID: "1234-uuid", Members: []string{"/dev/nvme0n1"}}
-	suite.md.findByMember["/dev/nvme0n1"] = "/dev/md127"
-	suite.md.arrays = []string{"/dev/md127"}
+	suite.md.with(func(f *fakeMDProvisioner) {
+		f.details["/dev/md127"] = md.Detail{Level: "raid1", Name: "installer:boot", UUID: "1234-uuid", Members: []string{"/dev/nvme0n1"}}
+		f.findByMember["/dev/nvme0n1"] = "/dev/md127"
+		f.arrays = []string{"/dev/md127"}
+	})
 
 	suite.createArraySpec("data", `disk.transport == "nvme"`)
 
@@ -793,8 +820,10 @@ func (suite *MDArrayReconcileSuite) TestUnmanagedArrayNotSuppressedBySpecNameCol
 	createDisk(&suite.DefaultSuite, "nvme0n1", "/dev/nvme0n1", "nvme")
 	createDisk(&suite.DefaultSuite, "nvme1n1", "/dev/nvme1n1", "nvme")
 
-	suite.md.details["/dev/md127"] = md.Detail{Level: "raid1", Name: "other:boot", UUID: "1234-uuid"}
-	suite.md.arrays = []string{"/dev/md0", "/dev/md127"}
+	suite.md.with(func(f *fakeMDProvisioner) {
+		f.details["/dev/md127"] = md.Detail{Level: "raid1", Name: "other:boot", UUID: "1234-uuid"}
+		f.arrays = []string{"/dev/md0", "/dev/md127"}
+	})
 
 	suite.createArraySpec("md127", `disk.transport == "nvme"`)
 
@@ -810,7 +839,9 @@ func (suite *MDArrayReconcileSuite) TestUnmanagedArrayNotSuppressedBySpecNameCol
 func (suite *MDArrayReconcileSuite) TestSkipsUnmanagedArrayNotYetQueryable() {
 	// "/dev/md127" is present per ListArrays but has no matching entry in details, so
 	// DetailDevice fails, e.g. an array udev hasn't run yet.
-	suite.md.arrays = []string{"/dev/md127"}
+	suite.md.with(func(f *fakeMDProvisioner) {
+		f.arrays = []string{"/dev/md127"}
+	})
 
 	createDisk(&suite.DefaultSuite, "nvme0n1", "/dev/nvme0n1", "nvme")
 
@@ -821,7 +852,9 @@ func (suite *MDArrayReconcileSuite) TestManagedArrayIsNotReportedUnmanaged() {
 	createDisk(&suite.DefaultSuite, "nvme0n1", "/dev/nvme0n1", "nvme")
 	createDisk(&suite.DefaultSuite, "nvme1n1", "/dev/nvme1n1", "nvme")
 
-	suite.md.arrays = []string{suite.md.createNode}
+	suite.md.with(func(f *fakeMDProvisioner) {
+		f.arrays = []string{f.createNode}
+	})
 
 	suite.createArraySpec("data", `disk.transport == "nvme"`)
 
