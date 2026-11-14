@@ -23,38 +23,10 @@ import (
 	"golang.org/x/sys/unix"
 	"kernel.org/pub/linux/libs/security/libcap/cap"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/sandboxd/internal/protocol"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
-
-// Control protocol between machined (Client) and sandboxd.
-//
-// machined sends a launchRequest over the control socket as one SEQPACKET
-// datagram, with SCM_RIGHTS carrying [stdin, stdout, stderr, serviceSocket].
-// sandboxd - which is PID 1 inside the namespace - forks the service
-// directly (no setns needed) and uses serviceSocket to (1) return a
-// launchResponse plus the service pidfd via SCM_RIGHTS, and (2) after machined
-// asks (Wait), return a waitResponse carrying the exit status.
-
-// launchRequest is sent by machined for each service launch.
-type launchRequest struct {
-	Args                []string
-	Env                 []string
-	DroppedCapabilities []string
-	SelinuxLabel        string
-}
-
-// launchResponse is returned once the service is started; the service pidfd is
-// passed via SCM_RIGHTS alongside it. On error (Err != ""), no pidfd is sent.
-type launchResponse struct {
-	Err string
-}
-
-// waitResponse is returned after the service exits.
-type waitResponse struct {
-	ExitCode int
-	ExitErr  string
-}
 
 const (
 	// readyFD is the pipe sandboxd writes one byte to when ready.
@@ -107,10 +79,38 @@ func Main() {
 	// else: its death collapses the entire namespace.
 	setSelfOOMScoreAdj(oomScoreAdjInit)
 
-	// Make /proc private so the overmount below stays in this mount namespace,
-	// then remount /proc scoped to THIS PID namespace.
+	// Replace the inherited host /proc with one scoped to THIS PID namespace.
+	//
+	// The host /proc is detached rather than overmounted: an overmounted host /proc
+	// stays in this namespace, and unmounting the scoped /proc on top exposes the
+	// host PID namespace (machined's fds and detached mounts).
+	//
+	// Mount and unmount events propagate through the parent mount, and every mount
+	// inherited from machined's namespace (/, /run, /system, /dev, ...) is a peer of
+	// machined's copy: make them all receive-only first, or detaching /proc here
+	// detaches machined's /proc too, and pod mounts under /run reach machined.
+	// /proc is made private so its submounts do not propagate either.
+	//
+	// The tree is then shared again, in peer groups of its own: mounts machined makes
+	// later (e.g. /var) arrive shared within the sandbox, so kubelet's volume mounts
+	// still reach CRI and the pods.
+	if err := syscall.Mount("", "/", "", syscall.MS_SLAVE|syscall.MS_REC, ""); err != nil {
+		logf("make / a slave: %v", err)
+		os.Exit(1)
+	}
+
+	if err := syscall.Mount("", "/", "", syscall.MS_SHARED|syscall.MS_REC, ""); err != nil {
+		logf("make / shared: %v", err)
+		os.Exit(1)
+	}
+
 	if err := syscall.Mount("", "/proc", "", syscall.MS_PRIVATE|syscall.MS_REC, ""); err != nil {
 		logf("make /proc private: %v", err)
+		os.Exit(1)
+	}
+
+	if err := syscall.Unmount("/proc", syscall.MNT_DETACH); err != nil {
+		logf("detach host /proc: %v", err)
 		os.Exit(1)
 	}
 
@@ -125,7 +125,7 @@ func Main() {
 
 	// Wrap the control socket before starting the reaper, so a failure here can
 	// os.Exit without skipping a deferred reaper.Shutdown().
-	controlConn, err := unixConn(os.NewFile(controlFD, "sandboxd-control"))
+	controlConn, err := protocol.UnixConn(os.NewFile(controlFD, "sandboxd-control"))
 	if err != nil {
 		logf("wrap control socket: %v", err)
 		os.Exit(1)
@@ -151,9 +151,9 @@ func Main() {
 
 	logf("started as PID %d of the sandbox namespace; serving launch requests", os.Getpid())
 
-	// Serve launch requests until machined closes the control socket (shutdown).
+	// Serve requests until machined closes the control socket (shutdown).
 	for {
-		req, fds, err := recvLaunch(controlConn)
+		req, fds, err := recvRequest(controlConn)
 		if err != nil {
 			if errors.Is(err, io.EOF) || errors.Is(err, net.ErrClosed) {
 				logf("control socket closed; shutting down")
@@ -161,40 +161,39 @@ func Main() {
 				return
 			}
 
-			logf("receiving launch request: %v", err)
+			logf("receiving request: %v", err)
 
 			continue
 		}
 
-		go handleLaunch(req, fds)
+		if req.Launch != nil {
+			go handleLaunch(*req.Launch, [4]*os.File(fds))
+		} else {
+			go handleSetattr(*req.Setattr, fds[0])
+		}
 	}
 }
 
-// recvLaunch reads one launch request datagram plus its SCM_RIGHTS fds
-// [stdin, stdout, stderr, serviceSocket] from the control socket.
-//
-//nolint:gocyclo
-func recvLaunch(control *net.UnixConn) (launchRequest, [4]*os.File, error) {
-	var (
-		req launchRequest
-		fds [4]*os.File
-	)
+// recvRequest reads one request datagram plus its SCM_RIGHTS fds from the
+// control socket.
+func recvRequest(control *net.UnixConn) (protocol.Request, []*os.File, error) {
+	var req protocol.Request
 
 	buf := make([]byte, 64*1024)                // request holds args+env; keep the SEQPACKET datagram whole
 	oob := make([]byte, syscall.CmsgSpace(4*4)) // room for 4 fds
 
 	n, oobn, _, _, err := control.ReadMsgUnix(buf, oob)
 	if err != nil {
-		return req, fds, err
+		return req, nil, err
 	}
 
 	if n == 0 {
-		return req, fds, io.EOF
+		return req, nil, io.EOF
 	}
 
 	scms, err := syscall.ParseSocketControlMessage(oob[:oobn])
 	if err != nil {
-		return req, fds, fmt.Errorf("parsing control message: %w", err)
+		return req, nil, fmt.Errorf("parsing control message: %w", err)
 	}
 
 	var rawFds []int
@@ -202,52 +201,62 @@ func recvLaunch(control *net.UnixConn) (launchRequest, [4]*os.File, error) {
 	for i := range scms {
 		fdSet, perr := syscall.ParseUnixRights(&scms[i])
 		if perr != nil {
-			return req, fds, fmt.Errorf("parsing SCM_RIGHTS: %w", perr)
+			for _, fd := range rawFds {
+				syscall.Close(fd) //nolint:errcheck
+			}
+
+			return req, nil, fmt.Errorf("parsing SCM_RIGHTS: %w", perr)
 		}
 
 		rawFds = append(rawFds, fdSet...)
 	}
 
-	if len(rawFds) != len(fds) {
-		for _, fd := range rawFds {
-			syscall.Close(fd) //nolint:errcheck
-		}
+	fds := make([]*os.File, 0, len(rawFds))
 
-		return req, fds, fmt.Errorf("expected %d fds, got %d", len(fds), len(rawFds))
+	// ReadMsgUnix receives the fds close-on-exec (MSG_CMSG_CLOEXEC): only the
+	// explicit stdio (re-established via pa.Files) reaches the forked service.
+	for _, fd := range rawFds {
+		fds = append(fds, os.NewFile(uintptr(fd), "request-fd"))
 	}
 
-	names := [4]string{"stdin", "stdout", "stderr", "service-socket"}
-
-	for i, fd := range rawFds {
-		// Received fds are not close-on-exec; mark them so nothing but the explicit
-		// stdio (re-established via pa.Files) leaks into the forked service.
-		syscall.CloseOnExec(fd)
-		fds[i] = os.NewFile(uintptr(fd), names[i])
-	}
-
-	if err := gob.NewDecoder(bytes.NewReader(buf[:n])).Decode(&req); err != nil {
-		for i := range fds {
-			fds[i].Close() //nolint:errcheck
+	req, err = protocol.DecodeRequest(buf[:n], len(fds))
+	if err != nil {
+		for _, f := range fds {
+			f.Close() //nolint:errcheck
 		}
 
-		return req, fds, fmt.Errorf("decoding launch request: %w", err)
+		return req, nil, err
 	}
 
 	return req, fds, nil
+}
+
+// handleSetattr changes the attributes of the mount at the target in this namespace.
+func handleSetattr(req protocol.SetattrRequest, reply *os.File) {
+	if err := protocol.ServeSetattr(reply, req, func(req protocol.SetattrRequest) error {
+		// The target must be the root of a mount, or mount_setattr fails with EINVAL:
+		// it never changes the mount containing the target.
+		return unix.MountSetattr(unix.AT_FDCWD, req.Target, unix.AT_SYMLINK_NOFOLLOW, &unix.MountAttr{
+			Attr_set: req.Set,
+			Attr_clr: req.Clr,
+		})
+	}); err != nil {
+		logf("answer setattr: %v", err)
+	}
 }
 
 // handleLaunch forks one service into the sandbox namespace and relays its
 // pidfd and exit status back to machined over the per-service socket.
 //
 //nolint:gocyclo
-func handleLaunch(req launchRequest, fds [4]*os.File) {
+func handleLaunch(req protocol.LaunchRequest, fds [4]*os.File) {
 	stdin, stdout, stderr, svcFile := fds[0], fds[1], fds[2], fds[3]
 
 	defer stdin.Close()  //nolint:errcheck
 	defer stdout.Close() //nolint:errcheck
 	defer stderr.Close() //nolint:errcheck
 
-	svcConn, err := unixConn(svcFile)
+	svcConn, err := protocol.UnixConn(svcFile)
 	if err != nil {
 		logf("wrap service socket: %v", err)
 
@@ -309,7 +318,7 @@ func handleLaunch(req launchRequest, fds [4]*os.File) {
 
 	// Return the pidfd; machined resolves the host PID and signals through it.
 	var respBuf bytes.Buffer
-	if encErr := gob.NewEncoder(&respBuf).Encode(launchResponse{}); encErr != nil {
+	if encErr := gob.NewEncoder(&respBuf).Encode(protocol.LaunchResponse{}); encErr != nil {
 		logf("encode launch response: %v", encErr)
 	}
 
@@ -335,7 +344,7 @@ func handleLaunch(req launchRequest, fds [4]*os.File) {
 
 	waitErr := <-exitCh
 
-	resp := waitResponse{}
+	resp := protocol.WaitResponse{}
 
 	if waitErr != nil {
 		// The caller only uses the error; a non-zero/failed exit is reported via
@@ -432,29 +441,9 @@ func dropCaps(droppedCapabilities []string, launcher *cap.Launcher) error {
 func sendLaunchErr(svcConn *net.UnixConn, errMsg string) {
 	var buf bytes.Buffer
 
-	if err := gob.NewEncoder(&buf).Encode(launchResponse{Err: errMsg}); err != nil {
+	if err := gob.NewEncoder(&buf).Encode(protocol.LaunchResponse{Err: errMsg}); err != nil {
 		return
 	}
 
 	svcConn.Write(buf.Bytes()) //nolint:errcheck
-}
-
-// unixConn wraps an *os.File socket as a *net.UnixConn. FileConn duplicates the
-// fd, so the original file is closed.
-func unixConn(f *os.File) (*net.UnixConn, error) {
-	conn, err := net.FileConn(f)
-	f.Close() //nolint:errcheck
-
-	if err != nil {
-		return nil, err
-	}
-
-	uc, ok := conn.(*net.UnixConn)
-	if !ok {
-		conn.Close() //nolint:errcheck
-
-		return nil, fmt.Errorf("not a unix socket")
-	}
-
-	return uc, nil
 }

@@ -878,8 +878,9 @@ func (suite *SELinuxSuite) TestNoStateAccess() {
 // the entry relative to the root of the partition.
 //
 // STATE is not mounted on the host, so a privileged pod mounts the partition under the kubelet directory, which
-// propagates the mount to the host, and the labels are read with the Talos API: no pod domain may read the files,
-// and the pod image has no tool to read the labels.
+// propagates the mount to the sandbox mount namespace (never back to machined), and the labels are read with the
+// Talos API through the root of sandboxd: no pod domain may read the files, and the pod image has no tool to read
+// the labels.
 func (suite *SELinuxSuite) stateLabels(node string) map[string]string {
 	nodeCtx := client.WithNode(suite.ctx, node)
 
@@ -910,7 +911,11 @@ func (suite *SELinuxSuite) stateLabels(node string) map[string]string {
 		suite.Assert().NoError(err, stderr)
 	}()
 
-	stream, err := suite.Client.LS(nodeCtx, &machineapi.ListRequest{Root: target, Recurse: true, ReportXattrs: true})
+	sandboxd, err := safe.StateGetByID[*runtimeres.ServicePID](nodeCtx, suite.Client.State(), "sandboxd")
+	suite.Require().NoError(err)
+
+	// the pod mount stays in the sandbox mount namespace: the target on the host is the empty mountpoint
+	stream, err := suite.Client.LS(nodeCtx, &machineapi.ListRequest{Root: fmt.Sprintf("/proc/%d/root%s", sandboxd.TypedSpec().PID, target), Recurse: true, ReportXattrs: true})
 	suite.Require().NoError(err)
 
 	labels := map[string]string{}

@@ -550,6 +550,10 @@ func (l *mockSandboxLauncher) Launch(cfg runtime.LaunchConfig) (runtime.SandboxH
 	return l.handle, nil
 }
 
+func (l *mockSandboxLauncher) SetMountAttributes(string, uint64, uint64) error {
+	return nil
+}
+
 // TestSandboxUnavailable verifies that when the sandbox launcher getter returns
 // nil (namespace not up yet), Run fails fast instead of launching on the host.
 func (suite *ProcessSuite) TestSandboxUnavailable() {

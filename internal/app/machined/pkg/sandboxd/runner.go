@@ -16,6 +16,7 @@ import (
 	"kernel.org/pub/linux/libs/security/libcap/cap"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/sandboxd/internal/protocol"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 	"github.com/siderolabs/talos/internal/pkg/cgroup"
@@ -136,7 +137,7 @@ func (s *sandboxRunner) Run(ctx context.Context, eventSink events.Recorder, onSt
 	controlMachined := os.NewFile(uintptr(controlFds[0]), "control-machined")
 	controlInit := os.NewFile(uintptr(controlFds[1]), "control-init")
 
-	// controlMachined is consumed by unixConn below (dups the fd, closes this
+	// controlMachined is consumed by protocol.UnixConn below (dups the fd, closes this
 	// handle) on success, or dropped on any error path; this defer covers both.
 	// (os.File.Close is idempotent, so the success-path double close is a no-op.)
 	defer controlMachined.Close() //nolint:errcheck
@@ -195,7 +196,7 @@ func (s *sandboxRunner) Run(ctx context.Context, eventSink events.Recorder, onSt
 		return status, fmt.Errorf("sandboxd failed to start: %w", rerr)
 	}
 
-	controlConn, err := unixConn(controlMachined)
+	controlConn, err := protocol.UnixConn(controlMachined)
 	if err != nil {
 		process.Kill() //nolint:errcheck
 		<-waitCh

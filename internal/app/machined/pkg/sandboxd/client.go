@@ -15,10 +15,12 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+	"time"
 
 	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/sandboxd/internal/protocol"
 )
 
 // Client is machined's launcher for the shared sandbox PID+mount namespace. It
@@ -71,12 +73,12 @@ func (c *Client) Launch(cfg runtime.LaunchConfig) (runtime.SandboxHandle, error)
 
 	var reqBuf bytes.Buffer
 
-	if err := gob.NewEncoder(&reqBuf).Encode(launchRequest{
+	if err := gob.NewEncoder(&reqBuf).Encode(protocol.Request{Launch: &protocol.LaunchRequest{
 		Args:                cfg.Args,
 		Env:                 cfg.Env,
 		DroppedCapabilities: cfg.DroppedCapabilities,
 		SelinuxLabel:        cfg.SelinuxLabel,
-	}); err != nil {
+	}}); err != nil {
 		svcMachined.Close() //nolint:errcheck
 
 		return nil, fmt.Errorf("encoding launch request: %w", err)
@@ -94,7 +96,7 @@ func (c *Client) Launch(cfg runtime.LaunchConfig) (runtime.SandboxHandle, error)
 		return nil, fmt.Errorf("sending launch request: %w", err)
 	}
 
-	svcConn, err := unixConn(svcMachined)
+	svcConn, err := protocol.UnixConn(svcMachined)
 	if err != nil {
 		return nil, fmt.Errorf("wrapping service socket: %w", err)
 	}
@@ -110,7 +112,7 @@ func (c *Client) Launch(cfg runtime.LaunchConfig) (runtime.SandboxHandle, error)
 		return nil, fmt.Errorf("reading launch response: %w", err)
 	}
 
-	var resp launchResponse
+	var resp protocol.LaunchResponse
 
 	if err := gob.NewDecoder(bytes.NewReader(respBuf[:n])).Decode(&resp); err != nil {
 		svcConn.Close() //nolint:errcheck
@@ -147,6 +149,23 @@ func (c *Client) Launch(cfg runtime.LaunchConfig) (runtime.SandboxHandle, error)
 	}
 
 	return &ServiceHandle{conn: svcConn, hostPID: hostPID, pidfd: pidfds[0]}, nil
+}
+
+// setattrTimeout bounds the wait for sandboxd's answer, so a stuck sandboxd
+// can't stall the mount controller; mount_setattr itself does no I/O.
+const setattrTimeout = 10 * time.Second
+
+// SetMountAttributes asks sandboxd to set and clear the attributes of the mount
+// at target in the sandbox namespace.
+func (c *Client) SetMountAttributes(target string, set, clr uint64) error {
+	return protocol.Setattr(func(data, oob []byte) error {
+		c.mu.Lock()
+		defer c.mu.Unlock()
+
+		_, _, err := c.control.WriteMsgUnix(data, oob, nil)
+
+		return err
+	}, protocol.SetattrRequest{Target: target, Set: set, Clr: clr}, setattrTimeout)
 }
 
 func writeFull(file *os.File, data []byte) error {
@@ -237,7 +256,7 @@ func (h *ServiceHandle) Wait() (int, error) {
 		return -1, fmt.Errorf("reading wait response: %w", err)
 	}
 
-	var resp waitResponse
+	var resp protocol.WaitResponse
 
 	if err := gob.NewDecoder(bytes.NewReader(buf[:n])).Decode(&resp); err != nil {
 		return -1, fmt.Errorf("decoding wait response: %w", err)

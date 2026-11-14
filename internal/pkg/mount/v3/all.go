@@ -7,6 +7,7 @@ package mount
 import (
 	"bufio"
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"sort"
@@ -25,7 +26,7 @@ func UnmountAll() error {
 	defer ticker.Stop()
 
 	for iteration := range timeout {
-		mounts, err := readMountInfo()
+		mounts, err := readMountInfo("/proc/self/mountinfo")
 		if err != nil {
 			return err
 		}
@@ -73,14 +74,16 @@ func UnmountAll() error {
 }
 
 type mountInfo struct {
+	Dev          string
+	Root         string
 	MountPoint   string
 	MountSource  string
 	MountType    string
 	MountOptions map[string]string
 }
 
-func readMountInfo() ([]mountInfo, error) {
-	f, err := os.Open("/proc/self/mountinfo")
+func readMountInfo(path string) ([]mountInfo, error) {
+	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
@@ -105,6 +108,8 @@ func readMountInfo() ([]mountInfo, error) {
 		post := strings.Fields(parts[1])
 
 		if len(pre) >= 5 {
+			mntInfo.Dev = pre[2]
+			mntInfo.Root = pre[3]
 			mntInfo.MountPoint = pre[4]
 		}
 
@@ -136,7 +141,36 @@ func readMountInfo() ([]mountInfo, error) {
 }
 
 func getSubmounts(target string) ([]string, error) {
-	mounts, err := readMountInfo()
+	return submountsIn("/proc/self/mountinfo", target, nil)
+}
+
+// ProcessSubmounts returns the mounts which keep target busy in the mount
+// namespace of the process pid, deepest first.
+//
+// Besides mounts nested under target, these are binds of the target filesystem
+// mounted elsewhere: the kernel does not count them as busy, so they keep the
+// filesystem alive past the unmount of target.
+func ProcessSubmounts(pid int32, target string) ([]string, error) {
+	mounts, err := readMountInfo("/proc/self/mountinfo")
+	if err != nil {
+		return nil, err
+	}
+
+	var self *mountInfo
+
+	// the last entry is the topmost mount on target
+	for i := range mounts {
+		if mounts[i].MountPoint == target {
+			self = &mounts[i]
+		}
+	}
+
+	return submountsIn(fmt.Sprintf("/proc/%d/mountinfo", pid), target, self)
+}
+
+// submountsIn reads the mounts under target, and the binds of self, if set, from mountInfoPath.
+func submountsIn(mountInfoPath, target string, self *mountInfo) ([]string, error) {
+	mounts, err := readMountInfo(mountInfoPath)
 	if err != nil {
 		return nil, err
 	}
@@ -161,6 +195,13 @@ func getSubmounts(target string) ([]string, error) {
 
 		// mounts nested under the target keep it busy.
 		if strings.HasPrefix(mnt.MountPoint, target+"/") {
+			add(mnt.MountPoint)
+
+			continue
+		}
+
+		if self != nil && mnt.Dev == self.Dev &&
+			(mnt.Root == self.Root || strings.HasPrefix(mnt.Root, strings.TrimSuffix(self.Root, "/")+"/")) {
 			add(mnt.MountPoint)
 
 			continue

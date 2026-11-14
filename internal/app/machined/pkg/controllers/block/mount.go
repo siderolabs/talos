@@ -20,6 +20,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-blockdevice/v2/swap"
 	"github.com/siderolabs/go-pointer"
@@ -28,11 +29,14 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/mountconfig"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/mountops"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/nfs"
+	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/sandboxd"
 	"github.com/siderolabs/talos/internal/pkg/mount/v3"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/filetree"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/xfs"
 	"github.com/siderolabs/talos/pkg/xfs/fsopen"
 )
@@ -57,6 +61,9 @@ const unmountRetryInterval = 30 * time.Second
 
 // MountController performs actual mount/unmount operations based on the MountRequests.
 type MountController struct {
+	// Sandbox returns the sandbox namespace launcher, nil while sandboxd is not running.
+	Sandbox func() machineruntime.SandboxLauncher
+
 	activeMounts map[string]*mountContext
 }
 
@@ -82,6 +89,12 @@ func (ctrl *MountController) Inputs() []controller.Input {
 			Namespace: block.NamespaceName,
 			Type:      block.MountStatusType,
 			Kind:      controller.InputStrong,
+		},
+		{
+			Namespace: runtimeres.NamespaceName,
+			Type:      runtimeres.ServicePIDType,
+			ID:        optional.Some(sandboxd.ServiceID),
+			Kind:      controller.InputWeak,
 		},
 	}
 }
@@ -199,7 +212,12 @@ func (ctrl *MountController) Run(ctx context.Context, r controller.Runtime, logg
 				}
 
 				if volumeStatus != nil {
-					if err = ctrl.handleUnmountOperation(logger, mountRequest, volumeStatus); err != nil {
+					err = ctrl.checkSandboxSubmounts(ctx, r, mountRequest)
+					if err == nil {
+						err = ctrl.handleUnmountOperation(logger, mountRequest, volumeStatus)
+					}
+
+					if err != nil {
 						// Returning would park the controller in restart backoff (up to 90s) deaf to events,
 						// stalling other mounts and shutdown teardown, which waits for these finalizers.
 						logger.Warn("failed to unmount, will retry", zap.String("mount_request", mountRequest.Metadata().ID()), zap.Error(err))
@@ -266,6 +284,13 @@ func (ctrl *MountController) Run(ctx context.Context, r controller.Runtime, logg
 
 				if err = ctrl.handleMountOperation(ctx, logger, rootPath, mountSource, mountTarget, mountFilesystem, mountRequest, volumeStatus); err != nil {
 					return err
+				}
+
+				if err = ctrl.syncSandboxAttributes(logger, mountRequest); err != nil {
+					// The host mount is in place: retry like a failed unmount instead of stalling every mount request.
+					logger.Warn("failed to update mount attributes in the sandbox, will retry", zap.String("mount_request", mountRequest.Metadata().ID()), zap.Error(err))
+
+					shouldRetry = true
 				}
 
 				if mountStatusMissing && volumeStatus.Metadata().ID() == constants.UserVolumeMountPoint {
@@ -1049,6 +1074,89 @@ func (ctrl *MountController) handleSwapMountOperation(
 		zap.String("volume", volumeStatus.Metadata().ID()),
 		zap.String("source", mountSource),
 	)
+
+	return nil
+}
+
+// syncSandboxAttributes applies the pending attribute changes of the mount to its
+// copy in the sandbox mount namespace: mount attributes never propagate.
+//
+// Without a running sandbox the changes stay pending: a namespace being created
+// may have copied the mount before them, and its ServicePID wakes the controller
+// once it serves requests. Replaying them on a fresh copy changes nothing.
+func (ctrl *MountController) syncSandboxAttributes(logger *zap.Logger, mountRequest *block.MountRequest) error {
+	mountCtx, ok := ctrl.activeMounts[mountRequest.Metadata().ID()]
+	if !ok || mountCtx.point == nil {
+		return nil
+	}
+
+	// a detached point records no changes: its setters are no-ops
+	changes := mountCtx.point.AttrChanges()
+	if changes.Empty() {
+		return nil
+	}
+
+	if ctrl.Sandbox == nil {
+		return nil
+	}
+
+	sandbox := ctrl.Sandbox()
+	if sandbox == nil {
+		return nil
+	}
+
+	err := sandbox.SetMountAttributes(mountCtx.point.Target(), changes.Set, changes.Clr)
+	if errors.Is(err, syscall.EINVAL) {
+		// nothing is mounted at the target in the sandbox (e.g. a pod unmounted its copy)
+		logger.Info("mount has no copy in the sandbox", zap.String("mount_request", mountRequest.Metadata().ID()), zap.Error(err))
+	} else if err != nil {
+		return err
+	}
+
+	mountCtx.point.ResetAttrChanges()
+
+	return nil
+}
+
+// checkSandboxSubmounts fails the unmount while the sandbox mount namespace
+// still has mounts under the target.
+//
+// The sandbox root is a slave of the host root: the host unmount would succeed and
+// propagate, but pod mounts nested under the target keep the filesystem alive
+// in the sandbox, so the kernel EBUSY never reaches machined.
+//
+// Only the sandbox namespace itself is checked (kubelet and Bidirectional pod mounts):
+// container binds live in each container's own mount namespace, and a mount made
+// between this check and the unmount is missed.
+func (ctrl *MountController) checkSandboxSubmounts(ctx context.Context, r controller.Reader, mountRequest *block.MountRequest) error {
+	mountCtx, ok := ctrl.activeMounts[mountRequest.Metadata().ID()]
+	if !ok || mountCtx.detached || mountCtx.point == nil || mountCtx.point.Target() == "" {
+		return nil
+	}
+
+	sandboxPID, err := safe.ReaderGetByID[*runtimeres.ServicePID](ctx, r, sandboxd.ServiceID)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return nil
+		}
+
+		return fmt.Errorf("failed to read sandboxd PID: %w", err)
+	}
+
+	submounts, err := mount.ProcessSubmounts(sandboxPID.TypedSpec().PID, mountCtx.point.Target())
+	if err != nil {
+		// sandboxd exited after the PID was read: its mount namespace is gone,
+		// a zombie fails the read with EINVAL.
+		if errors.Is(err, fs.ErrNotExist) || errors.Is(err, syscall.EINVAL) {
+			return nil
+		}
+
+		return fmt.Errorf("failed to read sandbox mounts: %w", err)
+	}
+
+	if len(submounts) > 0 {
+		return fmt.Errorf("failed to unmount %q: %w: sandbox submounts %v", mountRequest.Metadata().ID(), syscall.EBUSY, submounts)
+	}
 
 	return nil
 }

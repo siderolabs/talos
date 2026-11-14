@@ -190,7 +190,9 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		},
 		&block.DiscoveryController{},
 		&block.DisksController{},
-		&block.MountController{},
+		&block.MountController{
+			Sandbox: ctrl.v1alpha1Runtime.Sandbox,
+		},
 		&block.MountRequestController{},
 		&block.MountStatusController{},
 		&block.SMARTStatusController{

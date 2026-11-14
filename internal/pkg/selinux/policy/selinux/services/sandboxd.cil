@@ -29,9 +29,12 @@
 (allow sandboxd_t service_exec_f (file (execute)))
 (allow sandboxd_t service_exec_f (fs_classes (ro)))
 
-; Anchor the namespace: overmount a fresh procfs scoped to the new PID namespace.
-(allow sandboxd_t procfs_t (filesystem (mount remount)))
+; Anchor the namespace: replace the host procfs with a fresh one scoped to the new PID namespace.
+; Once the host procfs is detached, the mountpoint is the /proc dir of the rootfs, also procfs_t.
+(allow sandboxd_t procfs_t (filesystem (mount remount unmount)))
 (allow sandboxd_t procfs_t (dir (mounton)))
+; Make / receive-only (slave+shared) so the procfs swap does not propagate back to machined.
+(allow sandboxd_t rootfs_t (dir (mounton)))
 
 ; Control + per-service SEQPACKET sockets are created by machined (init_t).
 ; (sandboxd's stdout/stderr/ready fds are init_t pipes and its use of init_t fds

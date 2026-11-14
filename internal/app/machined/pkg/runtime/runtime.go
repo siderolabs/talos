@@ -47,6 +47,10 @@ type SandboxLauncher interface {
 	// The caller is responsible for closing its own copies of the fds after
 	// Launch returns.
 	Launch(cfg LaunchConfig) (SandboxHandle, error)
+	// SetMountAttributes sets and clears mount attributes (MOUNT_ATTR_*) of the
+	// copy of the mount at target in the sandbox namespace: attribute changes
+	// do not propagate between namespaces.
+	SetMountAttributes(target string, set, clr uint64) error
 }
 
 // Runtime defines the runtime parameters.

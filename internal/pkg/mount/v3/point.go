@@ -31,6 +31,9 @@ type Point struct {
 	source       string
 	target       string
 	selinuxLabel string
+
+	// attrChanges holds the attribute changes made to the attached mount since the last ResetAttrChanges.
+	attrChanges AttrChanges
 }
 
 // NewPoint creates a new mount point.
@@ -78,14 +81,21 @@ func (p *Point) Mount(opts Options) error {
 	}
 
 	return p.retry(func() error {
-		if err := p.moveMount(p.target); err != nil {
-			return fmt.Errorf("error mounting %q to %q: %w", p.Source(), p.target, err)
+		// Copies propagated into other mount namespaces (the sandbox) are cloned on
+		// attach and never see a later setattr, so set the attributes while detached.
+		fd, err := p.root.Fd()
+		if err != nil {
+			return fmt.Errorf("error getting detached mount of %s: %w", p.target, err)
 		}
 
-		if err := p.setattr(&unix.MountAttr{
+		if err = mountSetattr(fd, "", unix.AT_EMPTY_PATH, &unix.MountAttr{
 			Attr_set: uint64(opts.MountAttributes),
-		}, 0); err != nil {
+		}); err != nil {
 			return fmt.Errorf("error setting mountattributes on %s: %w", p.target, err)
+		}
+
+		if err = p.moveMount(p.target); err != nil {
+			return fmt.Errorf("error mounting %q to %q: %w", p.Source(), p.target, err)
 		}
 
 		if opts.Shared {
@@ -399,10 +409,6 @@ func (p *Point) SetNoExec(noExec bool) error {
 }
 
 func (p *Point) setattr(attr *unix.MountAttr, flags int) error {
-	if (attr.Attr_set&unix.MOUNT_ATTR_NOATIME) != 0 || (attr.Attr_clr&unix.MOUNT_ATTR_NOATIME) != 0 {
-		attr.Attr_clr |= unix.MOUNT_ATTR__ATIME
-	}
-
 	fd, err := p.root.Fd()
 	if err != nil && !errors.Is(err, os.ErrClosed) {
 		return err
@@ -414,8 +420,37 @@ func (p *Point) setattr(attr *unix.MountAttr, flags int) error {
 		flags |= unix.AT_EMPTY_PATH
 	}
 
-	if err := unix.MountSetattr(fd, p.target, uint(flags), attr); err != nil {
-		return fmt.Errorf("setattr failed for fd=%d target=%q flags=%d attr=%#+v: %w", fd, p.target, flags, *attr, err)
+	set, clr := attr.Attr_set, attr.Attr_clr
+
+	if err = mountSetattr(fd, p.target, flags, attr); err != nil {
+		return err
+	}
+
+	p.attrChanges.Record(false, clr)
+	p.attrChanges.Record(true, set)
+
+	return nil
+}
+
+// AttrChanges returns the attribute changes made to the attached mount since the last ResetAttrChanges.
+//
+// Copies of the mount in other mount namespaces never see them.
+func (p *Point) AttrChanges() AttrChanges {
+	return p.attrChanges
+}
+
+// ResetAttrChanges forgets the recorded attribute changes.
+func (p *Point) ResetAttrChanges() {
+	p.attrChanges = AttrChanges{}
+}
+
+func mountSetattr(fd int, path string, flags int, attr *unix.MountAttr) error {
+	if (attr.Attr_set&unix.MOUNT_ATTR_NOATIME) != 0 || (attr.Attr_clr&unix.MOUNT_ATTR_NOATIME) != 0 {
+		attr.Attr_clr |= unix.MOUNT_ATTR__ATIME
+	}
+
+	if err := unix.MountSetattr(fd, path, uint(flags), attr); err != nil {
+		return fmt.Errorf("setattr failed for fd=%d target=%q flags=%d attr=%#+v: %w", fd, path, flags, *attr, err)
 	}
 
 	return nil
