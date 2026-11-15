@@ -55,8 +55,12 @@ func (s *Sandboxd) DependsOn(runtime.Runtime) []string {
 }
 
 // Volumes implements the Service interface.
-func (s *Sandboxd) Volumes(runtime.Runtime) []string {
-	return nil
+//
+// The sandbox root is a slave of the host root: a mount made directly on it after
+// sandboxd starts arrives as a slave, and mounts under it in the sandbox no longer
+// reach machined. Waiting for the volumes CRI uses copies them in as peers.
+func (s *Sandboxd) Volumes(r runtime.Runtime) []string {
+	return (&CRI{}).Volumes(r)
 }
 
 // HealthFunc implements the HealthcheckedService interface. The namespace is

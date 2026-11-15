@@ -25,6 +25,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/xfs/fsopen"
 )
 
 // Control protocol between machined (Client) and sandboxd.
@@ -96,6 +97,53 @@ func ignoreTerminationSignals() func() {
 	return func() { signal.Stop(signals) }
 }
 
+// scopeProc replaces the inherited host /proc with one scoped to THIS PID namespace.
+//
+// The host /proc is detached rather than overmounted: unmounting an overmount
+// exposes the host /proc again, with machined's fds and detached mounts.
+//
+// Only the root mount is made a slave: the scoped /proc lands on it and must not
+// cover machined's /proc. The mounts under it stay peers of machined's (sandboxd
+// starts once the volumes CRI uses are mounted, see services.Sandboxd).
+// /proc is made private so detaching it does not detach machined's /proc.
+func scopeProc() error {
+	if err := unix.MountSetattr(unix.AT_FDCWD, "/", 0, &unix.MountAttr{Propagation: unix.MS_SLAVE}); err != nil {
+		return fmt.Errorf("make / a slave: %w", err)
+	}
+
+	if err := unix.MountSetattr(unix.AT_FDCWD, "/", 0, &unix.MountAttr{Propagation: unix.MS_SHARED}); err != nil {
+		return fmt.Errorf("make / shared: %w", err)
+	}
+
+	if err := unix.MountSetattr(unix.AT_FDCWD, "/proc", unix.AT_RECURSIVE, &unix.MountAttr{Propagation: unix.MS_PRIVATE}); err != nil {
+		return fmt.Errorf("make /proc private: %w", err)
+	}
+
+	if err := unix.Unmount("/proc", unix.MNT_DETACH); err != nil {
+		return fmt.Errorf("detach host /proc: %w", err)
+	}
+
+	procfs := fsopen.New("proc")
+	defer procfs.Close() //nolint:errcheck
+
+	fd, err := procfs.Open()
+	if err != nil {
+		return fmt.Errorf("create scoped /proc: %w", err)
+	}
+
+	if err = unix.MountSetattr(fd, "", unix.AT_EMPTY_PATH, &unix.MountAttr{
+		Attr_set: unix.MOUNT_ATTR_NOSUID | unix.MOUNT_ATTR_NODEV | unix.MOUNT_ATTR_NOEXEC,
+	}); err != nil {
+		return fmt.Errorf("harden scoped /proc: %w", err)
+	}
+
+	if _, err = procfs.MountAt("/proc"); err != nil {
+		return fmt.Errorf("mount scoped /proc: %w", err)
+	}
+
+	return nil
+}
+
 // Main is the entry point for the sandboxd subprocess. It is PID 1 of
 // the sandbox PID+mount namespace and:
 //  1. protects itself from the OOM killer and scopes /proc to this PID namespace,
@@ -107,16 +155,8 @@ func Main() {
 	// else: its death collapses the entire namespace.
 	setSelfOOMScoreAdj(oomScoreAdjInit)
 
-	// Make /proc private so the overmount below stays in this mount namespace,
-	// then remount /proc scoped to THIS PID namespace.
-	if err := syscall.Mount("", "/proc", "", syscall.MS_PRIVATE|syscall.MS_REC, ""); err != nil {
-		logf("make /proc private: %v", err)
-		os.Exit(1)
-	}
-
-	if err := syscall.Mount("proc", "/proc", "proc",
-		syscall.MS_NOSUID|syscall.MS_NOEXEC|syscall.MS_NODEV, ""); err != nil {
-		logf("remount /proc: %v", err)
+	if err := scopeProc(); err != nil {
+		logf("%v", err)
 		os.Exit(1)
 	}
 

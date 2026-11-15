@@ -50,6 +50,8 @@
 (type procfs_t)
 (call filesystem_f (procfs_t))
 (context procfs_t (system_u object_r procfs_t (systemLow systemLow)))
+; The /proc mountpoint on the rootfs: sandboxd mounts its scoped procfs here once the host one is detached.
+(filecon "/proc" dir (system_u object_r procfs_t (systemLow systemLow)))
 (genfscon proc "/" procfs_t)
 (genfscon proc "/sysvipc" procfs_t)
 

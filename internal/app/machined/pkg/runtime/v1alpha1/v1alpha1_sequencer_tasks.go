@@ -428,7 +428,9 @@ func PreShutdownServices(runtime.Sequence, any) (runtime.TaskExecutionFunc, stri
 func StopServicesEphemeral(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		// stopping 'cri' service stops everything which depends on it (kubelet, etcd, ...)
-		return system.Services(r).StopWithRevDepenencies(ctx, "cri", "trustd")
+		//
+		// sandboxd holds the same volumes as cri, so it is stopped as well.
+		return system.Services(r).StopWithRevDepenencies(ctx, "cri", "trustd", sandboxd.ServiceID)
 	}, "stopServicesForUpgrade"
 }
 

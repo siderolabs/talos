@@ -18,6 +18,7 @@
 /bin	system_u:object_r:bin_exec_t:s0
 /lib	system_u:object_r:lib_t:s0
 /sbin	system_u:object_r:bin_exec_t:s0
+/proc	-d	system_u:object_r:procfs_t:s0
 /lib64	system_u:object_r:lib_t:s0
 /usr/sbin	system_u:object_r:bin_exec_t:s0
 /usr/lib64	system_u:object_r:lib_t:s0
