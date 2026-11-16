@@ -25,7 +25,7 @@ type PullOption func(*PullOptions)
 // PullOptions configure Pull function.
 type PullOptions struct {
 	SkipIfAlreadyPulled bool
-	MaxNotFoundRetries  int
+	MaxNotFoundRetries  uint
 	NewProgressReporter NewProgressReporter
 	LogWriter           io.Writer
 }
@@ -50,7 +50,7 @@ func WithSkipIfAlreadyPulled() PullOption {
 //
 // This option is only honored in the PullWithRetriesAndTimeout function,
 // the Pull function will ignore this option and will not retry on not found errors.
-func WithMaxNotFoundRetries(maxRetries int) PullOption {
+func WithMaxNotFoundRetries(maxRetries uint) PullOption {
 	return func(opts *PullOptions) {
 		opts.MaxNotFoundRetries = maxRetries
 	}

@@ -691,8 +691,7 @@ func (suite *ContainersSuite) TestUnresolvableImage() {
 
 	suite.applyContainers(ctx, suite.newContainer(name, badImage))
 
-	// Pulling, not failed. Retries live inside the pull and run for image.PullTimeout, twenty
-	// minutes, so that a registry which is briefly unreachable or a mirror which comes up late
+	// Pulling, not failed. Failed attempts are retried for image.PullTimeout, twenty minutes, so that a registry which is briefly unreachable or a mirror which comes up late
 	// resolves without anything upstream re-triggering. A reference that will never resolve is
 	// indistinguishable from those until the timeout expires, which is well beyond any deadline this
 	// test should have, so the failed phase is not what gets asserted here.
@@ -703,6 +702,7 @@ func (suite *ContainersSuite) TestUnresolvableImage() {
 			asrt.Equal(containers.ContainerImagePhasePulling, status.TypedSpec().Phase,
 				"image is in phase %s (error %q)", status.TypedSpec().Phase, status.TypedSpec().Error)
 			asrt.Empty(status.TypedSpec().Digest, "an unresolvable reference produced a digest")
+			asrt.NotEmpty(status.TypedSpec().Error, "the failed pull attempt is not reported while retrying")
 		})
 
 	// The image phase is what the aggregate reports in its own right here: there is no instance to
