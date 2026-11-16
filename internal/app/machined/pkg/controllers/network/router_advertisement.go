@@ -33,7 +33,8 @@ var allNodesMulticast = netip.MustParseAddr("ff02::1")
 // relies on the kernel neighbor table, which the Linux kernel does not populate by sending RAs itself).
 //
 // It also enables net.ipv6.conf.<iface>.accept_ra=2 on those links (accept RAs while forwarding)
-// so this node learns the neighbor's link-local in return.
+// so this node learns the neighbor's link-local in return, and sets accept_ra_defrtr=0 so that the
+// neighbor's RAs do not install a default route.
 type RouterAdvertisementController struct {
 	senders map[string]raSender
 }
@@ -174,19 +175,29 @@ func (ctrl *RouterAdvertisementController) reconcile(ctx context.Context, r cont
 		}()
 	}
 
-	// enable accept_ra=2 on each unnumbered interface so we learn the neighbor's link-local.
+	// enable accept_ra=2 on each unnumbered interface so we learn the neighbor's link-local, and
+	// ignore the default router in its RAs: the default route comes from BGP, and a kernel RA default
+	// route with the same metric makes the kernel refuse the BGP one.
 	r.StartTrackingOutputs()
 
 	for _, iface := range sortedKeys(interfaces) {
-		id := kernel.Sysctl + "." + fmt.Sprintf("net/ipv6/conf/%s/accept_ra", iface)
+		for _, param := range []struct {
+			name  string
+			value string
+		}{
+			{name: "accept_ra", value: "2"},
+			{name: "accept_ra_defrtr", value: "0"},
+		} {
+			id := kernel.Sysctl + "." + fmt.Sprintf("net/ipv6/conf/%s/%s", iface, param.name)
 
-		if err = safe.WriterModify(ctx, r, runtimeres.NewKernelParamDefaultSpec(runtimeres.NamespaceName, id), func(spec *runtimeres.KernelParamDefaultSpec) error {
-			spec.TypedSpec().Value = "2"
-			spec.TypedSpec().IgnoreErrors = true
+			if err = safe.WriterModify(ctx, r, runtimeres.NewKernelParamDefaultSpec(runtimeres.NamespaceName, id), func(spec *runtimeres.KernelParamDefaultSpec) error {
+				spec.TypedSpec().Value = param.value
+				spec.TypedSpec().IgnoreErrors = true
 
-			return nil
-		}); err != nil {
-			return fmt.Errorf("error setting accept_ra: %w", err)
+				return nil
+			}); err != nil {
+				return fmt.Errorf("error setting %s: %w", param.name, err)
+			}
 		}
 	}
 

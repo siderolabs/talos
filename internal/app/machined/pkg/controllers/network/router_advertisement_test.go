@@ -39,12 +39,25 @@ func (suite *RouterAdvertisementControllerSuite) TestResolvesLinkAliasAndCleansU
 		assertions.True(res.TypedSpec().IgnoreErrors)
 	}, rtestutils.WithNamespace(runtimeres.NamespaceName))
 
+	defrtrID := kernel.Sysctl + ".net/ipv6/conf/lo/accept_ra_defrtr"
+	rtestutils.AssertResource(suite.Ctx(), suite.T(), suite.State(), defrtrID, func(res *runtimeres.KernelParamDefaultSpec, assertions *assert.Assertions) {
+		assertions.Equal("0", res.TypedSpec().Value, "a neighbor RA must not install a default route that collides with the BGP one")
+		assertions.True(res.TypedSpec().IgnoreErrors)
+	}, rtestutils.WithNamespace(runtimeres.NamespaceName))
+
 	suite.Destroy(link)
 	rtestutils.AssertNoResource[*runtimeres.KernelParamDefaultSpec](
 		suite.Ctx(),
 		suite.T(),
 		suite.State(),
 		id,
+		rtestutils.WithNamespace(runtimeres.NamespaceName),
+	)
+	rtestutils.AssertNoResource[*runtimeres.KernelParamDefaultSpec](
+		suite.Ctx(),
+		suite.T(),
+		suite.State(),
+		defrtrID,
 		rtestutils.WithNamespace(runtimeres.NamespaceName),
 	)
 }
