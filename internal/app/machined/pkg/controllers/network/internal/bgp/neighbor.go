@@ -5,6 +5,7 @@
 package bgp
 
 import (
+	"fmt"
 	"net/netip"
 	"sync"
 
@@ -19,26 +20,32 @@ import (
 // NeighborResolver resolves configured BGP peers against one lazily loaded rtnetlink snapshot.
 type NeighborResolver struct {
 	once      sync.Once
-	load      func() []rtnetlink.NeighMessage
+	load      func() ([]rtnetlink.NeighMessage, error)
 	neighbors []rtnetlink.NeighMessage
+	loadErr   error
 }
 
-// NewNeighborResolver creates a neighbor resolver.
-func NewNeighborResolver() *NeighborResolver {
-	return &NeighborResolver{load: readNeighbors}
+// NewNeighborResolver creates a neighbor resolver which loads the neighbor table with load on first use.
+func NewNeighborResolver(load func() ([]rtnetlink.NeighMessage, error)) *NeighborResolver {
+	return &NeighborResolver{load: load}
 }
 
 // ResolvePeers resolves all currently discoverable peers and their link-local interface mapping.
+//
+// If the neighbor table can't be read, unnumbered peers keep their link-local address from current (the
+// running unnumbered peers by link), as an empty table would remove them, and the read error is returned
+// together with the resolved peers.
 func (resolver *NeighborResolver) ResolvePeers(
 	config network.BGPInstanceConfigSpec,
 	runtimeState *RuntimeState,
+	current map[string]netip.Addr,
 	logger *zap.Logger,
-) ([]Peer, map[netip.Addr]string) {
+) ([]Peer, map[netip.Addr]string, error) {
 	peerIfaces := map[netip.Addr]string{}
 	resolved := make([]Peer, 0, len(config.Neighbors))
 
 	for _, neighbor := range config.Neighbors {
-		peer, ok := resolver.resolvePeer(neighbor, runtimeState, logger)
+		peer, ok := resolver.resolvePeer(neighbor, runtimeState, current, logger)
 		if !ok {
 			logger.Debug("unnumbered BGP peer not yet discovered, will retry", zap.String("link", neighbor.Link))
 
@@ -60,7 +67,7 @@ func (resolver *NeighborResolver) ResolvePeers(
 		resolved = append(resolved, peer)
 	}
 
-	return resolved, peerIfaces
+	return resolved, peerIfaces, resolver.loadErr
 }
 
 // warnAuthPasswordConflict reports an unnumbered peer whose link-local address is shared with an already
@@ -92,6 +99,7 @@ func warnAuthPasswordConflict(resolved []Peer, peer Peer, logger *zap.Logger) {
 func (resolver *NeighborResolver) resolvePeer(
 	neighbor network.BGPNeighborConfigSpec,
 	runtimeState *RuntimeState,
+	current map[string]netip.Addr,
 	logger *zap.Logger,
 ) (Peer, bool) {
 	if addr := neighbor.Address; addr.IsValid() {
@@ -107,10 +115,19 @@ func (resolver *NeighborResolver) resolvePeer(
 	}
 
 	resolver.once.Do(func() {
-		resolver.neighbors = resolver.load()
+		resolver.neighbors, resolver.loadErr = resolver.load()
 	})
 
-	return ResolvePeer(neighbor, runtimeState, resolver.neighbors, logger)
+	if resolver.loadErr == nil {
+		return ResolvePeer(neighbor, runtimeState, resolver.neighbors, logger)
+	}
+
+	lla, ok := current[neighbor.Link]
+	if !ok {
+		return Peer{}, false
+	}
+
+	return unnumberedPeer(neighbor, lla), true
 }
 
 // ResolvePeer resolves one configured peer against a neighbor snapshot.
@@ -148,27 +165,33 @@ func ResolvePeer(
 		return Peer{}, false
 	}
 
-	peer.Address = lla.String() + "%" + neighbor.Link
-	peer.LinkLocal = lla
-	peer.Link = neighbor.Link
-
-	return peer, true
+	return unnumberedPeer(neighbor, lla), true
 }
 
-func readNeighbors() []rtnetlink.NeighMessage {
+func unnumberedPeer(neighbor network.BGPNeighborConfigSpec, lla netip.Addr) Peer {
+	return Peer{
+		Config:    neighbor,
+		Address:   lla.String() + "%" + neighbor.Link,
+		LinkLocal: lla,
+		Link:      neighbor.Link,
+	}
+}
+
+// ReadNeighbors lists the kernel neighbor table.
+func ReadNeighbors() ([]rtnetlink.NeighMessage, error) {
 	conn, err := rtnetlink.Dial(nil)
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("error dialing rtnetlink socket: %w", err)
 	}
 
 	defer conn.Close() //nolint:errcheck
 
 	neighbors, err := conn.Neigh.List()
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("error listing neighbors: %w", err)
 	}
 
-	return neighbors
+	return neighbors, nil
 }
 
 // SelectLinkLocalNeighbor returns the single IPv6 link-local router neighbor on the interface.

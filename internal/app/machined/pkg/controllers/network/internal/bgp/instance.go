@@ -40,6 +40,7 @@ type Instance struct {
 	installRoutes bool
 	peers         map[string]string
 	peerIfaces    map[netip.Addr]string
+	unnumbered    map[string]netip.Addr
 }
 
 // NewInstance creates an initialized, stopped BGP instance.
@@ -49,12 +50,18 @@ func NewInstance() *Instance {
 		imported:   map[netip.Prefix]importedPath{},
 		peers:      map[string]string{},
 		peerIfaces: map[netip.Addr]string{},
+		unnumbered: map[string]netip.Addr{},
 	}
 }
 
 // Running reports whether the instance has an active GoBGP server.
 func (instance *Instance) Running() bool {
 	return instance.server != nil
+}
+
+// UnnumberedPeers returns the link-local address of each running unnumbered peer, by its link.
+func (instance *Instance) UnnumberedPeers() map[string]netip.Addr {
+	return instance.unnumbered
 }
 
 // Stop tears down the GoBGP server and resets all reconciled state.
@@ -85,6 +92,7 @@ func (instance *Instance) clearState() {
 	instance.installRoutes = false
 	instance.peers = map[string]string{}
 	instance.peerIfaces = map[netip.Addr]string{}
+	instance.unnumbered = map[string]netip.Addr{}
 }
 
 // EnsureServer (re)creates the GoBGP server when server-level configuration changes, then
@@ -155,6 +163,13 @@ func (instance *Instance) EnsureServer(
 	}
 
 	instance.peerIfaces = peerIfaces
+	instance.unnumbered = map[string]netip.Addr{}
+
+	for _, peer := range resolvedPeers {
+		if peer.LinkLocal.IsValid() {
+			instance.unnumbered[peer.Link] = peer.LinkLocal
+		}
+	}
 
 	return instance.reconcilePeers(ctx, config, resolvedPeers)
 }

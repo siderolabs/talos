@@ -190,7 +190,7 @@ func (ctrl *BGPController) reconcile(ctx context.Context, r controller.Runtime, 
 	}
 
 	runtimeState := internalbgp.NewRuntimeStateFromResources(linkStatuses.All(), addressStatuses.All())
-	neighborResolver := internalbgp.NewNeighborResolver()
+	neighborResolver := internalbgp.NewNeighborResolver(internalbgp.ReadNeighbors)
 
 	desired := map[resource.ID]struct{}{}
 
@@ -222,7 +222,12 @@ func (ctrl *BGPController) reconcile(ctx context.Context, r controller.Runtime, 
 			continue
 		}
 
-		peers, peerIfaces := neighborResolver.ResolvePeers(resolved.Spec, runtimeState, instanceLogger)
+		peers, peerIfaces, err := neighborResolver.ResolvePeers(resolved.Spec, runtimeState, instance.UnnumberedPeers(), instanceLogger)
+		if err != nil {
+			instanceLogger.Debug("error reading the neighbor table, keeping the current unnumbered BGP peers", zap.Error(err))
+
+			failed = true
+		}
 
 		if err = instance.EnsureServer(
 			ctx,

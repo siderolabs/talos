@@ -5,6 +5,7 @@
 package bgp_test
 
 import (
+	"errors"
 	"net/netip"
 	"testing"
 
@@ -78,12 +79,13 @@ func TestNeighborResolver(t *testing.T) {
 	assert.Equal(t, netip.MustParseAddr("fe80::2"), peer.LinkLocal)
 	assert.Equal(t, "eth0", peer.Link)
 
-	peers, _ := internalbgp.NewNeighborResolver().ResolvePeers(network.BGPInstanceConfigSpec{
+	peers, _, err := internalbgp.NewNeighborResolver(internalbgp.ReadNeighbors).ResolvePeers(network.BGPInstanceConfigSpec{
 		VRF: "vrf-blue",
 		Neighbors: []network.BGPNeighborConfigSpec{
 			{Address: netip.MustParseAddr("192.0.2.2"), PeerASN: 65002},
 		},
-	}, runtimeState, zap.NewNop())
+	}, runtimeState, nil, zap.NewNop())
+	require.NoError(t, err)
 	require.Len(t, peers, 1)
 	assert.Equal(t, "vrf-blue", peers[0].BindInterface)
 }
@@ -132,13 +134,16 @@ func TestNeighborResolverAuthPasswordConflict(t *testing.T) {
 
 			core, logs := observer.New(zapcore.WarnLevel)
 
-			peers, peerIfaces := internalbgp.NewNeighborResolverForTest(neighbors).ResolvePeers(network.BGPInstanceConfigSpec{
+			resolver := internalbgp.NewNeighborResolver(func() ([]rtnetlink.NeighMessage, error) { return neighbors, nil })
+
+			peers, peerIfaces, err := resolver.ResolvePeers(network.BGPInstanceConfigSpec{
 				Neighbors: []network.BGPNeighborConfigSpec{
 					{Link: "eth0", PeerASN: 65002, AuthPassword: test.passwords[0]},
 					{Link: "eth1", PeerASN: 65002, AuthPassword: test.passwords[1]},
 					{Link: "eth2", PeerASN: 65002, AuthPassword: test.passwords[2]},
 				},
-			}, runtimeState, zap.New(core))
+			}, runtimeState, nil, zap.New(core))
+			require.NoError(t, err)
 
 			require.Len(t, peers, 3)
 			assert.Equal(t, map[netip.Addr]string{netip.MustParseAddr("fe80::1"): "eth2"}, peerIfaces)
@@ -157,19 +162,52 @@ func TestNeighborResolverAuthPasswordConflict(t *testing.T) {
 func TestNeighborResolverNumberedPeerSkipsRtnetlink(t *testing.T) {
 	t.Parallel()
 
-	resolver := internalbgp.NewNeighborResolver()
+	resolver := internalbgp.NewNeighborResolver(func() ([]rtnetlink.NeighMessage, error) {
+		return nil, errors.New("numbered peers must not read the neighbor table")
+	})
 
-	peers, _ := resolver.ResolvePeers(network.BGPInstanceConfigSpec{
+	peers, _, err := resolver.ResolvePeers(network.BGPInstanceConfigSpec{
 		Neighbors: []network.BGPNeighborConfigSpec{
 			{Address: netip.MustParseAddr("192.0.2.2"), PeerASN: 65002},
 		},
-	}, internalbgp.NewRuntimeState(nil, nil), zap.NewNop())
+	}, internalbgp.NewRuntimeState(nil, nil), nil, zap.NewNop())
 
+	require.NoError(t, err)
 	require.Len(t, peers, 1)
 	assert.Equal(t, "192.0.2.2", peers[0].Address)
 
 	_, ok := internalbgp.ResolvePeer(network.BGPNeighborConfigSpec{}, internalbgp.NewRuntimeState(nil, nil), nil, zap.NewNop())
 	assert.False(t, ok)
+}
+
+func TestNeighborResolverReadError(t *testing.T) {
+	t.Parallel()
+
+	readErr := errors.New("netlink receive: no buffer space available")
+
+	resolver := internalbgp.NewNeighborResolver(func() ([]rtnetlink.NeighMessage, error) {
+		return nil, readErr
+	})
+
+	peers, peerIfaces, err := resolver.ResolvePeers(network.BGPInstanceConfigSpec{
+		Neighbors: []network.BGPNeighborConfigSpec{
+			{Address: netip.MustParseAddr("192.0.2.2"), PeerASN: 65002},
+			{Link: "eth0", PeerASN: 65002},
+			{Link: "eth1", PeerASN: 65002},
+			{Link: "eth2", PeerASN: 65002},
+		},
+	}, internalbgp.NewRuntimeState(map[string]network.LinkStatusSpec{"eth0": {Index: 10}, "eth1": {Index: 11}, "eth2": {Index: 12}}, nil),
+		map[string]netip.Addr{
+			"eth0": netip.MustParseAddr("fe80::1"),
+			"eth1": netip.MustParseAddr("fe80::1"),
+		},
+		zap.NewNop(),
+	)
+
+	assert.ErrorIs(t, err, readErr, "a failed neighbor table read must be reported")
+	assert.Equal(t, []string{"192.0.2.2", "fe80::1%eth0", "fe80::1%eth1"}, xslices.Map(peers, func(peer internalbgp.Peer) string { return peer.Address }),
+		"the running unnumbered peers must be kept, also when they share a link-local address, and a link without one must stay unresolved")
+	assert.Equal(t, map[netip.Addr]string{netip.MustParseAddr("fe80::1"): "eth1"}, peerIfaces)
 }
 
 func neighborMessage(index uint32, state uint16, flags uint8, address string) rtnetlink.NeighMessage {
