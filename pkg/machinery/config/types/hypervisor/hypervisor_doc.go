@@ -315,7 +315,7 @@ func (VirtualMachineProfileConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "VirtualMachineProfileConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineProfileConfig declares a named amd64 guest ABI." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "VirtualMachineProfileConfig declares a named amd64 guest ABI.\nProfiles bundle the guest machine type and CPU model. Use a versioned machine\ntype and a CPU baseline tested on every host for migration. Aliases drift as QEMU\nchanges. A named CPU model is not a migration guarantee across arbitrary hosts.\n",
+		Description: "VirtualMachineProfileConfig declares a named amd64 guest ABI.\nProfiles bundle the guest machine type, CPU model and platform timers. Use a versioned machine\ntype and a CPU baseline tested on every host for migration. Aliases drift as QEMU\nchanges. A named CPU model is not a migration guarantee across arbitrary hosts.\n",
 		Fields: []encoder.Doc{
 			{
 				Type:   "Meta",
@@ -342,10 +342,139 @@ func (VirtualMachineProfileConfigV1Alpha1) Doc() *encoder.Doc {
 				Description: "Guest CPU model and feature policy.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Guest CPU model and feature policy." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "timers",
+				Type:        "VirtualMachineProfileTimers",
+				Note:        "",
+				Description: "Platform timers presented to the guest.\n\nOptional; omitting it hides the HPET, the RTC catches up on missed ticks and the PIT delays them.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Platform timers presented to the guest." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
 	doc.AddExample("", exampleVirtualMachineProfileConfigV1Alpha1())
+
+	return doc
+}
+
+func (VirtualMachineProfileTimers) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VirtualMachineProfileTimers",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineProfileTimers selects the guest-visible platform timers." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineProfileTimers selects the guest-visible platform timers.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "VirtualMachineProfileConfigV1Alpha1",
+				FieldName: "timers",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "hpet",
+				Type:        "VirtualMachineProfileHPET",
+				Note:        "",
+				Description: "Emulated HPET settings.\n\nOptional; the HPET is hidden from the guest when this section is omitted.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Emulated HPET settings." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "rtc",
+				Type:        "VirtualMachineProfileRTC",
+				Note:        "",
+				Description: "Emulated RTC settings.\n\nOptional; the RTC catches up on missed ticks when this section is omitted.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Emulated RTC settings." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "pit",
+				Type:        "VirtualMachineProfilePIT",
+				Note:        "",
+				Description: "Emulated PIT settings.\n\nOptional; the PIT delays missed ticks when this section is omitted.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Emulated PIT settings." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (VirtualMachineProfileRTC) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VirtualMachineProfileRTC",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineProfileRTC describes the emulated real-time clock." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineProfileRTC describes the emulated real-time clock.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "VirtualMachineProfileTimers",
+				FieldName: "rtc",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "tickPolicy",
+				Type:        "VirtualMachineProfileRTCTickPolicy",
+				Note:        "",
+				Description: "How the RTC delivers ticks the guest missed while it was descheduled.\n\ncatchup delivers missed ticks at a higher rate until the guest catches up (QEMU driftfix=slew).\nGuests without an HPET, such as Windows, keep time from the RTC and drift without it.\ndelay delivers missed ticks at the normal rate, so guest time falls behind.\n\nOptional; defaults to catchup.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "How the RTC delivers ticks the guest missed while it was descheduled." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"catchup",
+					"delay",
+				},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (VirtualMachineProfilePIT) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VirtualMachineProfilePIT",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineProfilePIT describes the emulated programmable interval timer." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineProfilePIT describes the emulated programmable interval timer.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "VirtualMachineProfileTimers",
+				FieldName: "pit",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "tickPolicy",
+				Type:        "VirtualMachineProfilePITTickPolicy",
+				Note:        "",
+				Description: "How the in-kernel PIT delivers ticks the guest missed while it was descheduled.\n\ndelay delivers missed ticks at the normal rate. discard drops them.\n\nOptional; defaults to delay.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "How the in-kernel PIT delivers ticks the guest missed while it was descheduled." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"delay",
+					"discard",
+				},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (VirtualMachineProfileHPET) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VirtualMachineProfileHPET",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineProfileHPET describes the emulated High Precision Event Timer." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineProfileHPET describes the emulated High Precision Event Timer.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "VirtualMachineProfileTimers",
+				FieldName: "hpet",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "enabled",
+				Type:        "bool",
+				Note:        "",
+				Description: "Present an emulated HPET to the guest.\n\nDisabled by default: modern guests use kvm-clock and the local APIC timer, and the\nemulated HPET keeps QEMU's main thread waking at the guest's tick rate even after the\nguest has stopped using it. Enable it only for guests that require an HPET.\n\nOptional; defaults to disabled.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Present an emulated HPET to the guest." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
 
 	return doc
 }
@@ -1125,6 +1254,10 @@ func GetFileDoc() *encoder.FileDoc {
 			VirtualMachineMemory{}.Doc(),
 			VirtualMachineBallooning{}.Doc(),
 			VirtualMachineProfileConfigV1Alpha1{}.Doc(),
+			VirtualMachineProfileTimers{}.Doc(),
+			VirtualMachineProfileRTC{}.Doc(),
+			VirtualMachineProfilePIT{}.Doc(),
+			VirtualMachineProfileHPET{}.Doc(),
 			VirtualMachineProfileCPU{}.Doc(),
 			VirtualMachineProfileCPUFeature{}.Doc(),
 			VirtualMachineFirmware{}.Doc(),

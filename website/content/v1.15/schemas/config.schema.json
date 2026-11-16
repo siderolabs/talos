@@ -3622,6 +3622,13 @@
           "description": "Guest CPU model and feature policy.\n",
           "markdownDescription": "Guest CPU model and feature policy.",
           "x-intellij-html-description": "\u003cp\u003eGuest CPU model and feature policy.\u003c/p\u003e\n"
+        },
+        "timers": {
+          "$ref": "#/$defs/hypervisor.VirtualMachineProfileTimers",
+          "title": "timers",
+          "description": "Platform timers presented to the guest.\n\nOptional; omitting it hides the HPET, the RTC catches up on missed ticks and the PIT delays them.\n",
+          "markdownDescription": "Platform timers presented to the guest.\n\nOptional; omitting it hides the HPET, the RTC catches up on missed ticks and the PIT delays them.",
+          "x-intellij-html-description": "\u003cp\u003ePlatform timers presented to the guest.\u003c/p\u003e\n\n\u003cp\u003eOptional; omitting it hides the HPET, the RTC catches up on missed ticks and the PIT delays them.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -3633,7 +3640,83 @@
         "machine",
         "name"
       ],
-      "description": "VirtualMachineProfileConfig declares a named amd64 guest ABI.\\nProfiles bundle the guest machine type and CPU model. Use a versioned machine\\ntype and a CPU baseline tested on every host for migration. Aliases drift as QEMU\\nchanges. A named CPU model is not a migration guarantee across arbitrary hosts.\\n"
+      "description": "VirtualMachineProfileConfig declares a named amd64 guest ABI.\\nProfiles bundle the guest machine type, CPU model and platform timers. Use a versioned machine\\ntype and a CPU baseline tested on every host for migration. Aliases drift as QEMU\\nchanges. A named CPU model is not a migration guarantee across arbitrary hosts.\\n"
+    },
+    "hypervisor.VirtualMachineProfileHPET": {
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "enabled",
+          "description": "Present an emulated HPET to the guest.\n\nDisabled by default: modern guests use kvm-clock and the local APIC timer, and the\nemulated HPET keeps QEMU’s main thread waking at the guest’s tick rate even after the\nguest has stopped using it. Enable it only for guests that require an HPET.\n\nOptional; defaults to disabled.\n",
+          "markdownDescription": "Present an emulated HPET to the guest.\n\nDisabled by default: modern guests use kvm-clock and the local APIC timer, and the\nemulated HPET keeps QEMU's main thread waking at the guest's tick rate even after the\nguest has stopped using it. Enable it only for guests that require an HPET.\n\nOptional; defaults to disabled.",
+          "x-intellij-html-description": "\u003cp\u003ePresent an emulated HPET to the guest.\u003c/p\u003e\n\n\u003cp\u003eDisabled by default: modern guests use kvm-clock and the local APIC timer, and the\nemulated HPET keeps QEMU\u0026rsquo;s main thread waking at the guest\u0026rsquo;s tick rate even after the\nguest has stopped using it. Enable it only for guests that require an HPET.\u003c/p\u003e\n\n\u003cp\u003eOptional; defaults to disabled.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "VirtualMachineProfileHPET describes the emulated High Precision Event Timer."
+    },
+    "hypervisor.VirtualMachineProfilePIT": {
+      "properties": {
+        "tickPolicy": {
+          "enum": [
+            "delay",
+            "discard"
+          ],
+          "title": "tickPolicy",
+          "description": "How the in-kernel PIT delivers ticks the guest missed while it was descheduled.\n\ndelay delivers missed ticks at the normal rate. discard drops them.\n\nOptional; defaults to delay.\n",
+          "markdownDescription": "How the in-kernel PIT delivers ticks the guest missed while it was descheduled.\n\ndelay delivers missed ticks at the normal rate. discard drops them.\n\nOptional; defaults to delay.",
+          "x-intellij-html-description": "\u003cp\u003eHow the in-kernel PIT delivers ticks the guest missed while it was descheduled.\u003c/p\u003e\n\n\u003cp\u003edelay delivers missed ticks at the normal rate. discard drops them.\u003c/p\u003e\n\n\u003cp\u003eOptional; defaults to delay.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "VirtualMachineProfilePIT describes the emulated programmable interval timer."
+    },
+    "hypervisor.VirtualMachineProfileRTC": {
+      "properties": {
+        "tickPolicy": {
+          "enum": [
+            "catchup",
+            "delay"
+          ],
+          "title": "tickPolicy",
+          "description": "How the RTC delivers ticks the guest missed while it was descheduled.\n\ncatchup delivers missed ticks at a higher rate until the guest catches up (QEMU driftfix=slew).\nGuests without an HPET, such as Windows, keep time from the RTC and drift without it.\ndelay delivers missed ticks at the normal rate, so guest time falls behind.\n\nOptional; defaults to catchup.\n",
+          "markdownDescription": "How the RTC delivers ticks the guest missed while it was descheduled.\n\ncatchup delivers missed ticks at a higher rate until the guest catches up (QEMU driftfix=slew).\nGuests without an HPET, such as Windows, keep time from the RTC and drift without it.\ndelay delivers missed ticks at the normal rate, so guest time falls behind.\n\nOptional; defaults to catchup.",
+          "x-intellij-html-description": "\u003cp\u003eHow the RTC delivers ticks the guest missed while it was descheduled.\u003c/p\u003e\n\n\u003cp\u003ecatchup delivers missed ticks at a higher rate until the guest catches up (QEMU driftfix=slew).\nGuests without an HPET, such as Windows, keep time from the RTC and drift without it.\ndelay delivers missed ticks at the normal rate, so guest time falls behind.\u003c/p\u003e\n\n\u003cp\u003eOptional; defaults to catchup.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "VirtualMachineProfileRTC describes the emulated real-time clock."
+    },
+    "hypervisor.VirtualMachineProfileTimers": {
+      "properties": {
+        "hpet": {
+          "$ref": "#/$defs/hypervisor.VirtualMachineProfileHPET",
+          "title": "hpet",
+          "description": "Emulated HPET settings.\n\nOptional; the HPET is hidden from the guest when this section is omitted.\n",
+          "markdownDescription": "Emulated HPET settings.\n\nOptional; the HPET is hidden from the guest when this section is omitted.",
+          "x-intellij-html-description": "\u003cp\u003eEmulated HPET settings.\u003c/p\u003e\n\n\u003cp\u003eOptional; the HPET is hidden from the guest when this section is omitted.\u003c/p\u003e\n"
+        },
+        "rtc": {
+          "$ref": "#/$defs/hypervisor.VirtualMachineProfileRTC",
+          "title": "rtc",
+          "description": "Emulated RTC settings.\n\nOptional; the RTC catches up on missed ticks when this section is omitted.\n",
+          "markdownDescription": "Emulated RTC settings.\n\nOptional; the RTC catches up on missed ticks when this section is omitted.",
+          "x-intellij-html-description": "\u003cp\u003eEmulated RTC settings.\u003c/p\u003e\n\n\u003cp\u003eOptional; the RTC catches up on missed ticks when this section is omitted.\u003c/p\u003e\n"
+        },
+        "pit": {
+          "$ref": "#/$defs/hypervisor.VirtualMachineProfilePIT",
+          "title": "pit",
+          "description": "Emulated PIT settings.\n\nOptional; the PIT delays missed ticks when this section is omitted.\n",
+          "markdownDescription": "Emulated PIT settings.\n\nOptional; the PIT delays missed ticks when this section is omitted.",
+          "x-intellij-html-description": "\u003cp\u003eEmulated PIT settings.\u003c/p\u003e\n\n\u003cp\u003eOptional; the PIT delays missed ticks when this section is omitted.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "VirtualMachineProfileTimers selects the guest-visible platform timers."
     },
     "hypervisor.VirtualMachineSerial": {
       "properties": {

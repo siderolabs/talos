@@ -89,6 +89,7 @@ func (suite *VirtualMachineProjectionSuite) TestProfileCatalogueAndCleanup() {
 		asrt.True(res.TypedSpec().Builtin)
 		asrt.Equal("q35", res.TypedSpec().Machine)
 		asrt.Equal(hypervisorhelpers.VirtualMachineProfileCPUModeHostModel, res.TypedSpec().CPU.Mode)
+		asrt.Equal(hypervisor.DefaultVirtualMachineProfileTimersSpec(), res.TypedSpec().Timers)
 	})
 	ctest.AssertResource(suite, "legacy", func(res *hypervisor.VirtualMachineProfileSpec, asrt *assert.Assertions) {
 		asrt.True(res.TypedSpec().Builtin)
@@ -108,6 +109,9 @@ func (suite *VirtualMachineProjectionSuite) TestProfileCatalogueAndCleanup() {
 	doc.MachineConfig = "pc-q35-9.2"
 	doc.CPUConfig.ModeConfig = hypervisorhelpers.VirtualMachineProfileCPUModeCustom
 	doc.CPUConfig.ModelConfig = "x86-64-v3"
+	doc.TimersConfig.HPETConfig.HPETEnabled = new(true)
+	doc.TimersConfig.RTCConfig.TickPolicyConfig = hypervisorhelpers.VirtualMachineProfileRTCTickPolicyDelay
+	doc.TimersConfig.PITConfig.TickPolicyConfig = hypervisorhelpers.VirtualMachineProfilePITTickPolicyDiscard
 	cfg, err := container.New(doc)
 	suite.Require().NoError(err)
 
@@ -117,6 +121,9 @@ func (suite *VirtualMachineProjectionSuite) TestProfileCatalogueAndCleanup() {
 		asrt.False(res.TypedSpec().Builtin)
 		asrt.Equal("pc-q35-9.2", res.TypedSpec().Machine)
 		asrt.Equal("x86-64-v3", res.TypedSpec().CPU.Model)
+		asrt.True(res.TypedSpec().Timers.HPET)
+		asrt.Equal(hypervisorhelpers.VirtualMachineProfileRTCTickPolicyDelay, res.TypedSpec().Timers.RTCTickPolicy)
+		asrt.Equal(hypervisorhelpers.VirtualMachineProfilePITTickPolicyDiscard, res.TypedSpec().Timers.PITTickPolicy)
 	})
 	suite.Destroy(machine)
 	ctest.AssertNoResource[*hypervisor.VirtualMachineProfileSpec](suite, "rack-a")

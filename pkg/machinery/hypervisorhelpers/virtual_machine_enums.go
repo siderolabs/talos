@@ -32,6 +32,30 @@ const (
 	VirtualMachineProfileCPUFeaturePolicyForbid                                                // forbid
 )
 
+// VirtualMachineProfileRTCTickPolicy selects how the emulated RTC delivers ticks the guest missed.
+type VirtualMachineProfileRTCTickPolicy int
+
+// Profile RTC tick policies; values are libvirt tickpolicy names supported by QEMU for the RTC.
+//
+//structprotogen:gen_enum
+const (
+	VirtualMachineProfileRTCTickPolicyUnknown VirtualMachineProfileRTCTickPolicy = iota // unknown
+	VirtualMachineProfileRTCTickPolicyCatchup                                           // catchup
+	VirtualMachineProfileRTCTickPolicyDelay                                             // delay
+)
+
+// VirtualMachineProfilePITTickPolicy selects how the emulated PIT delivers ticks the guest missed.
+type VirtualMachineProfilePITTickPolicy int
+
+// Profile PIT tick policies; values are libvirt tickpolicy names supported by the in-kernel KVM PIT.
+//
+//structprotogen:gen_enum
+const (
+	VirtualMachineProfilePITTickPolicyUnknown VirtualMachineProfilePITTickPolicy = iota // unknown
+	VirtualMachineProfilePITTickPolicyDelay                                             // delay
+	VirtualMachineProfilePITTickPolicyDiscard                                           // discard
+)
+
 // VirtualMachinePowerState is the observed power state of a virtual machine.
 type VirtualMachinePowerState int
 

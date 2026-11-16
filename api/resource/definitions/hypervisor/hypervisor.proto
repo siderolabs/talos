@@ -287,6 +287,14 @@ message VirtualMachineProfileSpecSpec {
   bool builtin = 1;
   string machine = 2;
   VirtualMachineProfileCPUSpec cpu = 3;
+  VirtualMachineProfileTimersSpec timers = 4;
+}
+
+// VirtualMachineProfileTimersSpec defines the guest-visible platform timers.
+message VirtualMachineProfileTimersSpec {
+  bool hpet = 1;
+  talos.resource.definitions.enums.HypervisorhelpersVirtualMachineProfileRTCTickPolicy rtc_tick_policy = 2;
+  talos.resource.definitions.enums.HypervisorhelpersVirtualMachineProfilePITTickPolicy pit_tick_policy = 3;
 }
 
 // VirtualMachineSpecSpec is the spec for VirtualMachineSpec.

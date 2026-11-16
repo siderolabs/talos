@@ -7,6 +7,9 @@
 package profile_test
 
 import (
+	"maps"
+	"reflect"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -56,12 +59,11 @@ func TestProfiles(t *testing.T) {
 				Model:    expected.model,
 				Fallback: expected.fallback,
 			},
+			Timers: hypervisor.DefaultVirtualMachineProfileTimersSpec(),
 		}, *builtin.TypedSpec())
 		require.NoError(t, profile.Validate(expected.name, *builtin.TypedSpec()))
 	}
 
-	builtins[0].TypedSpec().Machine = "changed"
-	require.Error(t, profile.Validate("host", *builtins[0].TypedSpec()))
 	builtins[0].TypedSpec().CPU.Features = []hypervisor.VirtualMachineProfileCPUFeatureSpec{
 		{
 			Name: "changed",
@@ -71,6 +73,80 @@ func TestProfiles(t *testing.T) {
 	require.Equal(t, "host", fresh[0].Metadata().ID())
 	require.Equal(t, "q35", fresh[0].TypedSpec().Machine)
 	require.Empty(t, fresh[0].TypedSpec().CPU.Features)
+}
+
+// builtinContractMutations changes one hardware field each, keyed by its path in the spec.
+var builtinContractMutations = map[string]func(*hypervisor.VirtualMachineProfileSpecSpec){
+	"Machine": func(spec *hypervisor.VirtualMachineProfileSpecSpec) {
+		spec.Machine = "pc-q35-changed"
+	},
+	"CPU.Mode": func(spec *hypervisor.VirtualMachineProfileSpecSpec) {
+		spec.CPU.Mode = hypervisorhelpers.VirtualMachineProfileCPUModeUnknown
+	},
+	"CPU.Model": func(spec *hypervisor.VirtualMachineProfileSpecSpec) {
+		spec.CPU.Model = "changed"
+	},
+	"CPU.Fallback": func(spec *hypervisor.VirtualMachineProfileSpecSpec) {
+		spec.CPU.Fallback = "allow"
+	},
+	"CPU.Features": func(spec *hypervisor.VirtualMachineProfileSpecSpec) {
+		spec.CPU.Features = append(spec.CPU.Features, hypervisor.VirtualMachineProfileCPUFeatureSpec{
+			Name:   "pku",
+			Policy: hypervisorhelpers.VirtualMachineProfileCPUFeaturePolicyDisable,
+		})
+	},
+	"Timers.HPET": func(spec *hypervisor.VirtualMachineProfileSpecSpec) {
+		spec.Timers.HPET = !spec.Timers.HPET
+	},
+	"Timers.RTCTickPolicy": func(spec *hypervisor.VirtualMachineProfileSpecSpec) {
+		spec.Timers.RTCTickPolicy = hypervisorhelpers.VirtualMachineProfileRTCTickPolicyDelay
+	},
+	"Timers.PITTickPolicy": func(spec *hypervisor.VirtualMachineProfileSpecSpec) {
+		spec.Timers.PITTickPolicy = hypervisorhelpers.VirtualMachineProfilePITTickPolicyDiscard
+	},
+}
+
+// Every hardware field of a builtin profile is part of its contract: changing any one of them,
+// on any builtin, must fail validation.
+func TestValidateBuiltinContract(t *testing.T) {
+	for _, builtin := range profile.Profiles() {
+		for field, mutate := range builtinContractMutations {
+			t.Run(builtin.Metadata().ID()+"/"+field, func(t *testing.T) {
+				changed := builtin.TypedSpec().DeepCopy()
+				mutate(&changed)
+				require.NotEqual(t, *builtin.TypedSpec(), changed, "mutation must change the spec")
+				require.Error(t, profile.Validate(builtin.Metadata().ID(), changed))
+			})
+		}
+	}
+}
+
+// A field added to the profile spec must be added to builtinContractMutations, and so to the
+// field-by-field comparison in profile.Validate.
+func TestBuiltinContractCoversAllFields(t *testing.T) {
+	var fields []string
+
+	var walk func(prefix string, typ reflect.Type)
+
+	walk = func(prefix string, typ reflect.Type) {
+		for field := range typ.Fields() {
+			path := prefix + field.Name
+			if field.Type.Kind() == reflect.Struct {
+				walk(path+".", field.Type)
+
+				continue
+			}
+
+			fields = append(fields, path)
+		}
+	}
+
+	walk("", reflect.TypeFor[hypervisor.VirtualMachineProfileSpecSpec]())
+
+	// Builtin selects the validation path rather than describing guest hardware.
+	fields = slices.DeleteFunc(fields, func(field string) bool { return field == "Builtin" })
+
+	require.ElementsMatch(t, fields, slices.Collect(maps.Keys(builtinContractMutations)))
 }
 
 func TestValidateCustom(t *testing.T) {
@@ -87,6 +163,7 @@ func TestValidateCustom(t *testing.T) {
 				},
 			},
 		},
+		Timers: hypervisor.DefaultVirtualMachineProfileTimersSpec(),
 	}
 	require.NoError(t, profile.ValidateCustom("cluster", valid))
 
@@ -110,6 +187,18 @@ func TestValidateCustom(t *testing.T) {
 			name: "arm-machine",
 			mutate: func(spec *hypervisor.VirtualMachineProfileSpecSpec) {
 				spec.Machine = "virt"
+			},
+		},
+		{
+			name: "unknown-rtc-tick-policy",
+			mutate: func(spec *hypervisor.VirtualMachineProfileSpecSpec) {
+				spec.Timers.RTCTickPolicy = hypervisorhelpers.VirtualMachineProfileRTCTickPolicyUnknown
+			},
+		},
+		{
+			name: "unknown-pit-tick-policy",
+			mutate: func(spec *hypervisor.VirtualMachineProfileSpecSpec) {
+				spec.Timers.PITTickPolicy = hypervisorhelpers.VirtualMachineProfilePITTickPolicyUnknown
 			},
 		},
 		{

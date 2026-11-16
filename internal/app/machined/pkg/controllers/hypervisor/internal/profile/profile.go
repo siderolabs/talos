@@ -29,12 +29,7 @@ func Validate(name string, spec hypervisor.VirtualMachineProfileSpecSpec) error 
 			continue
 		}
 
-		expected := builtin.TypedSpec()
-		if spec.Machine != expected.Machine ||
-			spec.CPU.Mode != expected.CPU.Mode ||
-			spec.CPU.Model != expected.CPU.Model ||
-			spec.CPU.Fallback != expected.CPU.Fallback ||
-			!slices.Equal(spec.CPU.Features, expected.CPU.Features) {
+		if !sameHardware(spec, *builtin.TypedSpec()) {
 			return fmt.Errorf("builtin profile %q does not match the builtin hardware contract", name)
 		}
 
@@ -42,6 +37,25 @@ func Validate(name string, spec hypervisor.VirtualMachineProfileSpecSpec) error 
 	}
 
 	return fmt.Errorf("unknown builtin profile %q", name)
+}
+
+// sameHardware compares the guest-visible hardware of two profiles field by field.
+// The Builtin flag is not hardware and is not compared.
+func sameHardware(a, b hypervisor.VirtualMachineProfileSpecSpec) bool {
+	return a.Machine == b.Machine && sameCPU(a.CPU, b.CPU) && sameTimers(a.Timers, b.Timers)
+}
+
+func sameCPU(a, b hypervisor.VirtualMachineProfileCPUSpec) bool {
+	return a.Mode == b.Mode &&
+		a.Model == b.Model &&
+		a.Fallback == b.Fallback &&
+		slices.Equal(a.Features, b.Features)
+}
+
+func sameTimers(a, b hypervisor.VirtualMachineProfileTimersSpec) bool {
+	return a.HPET == b.HPET &&
+		a.RTCTickPolicy == b.RTCTickPolicy &&
+		a.PITTickPolicy == b.PITTickPolicy
 }
 
 // ValidateCustom checks a custom profile before publishing or rendering it.
@@ -73,10 +87,13 @@ func ValidateCustom(name string, spec hypervisor.VirtualMachineProfileSpecSpec) 
 		})
 	}
 
-	return errors.Join(errs, hypervisorhelpers.ValidateVirtualMachineProfileCPU(
-		spec.CPU.Mode,
-		spec.CPU.Model,
-		spec.CPU.Fallback,
-		features,
-	))
+	return errors.Join(errs,
+		hypervisorhelpers.ValidateVirtualMachineProfileCPU(
+			spec.CPU.Mode,
+			spec.CPU.Model,
+			spec.CPU.Fallback,
+			features,
+		),
+		hypervisorhelpers.ValidateVirtualMachineProfileTimers(spec.Timers.RTCTickPolicy, spec.Timers.PITTickPolicy),
+	)
 }

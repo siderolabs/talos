@@ -15,6 +15,11 @@
     <model fallback="forbid">EPYC-Rome-v1</model>
     <topology sockets="2" cores="3" threads="1"></topology>
   </cpu>
+  <clock offset="utc">
+    <timer name="rtc" tickpolicy="catchup"></timer>
+    <timer name="pit" tickpolicy="delay"></timer>
+    <timer name="hpet" present="no"></timer>
+  </clock>
   <devices>
     <channel type="unix">
       <source mode="bind"></source>

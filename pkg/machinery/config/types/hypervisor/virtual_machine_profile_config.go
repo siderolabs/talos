@@ -35,13 +35,14 @@ var (
 	_ config.VirtualMachineProfileConfig           = &VirtualMachineProfileConfigV1Alpha1{}
 	_ config.VirtualMachineProfileCPUConfig        = &VirtualMachineProfileCPU{}
 	_ config.VirtualMachineProfileCPUFeatureConfig = &VirtualMachineProfileCPUFeature{}
+	_ config.VirtualMachineProfileTimersConfig     = &VirtualMachineProfileTimers{}
 	_ config.Validator                             = &VirtualMachineProfileConfigV1Alpha1{}
 )
 
 // VirtualMachineProfileConfigV1Alpha1 declares a named amd64 guest ABI.
 //
 //	description: |
-//	  Profiles bundle the guest machine type and CPU model. Use a versioned machine
+//	  Profiles bundle the guest machine type, CPU model and platform timers. Use a versioned machine
 //	  type and a CPU baseline tested on every host for migration. Aliases drift as QEMU
 //	  changes. A named CPU model is not a migration guarantee across arbitrary hosts.
 //	examples:
@@ -60,6 +61,73 @@ type VirtualMachineProfileConfigV1Alpha1 struct {
 	// description: Guest CPU model and feature policy.
 	// schemaRequired: true
 	CPUConfig VirtualMachineProfileCPU `yaml:"cpu"`
+	// description: |
+	//   Platform timers presented to the guest.
+	//
+	//   Optional; omitting it hides the HPET, the RTC catches up on missed ticks and the PIT delays them.
+	TimersConfig VirtualMachineProfileTimers `yaml:"timers,omitempty"`
+}
+
+// VirtualMachineProfileTimers selects the guest-visible platform timers.
+type VirtualMachineProfileTimers struct {
+	//   description: |
+	//     Emulated HPET settings.
+	//
+	//     Optional; the HPET is hidden from the guest when this section is omitted.
+	HPETConfig VirtualMachineProfileHPET `yaml:"hpet,omitempty"`
+	//   description: |
+	//     Emulated RTC settings.
+	//
+	//     Optional; the RTC catches up on missed ticks when this section is omitted.
+	RTCConfig VirtualMachineProfileRTC `yaml:"rtc,omitempty"`
+	//   description: |
+	//     Emulated PIT settings.
+	//
+	//     Optional; the PIT delays missed ticks when this section is omitted.
+	PITConfig VirtualMachineProfilePIT `yaml:"pit,omitempty"`
+}
+
+// VirtualMachineProfileRTC describes the emulated real-time clock.
+type VirtualMachineProfileRTC struct {
+	//   description: |
+	//     How the RTC delivers ticks the guest missed while it was descheduled.
+	//
+	//     catchup delivers missed ticks at a higher rate until the guest catches up (QEMU driftfix=slew).
+	//     Guests without an HPET, such as Windows, keep time from the RTC and drift without it.
+	//     delay delivers missed ticks at the normal rate, so guest time falls behind.
+	//
+	//     Optional; defaults to catchup.
+	//   values:
+	//     - catchup
+	//     - delay
+	TickPolicyConfig hypervisorhelpers.VirtualMachineProfileRTCTickPolicy `yaml:"tickPolicy,omitempty"`
+}
+
+// VirtualMachineProfilePIT describes the emulated programmable interval timer.
+type VirtualMachineProfilePIT struct {
+	//   description: |
+	//     How the in-kernel PIT delivers ticks the guest missed while it was descheduled.
+	//
+	//     delay delivers missed ticks at the normal rate. discard drops them.
+	//
+	//     Optional; defaults to delay.
+	//   values:
+	//     - delay
+	//     - discard
+	TickPolicyConfig hypervisorhelpers.VirtualMachineProfilePITTickPolicy `yaml:"tickPolicy,omitempty"`
+}
+
+// VirtualMachineProfileHPET describes the emulated High Precision Event Timer.
+type VirtualMachineProfileHPET struct {
+	//   description: |
+	//     Present an emulated HPET to the guest.
+	//
+	//     Disabled by default: modern guests use kvm-clock and the local APIC timer, and the
+	//     emulated HPET keeps QEMU's main thread waking at the guest's tick rate even after the
+	//     guest has stopped using it. Enable it only for guests that require an HPET.
+	//
+	//     Optional; defaults to disabled.
+	HPETEnabled *bool `yaml:"enabled,omitempty"`
 }
 
 // VirtualMachineProfileCPU selects the guest-visible CPU.
@@ -146,6 +214,38 @@ func (c *VirtualMachineProfileConfigV1Alpha1) CPU() config.VirtualMachineProfile
 	return &c.CPUConfig
 }
 
+// Timers implements config.VirtualMachineProfileConfig.
+func (c *VirtualMachineProfileConfigV1Alpha1) Timers() config.VirtualMachineProfileTimersConfig {
+	return &c.TimersConfig
+}
+
+// HPET implements config.VirtualMachineProfileTimersConfig.
+func (c *VirtualMachineProfileTimers) HPET() bool {
+	if c.HPETConfig.HPETEnabled == nil {
+		return hypervisorhelpers.DefaultVirtualMachineProfileHPET
+	}
+
+	return *c.HPETConfig.HPETEnabled
+}
+
+// RTCTickPolicy implements config.VirtualMachineProfileTimersConfig.
+func (c *VirtualMachineProfileTimers) RTCTickPolicy() hypervisorhelpers.VirtualMachineProfileRTCTickPolicy {
+	if c.RTCConfig.TickPolicyConfig == hypervisorhelpers.VirtualMachineProfileRTCTickPolicyUnknown {
+		return hypervisorhelpers.DefaultVirtualMachineProfileRTCTickPolicy
+	}
+
+	return c.RTCConfig.TickPolicyConfig
+}
+
+// PITTickPolicy implements config.VirtualMachineProfileTimersConfig.
+func (c *VirtualMachineProfileTimers) PITTickPolicy() hypervisorhelpers.VirtualMachineProfilePITTickPolicy {
+	if c.PITConfig.TickPolicyConfig == hypervisorhelpers.VirtualMachineProfilePITTickPolicyUnknown {
+		return hypervisorhelpers.DefaultVirtualMachineProfilePITTickPolicy
+	}
+
+	return c.PITConfig.TickPolicyConfig
+}
+
 // Mode implements config.VirtualMachineProfileCPUConfig.
 func (c *VirtualMachineProfileCPU) Mode() hypervisorhelpers.VirtualMachineProfileCPUMode {
 	return c.ModeConfig
@@ -208,6 +308,10 @@ func (c *VirtualMachineProfileConfigV1Alpha1) Validate(validation.RuntimeMode, .
 	}()); err != nil {
 		errs = errors.Join(errs, err)
 	}
+
+	// The resolved policies are validated: an omitted or explicit "unknown" policy resolves to the
+	// default, so this only catches out-of-range values set by Go callers building the document.
+	errs = errors.Join(errs, hypervisorhelpers.ValidateVirtualMachineProfileTimers(c.TimersConfig.RTCTickPolicy(), c.TimersConfig.PITTickPolicy()))
 
 	return nil, errs
 }

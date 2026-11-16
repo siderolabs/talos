@@ -24,6 +24,11 @@ func TestVirtualMachineProfileResourceRoundTrip(t *testing.T) {
 	profile.TypedSpec().CPU.Model = "x86-64-v3"
 	profile.TypedSpec().CPU.Fallback = "forbid"
 	profile.TypedSpec().CPU.Features = []hypervisor.VirtualMachineProfileCPUFeatureSpec{{Name: "pku", Policy: hypervisorhelpers.VirtualMachineProfileCPUFeaturePolicyDisable}}
+	profile.TypedSpec().Timers = hypervisor.VirtualMachineProfileTimersSpec{
+		HPET:          true,
+		RTCTickPolicy: hypervisorhelpers.VirtualMachineProfileRTCTickPolicyDelay,
+		PITTickPolicy: hypervisorhelpers.VirtualMachineProfilePITTickPolicyDiscard,
+	}
 	encoded, err := protobuf.FromResource(profile)
 	require.NoError(t, err)
 	wire, err := encoded.Marshal()
@@ -37,4 +42,7 @@ func TestVirtualMachineProfileResourceRoundTrip(t *testing.T) {
 	require.NoError(t, err)
 	require.Contains(t, string(text), "mode: custom")
 	require.Contains(t, string(text), "policy: disable")
+	require.Contains(t, string(text), "hpet: true")
+	require.Contains(t, string(text), "rtcTickPolicy: delay")
+	require.Contains(t, string(text), "pitTickPolicy: discard")
 }

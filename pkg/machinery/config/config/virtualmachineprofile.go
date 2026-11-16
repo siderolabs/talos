@@ -12,6 +12,14 @@ type VirtualMachineProfileConfig interface {
 	VirtualMachineProfileConfigSignal()
 	Machine() string
 	CPU() VirtualMachineProfileCPUConfig
+	Timers() VirtualMachineProfileTimersConfig
+}
+
+// VirtualMachineProfileTimersConfig selects the platform timers exposed to a guest.
+type VirtualMachineProfileTimersConfig interface {
+	HPET() bool
+	RTCTickPolicy() hypervisorhelpers.VirtualMachineProfileRTCTickPolicy
+	PITTickPolicy() hypervisorhelpers.VirtualMachineProfilePITTickPolicy
 }
 
 // VirtualMachineProfileCPUConfig selects the CPU exposed to a guest.

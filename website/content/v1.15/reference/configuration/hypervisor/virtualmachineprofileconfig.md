@@ -1,7 +1,7 @@
 ---
 description: |
     VirtualMachineProfileConfig declares a named amd64 guest ABI.
-    Profiles bundle the guest machine type and CPU model. Use a versioned machine
+    Profiles bundle the guest machine type, CPU model and platform timers. Use a versioned machine
     type and a CPU baseline tested on every host for migration. Aliases drift as QEMU
     changes. A named CPU model is not a migration guarantee across arbitrary hosts.
 title: VirtualMachineProfileConfig
@@ -38,6 +38,7 @@ cpu:
 |`name` |string |Profile name. Builtin names and the compat- prefix are reserved.  | |
 |`machine` |string |q35 or i440fx machine family, preferably a versioned type.  | |
 |`cpu` |<a href="#VirtualMachineProfileConfig.cpu">VirtualMachineProfileCPU</a> |Guest CPU model and feature policy.  | |
+|`timers` |<a href="#VirtualMachineProfileConfig.timers">VirtualMachineProfileTimers</a> |Platform timers presented to the guest.<br><br>Optional; omitting it hides the HPET, the RTC catches up on missed ticks and the PIT delays them.  | |
 
 
 
@@ -70,6 +71,72 @@ VirtualMachineProfileCPUFeature selects one CPU flag.
 |-------|------|-------------|----------|
 |`name` |string |CPU feature name.  | |
 |`policy` |VirtualMachineProfileCPUFeaturePolicy |require, disable, optional, force or forbid.  |`require`<br />`disable`<br />`optional`<br />`force`<br />`forbid`<br /> |
+
+
+
+
+
+
+
+
+## timers {#VirtualMachineProfileConfig.timers}
+
+VirtualMachineProfileTimers selects the guest-visible platform timers.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`hpet` |<a href="#VirtualMachineProfileConfig.timers.hpet">VirtualMachineProfileHPET</a> |Emulated HPET settings.<br><br>Optional; the HPET is hidden from the guest when this section is omitted.  | |
+|`rtc` |<a href="#VirtualMachineProfileConfig.timers.rtc">VirtualMachineProfileRTC</a> |Emulated RTC settings.<br><br>Optional; the RTC catches up on missed ticks when this section is omitted.  | |
+|`pit` |<a href="#VirtualMachineProfileConfig.timers.pit">VirtualMachineProfilePIT</a> |Emulated PIT settings.<br><br>Optional; the PIT delays missed ticks when this section is omitted.  | |
+
+
+
+
+### hpet {#VirtualMachineProfileConfig.timers.hpet}
+
+VirtualMachineProfileHPET describes the emulated High Precision Event Timer.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`enabled` |bool |Present an emulated HPET to the guest.<br><br>Disabled by default: modern guests use kvm-clock and the local APIC timer, and the<br>emulated HPET keeps QEMU's main thread waking at the guest's tick rate even after the<br>guest has stopped using it. Enable it only for guests that require an HPET.<br><br>Optional; defaults to disabled.  | |
+
+
+
+
+
+
+### rtc {#VirtualMachineProfileConfig.timers.rtc}
+
+VirtualMachineProfileRTC describes the emulated real-time clock.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`tickPolicy` |VirtualMachineProfileRTCTickPolicy |How the RTC delivers ticks the guest missed while it was descheduled.<br><br>catchup delivers missed ticks at a higher rate until the guest catches up (QEMU driftfix=slew).<br>Guests without an HPET, such as Windows, keep time from the RTC and drift without it.<br>delay delivers missed ticks at the normal rate, so guest time falls behind.<br><br>Optional; defaults to catchup.  |`catchup`<br />`delay`<br /> |
+
+
+
+
+
+
+### pit {#VirtualMachineProfileConfig.timers.pit}
+
+VirtualMachineProfilePIT describes the emulated programmable interval timer.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`tickPolicy` |VirtualMachineProfilePITTickPolicy |How the in-kernel PIT delivers ticks the guest missed while it was descheduled.<br><br>delay delivers missed ticks at the normal rate. discard drops them.<br><br>Optional; defaults to delay.  |`delay`<br />`discard`<br /> |
 
 
 

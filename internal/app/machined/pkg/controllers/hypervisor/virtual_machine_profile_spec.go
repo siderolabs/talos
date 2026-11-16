@@ -126,6 +126,11 @@ func projectVirtualMachineProfile(profile configcfg.VirtualMachineProfileConfig)
 			Model:    cpu.Model(),
 			Fallback: cpu.Fallback(),
 		},
+		Timers: hypervisor.VirtualMachineProfileTimersSpec{
+			HPET:          profile.Timers().HPET(),
+			RTCTickPolicy: profile.Timers().RTCTickPolicy(),
+			PITTickPolicy: profile.Timers().PITTickPolicy(),
+		},
 	}
 	for _, feature := range cpu.Features() {
 		result.CPU.Features = append(result.CPU.Features, hypervisor.VirtualMachineProfileCPUFeatureSpec{

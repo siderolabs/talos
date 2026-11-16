@@ -16,6 +16,11 @@
     <acpi></acpi>
   </features>
   <cpu mode="host-model"></cpu>
+  <clock offset="utc">
+    <timer name="rtc" tickpolicy="catchup"></timer>
+    <timer name="pit" tickpolicy="delay"></timer>
+    <timer name="hpet" present="no"></timer>
+  </clock>
   <devices>
     <interface type="direct">
       <mac address="52:54:00:8b:86:cc"></mac>

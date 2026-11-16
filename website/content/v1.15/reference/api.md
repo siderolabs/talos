@@ -367,6 +367,8 @@ description: Talos gRPC API reference.
     - [HypervisorhelpersVirtualMachinePowerState](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachinePowerState)
     - [HypervisorhelpersVirtualMachineProfileCPUFeaturePolicy](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineProfileCPUFeaturePolicy)
     - [HypervisorhelpersVirtualMachineProfileCPUMode](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineProfileCPUMode)
+    - [HypervisorhelpersVirtualMachineProfilePITTickPolicy](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineProfilePITTickPolicy)
+    - [HypervisorhelpersVirtualMachineProfileRTCTickPolicy](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineProfileRTCTickPolicy)
     - [HypervisorhelpersVirtualMachineStage](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineStage)
     - [KubespanPeerState](#talos.resource.definitions.enums.KubespanPeerState)
     - [MachineType](#talos.resource.definitions.enums.MachineType)
@@ -568,6 +570,7 @@ description: Talos gRPC API reference.
     - [VirtualMachineProfileCPUFeatureSpec](#talos.resource.definitions.hypervisor.VirtualMachineProfileCPUFeatureSpec)
     - [VirtualMachineProfileCPUSpec](#talos.resource.definitions.hypervisor.VirtualMachineProfileCPUSpec)
     - [VirtualMachineProfileSpecSpec](#talos.resource.definitions.hypervisor.VirtualMachineProfileSpecSpec)
+    - [VirtualMachineProfileTimersSpec](#talos.resource.definitions.hypervisor.VirtualMachineProfileTimersSpec)
     - [VirtualMachineSpecSpec](#talos.resource.definitions.hypervisor.VirtualMachineSpecSpec)
     - [VirtualMachineStatusSpec](#talos.resource.definitions.hypervisor.VirtualMachineStatusSpec)
     - [VirtualMachineVCPUPinSpec](#talos.resource.definitions.hypervisor.VirtualMachineVCPUPinSpec)
@@ -6221,6 +6224,32 @@ HypervisorhelpersVirtualMachineProfileCPUMode selects the guest CPU exposure mod
 
 
 
+<a name="talos.resource.definitions.enums.HypervisorhelpersVirtualMachineProfilePITTickPolicy"></a>
+
+### HypervisorhelpersVirtualMachineProfilePITTickPolicy
+HypervisorhelpersVirtualMachineProfilePITTickPolicy selects how the emulated PIT delivers ticks the guest missed.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| VIRTUAL_MACHINE_PROFILE_PIT_TICK_POLICY_UNKNOWN | 0 |  |
+| VIRTUAL_MACHINE_PROFILE_PIT_TICK_POLICY_DELAY | 1 |  |
+| VIRTUAL_MACHINE_PROFILE_PIT_TICK_POLICY_DISCARD | 2 |  |
+
+
+
+<a name="talos.resource.definitions.enums.HypervisorhelpersVirtualMachineProfileRTCTickPolicy"></a>
+
+### HypervisorhelpersVirtualMachineProfileRTCTickPolicy
+HypervisorhelpersVirtualMachineProfileRTCTickPolicy selects how the emulated RTC delivers ticks the guest missed.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| VIRTUAL_MACHINE_PROFILE_RTC_TICK_POLICY_UNKNOWN | 0 |  |
+| VIRTUAL_MACHINE_PROFILE_RTC_TICK_POLICY_CATCHUP | 1 |  |
+| VIRTUAL_MACHINE_PROFILE_RTC_TICK_POLICY_DELAY | 2 |  |
+
+
+
 <a name="talos.resource.definitions.enums.HypervisorhelpersVirtualMachineStage"></a>
 
 ### HypervisorhelpersVirtualMachineStage
@@ -9993,6 +10022,24 @@ VirtualMachineProfileSpecSpec is the spec for VirtualMachineProfileSpec.
 | builtin | [bool](#bool) |  |  |
 | machine | [string](#string) |  |  |
 | cpu | [VirtualMachineProfileCPUSpec](#talos.resource.definitions.hypervisor.VirtualMachineProfileCPUSpec) |  |  |
+| timers | [VirtualMachineProfileTimersSpec](#talos.resource.definitions.hypervisor.VirtualMachineProfileTimersSpec) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.hypervisor.VirtualMachineProfileTimersSpec"></a>
+
+### VirtualMachineProfileTimersSpec
+VirtualMachineProfileTimersSpec defines the guest-visible platform timers.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| hpet | [bool](#bool) |  |  |
+| rtc_tick_policy | [talos.resource.definitions.enums.HypervisorhelpersVirtualMachineProfileRTCTickPolicy](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineProfileRTCTickPolicy) |  |  |
+| pit_tick_policy | [talos.resource.definitions.enums.HypervisorhelpersVirtualMachineProfilePITTickPolicy](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineProfilePITTickPolicy) |  |  |
 
 
 

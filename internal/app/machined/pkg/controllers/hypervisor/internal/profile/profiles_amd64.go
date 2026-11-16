@@ -12,6 +12,7 @@ import (
 )
 
 // Profiles returns the stable builtin catalog in name order.
+// Builtin profiles use the default timers, so changing a default changes every builtin guest's ABI.
 // Each call returns fresh resources so callers cannot modify the catalog.
 func Profiles() []*hypervisor.VirtualMachineProfileSpec {
 	host := hypervisor.NewVirtualMachineProfileSpec(hypervisor.NamespaceName, "host")
@@ -21,6 +22,7 @@ func Profiles() []*hypervisor.VirtualMachineProfileSpec {
 		CPU: hypervisor.VirtualMachineProfileCPUSpec{
 			Mode: hypervisorhelpers.VirtualMachineProfileCPUModeHostModel,
 		},
+		Timers: hypervisor.DefaultVirtualMachineProfileTimersSpec(),
 	}
 
 	// Legacy exposes a deliberately limited CPU baseline and traditional PC chipset.
@@ -34,6 +36,7 @@ func Profiles() []*hypervisor.VirtualMachineProfileSpec {
 			Model:    "kvm64",
 			Fallback: "forbid",
 		},
+		Timers: hypervisor.DefaultVirtualMachineProfileTimersSpec(),
 	}
 
 	passthrough := hypervisor.NewVirtualMachineProfileSpec(hypervisor.NamespaceName, "passthrough")
@@ -43,6 +46,7 @@ func Profiles() []*hypervisor.VirtualMachineProfileSpec {
 		CPU: hypervisor.VirtualMachineProfileCPUSpec{
 			Mode: hypervisorhelpers.VirtualMachineProfileCPUModeHostPassthrough,
 		},
+		Timers: hypervisor.DefaultVirtualMachineProfileTimersSpec(),
 	}
 
 	return []*hypervisor.VirtualMachineProfileSpec{

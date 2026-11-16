@@ -788,6 +788,8 @@ func renderVirtualMachineDomain(
 		}
 	}
 
+	domain.Clock = renderVirtualMachineClock(profile.Timers)
+
 	if topology := spec.CPU.Topology; topology != nil {
 		domain.CPU.Topology = &libvirtxml.DomainCPUTopology{
 			Sockets: int(topology.Sockets),
@@ -840,6 +842,22 @@ func renderVirtualMachineDomain(
 	}
 
 	return domainXML, attachedDisks, nil
+}
+
+// renderVirtualMachineClock renders the profile's platform timers.
+//
+// All timer settings come from the profile, so they are part of its guest ABI. The defaults
+// (RTC catchup, PIT delay, HPET hidden) follow virt-install's x86 KVM defaults; see
+// VirtualMachineProfileTimers in the config document for the rationale.
+func renderVirtualMachineClock(timers hypervisor.VirtualMachineProfileTimersSpec) *libvirtxml.DomainClock {
+	return &libvirtxml.DomainClock{
+		Offset: "utc",
+		Timer: []libvirtxml.DomainTimer{
+			{Name: "rtc", TickPolicy: timers.RTCTickPolicy.String()},
+			{Name: "pit", TickPolicy: timers.PITTickPolicy.String()},
+			{Name: "hpet", Present: libvirtYesNo(timers.HPET)},
+		},
+	}
 }
 
 func renderVirtualMachineConsole(domain *libvirtxml.Domain, console hypervisor.VirtualMachineConsoleSpec, video hypervisor.VirtualMachineVideoSpec) {
@@ -927,10 +945,7 @@ func renderVirtualMachineFirmware(domain *libvirtxml.Domain, firmware hypervisor
 
 	domain.OS.Firmware = "efi"
 
-	enabled := "no"
-	if firmware.SecureBoot {
-		enabled = "yes"
-	}
+	enabled := libvirtYesNo(firmware.SecureBoot)
 
 	domain.OS.FirmwareInfo = &libvirtxml.DomainOSFirmwareInfo{
 		Features: []libvirtxml.DomainOSFirmwareFeature{
@@ -1486,4 +1501,13 @@ func (a targetDevAllocator) allocate(bus string) (string, error) {
 	a[prefix] = index + 1
 
 	return prefix + string(rune('a'+index)), nil
+}
+
+// libvirtYesNo formats a bool as libvirt's yes/no attribute value.
+func libvirtYesNo(value bool) string {
+	if value {
+		return "yes"
+	}
+
+	return "no"
 }

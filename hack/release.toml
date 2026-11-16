@@ -935,6 +935,15 @@ Profiles are validated structurally only: Talos does not check that the host CPU
 Profile changes, including switching a VM to a different profile, are not applied to running guests;
 they take effect on the next deliberate stop and start of the virtual machine.
 Hardware profiles are currently available only on amd64.
+
+The emulated HPET is hidden from guests by default: on idle guests it keeps QEMU's main thread waking
+at the guest's tick rate and wastes host CPU. Guests that need an HPET can enable it in a custom profile
+with `timers.hpet.enabled: true`. Guests also get virt-install's RTC and PIT tick policies by default
+(RTC `catchup`, PIT `delay`); a custom profile can override them with `timers.rtc.tickPolicy` (`catchup` or `delay`)
+and `timers.pit.tickPolicy` (`delay` or `discard`).
+This also changes the builtin profiles (`host`, `legacy`, `passthrough`) and existing custom profiles without `timers`;
+the new timers apply on the next stop and start of the virtual machine. Builtin profiles cannot re-enable the HPET:
+use a custom profile with the same `machine` and `cpu` and `timers.hpet.enabled: true` instead.
 """
 
     [notes.ethernet_flow_control]

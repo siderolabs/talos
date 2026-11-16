@@ -44,6 +44,14 @@ func TestProfileIndependentDefinitionDigest(t *testing.T) {
 				Threads: 1,
 			},
 		},
+		Clock: &libvirtxml.DomainClock{
+			Offset: "utc",
+			Timer: []libvirtxml.DomainTimer{
+				{Name: "rtc", TickPolicy: "catchup"},
+				{Name: "pit", TickPolicy: "delay"},
+				{Name: "hpet", Present: "yes"},
+			},
+		},
 	}
 	xml, err := original.Marshal()
 	require.NoError(t, err)
@@ -78,6 +86,42 @@ func TestProfileIndependentDefinitionDigest(t *testing.T) {
 						Policy: "require",
 					},
 				}
+			},
+		},
+		{
+			name:        "hpet",
+			profileOnly: true,
+			mutate: func(definition *libvirtxml.Domain) {
+				definition.Clock.Timer[2].Present = "no"
+			},
+		},
+		{
+			name:        "clock-offset",
+			profileOnly: true,
+			mutate: func(definition *libvirtxml.Domain) {
+				definition.Clock.Offset = "localtime"
+			},
+		},
+		{
+			// Domains defined before profile timers existed carry no <clock>.
+			name:        "clock-absent",
+			profileOnly: true,
+			mutate: func(definition *libvirtxml.Domain) {
+				definition.Clock = nil
+			},
+		},
+		{
+			name:        "rtc-tickpolicy",
+			profileOnly: true,
+			mutate: func(definition *libvirtxml.Domain) {
+				definition.Clock.Timer[0].TickPolicy = "delay"
+			},
+		},
+		{
+			name:        "pit-tickpolicy",
+			profileOnly: true,
+			mutate: func(definition *libvirtxml.Domain) {
+				definition.Clock.Timer[1].TickPolicy = "discard"
 			},
 		},
 		{

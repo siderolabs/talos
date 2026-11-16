@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -363,6 +364,8 @@ func (suite *LibvirtSuite) TestAlpineBuiltinProfiles() {
 					asrt.Equal("x86_64", domain.OS.Type.Arch)
 					asrt.Equal(test.machine, domain.OS.Type.Machine)
 					asrt.Equal(test.cpuMode.String(), domain.CPU.Mode)
+					asrt.Equal(defaultAlpineClock(), domain.Clock,
+						"builtin profiles must hide the HPET and use the default tick policies")
 
 					if test.model == "" {
 						asrt.Nil(domain.CPU.Model, "host CPU mode must not pin a literal model")
@@ -395,9 +398,84 @@ func (suite *LibvirtSuite) TestAlpineBuiltinProfiles() {
 			suite.Require().NoError(console.expectAfter(start, []byte("localhost:~#")))
 
 			suite.assertAlpineCPU(console)
+			suite.assertLiveClock(node, doc.Name(), defaultAlpineClock())
+			suite.assertAlpineHPET(console, false)
 			suite.detachAlpineConsole(console)
 		})
 	}
+}
+
+// expectedAlpineClock is the clock a rendered domain carries; values are libvirt attribute values.
+func expectedAlpineClock(rtcTickPolicy, pitTickPolicy, hpetPresent string) *libvirtxml.DomainClock {
+	return &libvirtxml.DomainClock{
+		Offset: "utc",
+		Timer: []libvirtxml.DomainTimer{
+			{Name: "rtc", TickPolicy: rtcTickPolicy},
+			{Name: "pit", TickPolicy: pitTickPolicy},
+			{Name: "hpet", Present: hpetPresent},
+		},
+	}
+}
+
+// defaultAlpineClock is the clock of a profile without timer settings. The HPET is spelled out
+// rather than derived: hiding it by default is the behavior under test.
+func defaultAlpineClock() *libvirtxml.DomainClock {
+	return expectedAlpineClock(
+		hypervisorhelpers.DefaultVirtualMachineProfileRTCTickPolicy.String(),
+		hypervisorhelpers.DefaultVirtualMachineProfilePITTickPolicy.String(),
+		"no",
+	)
+}
+
+// assertLiveClock checks the timers of the domain libvirt is actually running.
+// Only the tick policy and presence are compared: libvirt may add other attributes to live XML.
+func (suite *LibvirtSuite) assertLiveClock(node, name string, want *libvirtxml.DomainClock) {
+	suite.T().Helper()
+
+	var domain libvirtxml.Domain
+
+	suite.Require().NoError(domain.Unmarshal(suite.runVirsh(node, "dumpxml", name)))
+	suite.Require().NotNil(domain.Clock, "live domain has no clock element")
+
+	for _, expected := range want.Timer {
+		idx := slices.IndexFunc(domain.Clock.Timer, func(timer libvirtxml.DomainTimer) bool {
+			return timer.Name == expected.Name
+		})
+		suite.Require().GreaterOrEqual(idx, 0, "live domain has no %s timer; clock: %+v", expected.Name, domain.Clock)
+
+		live := domain.Clock.Timer[idx]
+		suite.Require().Equal(expected.TickPolicy, live.TickPolicy, "live %s tick policy", expected.Name)
+		suite.Require().Equal(expected.Present, live.Present, "live %s presence", expected.Name)
+	}
+}
+
+// assertAlpineHPET checks HPET visibility from inside the guest rather than inferring it from XML.
+// Only the ACPI HPET table is checked: QEMU publishes it exactly when it emulates an HPET, while
+// whether the kernel also registers an hpet clocksource depends on its config and quirks.
+func (suite *LibvirtSuite) assertAlpineHPET(console *alpineConsole, present bool) {
+	suite.T().Helper()
+
+	// The expanded status and terminating delimiter are absent from echoed input.
+	nonce := strings.ReplaceAll(uuid.NewString(), "-", "")
+	start := console.mark()
+	suite.Require().NoError(console.send(fmt.Sprintf(
+		"test -e /sys/firmware/acpi/tables/HPET; table=$?; "+
+			"printf '\\nHPET_EXIT_%%s_%%s_END\\n' '%s' \"$table\"\n",
+		nonce,
+	)))
+	prefix := "\r\nHPET_EXIT_" + nonce + "_"
+	suite.Require().NoError(console.expectAfter(start, []byte(prefix)))
+	completion := start + bytes.Index(console.transcript[start:], []byte(prefix)) + len(prefix)
+	suite.Require().NoError(console.expectAfter(completion, []byte("_END\r\n")))
+
+	got, _, _ := strings.Cut(string(console.transcript[completion:]), "_END\r\n")
+
+	want := "1"
+	if present {
+		want = "0"
+	}
+
+	suite.Require().Equal(want, got, "guest ACPI HPET table status")
 }
 
 // assertAlpineCPU checks the guest rather than inferring its ABI from rendered XML.
@@ -621,6 +699,129 @@ func (suite *LibvirtSuite) TestAlpineProfileSwitch() {
 		bootID, guestMarker = nextBootID, nextMarker
 	}
 
+	suite.detachAlpineConsole(console)
+}
+
+// TestAlpineCustomProfileTimers boots a guest on a custom profile that enables the HPET and uses the
+// non-default tick policies, proving libvirt and QEMU accept them. It then resets the profile timers
+// to their defaults and checks the change lands only after a stop/start.
+func (suite *LibvirtSuite) TestAlpineCustomProfileTimers() {
+	node, nodeCtx := suite.requireAlpineGuestNode()
+
+	profile := hypervisorcfg.NewVirtualMachineProfileConfigV1Alpha1()
+	profile.MetaName = "hpet-" + strings.ReplaceAll(uuid.NewString(), "-", "")[:16]
+	profile.MachineConfig = "q35"
+	profile.CPUConfig.ModeConfig = hypervisorhelpers.VirtualMachineProfileCPUModeHostModel
+	profile.TimersConfig.HPETConfig.HPETEnabled = new(true)
+	profile.TimersConfig.RTCConfig.TickPolicyConfig = hypervisorhelpers.VirtualMachineProfileRTCTickPolicyDelay
+	profile.TimersConfig.PITConfig.TickPolicyConfig = hypervisorhelpers.VirtualMachineProfilePITTickPolicyDiscard
+
+	// Registered before the guest so it runs after the guest's own cleanup: the guest restores a
+	// config snapshot taken after this patch, which still contains the profile.
+	suite.T().Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer cancel()
+
+		cleanupCtx := client.WithNode(ctx, node)
+		suite.RemoveMachineConfigDocumentsByName(cleanupCtx, hypervisorcfg.VirtualMachineProfileConfigKind, profile.Name())
+		rtestutils.AssertNoResource[*hypervisor.VirtualMachineProfileSpec](cleanupCtx, suite.T(), suite.Client.State(), profile.Name())
+	})
+
+	suite.PatchMachineConfig(nodeCtx, profile)
+
+	custom := expectedAlpineClock("delay", "discard", "yes")
+	defaults := defaultAlpineClock()
+
+	assertProfile := func(want hypervisor.VirtualMachineProfileTimersSpec) {
+		suite.T().Helper()
+
+		rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), profile.Name(),
+			func(spec *hypervisor.VirtualMachineProfileSpec, asrt *assert.Assertions) {
+				asrt.False(spec.TypedSpec().Builtin)
+				asrt.Equal(want, spec.TypedSpec().Timers)
+			})
+	}
+
+	assertProfile(hypervisor.VirtualMachineProfileTimersSpec{
+		HPET:          true,
+		RTCTickPolicy: hypervisorhelpers.VirtualMachineProfileRTCTickPolicyDelay,
+		PITTickPolicy: hypervisorhelpers.VirtualMachineProfilePITTickPolicyDiscard,
+	})
+
+	doc := suite.prepareAlpineGuestOnNode(node, nodeCtx, nil, 512<<20, profile.Name())
+	name := doc.Name()
+
+	suite.T().Cleanup(func() {
+		if suite.T().Failed() {
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+
+			suite.T().Logf("timers profile VM log: %q", suite.vmLogSnapshot(client.WithNode(ctx, node), name, 200))
+		}
+	})
+
+	assertRendered := func(power string, clock *libvirtxml.DomainClock) {
+		suite.T().Helper()
+
+		rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), name,
+			func(spec *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+				asrt.Equal(power, spec.TypedSpec().PowerState)
+
+				var domain libvirtxml.Domain
+				if asrt.NoError(domain.Unmarshal(spec.TypedSpec().DomainXML)) {
+					asrt.Equal(clock, domain.Clock)
+				}
+			})
+	}
+
+	assertRendered("running", custom)
+	suite.assertLiveClock(node, name, custom)
+
+	console := suite.loginAlpineConsole(nodeCtx, name)
+	consoles := make([]*alpineConsole, 0, 2)
+	consoles = append(consoles, console)
+
+	defer func() {
+		for _, attached := range consoles {
+			if suite.T().Failed() {
+				suite.T().Logf("timers profile bounded Alpine console transcript: %q", attached.transcript)
+			}
+
+			attached.cancel()
+		}
+	}()
+
+	suite.assertAlpineHPET(console, true)
+
+	// Setting the profile timers back to the defaults moves the desired XML but must not touch the running guest.
+	// The values are set explicitly: the document is applied as a merge patch, so omitting a field would
+	// keep its previous value instead of resetting it.
+	beforeID := suite.runVirsh(node, "domid", name)
+	profile.TimersConfig.HPETConfig.HPETEnabled = new(hypervisorhelpers.DefaultVirtualMachineProfileHPET)
+	profile.TimersConfig.RTCConfig.TickPolicyConfig = hypervisorhelpers.DefaultVirtualMachineProfileRTCTickPolicy
+	profile.TimersConfig.PITConfig.TickPolicyConfig = hypervisorhelpers.DefaultVirtualMachineProfilePITTickPolicy
+	suite.PatchMachineConfig(nodeCtx, profile)
+	assertProfile(hypervisor.DefaultVirtualMachineProfileTimersSpec())
+	assertRendered("running", defaults)
+	suite.Require().Equal(beforeID, suite.runVirsh(node, "domid", name))
+	suite.assertLiveClock(node, name, custom)
+	suite.assertAlpineHPET(console, true)
+	suite.detachAlpineConsole(console)
+
+	doc.PowerStateConfig = hypervisorhelpers.PowerStateStopped
+	suite.PatchMachineConfig(nodeCtx, doc)
+	assertRendered("stopped", defaults)
+	suite.assertStoppedDomain(nodeCtx, node, name)
+
+	doc.PowerStateConfig = hypervisorhelpers.PowerStateRunning
+	suite.PatchMachineConfig(nodeCtx, doc)
+	assertRendered("running", defaults)
+	suite.assertRunningTransientDomainWithDevices(node, name, 1, 1, 0)
+	suite.assertLiveClock(node, name, defaults)
+
+	console = suite.loginAlpineConsole(nodeCtx, name)
+	consoles = append(consoles, console)
+	suite.assertAlpineHPET(console, false)
 	suite.detachAlpineConsole(console)
 }
 

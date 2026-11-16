@@ -111,5 +111,9 @@ func (o *VirtualMachineProfileConfigV1Alpha1) DeepCopy() *VirtualMachineProfileC
 		cp.CPUConfig.FeaturesConfig = make([]VirtualMachineProfileCPUFeature, len(o.CPUConfig.FeaturesConfig))
 		copy(cp.CPUConfig.FeaturesConfig, o.CPUConfig.FeaturesConfig)
 	}
+	if o.TimersConfig.HPETConfig.HPETEnabled != nil {
+		cp.TimersConfig.HPETConfig.HPETEnabled = new(bool)
+		*cp.TimersConfig.HPETConfig.HPETEnabled = *o.TimersConfig.HPETConfig.HPETEnabled
+	}
 	return &cp
 }

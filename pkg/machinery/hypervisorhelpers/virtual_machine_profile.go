@@ -74,6 +74,43 @@ func validateVirtualMachineProfileExposure(mode VirtualMachineProfileCPUMode, mo
 	return errs
 }
 
+// Profile timer defaults, applied when a profile omits a timer setting and used by every builtin profile.
+// They follow virt-install's x86 KVM defaults. Changing one changes the guest ABI of every such profile.
+const (
+	// DefaultVirtualMachineProfileHPET hides the emulated HPET: QEMU keeps its periodic timer running
+	// after the guest stops using it, waking the main thread at the guest's tick rate.
+	DefaultVirtualMachineProfileHPET = false
+	// DefaultVirtualMachineProfileRTCTickPolicy catches up on missed RTC ticks: guests without an HPET,
+	// such as Windows, keep time from the RTC and would otherwise drift.
+	DefaultVirtualMachineProfileRTCTickPolicy = VirtualMachineProfileRTCTickPolicyCatchup
+	// DefaultVirtualMachineProfilePITTickPolicy delays missed PIT ticks, the in-kernel KVM PIT's default.
+	DefaultVirtualMachineProfilePITTickPolicy = VirtualMachineProfilePITTickPolicyDelay
+)
+
+// ValidateVirtualMachineProfileTimers checks resolved timer tick policies.
+// Unknown is rejected: profile specs always carry an explicit policy.
+func ValidateVirtualMachineProfileTimers(rtc VirtualMachineProfileRTCTickPolicy, pit VirtualMachineProfilePITTickPolicy) error {
+	var errs error
+
+	switch rtc {
+	case VirtualMachineProfileRTCTickPolicyCatchup, VirtualMachineProfileRTCTickPolicyDelay:
+	case VirtualMachineProfileRTCTickPolicyUnknown:
+		fallthrough
+	default:
+		errs = errors.Join(errs, fmt.Errorf("timers.rtc.tickPolicy %q must be catchup or delay", rtc.String()))
+	}
+
+	switch pit {
+	case VirtualMachineProfilePITTickPolicyDelay, VirtualMachineProfilePITTickPolicyDiscard:
+	case VirtualMachineProfilePITTickPolicyUnknown:
+		fallthrough
+	default:
+		errs = errors.Join(errs, fmt.Errorf("timers.pit.tickPolicy %q must be delay or discard", pit.String()))
+	}
+
+	return errs
+}
+
 func validateVirtualMachineProfileFeatures(features []VirtualMachineProfileFeature) error {
 	var errs error
 

@@ -20,6 +20,11 @@
     <feature policy="force" name="hypervisor"></feature>
     <feature policy="forbid" name="vmx"></feature>
   </cpu>
+  <clock offset="utc">
+    <timer name="rtc" tickpolicy="catchup"></timer>
+    <timer name="pit" tickpolicy="delay"></timer>
+    <timer name="hpet" present="no"></timer>
+  </clock>
   <devices>
     <channel type="unix">
       <source mode="bind"></source>

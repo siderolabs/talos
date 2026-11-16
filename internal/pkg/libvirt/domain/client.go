@@ -493,7 +493,8 @@ func setSerialCapture(desc *libvirtxml.Domain, id uuid.UUID) {
 	}
 }
 
-// profileIndependentDigest excludes only fields controlled by a hardware profile.
+// profileIndependentDigest excludes only fields controlled by a hardware profile
+// (machine type, CPU model and features, platform timers).
 // Topology, vCPU count, tuning, memory, devices and all other VM intent remain in
 // this digest so a profile edit cannot hide an unrelated definition change.
 func profileIndependentDigest(desc libvirtxml.Domain) (string, error) {
@@ -515,6 +516,10 @@ func profileIndependentDigest(desc libvirtxml.Domain) (string, error) {
 		cpu.Features = nil
 		desc.CPU = &cpu
 	}
+
+	// Clock holds only the profile's timers and a fixed offset. Domains defined before
+	// timers existed carry no <clock>, so it must not reach the digest at all.
+	desc.Clock = nil
 
 	canonical, err := desc.Marshal()
 	if err != nil {

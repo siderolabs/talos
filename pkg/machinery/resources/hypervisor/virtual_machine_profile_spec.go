@@ -24,9 +24,28 @@ type VirtualMachineProfileSpec = typed.Resource[VirtualMachineProfileSpecSpec, V
 //
 //gotagsrewrite:gen
 type VirtualMachineProfileSpecSpec struct {
-	Builtin bool                         `yaml:"builtin" protobuf:"1"`
-	Machine string                       `yaml:"machine" protobuf:"2"`
-	CPU     VirtualMachineProfileCPUSpec `yaml:"cpu" protobuf:"3"`
+	Builtin bool                            `yaml:"builtin" protobuf:"1"`
+	Machine string                          `yaml:"machine" protobuf:"2"`
+	CPU     VirtualMachineProfileCPUSpec    `yaml:"cpu" protobuf:"3"`
+	Timers  VirtualMachineProfileTimersSpec `yaml:"timers" protobuf:"4"`
+}
+
+// VirtualMachineProfileTimersSpec defines the guest-visible platform timers.
+//
+//gotagsrewrite:gen
+type VirtualMachineProfileTimersSpec struct {
+	HPET          bool                                                 `yaml:"hpet" protobuf:"1"`
+	RTCTickPolicy hypervisorhelpers.VirtualMachineProfileRTCTickPolicy `yaml:"rtcTickPolicy" protobuf:"2"`
+	PITTickPolicy hypervisorhelpers.VirtualMachineProfilePITTickPolicy `yaml:"pitTickPolicy" protobuf:"3"`
+}
+
+// DefaultVirtualMachineProfileTimersSpec returns the timers of a profile that sets none.
+func DefaultVirtualMachineProfileTimersSpec() VirtualMachineProfileTimersSpec {
+	return VirtualMachineProfileTimersSpec{
+		HPET:          hypervisorhelpers.DefaultVirtualMachineProfileHPET,
+		RTCTickPolicy: hypervisorhelpers.DefaultVirtualMachineProfileRTCTickPolicy,
+		PITTickPolicy: hypervisorhelpers.DefaultVirtualMachineProfilePITTickPolicy,
+	}
 }
 
 // VirtualMachineProfileCPUSpec defines a guest-visible CPU model.

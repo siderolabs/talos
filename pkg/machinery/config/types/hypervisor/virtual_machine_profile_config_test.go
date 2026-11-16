@@ -38,6 +38,18 @@ func TestVirtualMachineProfileEnumDocValues(t *testing.T) {
 			field:    "policy",
 			expected: hypervisorhelpers.NameableValues(hypervisorhelpers.VirtualMachineProfileCPUFeaturePolicyStrings()),
 		},
+		{
+			name:     "RTC tick policy",
+			doc:      hypervisor.VirtualMachineProfileRTC{}.Doc(),
+			field:    "tickPolicy",
+			expected: hypervisorhelpers.NameableValues(hypervisorhelpers.VirtualMachineProfileRTCTickPolicyStrings()),
+		},
+		{
+			name:     "PIT tick policy",
+			doc:      hypervisor.VirtualMachineProfilePIT{}.Doc(),
+			field:    "tickPolicy",
+			expected: hypervisorhelpers.NameableValues(hypervisorhelpers.VirtualMachineProfilePITTickPolicyStrings()),
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
@@ -71,6 +83,191 @@ cpu:
 	require.Equal(t, hypervisorhelpers.VirtualMachineProfileCPUModeCustom, profile.CPU().Mode())
 	require.Equal(t, "x86-64-v3", profile.CPU().Model())
 	require.Equal(t, hypervisorhelpers.VirtualMachineProfileCPUFeaturePolicyDisable, profile.CPU().Features()[0].Policy())
+	require.False(t, profile.Timers().HPET())
+}
+
+const profileWithTimers = `apiVersion: v1alpha1
+kind: VirtualMachineProfileConfig
+name: rack-a
+machine: q35
+cpu:
+  mode: host-model
+`
+
+func TestVirtualMachineProfileTimers(t *testing.T) {
+	t.Parallel()
+
+	const (
+		catchup = hypervisorhelpers.DefaultVirtualMachineProfileRTCTickPolicy
+		delay   = hypervisorhelpers.DefaultVirtualMachineProfilePITTickPolicy
+	)
+
+	for _, test := range []struct {
+		name   string
+		timers string
+		hpet   bool
+		rtc    hypervisorhelpers.VirtualMachineProfileRTCTickPolicy
+		pit    hypervisorhelpers.VirtualMachineProfilePITTickPolicy
+	}{
+		{name: "omitted", rtc: catchup, pit: delay},
+		{name: "empty-sections", timers: "timers:\n  hpet: {}\n  rtc: {}\n  pit: {}\n", rtc: catchup, pit: delay},
+		{name: "hpet-disabled", timers: "timers:\n  hpet:\n    enabled: false\n", rtc: catchup, pit: delay},
+		{name: "hpet-enabled", timers: "timers:\n  hpet:\n    enabled: true\n", hpet: true, rtc: catchup, pit: delay},
+		{
+			name:   "explicit-defaults",
+			timers: "timers:\n  rtc:\n    tickPolicy: catchup\n  pit:\n    tickPolicy: delay\n",
+			rtc:    catchup,
+			pit:    delay,
+		},
+		{
+			name:   "overrides",
+			timers: "timers:\n  rtc:\n    tickPolicy: delay\n  pit:\n    tickPolicy: discard\n",
+			rtc:    hypervisorhelpers.VirtualMachineProfileRTCTickPolicyDelay,
+			pit:    hypervisorhelpers.VirtualMachineProfilePITTickPolicyDiscard,
+		},
+		// "unknown" is the enum's zero value, so it is indistinguishable from an omitted field and
+		// resolves to the default rather than being rejected.
+		{
+			name:   "explicit-unknown",
+			timers: "timers:\n  rtc:\n    tickPolicy: unknown\n  pit:\n    tickPolicy: unknown\n",
+			rtc:    catchup,
+			pit:    delay,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			provider, err := configloader.NewFromBytes([]byte(profileWithTimers + test.timers))
+			require.NoError(t, err)
+			require.Len(t, provider.VirtualMachineProfileConfigs(), 1)
+
+			timers := provider.VirtualMachineProfileConfigs()[0].Timers()
+			require.Equal(t, test.hpet, timers.HPET())
+			require.Equal(t, test.rtc, timers.RTCTickPolicy())
+			require.Equal(t, test.pit, timers.PITTickPolicy())
+		})
+	}
+}
+
+func TestVirtualMachineProfileTimersInvalid(t *testing.T) {
+	t.Parallel()
+
+	// QEMU supports neither merge nor discard for the RTC, nor catchup or merge for the in-kernel PIT.
+	// These fail while decoding: they are not values of the respective enums.
+	for _, test := range []struct {
+		name   string
+		timers string
+	}{
+		{name: "rtc-discard", timers: "timers:\n  rtc:\n    tickPolicy: discard\n"},
+		{name: "rtc-merge", timers: "timers:\n  rtc:\n    tickPolicy: merge\n"},
+		{name: "pit-catchup", timers: "timers:\n  pit:\n    tickPolicy: catchup\n"},
+		{name: "pit-merge", timers: "timers:\n  pit:\n    tickPolicy: merge\n"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			_, err := configloader.NewFromBytes([]byte(profileWithTimers + test.timers))
+			require.ErrorContains(t, err, "does not belong to")
+		})
+	}
+}
+
+// Out-of-range values cannot come from YAML, only from Go callers building the document directly.
+func TestVirtualMachineProfileTimersValidate(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name   string
+		mutate func(*hypervisor.VirtualMachineProfileTimers)
+		want   string
+	}{
+		{
+			name: "rtc",
+			mutate: func(timers *hypervisor.VirtualMachineProfileTimers) {
+				timers.RTCConfig.TickPolicyConfig = hypervisorhelpers.VirtualMachineProfileRTCTickPolicy(99)
+			},
+			want: "timers.rtc.tickPolicy",
+		},
+		{
+			name: "pit",
+			mutate: func(timers *hypervisor.VirtualMachineProfileTimers) {
+				timers.PITConfig.TickPolicyConfig = hypervisorhelpers.VirtualMachineProfilePITTickPolicy(99)
+			},
+			want: "timers.pit.tickPolicy",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := hypervisor.NewVirtualMachineProfileConfigV1Alpha1()
+			cfg.MetaName = "rack-a"
+			cfg.MachineConfig = "q35"
+			cfg.CPUConfig.ModeConfig = hypervisorhelpers.VirtualMachineProfileCPUModeHostModel
+
+			_, err := cfg.Validate(validationMode{})
+			require.NoError(t, err)
+
+			test.mutate(&cfg.TimersConfig)
+
+			_, err = cfg.Validate(validationMode{})
+			require.ErrorContains(t, err, test.want)
+		})
+	}
+}
+
+func TestVirtualMachineProfileTimersRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name     string
+		timers   hypervisor.VirtualMachineProfileTimers
+		contains []string
+		omits    []string
+	}{
+		{
+			name:  "defaults-omitted",
+			omits: []string{"timers:", "tickPolicy:"},
+		},
+		{
+			name: "overrides",
+			timers: hypervisor.VirtualMachineProfileTimers{
+				HPETConfig: hypervisor.VirtualMachineProfileHPET{HPETEnabled: new(true)},
+				RTCConfig:  hypervisor.VirtualMachineProfileRTC{TickPolicyConfig: hypervisorhelpers.VirtualMachineProfileRTCTickPolicyDelay},
+				PITConfig:  hypervisor.VirtualMachineProfilePIT{TickPolicyConfig: hypervisorhelpers.VirtualMachineProfilePITTickPolicyDiscard},
+			},
+			contains: []string{"enabled: true", "tickPolicy: delay", "tickPolicy: discard"},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := hypervisor.NewVirtualMachineProfileConfigV1Alpha1()
+			cfg.MetaName = "rack-a"
+			cfg.MachineConfig = "q35"
+			cfg.CPUConfig.ModeConfig = hypervisorhelpers.VirtualMachineProfileCPUModeHostModel
+			cfg.TimersConfig = test.timers
+
+			encoded, err := encoder.NewEncoder(cfg, encoder.WithComments(encoder.CommentsDisabled)).Encode()
+			require.NoError(t, err)
+
+			for _, want := range test.contains {
+				require.Contains(t, string(encoded), want)
+			}
+
+			for _, unwanted := range test.omits {
+				require.NotContains(t, string(encoded), unwanted)
+			}
+
+			provider, err := configloader.NewFromBytes(encoded)
+			require.NoError(t, err)
+			require.Len(t, provider.VirtualMachineProfileConfigs(), 1)
+
+			decoded := provider.VirtualMachineProfileConfigs()[0].Timers()
+			require.Equal(t, cfg.TimersConfig.HPET(), decoded.HPET())
+			require.Equal(t, cfg.TimersConfig.RTCTickPolicy(), decoded.RTCTickPolicy())
+			require.Equal(t, cfg.TimersConfig.PITTickPolicy(), decoded.PITTickPolicy())
+		})
+	}
 }
 
 func TestVirtualMachineProfileEnumRoundTrip(t *testing.T) {

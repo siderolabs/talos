@@ -629,6 +629,7 @@ func (suite *VirtualMachineSpecSuite) TestProfileUpdatesReplaceGuestHardware() {
 				},
 			},
 		},
+		Timers: hypervisor.DefaultVirtualMachineProfileTimersSpec(),
 	}
 	suite.Create(profile)
 
@@ -715,6 +716,7 @@ func (suite *VirtualMachineSpecSuite) TestProfileUpdatesReplaceGuestHardware() {
 					},
 				},
 			},
+			Timers: hypervisor.DefaultVirtualMachineProfileTimersSpec(),
 		}
 
 		return nil
@@ -823,6 +825,7 @@ func (suite *VirtualMachineSpecSuite) TestProfileRendersGuestHardwareAndMissingP
 				},
 			},
 		},
+		Timers: hypervisor.DefaultVirtualMachineProfileTimersSpec(),
 	}
 	suite.Create(profile)
 	ctest.AssertResource(suite, name, func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
@@ -841,6 +844,76 @@ func (suite *VirtualMachineSpecSuite) TestProfileRendersGuestHardwareAndMissingP
 			asrt.Equal("disable", domain.CPU.Features[0].Policy)
 		}
 	})
+}
+
+// The profile's timer settings reach the rendered clock.
+func (suite *VirtualMachineSpecSuite) TestProfileTimers() {
+	if runtime.GOARCH != "amd64" {
+		suite.T().Skip("VM hardware profiles are only supported on amd64")
+	}
+
+	profile := hypervisor.NewVirtualMachineProfileSpec(hypervisor.NamespaceName, "with-hpet")
+	*profile.TypedSpec() = hypervisor.VirtualMachineProfileSpecSpec{
+		Machine: "q35",
+		CPU: hypervisor.VirtualMachineProfileCPUSpec{
+			Mode: hypervisorhelpers.VirtualMachineProfileCPUModeHostModel,
+		},
+		Timers: hypervisor.DefaultVirtualMachineProfileTimersSpec(),
+	}
+	profile.TypedSpec().Timers.HPET = true
+	suite.Create(profile)
+
+	vm := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "timers")
+	*vm.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
+		Profile:    "with-hpet",
+		CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
+		Memory:     hypervisor.VirtualMachineMemorySpec{Size: 512 << 20},
+		PowerState: "stopped",
+		Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "bios"},
+	}
+	suite.Create(vm)
+
+	assertClock := func(rtc, pit, hpet string) {
+		suite.T().Helper()
+
+		ctest.AssertResource(suite, vm.Metadata().ID(), func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+			var domain libvirtxml.Domain
+			if !asrt.NoError(domain.Unmarshal(res.TypedSpec().DomainXML)) {
+				return
+			}
+
+			asrt.NoError(validateDomainXML([]byte(res.TypedSpec().DomainXML)))
+			asrt.Equal(&libvirtxml.DomainClock{
+				Offset: "utc",
+				Timer: []libvirtxml.DomainTimer{
+					{Name: "rtc", TickPolicy: rtc},
+					{Name: "pit", TickPolicy: pit},
+					{Name: "hpet", Present: hpet},
+				},
+			}, domain.Clock)
+		})
+	}
+
+	defaults := hypervisor.DefaultVirtualMachineProfileTimersSpec()
+
+	assertClock(defaults.RTCTickPolicy.String(), defaults.PITTickPolicy.String(), "yes")
+
+	ctest.UpdateWithConflicts(suite, profile, func(current *hypervisor.VirtualMachineProfileSpec) error {
+		current.TypedSpec().Timers = hypervisor.VirtualMachineProfileTimersSpec{
+			RTCTickPolicy: hypervisorhelpers.VirtualMachineProfileRTCTickPolicyDelay,
+			PITTickPolicy: hypervisorhelpers.VirtualMachineProfilePITTickPolicyDiscard,
+		}
+
+		return nil
+	})
+	assertClock("delay", "discard", "no")
+
+	ctest.UpdateWithConflicts(suite, vm, func(current *hypervisor.VirtualMachineSpec) error {
+		current.TypedSpec().Profile = "host"
+
+		return nil
+	})
+	assertClock(defaults.RTCTickPolicy.String(), defaults.PITTickPolicy.String(), "no")
 }
 
 // Video model + VRAM flow through to <video><model type="…" vram="…">; empty model falls
