@@ -465,6 +465,36 @@ func TestContainerStatusSpecUpdate(t *testing.T) {
 			},
 		},
 		{
+			name:                 "a failed pull attempt surfaces while the pull is retried",
+			containerImageStatus: newImageStatus(containers.ContainerImagePhasePulling, "attempt failed"),
+			waitingFor:           []string{"image"},
+			want: containers.ContainerStatusSpec{
+				State:  containers.ContainerStatePulling,
+				Health: containers.ContainerHealthPulling,
+				Image:  imageRef,
+				Error:  "attempt failed",
+			},
+		},
+		{
+			// A pull which succeeded after failed attempts has no error left to report, even though the
+			// container has no instance yet.
+			name: "an error reported while pulling is not carried over",
+			prev: containers.ContainerStatusSpec{
+				State:  containers.ContainerStatePulling,
+				Health: containers.ContainerHealthPulling,
+				Error:  "attempt failed",
+			},
+			containerImageStatus: newImageStatus(containers.ContainerImagePhaseReady, ""),
+			waitingFor:           []string{"network"},
+			want: containers.ContainerStatusSpec{
+				State:      containers.ContainerStatePending,
+				Health:     containers.ContainerHealthPending,
+				Image:      imageRef,
+				Error:      "",
+				WaitingFor: []string{"network"},
+			},
+		},
+		{
 			name:         "gates that have not been published yet are not gates that are met",
 			gatesUnknown: true,
 			want: containers.ContainerStatusSpec{

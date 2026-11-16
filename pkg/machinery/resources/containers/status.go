@@ -168,7 +168,9 @@ func (containerStatusSpec *ContainerStatusSpec) Update(
 		containerStatusSpec.Error = healthCheckErrorPrefix + containerHealthStatus.TypedSpec().Message
 	}
 
-	if containerStatusSpec.Error == "" && containerInstanceStatus == nil && prev.State != ContainerStateRunning {
+	// Track previous errors for executions, but ignore previous pull errors.
+	if containerStatusSpec.Error == "" && containerInstanceStatus == nil &&
+		prev.State != ContainerStateRunning && prev.State != ContainerStatePulling {
 		containerStatusSpec.Error = prev.Error
 		containerStatusSpec.ErrorLastLog = prev.ErrorLastLog
 	}
