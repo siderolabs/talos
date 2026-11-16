@@ -24,10 +24,12 @@ func TestRuntimeStateResolve(t *testing.T) {
 		network.NewLinkStatus(network.NamespaceName, "vrf-blue"),
 		network.NewLinkStatus(network.NamespaceName, "dummy0"),
 		network.NewLinkStatus(network.NamespaceName, "eth1"),
+		network.NewLinkStatus(network.NamespaceName, "eth0"),
 	}
 	*linkStatuses[0].TypedSpec() = network.LinkStatusSpec{Index: 10, Kind: network.LinkKindVRF}
 	*linkStatuses[1].TypedSpec() = network.LinkStatusSpec{Index: 11, MasterIndex: 10, Alias: "node-ip"}
 	*linkStatuses[2].TypedSpec() = network.LinkStatusSpec{Index: 12, MasterIndex: 10, AltNames: []string{"fabric0"}}
+	*linkStatuses[3].TypedSpec() = network.LinkStatusSpec{Index: 13}
 
 	addressSpecs := []network.AddressStatusSpec{
 		{Address: netip.MustParsePrefix("2001:db8::2/64"), LinkName: "dummy0", LinkIndex: 11},
@@ -40,6 +42,8 @@ func TestRuntimeStateResolve(t *testing.T) {
 		{Address: netip.MustParsePrefix("::1/128"), LinkName: "dummy0", LinkIndex: 11},
 		{Address: netip.MustParsePrefix("fe80::1/64"), LinkName: "dummy0", LinkIndex: 11},
 		{Address: netip.MustParsePrefix("ff02::1/16"), LinkName: "dummy0", LinkIndex: 11},
+		{Address: netip.MustParsePrefix("198.51.100.1/24"), LinkName: "fabric0", LinkIndex: 12},
+		{Address: netip.MustParsePrefix("172.16.0.2/24"), LinkName: "eth0", LinkIndex: 13},
 	}
 	addressStatuses := make([]*network.AddressStatus, 0, len(addressSpecs))
 
@@ -77,6 +81,18 @@ func TestRuntimeStateResolve(t *testing.T) {
 		netip.MustParsePrefix("2001:db8::/64"),
 		netip.MustParsePrefix("2001:db8:1::5/128"),
 	}, resolved.AdvertisedPrefixes)
+	// a learned route must not replace an on-link route in the instance's VRF, other VRFs don't matter
+	assert.Equal(t, []netip.Prefix{
+		netip.MustParsePrefix("10.0.0.0/24"),
+		netip.MustParsePrefix("127.0.0.0/8"),
+		netip.MustParsePrefix("192.0.2.5/32"),
+		netip.MustParsePrefix("198.51.100.0/24"),
+		netip.MustParsePrefix("::1/128"),
+		netip.MustParsePrefix("2001:db8::/64"),
+		netip.MustParsePrefix("2001:db8:1::5/128"),
+		netip.MustParsePrefix("fe80::/64"),
+		netip.MustParsePrefix("ff02::/16"),
+	}, resolved.ConnectedPrefixes)
 	assert.Equal(t, netip.MustParseAddr("10.0.0.2"), resolved.RouterID)
 
 	// Resolution clones mutable fields rather than modifying the input value.

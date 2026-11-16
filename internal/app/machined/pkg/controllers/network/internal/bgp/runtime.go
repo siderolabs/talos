@@ -18,7 +18,12 @@ import (
 type ResolvedConfig struct {
 	Spec               network.BGPInstanceConfigSpec
 	AdvertisedPrefixes []netip.Prefix
-	RouterID           netip.Addr
+	// ConnectedPrefixes are the prefixes of all addresses in the instance's routing domain.
+	//
+	// The kernel already routes them on-link, and a learned route for the same prefix would replace
+	// that route, as Talos installs address routes with a higher metric than BGP routes.
+	ConnectedPrefixes []netip.Prefix
+	RouterID          netip.Addr
 	// VRFIndex is the kernel index of the VRF link, zero when the instance runs in the main table.
 	//
 	// The listening socket is bound to the device by name, which the kernel resolves to an index
@@ -145,6 +150,7 @@ func (state *RuntimeState) Resolve(spec network.BGPInstanceConfigSpec) (Resolved
 	return ResolvedConfig{
 		Spec:               resolved,
 		AdvertisedPrefixes: connectedPrefixes(advertisedAddresses),
+		ConnectedPrefixes:  connectedPrefixes(state.domainAddresses(resolved.VRF)),
 		RouterID:           routerID(resolved.RouterID, advertisedAddresses),
 		VRFIndex:           vrfIndex,
 	}, nil
@@ -298,6 +304,27 @@ func (state *RuntimeState) advertisedAddresses(links []string) []netip.Prefix {
 	slices.SortFunc(addresses, func(left, right netip.Prefix) int {
 		return left.Addr().Compare(right.Addr())
 	})
+
+	return addresses
+}
+
+func (state *RuntimeState) domainAddresses(vrf string) []netip.Prefix {
+	var addresses []netip.Prefix
+
+	for _, address := range state.addresses {
+		linkName := state.resolveLinkName(address.LinkName)
+
+		status, exists := state.linksByName[linkName]
+		if !exists {
+			continue
+		}
+
+		if linkVRF, err := state.linkVRF(linkName, status); err != nil || linkVRF != vrf {
+			continue
+		}
+
+		addresses = append(addresses, address.Address)
+	}
 
 	return addresses
 }

@@ -32,7 +32,7 @@ type Instance struct {
 	watchCancel   context.CancelFunc
 	originated    map[netip.Prefix]struct{}
 	imported      map[netip.Prefix]importedPath
-	advertised    []netip.Prefix
+	connected     []netip.Prefix
 	imports       []network.BGPImportRouteSpec
 	table         nethelpers.RoutingTable
 	source        netip.Addr
@@ -77,7 +77,7 @@ func (instance *Instance) Stop() {
 func (instance *Instance) clearState() {
 	instance.originated = map[netip.Prefix]struct{}{}
 	instance.imported = map[netip.Prefix]importedPath{}
-	instance.advertised = nil
+	instance.connected = nil
 	instance.imports = nil
 	instance.table = 0
 	instance.source = netip.Addr{}
@@ -219,14 +219,14 @@ func (instance *Instance) ReconcileOriginated(advertised []netip.Prefix) error {
 
 // SetOutputState records the successfully reconciled configuration used to build controller outputs.
 func (instance *Instance) SetOutputState(
-	advertised []netip.Prefix,
+	connected []netip.Prefix,
 	imports []network.BGPImportRouteSpec,
 	table nethelpers.RoutingTable,
 	source netip.Addr,
 	localASN uint32,
 	installRoutes bool,
 ) {
-	instance.advertised = slices.Clone(advertised)
+	instance.connected = slices.Clone(connected)
 	instance.imports = cloneImportRoutes(imports)
 	instance.table = table
 	instance.source = source

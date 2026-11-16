@@ -253,7 +253,7 @@ func (ctrl *BGPController) reconcile(ctx context.Context, r controller.Runtime, 
 		}
 
 		instance.SetOutputState(
-			resolved.AdvertisedPrefixes,
+			resolved.ConnectedPrefixes,
 			resolved.Spec.ImportRoutes,
 			resolved.Spec.VRFTable,
 			resolved.Spec.RouteSource,

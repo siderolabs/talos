@@ -43,8 +43,8 @@ func (instance *Instance) Snapshot(ctx context.Context) Snapshot {
 func (instance *Instance) learnedRoutes() map[netip.Prefix][]network.RouteNextHop {
 	learned := map[netip.Prefix][]network.RouteNextHop{}
 
-	localSet := make(map[netip.Prefix]struct{}, len(instance.advertised)+len(instance.imported))
-	for _, prefix := range instance.advertised {
+	localSet := make(map[netip.Prefix]struct{}, len(instance.connected)+len(instance.imported))
+	for _, prefix := range instance.connected {
 		localSet[prefix] = struct{}{}
 	}
 
