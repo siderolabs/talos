@@ -9,7 +9,9 @@ import (
 	"fmt"
 	"net/netip"
 	"slices"
+	"time"
 
+	"github.com/cenkalti/backoff/v7"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -80,11 +82,16 @@ func (ctrl *RouteSpecController) Run(ctx context.Context, r controller.Runtime, 
 		ctrl.installedProtocols = map[resource.ID]nethelpers.RouteProtocol{}
 	}
 
+	retryBackoff := backoff.NewExponentialBackOff()
+
+	var retryCh <-chan time.Time
+
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
 		case <-r.EventCh():
+		case <-retryCh:
 		}
 
 		// list source network configuration resources
@@ -125,8 +132,15 @@ func (ctrl *RouteSpecController) Run(ctx context.Context, r controller.Runtime, 
 			}
 		}
 
+		// failed routes are retried here: a controller restart would also delay every other route change
 		if err = multiErr.ErrorOrNil(); err != nil {
-			return err
+			logger.Error("error syncing routes", zap.Error(err))
+
+			retryCh = time.After(retryBackoff.NextBackOff())
+		} else {
+			retryBackoff.Reset()
+
+			retryCh = nil
 		}
 
 		r.ResetRestartBackoff()

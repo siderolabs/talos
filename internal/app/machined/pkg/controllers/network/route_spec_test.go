@@ -1354,6 +1354,55 @@ func TestRouteScopeMatches(t *testing.T) {
 	}
 }
 
+func (suite *RouteSpecSuite) TestFailingRouteDoesNotDelayOtherRoutes() {
+	link := uniqueDummyInterface()
+
+	conn, err := rtnetlink.Dial(nil)
+	suite.Require().NoError(err)
+
+	defer conn.Close() //nolint:errcheck
+
+	index := suite.createDummyInterface(conn, link, netip.MustParsePrefix("10.77.0.2/31"))
+
+	defer conn.Link.Delete(index) //nolint:errcheck
+
+	gateway := netip.MustParseAddr("10.77.0.3")
+
+	newRoute := func(id string, destination netip.Prefix, priority uint32) *network.RouteSpec {
+		route := network.NewRouteSpec(network.NamespaceName, id)
+		*route.TypedSpec() = network.RouteSpecSpec{
+			Family:      nethelpers.FamilyInet4,
+			Destination: destination,
+			Gateway:     gateway,
+			Table:       nethelpers.TableMain,
+			Protocol:    nethelpers.ProtocolStatic,
+			Type:        nethelpers.TypeUnicast,
+			Scope:       nethelpers.ScopeGlobal,
+			ConfigLayer: network.ConfigOperator,
+			Priority:    priority,
+		}
+
+		return route
+	}
+
+	// the kernel refuses it: the connected route of the link has the same destination and metric
+	suite.Create(newRoute("failing", netip.MustParsePrefix("10.77.0.2/31"), 0))
+
+	// let failures pile up, as a restarted controller would back off longer with each of them
+	time.Sleep(10 * time.Second)
+
+	destination := netip.MustParsePrefix("10.79.0.0/24")
+	start := time.Now()
+
+	suite.Create(newRoute("unrelated", destination, 1024))
+
+	for suite.assertRoute(destination, gateway, func(rtnetlink.RouteMessage) error { return nil }) != nil {
+		time.Sleep(20 * time.Millisecond)
+	}
+
+	suite.Assert().Less(time.Since(start), time.Second, "a failing route must not delay the others")
+}
+
 func TestRouteSpecSuite(t *testing.T) {
 	t.Parallel()
 
