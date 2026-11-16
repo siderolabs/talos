@@ -5,12 +5,14 @@
 package network_test
 
 import (
+	"net"
 	"net/netip"
 	"testing"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
@@ -181,6 +183,64 @@ func (suite *BGPControllerSuite) TestRuntimeStatusResolutionAndServerRestart() {
 	)
 }
 
+func (suite *BGPControllerSuite) TestRejectedPeerDoesNotStopOtherPeers() {
+	fabric := network.NewBGPInstanceConfig("fabric")
+	*fabric.TypedSpec() = network.BGPInstanceConfigSpec{
+		LocalASN:      65001,
+		RouterID:      netip.MustParseAddr("10.0.0.1"),
+		VRFTable:      nethelpers.TableMain,
+		InstallRoutes: true,
+		Neighbors: []network.BGPNeighborConfigSpec{
+			{
+				Address: netip.MustParseAddr("192.0.2.1"),
+				PeerASN: 65002,
+				Passive: true,
+			},
+			{
+				// GoBGP rejects it: the zone names a link which does not exist
+				Address: netip.MustParseAddr("fe80::1%bgpmissing0"),
+				PeerASN: 65002,
+				Passive: true,
+			},
+		},
+	}
+
+	workload := network.NewBGPInstanceConfig("workload")
+	*workload.TypedSpec() = network.BGPInstanceConfigSpec{
+		LocalASN:      65003,
+		RouterID:      netip.MustParseAddr("10.0.0.2"),
+		VRFTable:      88,
+		InstallRoutes: true,
+		Neighbors: []network.BGPNeighborConfigSpec{
+			{
+				Address: netip.MustParseAddr("192.0.2.2"),
+				PeerASN: 65004,
+				Passive: true,
+			},
+		},
+	}
+
+	suite.Create(fabric)
+	suite.Create(workload)
+
+	var created time.Time
+
+	rtestutils.AssertResource(suite.Ctx(), suite.T(), suite.State(), "fabric/192.0.2.1", func(res *network.BGPPeerStatus, _ *assert.Assertions) {
+		created = res.Metadata().Created()
+	}, rtestutils.WithNamespace(network.NamespaceName))
+
+	rtestutils.AssertResource(suite.Ctx(), suite.T(), suite.State(), "workload/192.0.2.2", func(*network.BGPPeerStatus, *assert.Assertions) {}, rtestutils.WithNamespace(network.NamespaceName))
+
+	rtestutils.AssertNoResource[*network.BGPPeerStatus](suite.Ctx(), suite.T(), suite.State(), "fabric/fe80::1%bgpmissing0", rtestutils.WithNamespace(network.NamespaceName))
+
+	// a restarted controller would stop every server and recreate the statuses
+	time.Sleep(time.Second)
+
+	rtestutils.AssertResource(suite.Ctx(), suite.T(), suite.State(), "fabric/192.0.2.1", func(res *network.BGPPeerStatus, assertions *assert.Assertions) {
+		assertions.Equal(created, res.Metadata().Created())
+	}, rtestutils.WithNamespace(network.NamespaceName))
+}
+
 func TestBGPControllerSuite(t *testing.T) {
 	t.Parallel()
 
@@ -188,6 +248,58 @@ func TestBGPControllerSuite(t *testing.T) {
 		Timeout: 5 * time.Second,
 		AfterSetup: func(s *ctest.DefaultSuite) {
 			s.Require().NoError(s.Runtime().RegisterController(&netctrl.BGPController{ListenPort: -1}))
+		},
+	})
+}
+
+type BGPControllerRetrySuite struct {
+	ctest.DefaultSuite
+
+	listener net.Listener
+}
+
+func (suite *BGPControllerRetrySuite) TestFailedInstanceIsRetried() {
+	fabric := network.NewBGPInstanceConfig("fabric")
+	*fabric.TypedSpec() = network.BGPInstanceConfigSpec{
+		LocalASN:      65001,
+		RouterID:      netip.MustParseAddr("10.0.0.1"),
+		VRFTable:      nethelpers.TableMain,
+		InstallRoutes: true,
+		Neighbors: []network.BGPNeighborConfigSpec{
+			{
+				Address: netip.MustParseAddr("192.0.2.1"),
+				PeerASN: 65002,
+				Passive: true,
+			},
+		},
+	}
+
+	suite.Create(fabric)
+
+	// the server can not start while the listen port is taken
+	time.Sleep(time.Second)
+
+	rtestutils.AssertNoResource[*network.BGPPeerStatus](suite.Ctx(), suite.T(), suite.State(), "fabric/192.0.2.1", rtestutils.WithNamespace(network.NamespaceName))
+
+	// freeing the port changes no controller input: only the retry starts the server
+	suite.Require().NoError(suite.listener.Close())
+
+	rtestutils.AssertResource(suite.Ctx(), suite.T(), suite.State(), "fabric/192.0.2.1", func(*network.BGPPeerStatus, *assert.Assertions) {}, rtestutils.WithNamespace(network.NamespaceName))
+}
+
+func TestBGPControllerRetrySuite(t *testing.T) {
+	t.Parallel()
+
+	listener, err := (&net.ListenConfig{}).Listen(t.Context(), "tcp", ":0")
+	require.NoError(t, err)
+
+	port := int32(listener.Addr().(*net.TCPAddr).Port)
+
+	suite.Run(t, &BGPControllerRetrySuite{
+		listener: listener,
+		Timeout:  10 * time.Second,
+		AfterSetup: func(s *ctest.DefaultSuite) {
+			s.Require().NoError(s.Runtime().RegisterController(&netctrl.BGPController{ListenPort: port}))
 		},
 	})
 }

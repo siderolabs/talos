@@ -6,6 +6,7 @@ package bgp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog" //nolint:loglinter // GoBGP's logger compatibility interface requires slog.
 	"net/netip"
@@ -234,6 +235,7 @@ func (instance *Instance) SetOutputState(
 }
 
 // reconcilePeers adds, removes and updates peers to match the resolved set.
+// A peer GoBGP rejects is skipped and retried on the next reconcile; the other peers are still reconciled.
 //
 // Changed peers are updated in place: GoBGP applies BFD and timer changes to the live session, and resets it
 // only for changes which need a new OPEN message (e.g. ASN or transport settings).
@@ -242,6 +244,8 @@ func (instance *Instance) reconcilePeers(
 	config network.BGPInstanceConfigSpec,
 	resolved []Peer,
 ) error {
+	var errs error
+
 	desired := make(map[string]string, len(resolved))
 
 	for _, peer := range resolved {
@@ -254,7 +258,9 @@ func (instance *Instance) reconcilePeers(
 		}
 
 		if err := instance.server.DeletePeer(ctx, &gobgpapi.DeletePeerRequest{Address: address}); err != nil {
-			return fmt.Errorf("error deleting BGP peer: %w", err)
+			errs = errors.Join(errs, fmt.Errorf("error deleting BGP peer %s: %w", address, err))
+
+			continue
 		}
 
 		delete(instance.peers, address)
@@ -266,16 +272,20 @@ func (instance *Instance) reconcilePeers(
 		switch {
 		case !ok:
 			if err := instance.server.AddPeer(ctx, &gobgpapi.AddPeerRequest{Peer: BuildPeer(peer, config.Multipath)}); err != nil {
-				return fmt.Errorf("error adding BGP peer: %w", err)
+				errs = errors.Join(errs, fmt.Errorf("error adding BGP peer %s: %w", peer.Address, err))
+
+				continue
 			}
 		case hash != desired[peer.Address]:
 			if _, err := instance.server.UpdatePeer(ctx, &gobgpapi.UpdatePeerRequest{Peer: BuildPeer(peer, config.Multipath)}); err != nil {
-				return fmt.Errorf("error updating BGP peer: %w", err)
+				errs = errors.Join(errs, fmt.Errorf("error updating BGP peer %s: %w", peer.Address, err))
+
+				continue
 			}
 		}
 
 		instance.peers[peer.Address] = desired[peer.Address]
 	}
 
-	return nil
+	return errs
 }

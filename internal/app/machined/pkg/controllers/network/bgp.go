@@ -9,7 +9,9 @@ import (
 	"fmt"
 	"net/netip"
 	"slices"
+	"time"
 
+	"github.com/cenkalti/backoff/v7"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -96,16 +98,31 @@ func (ctrl *BGPController) Run(ctx context.Context, r controller.Runtime, logger
 
 	defer neighWatcher.Done()
 
+	retryBackoff := backoff.NewExponentialBackOff()
+
+	var retryCh <-chan time.Time
+
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
 		case <-r.EventCh():
 		case <-ctrl.reconcileCh:
+		case <-retryCh:
 		}
 
-		if err := ctrl.reconcile(ctx, r, logger); err != nil {
+		failed, err := ctrl.reconcile(ctx, r, logger)
+		if err != nil {
 			return err
+		}
+
+		// failed instances and peers are retried here: a controller restart would also stop the healthy ones
+		if failed {
+			retryCh = time.After(retryBackoff.NextBackOff())
+		} else {
+			retryBackoff.Reset()
+
+			retryCh = nil
 		}
 
 		r.ResetRestartBackoff()
@@ -153,27 +170,31 @@ func instanceOutputs(ctx context.Context, name resource.ID, instance *internalbg
 	}
 }
 
+// reconcile reports whether an instance failed and needs a retry.
+//
 //nolint:gocyclo,cyclop
-func (ctrl *BGPController) reconcile(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *BGPController) reconcile(ctx context.Context, r controller.Runtime, logger *zap.Logger) (bool, error) {
 	configs, err := safe.ReaderListAll[*network.BGPInstanceConfig](ctx, r)
 	if err != nil {
-		return fmt.Errorf("error listing BGP instance configs: %w", err)
+		return false, fmt.Errorf("error listing BGP instance configs: %w", err)
 	}
 
 	linkStatuses, err := safe.ReaderListAll[*network.LinkStatus](ctx, r)
 	if err != nil {
-		return fmt.Errorf("error listing link statuses: %w", err)
+		return false, fmt.Errorf("error listing link statuses: %w", err)
 	}
 
 	addressStatuses, err := safe.ReaderListAll[*network.AddressStatus](ctx, r)
 	if err != nil {
-		return fmt.Errorf("error listing address statuses: %w", err)
+		return false, fmt.Errorf("error listing address statuses: %w", err)
 	}
 
 	runtimeState := internalbgp.NewRuntimeStateFromResources(linkStatuses.All(), addressStatuses.All())
 	neighborResolver := internalbgp.NewNeighborResolver()
 
 	desired := map[resource.ID]struct{}{}
+
+	var failed bool
 
 	for configResource := range configs.All() {
 		name := configResource.Metadata().ID()
@@ -214,11 +235,21 @@ func (ctrl *BGPController) reconcile(ctx context.Context, r controller.Runtime, 
 			ctrl.effectiveListenPort(),
 			ctrl.signal,
 		); err != nil {
-			return fmt.Errorf("error configuring BGP instance %q: %w", name, err)
+			instanceLogger.Error("error configuring BGP instance", zap.Error(err))
+
+			failed = true
+
+			if !instance.Running() {
+				continue
+			}
 		}
 
 		if err = instance.ReconcileOriginated(resolved.AdvertisedPrefixes); err != nil {
-			return fmt.Errorf("error originating routes for BGP instance %q: %w", name, err)
+			instanceLogger.Error("error originating BGP routes", zap.Error(err))
+
+			failed = true
+
+			continue
 		}
 
 		instance.SetOutputState(
@@ -255,7 +286,11 @@ func (ctrl *BGPController) reconcile(ctx context.Context, r controller.Runtime, 
 
 		desiredCount, ready, importErr := internalbgp.ReconcileImportedPaths(name, instance, ctrl.instances, desired)
 		if importErr != nil {
-			return fmt.Errorf("error resolving route imports for BGP instance %q: %w", name, importErr)
+			logger.With(zap.String("instance", name)).Error("error resolving BGP route imports", zap.Error(importErr))
+
+			failed = true
+
+			continue
 		}
 
 		if !ready {
@@ -293,7 +328,7 @@ func (ctrl *BGPController) reconcile(ctx context.Context, r controller.Runtime, 
 		)
 	}
 
-	return ctrl.writeOutputs(ctx, r, outputs)
+	return failed, ctrl.writeOutputs(ctx, r, outputs)
 }
 
 func (ctrl *BGPController) effectiveListenPort() int32 {
