@@ -121,6 +121,16 @@ func TestProcessEqual(t *testing.T) {
 			},
 			want: true,
 		},
+		{
+			name: "runtime differs",
+			containerSpec: &containers.ContainerSpecSpec{
+				Runtime: containers.ContainerRuntimeRunsc,
+			},
+			instanceSpec: &containers.ContainerInstanceSpecSpec{
+				Runtime: containers.ContainerRuntimeRunc,
+			},
+			want: false,
+		},
 	}
 
 	for _, tt := range tests {

@@ -21,9 +21,11 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/extensions"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	timeres "github.com/siderolabs/talos/pkg/machinery/resources/time"
 )
 
@@ -148,6 +150,35 @@ func (suite *InstanceSuite) TestDependencyStatusReportsUnmetGates() {
 
 	suite.assertWaitingFor()
 	suite.assertInstance(0)
+}
+
+// TestRuntimeWaitsForExtension covers a runsc container on a node without the gvisor extension: it
+// waits for the extension rather than failing to start, and starts once the extension is listed.
+func (suite *InstanceSuite) TestRuntimeWaitsForExtension() {
+	suite.createSpec(func(spec *containers.ContainerSpecSpec) {
+		spec.Runtime = containers.ContainerRuntimeRunsc
+	})
+	suite.markImageReady()
+
+	suite.assertWaitingFor("extension: " + constants.ContainerRuntimeRunscExtension)
+	suite.assertNoInstance(0)
+
+	suite.installExtension(constants.ContainerRuntimeRunscExtension)
+
+	suite.assertWaitingFor()
+	suite.assertInstance(0)
+
+	ctest.AssertResource(suite, containers.InstanceID(testContainer, 0), func(instance *containers.ContainerInstanceSpec, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerRuntimeRunsc, instance.TypedSpec().Runtime)
+	})
+}
+
+// installExtension lists a system extension as installed.
+func (suite *InstanceSuite) installExtension(name string) {
+	ext := runtimeres.NewExtensionStatus(runtimeres.NamespaceName, "000."+name)
+	ext.TypedSpec().Metadata = extensions.Metadata{Name: name}
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), ext))
 }
 
 // TestDependencyStatusEmptyWhileInstanceRuns covers a gate going unmet under a container that is
@@ -799,6 +830,9 @@ func (suite *InstanceSuite) TestSpecChangeReplacesInstance() {
 // old settings and the config change silently never takes effect. Each mutation must therefore
 // advance the generation.
 func (suite *InstanceSuite) TestEveryComparedFieldReplacesInstance() {
+	// The runtime mutation below switches to runsc, which is gated on its extension.
+	suite.installExtension(constants.ContainerRuntimeRunscExtension)
+
 	suite.createSpec()
 	suite.markImageReady()
 
@@ -808,6 +842,7 @@ func (suite *InstanceSuite) TestEveryComparedFieldReplacesInstance() {
 		func(spec *containers.ContainerSpecSpec) { spec.Entrypoint = []string{"/entrypoint.sh"} },
 		func(spec *containers.ContainerSpecSpec) { spec.Args = []string{"nginx", "-g", "daemon off;"} },
 		func(spec *containers.ContainerSpecSpec) { spec.WorkingDir = "/srv" },
+		func(spec *containers.ContainerSpecSpec) { spec.Runtime = containers.ContainerRuntimeRunsc },
 		func(spec *containers.ContainerSpecSpec) { spec.Environment = []string{"NGINX_PORT=8080"} },
 		// Each RunAs half separately: nil is meaningful there, so a comparison that only looks at
 		// one half would miss the other.

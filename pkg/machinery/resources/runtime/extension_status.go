@@ -9,6 +9,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+	"github.com/cosi-project/runtime/pkg/safe"
 
 	"github.com/siderolabs/talos/pkg/machinery/extensions"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
@@ -29,6 +30,17 @@ func NewExtensionStatus(namespace resource.Namespace, id resource.ID) *Extension
 		resource.NewMetadata(namespace, ExtensionStatusType, id, resource.VersionUndefined),
 		ExtensionStatusSpec{},
 	)
+}
+
+// ExtensionInstalled reports whether the extension with the given name is among the extension statuses.
+//
+// The resource ID is derived from the layer image, so the match is on the name the extension declares.
+func ExtensionInstalled(extensions safe.List[*ExtensionStatus], name string) bool {
+	_, found := extensions.Find(func(ext *ExtensionStatus) bool {
+		return ext.TypedSpec().Metadata.Name == name
+	})
+
+	return found
 }
 
 // ExtensionStatusExtension is auxiliary resource data for ExtensionStatus.

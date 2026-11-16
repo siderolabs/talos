@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"strings"
 
+	runtimeoptions "github.com/containerd/containerd/api/types/runtimeoptions/v1"
 	containerdapi "github.com/containerd/containerd/v2/client"
 	ctrdcontainers "github.com/containerd/containerd/v2/core/containers"
 	"github.com/containerd/containerd/v2/core/content"
@@ -144,8 +145,7 @@ func (r *containerdRunner) Run(
 		return 0, err
 	}
 
-	svc := containerdrunner.NewRunner(false,
-		&runner.Args{ID: id},
+	runnerOpts := []runner.Option{
 		runner.WithNamespace(constants.TalosContainersContainerdNamespace),
 		runner.WithContainerdAddress(constants.CRIContainerdAddress),
 		runner.WithContainerImage(spec.Image),
@@ -153,7 +153,7 @@ func (r *containerdRunner) Run(
 		runner.WithLoggingManager(r.logging),
 		// Keyed by container, not by instance: successive generations append to one buffer, so restart
 		// history reads as a single continuous log.
-		runner.WithLogID(constants.TalosContainersLogPrefix+spec.ContainerID),
+		runner.WithLogID(constants.TalosContainersLogPrefix + spec.ContainerID),
 		runner.WithCgroupPath(cgroupPath),
 		runner.WithCgroupResources(containersadapter.ContainerResourcesSpec(&spec.Resources).CgroupResources()),
 		runner.WithOOMScoreAdj(oomScoreAdj),
@@ -166,7 +166,9 @@ func (r *containerdRunner) Run(
 		// was granted on execve.
 		runner.WithAmbientCapabilitiesForNonRoot(true),
 		runner.WithOCISpecOpts(r.ociSpecOpts(spec, image)...),
-	)
+	}
+
+	svc := containerdrunner.NewRunner(false, &runner.Args{ID: id}, slices.Concat(runnerOpts, runtimeOpts(spec.Runtime))...)
 
 	if err := svc.Open(); err != nil {
 		return 0, fmt.Errorf("failed to create container %q: %w", id, err)
@@ -179,6 +181,50 @@ func (r *containerdRunner) Run(
 	})
 
 	return int32(status.ExitCode), err //nolint:gosec
+}
+
+// runtimeOpts selects the OCI runtime the container runs under.
+//
+// runc is containerd's default, so it needs nothing. runsc is reached through gVisor's shim, which the
+// gvisor extension installs on containerd's PATH. The shim is pointed at the runsc config the extension
+// ships, as its CRI runtime handler does. gVisor does not support SELinux labels: the label is left out,
+// the sandbox stands in for it.
+func runtimeOpts(containerRuntime string) []runner.Option {
+	if containerRuntime != containersres.ContainerRuntimeRunsc {
+		return nil
+	}
+
+	return []runner.Option{
+		runner.WithContainerOpts(containerdapi.WithRuntime(constants.ContainerRuntimeRunscShim, &runtimeoptions.Options{
+			TypeUrl:    constants.ContainerRuntimeRunscOptionsTypeURL,
+			ConfigPath: constants.ContainerRuntimeRunscConfigPath,
+		})),
+		runner.WithoutSelinuxLabel(),
+	}
+}
+
+// criContainerTypeAnnotation tells a runtime what a container is to its pod: the pod sandbox, or one of
+// the containers within it. CRI sets it on every container it creates.
+const (
+	criContainerTypeAnnotation = "io.kubernetes.cri.container-type"
+	criContainerTypeSandbox    = "sandbox"
+)
+
+// withRunscSandbox marks the container as the root of its own gVisor sandbox.
+//
+// runsc and its shim disagree on a container without the CRI container type: runsc starts a new
+// sandbox for it, while the shim takes it for a container joining an existing one. The shim then runs
+// runsc create with its output captured, and the sandbox, which outlives runsc create, inherits that
+// pipe: create never returns, and the shim stays locked for good. Each Talos container is a sandbox of
+// its own, as a pod sandbox is under CRI.
+func withRunscSandbox(_ context.Context, _ oci.Client, _ *ctrdcontainers.Container, s *oci.Spec) error {
+	if s.Annotations == nil {
+		s.Annotations = map[string]string{}
+	}
+
+	s.Annotations[criContainerTypeAnnotation] = criContainerTypeSandbox
+
+	return nil
 }
 
 // Close implements TaskRunner interface.
@@ -226,6 +272,10 @@ func (r *containerdRunner) ociSpecOpts(spec containersres.ContainerInstanceSpecS
 
 	if len(spec.Devices) > 0 {
 		opts = append(opts, WithResolvedDevices(spec.Devices))
+	}
+
+	if spec.Runtime == containersres.ContainerRuntimeRunsc {
+		opts = append(opts, withRunscSandbox)
 	}
 
 	// An rshared bind can only join the host peer group when the container's

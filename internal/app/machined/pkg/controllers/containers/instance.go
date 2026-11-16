@@ -19,6 +19,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	timeres "github.com/siderolabs/talos/pkg/machinery/resources/time"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
@@ -78,6 +79,12 @@ func (ctrl *InstanceController) Inputs() []controller.Input {
 			Namespace: v1alpha1.NamespaceName,
 			Type:      timeres.StatusType,
 			ID:        optional.Some(timeres.StatusID),
+			Kind:      controller.InputWeak,
+		},
+		// Gate on the extension providing the container's runtime.
+		{
+			Namespace: runtimeres.NamespaceName,
+			Type:      runtimeres.ExtensionStatusType,
 			Kind:      controller.InputWeak,
 		},
 		// Restarts are paced off the previous instance's outcome.
@@ -627,6 +634,7 @@ func (ctrl *InstanceController) createInstanceSpec(
 			instanceSpec.Entrypoint = containerSpec.TypedSpec().Entrypoint
 			instanceSpec.Args = containerSpec.TypedSpec().Args
 			instanceSpec.WorkingDir = containerSpec.TypedSpec().WorkingDir
+			instanceSpec.Runtime = containerSpec.TypedSpec().Runtime
 			instanceSpec.RunAs = containerSpec.TypedSpec().RunAs
 			instanceSpec.Environment = containerSpec.TypedSpec().Environment
 			instanceSpec.Mounts = resolved.Mounts

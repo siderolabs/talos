@@ -493,7 +493,7 @@ func (c *containerdRunner) newOCISpecOpts(image oci.Image) []oci.SpecOpts {
 
 	specOpts = append(specOpts, c.seccompSpecOpt())
 
-	if selinux.IsEnabled() {
+	if selinux.IsEnabled() && !c.opts.SkipSelinuxLabel {
 		if c.opts.SelinuxLabel != "" {
 			specOpts = append(
 				specOpts,

@@ -8487,6 +8487,7 @@ later changes to those inputs: a spec change destroys this instance rather than 
 | devices | [ResolvedDeviceSpec](#talos.resource.definitions.containers.ResolvedDeviceSpec) | repeated | Devices are fully resolved, with host device nodes filled in. |
 | stop_timeout | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
 | execution_hash | [string](#string) |  | ExecutionHash is the ContainerSpec execution hash the instance was created for. |
+| runtime | [string](#string) |  | Runtime is the OCI runtime the container runs under: runc or runsc. |
 
 
 
@@ -8711,6 +8712,7 @@ ContainerSpecSpec is the spec for ContainerSpec.
 | stop_timeout | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
 | restart | [ContainerRestartSpec](#talos.resource.definitions.containers.ContainerRestartSpec) |  |  |
 | health_check | [ContainerHealthCheckSpec](#talos.resource.definitions.containers.ContainerHealthCheckSpec) |  | HealthCheck probes the running container. It is not part of the execution hash: changing it re-targets the probe of the running instance rather than replacing the instance. |
+| runtime | [string](#string) |  | Runtime is the OCI runtime the container runs under: runc or runsc. |
 
 
 

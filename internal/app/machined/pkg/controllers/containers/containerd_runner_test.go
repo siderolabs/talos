@@ -13,6 +13,7 @@ import (
 	"golang.org/x/sys/unix"
 
 	containersctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/containers"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
 )
 
@@ -348,4 +349,45 @@ func TestDecodeSeccompProfile(t *testing.T) {
 		SeccompLocalhostProfileContent: `{`,
 	})
 	assert.ErrorContains(t, err, `failed to decode seccomp profile "broken.json"`)
+}
+
+func TestRuntimeOpts(t *testing.T) {
+	t.Parallel()
+
+	apply := func(containerRuntime string) *runner.Options {
+		opts := runner.DefaultOptions()
+
+		for _, opt := range containersctrl.RuntimeOpts(containerRuntime) {
+			opt(opts)
+		}
+
+		return opts
+	}
+
+	for _, containerRuntime := range []string{"", containers.ContainerRuntimeRunc} {
+		opts := apply(containerRuntime)
+
+		// runc is containerd's default runtime: nothing is selected, and the SELinux label stays.
+		assert.Empty(t, opts.ContainerOpts, containerRuntime)
+		assert.False(t, opts.SkipSelinuxLabel, containerRuntime)
+	}
+
+	opts := apply(containers.ContainerRuntimeRunsc)
+
+	assert.Len(t, opts.ContainerOpts, 1)
+	assert.True(t, opts.SkipSelinuxLabel)
+}
+
+func TestWithRunscSandbox(t *testing.T) {
+	t.Parallel()
+
+	// The gVisor shim only hands stdio to the sandbox, and doesn't hang in create, for a container
+	// marked as the pod sandbox.
+	spec := &specs.Spec{Annotations: map[string]string{"keep": "me"}}
+	require.NoError(t, containersctrl.WithRunscSandbox(t.Context(), nil, nil, spec))
+	assert.Equal(t, map[string]string{"keep": "me", "io.kubernetes.cri.container-type": "sandbox"}, spec.Annotations)
+
+	spec = &specs.Spec{}
+	require.NoError(t, containersctrl.WithRunscSandbox(t.Context(), nil, nil, spec))
+	assert.Equal(t, map[string]string{"io.kubernetes.cri.container-type": "sandbox"}, spec.Annotations)
 }

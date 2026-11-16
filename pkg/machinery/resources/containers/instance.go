@@ -72,6 +72,9 @@ type ContainerInstanceSpecSpec struct {
 	StopTimeout time.Duration `yaml:"stopTimeout,omitempty" protobuf:"14"`
 	// ExecutionHash is the ContainerSpec execution hash the instance was created for.
 	ExecutionHash string `yaml:"executionHash,omitempty" protobuf:"15"`
+
+	// Runtime is the OCI runtime the container runs under: runc or runsc.
+	Runtime string `yaml:"runtime,omitempty" protobuf:"16"`
 }
 
 // ResolvedMountSpec is a mount with its host-side source resolved.

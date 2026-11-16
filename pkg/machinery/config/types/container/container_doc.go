@@ -61,6 +61,17 @@ func (ContainerConfigV1Alpha1) Doc() *encoder.Doc {
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Overrides the image's WORKDIR." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
+				Name:        "runtime",
+				Type:        "ContainerRuntime",
+				Note:        "",
+				Description: "OCI runtime the container runs under.\n\n`runc` (the default) runs the container directly on the host kernel.\n`runsc` runs it in a gVisor sandbox, with its own user-space kernel between the\ncontainer and the host. `runsc` requires the `gvisor` system extension, and is not\ncompatible with the privileged profile, machined access, devices, host networking or\nhealth checks.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "OCI runtime the container runs under." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"runc",
+					"runsc",
+				},
+			},
+			{
 				Name:        "runAs",
 				Type:        "ContainerRunAs",
 				Note:        "",
@@ -123,7 +134,7 @@ func (ContainerConfigV1Alpha1) Doc() *encoder.Doc {
 	doc.AddExample("", exampleContainerConfigV1Alpha1())
 
 	doc.Fields[2].AddExample("", "docker.io/library/nginx:1.27")
-	doc.Fields[9].AddExample("", exampleContainerDevices())
+	doc.Fields[10].AddExample("", exampleContainerDevices())
 
 	return doc
 }

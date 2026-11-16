@@ -16,6 +16,8 @@ var (
 	OpenTaskNetNS         = openTaskNetNS
 	TaskNetNSDialer       = taskNetNSDialer
 	TaskCgroupPath        = taskCgroupPath
+	RuntimeOpts           = runtimeOpts
+	WithRunscSandbox      = withRunscSandbox
 
 	LogContainerStatusTransition = logContainerStatusTransition
 )

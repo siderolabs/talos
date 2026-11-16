@@ -18,8 +18,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
+	"github.com/siderolabs/talos/pkg/machinery/extensions"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	timeres "github.com/siderolabs/talos/pkg/machinery/resources/time"
 )
 
@@ -494,6 +496,33 @@ func TestReady(t *testing.T) {
 	}
 }
 
+func TestRuntimeReady(t *testing.T) {
+	t.Parallel()
+
+	ctx := t.Context()
+
+	st := state.WrapCore(inmem.NewState())
+
+	runc := containers.ContainerSpecSpec{Runtime: containers.ContainerRuntimeRunc}
+	runsc := containers.ContainerSpecSpec{Runtime: containers.ContainerRuntimeRunsc}
+
+	waitingFor, err := runc.RuntimeReady(ctx, st)
+	require.NoError(t, err)
+	assert.Empty(t, waitingFor)
+
+	waitingFor, err = runsc.RuntimeReady(ctx, st)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"extension: gvisor"}, waitingFor)
+
+	ext := runtime.NewExtensionStatus(runtime.NamespaceName, "000.ghcr.io-siderolabs-gvisor")
+	ext.TypedSpec().Metadata = extensions.Metadata{Name: "gvisor"}
+	require.NoError(t, st.Create(ctx, ext))
+
+	waitingFor, err = runsc.RuntimeReady(ctx, st)
+	require.NoError(t, err)
+	assert.Empty(t, waitingFor)
+}
+
 func TestReadyMissingStatuses(t *testing.T) {
 	t.Parallel()
 
@@ -538,6 +567,7 @@ func TestExecutionHash(t *testing.T) {
 		func(spec *containers.ContainerSpecSpec) { spec.Environment = []string{"A=2"} },
 		func(spec *containers.ContainerSpecSpec) { spec.Args = []string{"-v"} },
 		func(spec *containers.ContainerSpecSpec) { spec.Network.HostNetwork = true },
+		func(spec *containers.ContainerSpecSpec) { spec.Runtime = containers.ContainerRuntimeRunsc },
 		func(spec *containers.ContainerSpecSpec) {
 			spec.Mounts = []containers.ContainerMountSpec{{Kind: containers.MountKindTmpfs, Destination: "/tmp"}}
 		},

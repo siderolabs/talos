@@ -27,6 +27,8 @@ type ContainerConfig interface {
 	Args() []string
 	// WorkingDir overrides the image WORKDIR; empty means use the image.
 	WorkingDir() string
+	// Runtime is the OCI runtime the container runs under; defaults to runc.
+	Runtime() ContainerRuntime
 	// RunAs settings; never nil.
 	RunAs() ContainerRunAsConfig
 	// Environment is merged over the image ENV.
@@ -153,6 +155,17 @@ const (
 	ContainerSeccompProfileUnconfined ContainerSeccompProfile = "unconfined"
 	// ContainerSeccompProfileLocalhost applies a seccomp profile declared in the machine configuration.
 	ContainerSeccompProfileLocalhost ContainerSeccompProfile = "localhost"
+)
+
+// ContainerRuntime selects the OCI runtime a container runs under.
+type ContainerRuntime string
+
+// Container runtimes.
+const (
+	// ContainerRuntimeRunc runs the container with runc, directly on the host kernel. Default.
+	ContainerRuntimeRunc ContainerRuntime = "runc"
+	// ContainerRuntimeRunsc runs the container in a gVisor sandbox; requires the gvisor system extension.
+	ContainerRuntimeRunsc ContainerRuntime = "runsc"
 )
 
 // ContainerNetworkMode selects the container's network namespace.
