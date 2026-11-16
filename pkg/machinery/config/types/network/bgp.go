@@ -122,7 +122,8 @@ type BGPInstanceConfigV1Alpha1 struct {
 	//   description: |
 	//     Selected routes to import from other BGP instances. Imports are one-way: matching best paths
 	//     learned from each source instance are preserved and advertised by this instance with its own
-	//     next hop. Locally originated and previously imported paths are not recursively imported.
+	//     next hop. Locally originated and previously imported paths are not recursively imported, so
+	//     imports do not chain: importing from an instance gives only the routes it learned from its own neighbors.
 	//     Selectors in a single target instance must not overlap, giving each imported prefix one source.
 	BGPImportRoutes []BGPImportRoute `yaml:"importRoutes,omitempty" merge:"replace"`
 	//   description: |
@@ -169,6 +170,7 @@ type BGPNeighborConfig struct {
 	NeighborPassive bool `yaml:"passive,omitempty"`
 	//   description: |
 	//     BGP hold time for this neighbor. Zero uses the implementation default.
+	//     The hold time is negotiated when the session is established: a change applies to the next session.
 	//   schema:
 	//     type: string
 	//     pattern: ^[-+]?(((\d+(\.\d*)?|\.\d+|\d+)([nuµm]?s|m|h))|0)+$

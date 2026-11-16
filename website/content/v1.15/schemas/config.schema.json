@@ -5654,9 +5654,9 @@
           },
           "type": "array",
           "title": "importRoutes",
-          "description": "Selected routes to import from other BGP instances. Imports are one-way: matching best paths\nlearned from each source instance are preserved and advertised by this instance with its own\nnext hop. Locally originated and previously imported paths are not recursively imported.\nSelectors in a single target instance must not overlap, giving each imported prefix one source.\n",
-          "markdownDescription": "Selected routes to import from other BGP instances. Imports are one-way: matching best paths\nlearned from each source instance are preserved and advertised by this instance with its own\nnext hop. Locally originated and previously imported paths are not recursively imported.\nSelectors in a single target instance must not overlap, giving each imported prefix one source.",
-          "x-intellij-html-description": "\u003cp\u003eSelected routes to import from other BGP instances. Imports are one-way: matching best paths\nlearned from each source instance are preserved and advertised by this instance with its own\nnext hop. Locally originated and previously imported paths are not recursively imported.\nSelectors in a single target instance must not overlap, giving each imported prefix one source.\u003c/p\u003e\n"
+          "description": "Selected routes to import from other BGP instances. Imports are one-way: matching best paths\nlearned from each source instance are preserved and advertised by this instance with its own\nnext hop. Locally originated and previously imported paths are not recursively imported, so\nimports do not chain: importing from an instance gives only the routes it learned from its own neighbors.\nSelectors in a single target instance must not overlap, giving each imported prefix one source.\n",
+          "markdownDescription": "Selected routes to import from other BGP instances. Imports are one-way: matching best paths\nlearned from each source instance are preserved and advertised by this instance with its own\nnext hop. Locally originated and previously imported paths are not recursively imported, so\nimports do not chain: importing from an instance gives only the routes it learned from its own neighbors.\nSelectors in a single target instance must not overlap, giving each imported prefix one source.",
+          "x-intellij-html-description": "\u003cp\u003eSelected routes to import from other BGP instances. Imports are one-way: matching best paths\nlearned from each source instance are preserved and advertised by this instance with its own\nnext hop. Locally originated and previously imported paths are not recursively imported, so\nimports do not chain: importing from an instance gives only the routes it learned from its own neighbors.\nSelectors in a single target instance must not overlap, giving each imported prefix one source.\u003c/p\u003e\n"
         },
         "neighbors": {
           "items": {
@@ -5720,9 +5720,9 @@
           "type": "string",
           "pattern": "^[-+]?(((\\d+(\\.\\d*)?|\\.\\d+|\\d+)([nuµm]?s|m|h))|0)+$",
           "title": "holdTime",
-          "description": "BGP hold time for this neighbor. Zero uses the implementation default.\n",
-          "markdownDescription": "BGP hold time for this neighbor. Zero uses the implementation default.",
-          "x-intellij-html-description": "\u003cp\u003eBGP hold time for this neighbor. Zero uses the implementation default.\u003c/p\u003e\n"
+          "description": "BGP hold time for this neighbor. Zero uses the implementation default.\nThe hold time is negotiated when the session is established: a change applies to the next session.\n",
+          "markdownDescription": "BGP hold time for this neighbor. Zero uses the implementation default.\nThe hold time is negotiated when the session is established: a change applies to the next session.",
+          "x-intellij-html-description": "\u003cp\u003eBGP hold time for this neighbor. Zero uses the implementation default.\nThe hold time is negotiated when the session is established: a change applies to the next session.\u003c/p\u003e\n"
         },
         "bfd": {
           "$ref": "#/$defs/network.BGPBFDConfig",

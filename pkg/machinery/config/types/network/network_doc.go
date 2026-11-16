@@ -92,7 +92,7 @@ func (BGPInstanceConfigV1Alpha1) Doc() *encoder.Doc {
 				Name:        "importRoutes",
 				Type:        "[]BGPImportRoute",
 				Note:        "",
-				Description: "Selected routes to import from other BGP instances. Imports are one-way: matching best paths\nlearned from each source instance are preserved and advertised by this instance with its own\nnext hop. Locally originated and previously imported paths are not recursively imported.\nSelectors in a single target instance must not overlap, giving each imported prefix one source.",
+				Description: "Selected routes to import from other BGP instances. Imports are one-way: matching best paths\nlearned from each source instance are preserved and advertised by this instance with its own\nnext hop. Locally originated and previously imported paths are not recursively imported, so\nimports do not chain: importing from an instance gives only the routes it learned from its own neighbors.\nSelectors in a single target instance must not overlap, giving each imported prefix one source.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Selected routes to import from other BGP instances. Imports are one-way: matching best paths" /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
@@ -199,7 +199,7 @@ func (BGPNeighborConfig) Doc() *encoder.Doc {
 				Name:        "holdTime",
 				Type:        "Duration",
 				Note:        "",
-				Description: "BGP hold time for this neighbor. Zero uses the implementation default.",
+				Description: "BGP hold time for this neighbor. Zero uses the implementation default.\nThe hold time is negotiated when the session is established: a change applies to the next session.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "BGP hold time for this neighbor. Zero uses the implementation default." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{

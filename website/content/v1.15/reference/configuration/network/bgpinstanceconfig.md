@@ -77,7 +77,7 @@ advertise:
 |`multipath` |bool |Enable ECMP (multipath) for routes learned from multiple neighbors. Defaults to false.  | |
 |`maxPaths` |uint8 |Maximum number of ECMP next-hops to install. Zero uses the implementation default.  | |
 |`installRoutes` |bool |Install routes learned from BGP neighbors into the Linux routing table. Defaults to true.<br>When false, learned routes remain in this instance's BGP RIB and can still be selected by<br>`importRoutes`, but Talos does not install them into the Linux FIB.  | |
-|`importRoutes` |<a href="#BGPInstanceConfig.importRoutes.">[]BGPImportRoute</a> |Selected routes to import from other BGP instances. Imports are one-way: matching best paths<br>learned from each source instance are preserved and advertised by this instance with its own<br>next hop. Locally originated and previously imported paths are not recursively imported.<br>Selectors in a single target instance must not overlap, giving each imported prefix one source.  | |
+|`importRoutes` |<a href="#BGPInstanceConfig.importRoutes.">[]BGPImportRoute</a> |Selected routes to import from other BGP instances. Imports are one-way: matching best paths<br>learned from each source instance are preserved and advertised by this instance with its own<br>next hop. Locally originated and previously imported paths are not recursively imported, so<br>imports do not chain: importing from an instance gives only the routes it learned from its own neighbors.<br>Selectors in a single target instance must not overlap, giving each imported prefix one source.  | |
 |`neighbors` |<a href="#BGPInstanceConfig.neighbors.">[]BGPNeighborConfig</a> |BGP neighbors in this routing instance.  | |
 
 
@@ -114,7 +114,7 @@ BGPNeighborConfig configures a concrete BGP neighbor.
 |`peerASN` |uint32 |Expected peer ASN. Zero accepts any ASN advertised by the peer (eBGP "external").  | |
 |`localASN` |uint32 |Local ASN override for this neighbor. Zero uses the instance local ASN.  | |
 |`passive` |bool |Wait for the neighbor to establish the connection instead of initiating it.  | |
-|`holdTime` |Duration |BGP hold time for this neighbor. Zero uses the implementation default.  | |
+|`holdTime` |Duration |BGP hold time for this neighbor. Zero uses the implementation default.<br>The hold time is negotiated when the session is established: a change applies to the next session.  | |
 |`bfd` |<a href="#BGPInstanceConfig.neighbors..bfd">BGPBFDConfig</a> |BFD (Bidirectional Forwarding Detection) settings for this neighbor.<br>The presence of this block enables BFD; an empty block uses the implementation defaults.<br>BFD is supported only when the BGP instance uses the default routing domain, not a VRF.  | |
 |`authPassword` |string |Password for TCP MD5 signature authentication (RFC 2385) of the BGP session.<br>The same password must be configured on the neighbor. Supported for VRF-bound BGP instances as well.<br>The password must not exceed 80 bytes. If unset, the session is not authenticated.<br>The kernel matches the password by peer address (and VRF, if any), so unnumbered neighbors<br>sharing the same link-local address on different links must all use the same password (or none).  | |
 |`ebgpMultiHop` |uint32 |TTL To be set on BGP packet for eBGPMultiHop feature.<br>Value must be between 2 and 255.  | |
