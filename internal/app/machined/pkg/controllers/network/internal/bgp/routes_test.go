@@ -52,7 +52,7 @@ func TestLearnedRouteOutLinks(t *testing.T) {
 	instance := internalbgp.NewInstance()
 	internalbgp.SetInstanceServerForTest(instance, server)
 	internalbgp.SetInstancePeerIfacesForTest(instance, map[netip.Addr]string{unnumberedNexthop: "eth0"})
-	instance.SetOutputState(nil, nil, 0, netip.Addr{}, 0, true)
+	instance.SetOutputState(nil, resourcenetwork.BGPInstanceConfigSpec{InstallRoutes: true})
 
 	learned := instance.Snapshot(ctx).Learned
 
@@ -131,13 +131,31 @@ func TestLearnedRouteNextHopOrder(t *testing.T) {
 
 	instance := internalbgp.NewInstance()
 	internalbgp.SetInstanceServerForTest(instance, server)
-	instance.SetOutputState(nil, nil, 0, netip.Addr{}, 0, true)
+	instance.SetOutputState(nil, resourcenetwork.BGPInstanceConfigSpec{InstallRoutes: true})
 
 	assert.Equal(
 		t,
 		[]resourcenetwork.RouteNextHop{{Gateway: low}, {Gateway: high}},
 		instance.Snapshot(ctx).Learned[prefix],
 		"ECMP next-hops must be reported in a canonical order",
+	)
+
+	instance.SetOutputState(nil, resourcenetwork.BGPInstanceConfigSpec{InstallRoutes: true, MaxPaths: 1})
+
+	assert.Equal(
+		t,
+		[]resourcenetwork.RouteNextHop{{Gateway: low}},
+		instance.Snapshot(ctx).Learned[prefix],
+		"maxPaths must cap the installed ECMP next-hops",
+	)
+
+	instance.SetOutputState(nil, resourcenetwork.BGPInstanceConfigSpec{InstallRoutes: true, MaxPaths: 2})
+
+	assert.Equal(
+		t,
+		[]resourcenetwork.RouteNextHop{{Gateway: low}, {Gateway: high}},
+		instance.Snapshot(ctx).Learned[prefix],
+		"maxPaths equal to the next-hop count must keep all of them",
 	)
 }
 
@@ -164,7 +182,7 @@ func TestLearnedRouteDuplicateNextHops(t *testing.T) {
 
 	instance := internalbgp.NewInstance()
 	internalbgp.SetInstanceServerForTest(instance, server)
-	instance.SetOutputState(nil, nil, 0, netip.Addr{}, 0, true)
+	instance.SetOutputState(nil, resourcenetwork.BGPInstanceConfigSpec{InstallRoutes: true})
 
 	assert.Equal(
 		t,

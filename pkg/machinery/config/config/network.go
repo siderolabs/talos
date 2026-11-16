@@ -486,7 +486,7 @@ type NetworkBGPInstanceConfig interface {
 	AdvertiseLinks() []string
 	// Multipath enables ECMP (multiple best paths) for received routes.
 	Multipath() bool
-	// MaxPaths caps the number of ECMP next-hops; zero means use the implementation default.
+	// MaxPaths caps the number of installed ECMP next-hops; zero installs all best paths.
 	MaxPaths() uint8
 	// InstallRoutes reports whether neighbor-learned routes should be installed into the Linux FIB.
 	InstallRoutes() bool

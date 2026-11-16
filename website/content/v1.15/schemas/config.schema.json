@@ -5700,9 +5700,9 @@
         "maxPaths": {
           "type": "integer",
           "title": "maxPaths",
-          "description": "Maximum number of ECMP next-hops to install. Zero uses the implementation default.\n",
-          "markdownDescription": "Maximum number of ECMP next-hops to install. Zero uses the implementation default.",
-          "x-intellij-html-description": "\u003cp\u003eMaximum number of ECMP next-hops to install. Zero uses the implementation default.\u003c/p\u003e\n"
+          "description": "Maximum number of ECMP next-hops to install. Zero installs all best paths.\n",
+          "markdownDescription": "Maximum number of ECMP next-hops to install. Zero installs all best paths.",
+          "x-intellij-html-description": "\u003cp\u003eMaximum number of ECMP next-hops to install. Zero installs all best paths.\u003c/p\u003e\n"
         },
         "installRoutes": {
           "type": "boolean",

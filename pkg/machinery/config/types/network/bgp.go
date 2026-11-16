@@ -112,7 +112,7 @@ type BGPInstanceConfigV1Alpha1 struct {
 	//     Enable ECMP (multipath) for routes learned from multiple neighbors. Defaults to false.
 	BGPMultipath *bool `yaml:"multipath,omitempty"`
 	//   description: |
-	//     Maximum number of ECMP next-hops to install. Zero uses the implementation default.
+	//     Maximum number of ECMP next-hops to install. Zero installs all best paths.
 	BGPMaxPaths uint8 `yaml:"maxPaths,omitempty"`
 	//   description: |
 	//     Install routes learned from BGP neighbors into the Linux routing table. Defaults to true.

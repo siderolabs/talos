@@ -41,6 +41,7 @@ type Instance struct {
 	source        netip.Addr
 	localASN      uint32
 	installRoutes bool
+	maxPaths      uint8
 	peers         map[string]string
 	peerIfaces    map[netip.Addr]string
 	unnumbered    map[string]netip.Addr
@@ -95,6 +96,7 @@ func (instance *Instance) clearState() {
 	instance.source = netip.Addr{}
 	instance.localASN = 0
 	instance.installRoutes = false
+	instance.maxPaths = 0
 	instance.peers = map[string]string{}
 	instance.peerIfaces = map[netip.Addr]string{}
 	instance.unnumbered = map[string]netip.Addr{}
@@ -201,8 +203,8 @@ func (instance *Instance) serverIdentity(
 	listenPort int32,
 ) (netip.Addr, string) {
 	routerID := selectRouterID(config.RouterID, routerIDCandidates)
-	key := ServerKey(config.LocalASN, routerID, config.Multipath, config.MaxPaths, config.VRF, vrfIndex, config.VRFTable, listenPort)
-	keptKey := ServerKey(config.LocalASN, instance.derivedID, config.Multipath, config.MaxPaths, config.VRF, vrfIndex, config.VRFTable, listenPort)
+	key := ServerKey(config.LocalASN, routerID, config.Multipath, config.VRF, vrfIndex, config.VRFTable, listenPort)
+	keptKey := ServerKey(config.LocalASN, instance.derivedID, config.Multipath, config.VRF, vrfIndex, config.VRFTable, listenPort)
 
 	keep := key != instance.serverKey && keptKey == instance.serverKey && !config.RouterID.IsValid() &&
 		slices.Contains(routerIDCandidates, instance.derivedID) && instance.hasSession(ctx, resolvedPeers)
@@ -308,20 +310,14 @@ func (instance *Instance) ReconcileOriginated(advertised []netip.Prefix) error {
 }
 
 // SetOutputState records the successfully reconciled configuration used to build controller outputs.
-func (instance *Instance) SetOutputState(
-	connected []netip.Prefix,
-	imports []network.BGPImportRouteSpec,
-	table nethelpers.RoutingTable,
-	source netip.Addr,
-	localASN uint32,
-	installRoutes bool,
-) {
+func (instance *Instance) SetOutputState(connected []netip.Prefix, config network.BGPInstanceConfigSpec) {
 	instance.connected = slices.Clone(connected)
-	instance.imports = cloneImportRoutes(imports)
-	instance.table = table
-	instance.source = source
-	instance.localASN = localASN
-	instance.installRoutes = installRoutes
+	instance.imports = cloneImportRoutes(config.ImportRoutes)
+	instance.table = config.VRFTable
+	instance.source = config.RouteSource
+	instance.localASN = config.LocalASN
+	instance.installRoutes = config.InstallRoutes
+	instance.maxPaths = config.MaxPaths
 }
 
 // reconcilePeers adds, removes and updates peers to match the resolved set.

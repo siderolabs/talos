@@ -85,8 +85,15 @@ func (instance *Instance) learnedRoutes() map[netip.Prefix][]network.RouteNextHo
 	// GoBGP yields the paths of a destination in its own order, which is not guaranteed to be stable
 	// across calls, and several best paths may share a next-hop (e.g. the same route reflected by two
 	// route reflectors): canonicalize the ECMP set so that the RouteSpec is stable across reconciles.
+	// The canonical order also makes the maxPaths cut stable.
 	for dst, nexthops := range learned {
-		learned[dst] = network.NormalizeNextHops(nexthops)
+		nexthops = network.NormalizeNextHops(nexthops)
+
+		if instance.maxPaths > 0 && len(nexthops) > int(instance.maxPaths) {
+			nexthops = nexthops[:instance.maxPaths]
+		}
+
+		learned[dst] = nexthops
 	}
 
 	return learned

@@ -85,12 +85,15 @@ func newGracefulRestartFixture(t *testing.T, gracefulRestart *network.BGPGracefu
 	connectBGPImportTestFabric(t, ctx, targetServer, fixture.fabricServer, fabricPort)
 
 	internalbgp.SetInstanceServerForTest(fixture.fabric, targetServer)
-	fixture.fabric.SetOutputState(nil, []network.BGPImportRouteSpec{{
-		BGPInstance: "workload",
-		Prefixes:    []netip.Prefix{netip.MustParsePrefix("198.51.100.0/24")},
-	}}, 0, netip.Addr{}, 0, true)
+	fixture.fabric.SetOutputState(nil, network.BGPInstanceConfigSpec{
+		ImportRoutes: []network.BGPImportRouteSpec{{
+			BGPInstance: "workload",
+			Prefixes:    []netip.Prefix{netip.MustParsePrefix("198.51.100.0/24")},
+		}},
+		InstallRoutes: true,
+	})
 
-	fixture.workload.SetOutputState(nil, nil, 0, netip.Addr{}, 0, true)
+	fixture.workload.SetOutputState(nil, network.BGPInstanceConfigSpec{InstallRoutes: true})
 
 	fixture.instances = map[string]*internalbgp.Instance{"fabric": fixture.fabric, "workload": fixture.workload}
 	fixture.desired = map[string]struct{}{"fabric": {}, "workload": {}}

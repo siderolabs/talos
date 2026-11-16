@@ -78,8 +78,8 @@ func (BGPInstanceConfigV1Alpha1) Doc() *encoder.Doc {
 				Name:        "maxPaths",
 				Type:        "uint8",
 				Note:        "",
-				Description: "Maximum number of ECMP next-hops to install. Zero uses the implementation default.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Maximum number of ECMP next-hops to install. Zero uses the implementation default." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "Maximum number of ECMP next-hops to install. Zero installs all best paths.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Maximum number of ECMP next-hops to install. Zero installs all best paths." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
 				Name:        "installRoutes",

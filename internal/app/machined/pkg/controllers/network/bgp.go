@@ -280,14 +280,7 @@ func (ctrl *BGPController) reconcile(ctx context.Context, r controller.Runtime, 
 			continue
 		}
 
-		instance.SetOutputState(
-			resolved.ConnectedPrefixes,
-			resolved.Spec.ImportRoutes,
-			resolved.Spec.VRFTable,
-			resolved.Spec.RouteSource,
-			resolved.Spec.LocalASN,
-			resolved.Spec.InstallRoutes,
-		)
+		instance.SetOutputState(resolved.ConnectedPrefixes, resolved.Spec)
 	}
 
 	for name, instance := range ctrl.instances {

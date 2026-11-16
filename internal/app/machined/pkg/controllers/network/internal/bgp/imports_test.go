@@ -47,13 +47,13 @@ func TestBGPRouteImportLifecycle(t *testing.T) {
 
 	source := internalbgp.NewInstance()
 	internalbgp.SetInstanceServerForTest(source, sourceServer)
-	source.SetOutputState(nil, nil, 0, netip.Addr{}, 0, false)
+	source.SetOutputState(nil, resourcenetwork.BGPInstanceConfigSpec{})
 	assert.Empty(t, source.Snapshot(ctx).Learned, "installRoutes=false must suppress FIB output")
 
-	source.SetOutputState(nil, nil, 0, netip.Addr{}, 0, true)
+	source.SetOutputState(nil, resourcenetwork.BGPInstanceConfigSpec{InstallRoutes: true})
 	assert.Contains(t, source.Snapshot(ctx).Learned, prefix, "installRoutes=true must restore FIB output")
 
-	source.SetOutputState(nil, nil, 0, netip.Addr{}, 0, false)
+	source.SetOutputState(nil, resourcenetwork.BGPInstanceConfigSpec{})
 	candidates, err := internalbgp.ListImportCandidatesForTest(
 		source,
 		[]netip.Prefix{netip.MustParsePrefix("198.51.100.0/24")},
@@ -64,10 +64,13 @@ func TestBGPRouteImportLifecycle(t *testing.T) {
 	target := internalbgp.NewInstance()
 	internalbgp.SetInstanceServerForTest(target, targetServer)
 	require.NoError(t, target.ReconcileOriginated([]netip.Prefix{originatedPrefix}))
-	target.SetOutputState([]netip.Prefix{originatedPrefix}, []resourcenetwork.BGPImportRouteSpec{{
-		BGPInstance: "workload",
-		Prefixes:    []netip.Prefix{netip.MustParsePrefix("198.51.100.0/24")},
-	}}, 0, netip.Addr{}, 0, true)
+	target.SetOutputState([]netip.Prefix{originatedPrefix}, resourcenetwork.BGPInstanceConfigSpec{
+		ImportRoutes: []resourcenetwork.BGPImportRouteSpec{{
+			BGPInstance: "workload",
+			Prefixes:    []netip.Prefix{netip.MustParsePrefix("198.51.100.0/24")},
+		}},
+		InstallRoutes: true,
+	})
 
 	instances := map[string]*internalbgp.Instance{
 		"fabric":   target,
@@ -170,10 +173,13 @@ func TestImportedPrefixBecomesOriginated(t *testing.T) {
 
 	target := internalbgp.NewInstance()
 	internalbgp.SetInstanceServerForTest(target, targetServer)
-	target.SetOutputState(nil, []resourcenetwork.BGPImportRouteSpec{{
-		BGPInstance: "workload",
-		Prefixes:    []netip.Prefix{netip.MustParsePrefix("198.51.100.0/24")},
-	}}, 0, netip.Addr{}, 0, true)
+	target.SetOutputState(nil, resourcenetwork.BGPInstanceConfigSpec{
+		ImportRoutes: []resourcenetwork.BGPImportRouteSpec{{
+			BGPInstance: "workload",
+			Prefixes:    []netip.Prefix{netip.MustParsePrefix("198.51.100.0/24")},
+		}},
+		InstallRoutes: true,
+	})
 
 	instances := map[string]*internalbgp.Instance{"fabric": target, "workload": source}
 	desiredInstances := map[string]struct{}{"fabric": {}, "workload": {}}
@@ -278,10 +284,13 @@ func TestImportedPathChangeIsReplacedInPlace(t *testing.T) {
 
 	target := internalbgp.NewInstance()
 	internalbgp.SetInstanceServerForTest(target, targetServer)
-	target.SetOutputState(nil, []resourcenetwork.BGPImportRouteSpec{{
-		BGPInstance: "workload",
-		Prefixes:    []netip.Prefix{netip.MustParsePrefix("198.51.100.0/24")},
-	}}, 0, netip.Addr{}, 0, true)
+	target.SetOutputState(nil, resourcenetwork.BGPInstanceConfigSpec{
+		ImportRoutes: []resourcenetwork.BGPImportRouteSpec{{
+			BGPInstance: "workload",
+			Prefixes:    []netip.Prefix{netip.MustParsePrefix("198.51.100.0/24")},
+		}},
+		InstallRoutes: true,
+	})
 
 	instances := map[string]*internalbgp.Instance{"fabric": target, "workload": source}
 	desired := map[string]struct{}{"fabric": {}, "workload": {}}

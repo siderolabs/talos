@@ -75,7 +75,7 @@ advertise:
     - dummy0
 {{< /highlight >}}</details> | |
 |`multipath` |bool |Enable ECMP (multipath) for routes learned from multiple neighbors. Defaults to false.  | |
-|`maxPaths` |uint8 |Maximum number of ECMP next-hops to install. Zero uses the implementation default.  | |
+|`maxPaths` |uint8 |Maximum number of ECMP next-hops to install. Zero installs all best paths.  | |
 |`installRoutes` |bool |Install routes learned from BGP neighbors into the Linux routing table. Defaults to true.<br>When false, learned routes remain in this instance's BGP RIB and can still be selected by<br>`importRoutes`, but Talos does not install them into the Linux FIB.  | |
 |`importRoutes` |<a href="#BGPInstanceConfig.importRoutes.">[]BGPImportRoute</a> |Selected routes to import from other BGP instances. Imports are one-way: matching best paths<br>learned from each source instance are preserved and advertised by this instance with its own<br>next hop. Locally originated and previously imported paths are not recursively imported, so<br>imports do not chain: importing from an instance gives only the routes it learned from its own neighbors.<br>Selectors in a single target instance must not overlap, giving each imported prefix one source.  | |
 |`neighbors` |<a href="#BGPInstanceConfig.neighbors.">[]BGPNeighborConfig</a> |BGP neighbors in this routing instance.  | |
