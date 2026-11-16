@@ -8,6 +8,7 @@ import (
 	"context"
 	"net"
 	"net/netip"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -196,6 +197,73 @@ func startBGPImportTestServer(t *testing.T, ctx context.Context, asn uint32, rou
 	t.Cleanup(server.Stop)
 
 	return server
+}
+
+func TestImportedPathChangeIsReplacedInPlace(t *testing.T) {
+	ctx := t.Context()
+	fabricPort := freeBGPImportTestPort(t)
+	sourceServer := startBGPImportTestServer(t, ctx, 4200000000, "192.0.2.1", -1, false)
+	targetServer := startBGPImportTestServer(t, ctx, 65001, "192.0.2.2", -1, false)
+	fabricServer := startBGPImportTestServer(t, ctx, 65000, "192.0.2.3", fabricPort, false)
+	connectBGPImportTestFabric(t, ctx, targetServer, fabricServer, fabricPort)
+
+	prefix := netip.MustParsePrefix("198.51.100.100/32")
+
+	_, err := sourceServer.AddPath(apiutil.AddPathRequest{Paths: []*apiutil.Path{newBGPImportTestPath(t, prefix, 50)}})
+	require.NoError(t, err)
+
+	source := internalbgp.NewInstance()
+	internalbgp.SetInstanceServerForTest(source, sourceServer)
+
+	target := internalbgp.NewInstance()
+	internalbgp.SetInstanceServerForTest(target, targetServer)
+	target.SetOutputState(nil, []resourcenetwork.BGPImportRouteSpec{{
+		BGPInstance: "workload",
+		Prefixes:    []netip.Prefix{netip.MustParsePrefix("198.51.100.0/24")},
+	}}, 0, netip.Addr{}, 0, true)
+
+	instances := map[string]*internalbgp.Instance{"fabric": target, "workload": source}
+	desired := map[string]struct{}{"fabric": {}, "workload": {}}
+
+	_, _, err = internalbgp.ReconcileImportedPaths("fabric", target, instances, desired)
+	require.NoError(t, err)
+	require.Eventually(t, func() bool { return listBGPImportTestPath(t, fabricServer, prefix) != nil }, 5*time.Second, 10*time.Millisecond)
+
+	var withdrawals atomic.Int32
+
+	require.NoError(t, fabricServer.WatchEvent(ctx, gobgpsrv.WatchEventMessageCallbacks{
+		OnBestPath: func(paths []*apiutil.Path, _ time.Time) {
+			for _, path := range paths {
+				if path.Withdrawal && path.Nlri.String() == prefix.String() {
+					withdrawals.Add(1)
+				}
+			}
+		},
+	}, gobgpsrv.WatchBestPath(false)))
+
+	updatedPath := newBGPImportTestPath(t, prefix, 75)
+
+	_, err = sourceServer.AddPath(apiutil.AddPathRequest{Paths: []*apiutil.Path{updatedPath}})
+	require.NoError(t, err)
+
+	_, _, err = internalbgp.ReconcileImportedPaths("fabric", target, instances, desired)
+	require.NoError(t, err)
+
+	require.Eventually(t, func() bool {
+		path := listBGPImportTestPath(t, fabricServer, prefix)
+
+		return path != nil && importedAttribute[*bgppacket.PathAttributeMultiExitDisc](t, path).Value == 75
+	}, 5*time.Second, 10*time.Millisecond)
+
+	assert.Zero(t, withdrawals.Load(), "a changed imported path must replace the old one without a withdrawal")
+
+	// the replacement must still be removable once the source withdraws it
+	require.NoError(t, sourceServer.DeletePath(apiutil.DeletePathRequest{Paths: []*apiutil.Path{updatedPath}}))
+
+	_, _, err = internalbgp.ReconcileImportedPaths("fabric", target, instances, desired)
+	require.NoError(t, err)
+
+	require.Eventually(t, func() bool { return listBGPImportTestPath(t, fabricServer, prefix) == nil }, 5*time.Second, 10*time.Millisecond)
 }
 
 func connectBGPImportTestFabric(
