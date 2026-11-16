@@ -29,6 +29,13 @@ const ConfigNamespaceName resource.Namespace = "network-config"
 // DefaultRouteMetric is the default route metric if no metric was specified explicitly.
 const DefaultRouteMetric = 1024
 
+// BGPRouteMetric is the kernel metric of BGP-learned routes, the same as FRR's zebra uses.
+//
+// The kernel rejects a route next to one with the same metric: a non-zero metric keeps learned routes
+// from colliding with routes installed without one (IPv4 0, IPv6 1024), and it is still lower than
+// DefaultRouteMetric, so learned routes win over Talos static and DHCP routes.
+const BGPRouteMetric = 20
+
 // AddressID builds ID (primary key) for the address.
 func AddressID(linkName string, addr netip.Prefix) string {
 	return fmt.Sprintf("%s/%s", linkName, addr)

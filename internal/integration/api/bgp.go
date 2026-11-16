@@ -118,7 +118,7 @@ func (suite *BGPSuite) TestNumberedBGP() {
 		nethelpers.FamilyInet4,
 		netip.MustParsePrefix(fabricRoute),
 		fabric,
-		0,
+		networkres.BGPRouteMetric,
 		"",
 	)
 
@@ -269,7 +269,7 @@ func (suite *BGPSuite) TestVRFBGP() {
 		nethelpers.FamilyInet4,
 		netip.MustParsePrefix(fabricRoute),
 		fabric,
-		0,
+		networkres.BGPRouteMetric,
 		"",
 	)
 
@@ -378,7 +378,7 @@ func (suite *BGPSuite) TestVRFBGPRecreate() {
 		nethelpers.FamilyInet4,
 		netip.MustParsePrefix(fabricRoute),
 		fabric,
-		0,
+		networkres.BGPRouteMetric,
 		"",
 	)
 
@@ -468,6 +468,10 @@ func (suite *BGPSuite) assertLearnedRoute(nodeCtx context.Context, dest netip.Pr
 
 			if spec.Destination != dest || spec.Protocol != nethelpers.ProtocolBGP {
 				continue
+			}
+
+			if spec.Priority != networkres.BGPRouteMetric {
+				return false
 			}
 
 			if hops == 1 {
@@ -870,7 +874,7 @@ func (suite *BGPSuite) assertDefaultRoute(nodeCtx context.Context) {
 			// netip.Prefix, whose Bits() is -1), not as "0.0.0.0/0" — match either form.
 			isDefault := !spec.Destination.IsValid() || spec.Destination.Bits() == 0
 
-			if isDefault && spec.Protocol == nethelpers.ProtocolBGP {
+			if isDefault && spec.Protocol == nethelpers.ProtocolBGP && spec.Priority == networkres.BGPRouteMetric {
 				return true
 			}
 		}

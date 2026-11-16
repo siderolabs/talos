@@ -1191,6 +1191,16 @@ neighbors:
 The password is redacted from the machine configuration output. The `BGPInstanceConfigs` resource is now sensitive: the `os:admin` role reads it in full, while the other roles get it with the password replaced by `REDACTED`.
 """
 
+    [notes.bgp_route_metric]
+        title = "BGP Route Metric"
+        description = """\
+Routes learned over BGP are now installed with metric 20, the same as FRR uses, instead of no metric
+(IPv4 0, IPv6 1024), so they no longer fail to install next to a route with the same metric from another
+daemon or from Talos (e.g. a static IPv6 default route).
+Routes with a metric below 20 for the same destination, including IPv4 routes installed without a metric, now take
+precedence over the learned ones.
+"""
+
     [notes.image_layers_sync_fs]
         title = "Image Layers Synced to Disk"
         description = """\

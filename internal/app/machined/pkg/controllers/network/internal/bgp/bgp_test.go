@@ -204,6 +204,7 @@ func TestRouteSpec(t *testing.T) {
 	assert.Empty(t, single.NextHops)
 	assert.Equal(t, nethelpers.ProtocolBGP, single.Protocol)
 	assert.Equal(t, nethelpers.RoutingTable(88), single.Table)
+	assert.Equal(t, uint32(network.BGPRouteMetric), single.Priority)
 
 	nexthops := []network.RouteNextHop{
 		{Gateway: netip.MustParseAddr("fe80::1")},
@@ -216,6 +217,7 @@ func TestRouteSpec(t *testing.T) {
 	assert.False(t, multipath.Source.IsValid(), "a cross-family preferred source must be ignored")
 	assert.Equal(t, nexthops, multipath.NextHops)
 	assert.Equal(t, nethelpers.TableMain, multipath.Table)
+	assert.Equal(t, uint32(network.BGPRouteMetric), multipath.Priority)
 }
 
 func TestSessionState(t *testing.T) {

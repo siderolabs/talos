@@ -117,7 +117,7 @@ func (suite *RouteMergeSuite) TestMerge() {
 func (suite *RouteMergeSuite) TestMergeSameKey() {
 	// the kernel keeps a single route per table, destination and priority, so the routes which differ only in
 	// next-hops are merged into a single route, higher layer wins
-	bgp := network.NewRouteSpec(network.ConfigNamespaceName, "bgp/fabric/inet4//0")
+	bgp := network.NewRouteSpec(network.ConfigNamespaceName, "bgp/fabric/inet4//20")
 	*bgp.TypedSpec() = network.RouteSpecSpec{
 		Destination: netip.MustParsePrefix("0.0.0.0/0"),
 		NextHops: []network.RouteNextHop{
@@ -129,10 +129,11 @@ func (suite *RouteMergeSuite) TestMergeSameKey() {
 		Type:        nethelpers.TypeUnicast,
 		Table:       nethelpers.TableMain,
 		Protocol:    nethelpers.ProtocolBGP,
+		Priority:    network.BGPRouteMetric,
 		ConfigLayer: network.ConfigOperator,
 	}
 
-	static := network.NewRouteSpec(network.ConfigNamespaceName, "configuration/inet4//0")
+	static := network.NewRouteSpec(network.ConfigNamespaceName, "configuration/inet4//20")
 	*static.TypedSpec() = network.RouteSpecSpec{
 		Gateway:     netip.MustParseAddr("10.0.0.1"),
 		OutLinkName: "eth2",
@@ -141,6 +142,7 @@ func (suite *RouteMergeSuite) TestMergeSameKey() {
 		Type:        nethelpers.TypeUnicast,
 		Table:       nethelpers.TableMain,
 		Protocol:    nethelpers.ProtocolStatic,
+		Priority:    network.BGPRouteMetric,
 		ConfigLayer: network.ConfigMachineConfiguration,
 	}
 
@@ -174,11 +176,11 @@ func (suite *RouteMergeSuite) TestMergeSameKey() {
 
 	suite.assertRoutes(
 		[]string{
-			"inet4//0",
+			"inet4//20",
 			"inet6//1024",
 		}, func(r *network.RouteSpec, asrt *assert.Assertions) {
 			switch r.Metadata().ID() {
-			case "inet4//0":
+			case "inet4//20":
 				asrt.Equal(*static.TypedSpec(), *r.TypedSpec())
 			case "inet6//1024":
 				asrt.Equal(*ipv6NoPriority.TypedSpec(), *r.TypedSpec())
@@ -190,7 +192,7 @@ func (suite *RouteMergeSuite) TestMergeSameKey() {
 
 	suite.assertRoutes(
 		[]string{
-			"inet4//0",
+			"inet4//20",
 		}, func(r *network.RouteSpec, asrt *assert.Assertions) {
 			asrt.Equal(*bgp.TypedSpec(), *r.TypedSpec())
 		},
@@ -204,7 +206,7 @@ func (suite *RouteMergeSuite) TestMergeSameKey() {
 
 	suite.assertRoutes(
 		[]string{
-			"inet4//0",
+			"inet4//20",
 		}, func(r *network.RouteSpec, asrt *assert.Assertions) {
 			asrt.Equal(resource.PhaseRunning, r.Metadata().Phase())
 			asrt.Equal(*bgp.TypedSpec(), *r.TypedSpec())

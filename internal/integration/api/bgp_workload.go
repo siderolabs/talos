@@ -192,6 +192,10 @@ func (helper bgpWorkloadHelper) waitForFabricRoute(nodeCtx context.Context, dest
 				continue
 			}
 
+			if spec.Priority != networkres.BGPRouteMetric {
+				return false
+			}
+
 			if len(spec.NextHops) > 0 {
 				return true
 			}
@@ -212,7 +216,8 @@ func (helper bgpWorkloadHelper) waitForFabricRouteSpec(nodeCtx context.Context, 
 
 		for route := range routes.All() {
 			spec := route.TypedSpec()
-			if spec.Destination == destination && spec.Table == nethelpers.TableMain && spec.Protocol == nethelpers.ProtocolBGP {
+			if spec.Destination == destination && spec.Table == nethelpers.TableMain && spec.Protocol == nethelpers.ProtocolBGP &&
+				spec.Priority == networkres.BGPRouteMetric {
 				return true
 			}
 		}

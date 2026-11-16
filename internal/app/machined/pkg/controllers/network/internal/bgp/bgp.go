@@ -278,6 +278,7 @@ func RouteSpec(prefix netip.Prefix, nexthops []network.RouteNextHop, source neti
 		Protocol:    nethelpers.ProtocolBGP,
 		Type:        nethelpers.TypeUnicast,
 		Scope:       nethelpers.ScopeGlobal,
+		Priority:    network.BGPRouteMetric,
 		ConfigLayer: network.ConfigOperator,
 	}
 
