@@ -50,6 +50,12 @@ const bgpMaxAuthPasswordLength = 80
 // ebgpMultiHopMax is the maximum eBGPMultiHop possible (TTL of a TCP packet).
 const ebgpMultiHopMax = 255
 
+// bgpMinHoldTime and bgpMaxHoldTime bound a non-zero BGP hold time: RFC 4271 4.2, and the 16-bit Hold Time field of OPEN.
+const (
+	bgpMinHoldTime = 3 * time.Second
+	bgpMaxHoldTime = 65535 * time.Second
+)
+
 // BGPInstanceConfigV1Alpha1 configures a native BGP routing instance on the host.
 //
 //	examples:
@@ -502,11 +508,17 @@ func bgpNeighborKey(index int, neighbor BGPNeighborConfig) (string, error) {
 	return neighbor.NeighborLinkConfig, nil
 }
 
+//nolint:gocyclo
 func validateBGPNeighborBehavior(index int, neighbor BGPNeighborConfig, vrf string) error {
 	var errs error
 
-	if neighbor.NeighborHoldTime < 0 {
+	switch holdTime := neighbor.NeighborHoldTime; {
+	case holdTime < 0:
 		errs = errors.Join(errs, fmt.Errorf("neighbor[%d]: holdTime must not be negative", index))
+	case holdTime == 0:
+	case holdTime%time.Second != 0 || holdTime < bgpMinHoldTime || holdTime > bgpMaxHoldTime:
+		// BGP carries the hold time in whole seconds, and RFC 4271 4.2 allows zero or at least three seconds
+		errs = errors.Join(errs, fmt.Errorf("neighbor[%d]: holdTime must be whole seconds between %d and %d seconds", index, int(bgpMinHoldTime.Seconds()), int(bgpMaxHoldTime.Seconds())))
 	}
 
 	if len(neighbor.NeighborAuthPassword) > bgpMaxAuthPasswordLength {

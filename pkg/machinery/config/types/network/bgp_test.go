@@ -273,6 +273,62 @@ func TestBGPInstanceConfigValidate(t *testing.T) {
 			expectedError: "neighbor[0]: holdTime must not be negative\nneighbor[0]: bfd.transmitInterval must not be negative\nneighbor[0]: bfd.receiveInterval must not be negative",
 		},
 		{
+			name: "sub-second holdTime",
+			cfg: func() *network.BGPInstanceConfigV1Alpha1 {
+				cfg := network.NewBGPInstanceConfigV1Alpha1("fabric")
+				cfg.BGPLocalASN = 65001
+				cfg.BGPNeighborConfigs = []network.BGPNeighborConfig{{
+					NeighborLinkConfig: "enp0s1",
+					NeighborHoldTime:   500 * time.Millisecond,
+				}}
+
+				return cfg
+			},
+			expectedError: "neighbor[0]: holdTime must be whole seconds between 3 and 65535 seconds",
+		},
+		{
+			name: "holdTime below RFC 4271 minimum",
+			cfg: func() *network.BGPInstanceConfigV1Alpha1 {
+				cfg := network.NewBGPInstanceConfigV1Alpha1("fabric")
+				cfg.BGPLocalASN = 65001
+				cfg.BGPNeighborConfigs = []network.BGPNeighborConfig{{
+					NeighborLinkConfig: "enp0s1",
+					NeighborHoldTime:   2 * time.Second,
+				}}
+
+				return cfg
+			},
+			expectedError: "neighbor[0]: holdTime must be whole seconds between 3 and 65535 seconds",
+		},
+		{
+			name: "fractional holdTime",
+			cfg: func() *network.BGPInstanceConfigV1Alpha1 {
+				cfg := network.NewBGPInstanceConfigV1Alpha1("fabric")
+				cfg.BGPLocalASN = 65001
+				cfg.BGPNeighborConfigs = []network.BGPNeighborConfig{{
+					NeighborLinkConfig: "enp0s1",
+					NeighborHoldTime:   9500 * time.Millisecond,
+				}}
+
+				return cfg
+			},
+			expectedError: "neighbor[0]: holdTime must be whole seconds between 3 and 65535 seconds",
+		},
+		{
+			name: "holdTime above the OPEN field",
+			cfg: func() *network.BGPInstanceConfigV1Alpha1 {
+				cfg := network.NewBGPInstanceConfigV1Alpha1("fabric")
+				cfg.BGPLocalASN = 65001
+				cfg.BGPNeighborConfigs = []network.BGPNeighborConfig{{
+					NeighborLinkConfig: "enp0s1",
+					NeighborHoldTime:   65536 * time.Second,
+				}}
+
+				return cfg
+			},
+			expectedError: "neighbor[0]: holdTime must be whole seconds between 3 and 65535 seconds",
+		},
+		{
 			name: "BFD in VRF",
 			cfg: func() *network.BGPInstanceConfigV1Alpha1 {
 				cfg := network.NewBGPInstanceConfigV1Alpha1("workload")
