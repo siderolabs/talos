@@ -84,7 +84,9 @@ type BGPInstanceConfigV1Alpha1 struct {
 	//   schemaRequired: true
 	BGPLocalASN uint32 `yaml:"localASN"`
 	//   description: |
-	//     BGP router-id. If not set, it is derived from the first advertised address.
+	//     BGP router-id. If not set, it is derived from the lowest IPv4 address on the advertised links.
+	//     A derived router-id is kept while a neighbor session is established or opening, as changing it resets all sessions.
+	//     It switches to the newly derived address once no session is up, when its address leaves the advertised links, or when the instance is restarted for another change.
 	//   examples:
 	//    - value: >
 	//       meta.Addr{Addr: netip.MustParseAddr("10.0.0.1")}

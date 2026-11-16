@@ -50,8 +50,8 @@ func (BGPInstanceConfigV1Alpha1) Doc() *encoder.Doc {
 				Name:        "routerID",
 				Type:        "Addr",
 				Note:        "",
-				Description: "BGP router-id. If not set, it is derived from the first advertised address.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "BGP router-id. If not set, it is derived from the first advertised address." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "BGP router-id. If not set, it is derived from the lowest IPv4 address on the advertised links.\nA derived router-id is kept while a neighbor session is established or opening, as changing it resets all sessions.\nIt switches to the newly derived address once no session is up, when its address leaves the advertised links, or when the instance is restarted for another change.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "BGP router-id. If not set, it is derived from the lowest IPv4 address on the advertised links." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
 				Name:        "routeSource",

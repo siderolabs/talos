@@ -166,14 +166,17 @@ func TestRuntimeStateRouterID(t *testing.T) {
 	state := internalbgp.NewRuntimeState(
 		map[string]network.LinkStatusSpec{"dummy0": {Index: 1}},
 		[]network.AddressStatusSpec{
+			{Address: netip.MustParsePrefix("10.0.0.9/24"), LinkName: "dummy0", LinkIndex: 1},
 			{Address: netip.MustParsePrefix("2001:db8::2/64"), LinkName: "dummy0", LinkIndex: 1},
 			{Address: netip.MustParsePrefix("10.0.0.2/32"), LinkName: "dummy0", LinkIndex: 1},
+			{Address: netip.MustParsePrefix("10.0.0.2/24"), LinkName: "dummy0", LinkIndex: 1},
 		},
 	)
 
 	auto, err := state.Resolve(network.BGPInstanceConfigSpec{AdvertiseLinks: []string{"dummy0"}})
 	require.NoError(t, err)
 	assert.Equal(t, netip.MustParseAddr("10.0.0.2"), auto.RouterID)
+	assert.Equal(t, []netip.Addr{netip.MustParseAddr("10.0.0.2"), netip.MustParseAddr("10.0.0.9")}, auto.RouterIDCandidates)
 
 	configured, err := state.Resolve(network.BGPInstanceConfigSpec{
 		RouterID:       netip.MustParseAddr("192.0.2.1"),

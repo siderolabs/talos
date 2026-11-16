@@ -17,6 +17,7 @@ import (
 	gobgpapi "github.com/osrg/gobgp/v4/api"
 	"github.com/osrg/gobgp/v4/pkg/apiutil"
 	gobgpsrv "github.com/osrg/gobgp/v4/pkg/server"
+	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
 	"go.uber.org/zap/exp/zapslog"
 	"golang.org/x/sys/unix"
@@ -29,6 +30,8 @@ import (
 type Instance struct {
 	server        *gobgpsrv.BgpServer
 	serverKey     string
+	derivedID     netip.Addr
+	pendingID     netip.Addr
 	watchCancel   context.CancelFunc
 	originated    map[netip.Prefix]struct{}
 	imported      map[netip.Prefix]importedPath
@@ -77,6 +80,8 @@ func (instance *Instance) Stop() {
 	}
 
 	instance.serverKey = ""
+	instance.derivedID = netip.Addr{}
+	instance.pendingID = netip.Addr{}
 
 	instance.clearState()
 }
@@ -101,14 +106,14 @@ func (instance *Instance) EnsureServer(
 	ctx context.Context,
 	logger *zap.Logger,
 	config network.BGPInstanceConfigSpec,
-	routerID netip.Addr,
+	routerIDCandidates []netip.Addr,
 	vrfIndex uint32,
 	resolvedPeers []Peer,
 	peerIfaces map[netip.Addr]string,
 	listenPort int32,
 	signal func(),
 ) error {
-	key := ServerKey(config.LocalASN, routerID, config.Multipath, config.MaxPaths, config.VRF, vrfIndex, config.VRFTable, listenPort)
+	routerID, key := instance.serverIdentity(ctx, logger, config, routerIDCandidates, resolvedPeers, vrfIndex, listenPort)
 
 	if instance.server == nil || instance.serverKey != key {
 		instance.Stop()
@@ -162,6 +167,13 @@ func (instance *Instance) EnsureServer(
 		logger.Info("started embedded BGP speaker", zap.Uint32("asn", config.LocalASN), zap.Stringer("router_id", routerID))
 	}
 
+	// a configured router ID may be dropped for the same derived one without a rebuild
+	instance.derivedID = netip.Addr{}
+
+	if !config.RouterID.IsValid() {
+		instance.derivedID = routerID
+	}
+
 	instance.peerIfaces = peerIfaces
 	instance.unnumbered = map[string]netip.Addr{}
 
@@ -172,6 +184,66 @@ func (instance *Instance) EnsureServer(
 	}
 
 	return instance.reconcilePeers(ctx, config, resolvedPeers)
+}
+
+// serverIdentity returns the router ID and server key to run with.
+//
+// Like FRR, a derived router ID is kept while a session is established or opening, as a new one
+// resets every session, unless the server is rebuilt anyway or the address has left the advertised
+// links. derivedID is unset while the router ID is configured.
+func (instance *Instance) serverIdentity(
+	ctx context.Context,
+	logger *zap.Logger,
+	config network.BGPInstanceConfigSpec,
+	routerIDCandidates []netip.Addr,
+	resolvedPeers []Peer,
+	vrfIndex uint32,
+	listenPort int32,
+) (netip.Addr, string) {
+	routerID := selectRouterID(config.RouterID, routerIDCandidates)
+	key := ServerKey(config.LocalASN, routerID, config.Multipath, config.MaxPaths, config.VRF, vrfIndex, config.VRFTable, listenPort)
+	keptKey := ServerKey(config.LocalASN, instance.derivedID, config.Multipath, config.MaxPaths, config.VRF, vrfIndex, config.VRFTable, listenPort)
+
+	keep := key != instance.serverKey && keptKey == instance.serverKey && !config.RouterID.IsValid() &&
+		slices.Contains(routerIDCandidates, instance.derivedID) && instance.hasSession(ctx, resolvedPeers)
+
+	if !keep {
+		instance.pendingID = netip.Addr{}
+
+		return routerID, key
+	}
+
+	if instance.pendingID != routerID {
+		logger.Info("keeping the BGP router ID while a session is established or opening",
+			zap.Stringer("router_id", instance.derivedID), zap.Stringer("derived_router_id", routerID))
+
+		instance.pendingID = routerID
+	}
+
+	return instance.derivedID, keptKey
+}
+
+// hasSession reports whether a peer which stays configured is established or completing its handshake.
+func (instance *Instance) hasSession(ctx context.Context, resolvedPeers []Peer) bool {
+	addresses := xslices.ToSet(xslices.Map(resolvedPeers, func(peer Peer) string { return peer.Address }))
+
+	var session bool
+
+	if err := instance.server.ListPeer(ctx, &gobgpapi.ListPeerRequest{}, func(peer *gobgpapi.Peer) {
+		if _, configured := addresses[peer.GetConf().GetNeighborAddress()]; !configured {
+			return
+		}
+
+		switch peer.GetState().GetSessionState() { //nolint:exhaustive // only sessions with an OPEN exchange in progress or done
+		case gobgpapi.PeerState_SESSION_STATE_OPENSENT, gobgpapi.PeerState_SESSION_STATE_OPENCONFIRM, gobgpapi.PeerState_SESSION_STATE_ESTABLISHED:
+			session = true
+		}
+	}); err != nil {
+		// only a canceled context fails it: keep the router ID rather than rebuild the server
+		return true
+	}
+
+	return session
 }
 
 // listenAddresses returns the wildcard addresses to listen on.

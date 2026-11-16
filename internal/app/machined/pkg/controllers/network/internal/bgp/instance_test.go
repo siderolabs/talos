@@ -16,9 +16,12 @@ import (
 	"github.com/gopacket/gopacket"
 	"github.com/gopacket/gopacket/layers"
 	gobgpapi "github.com/osrg/gobgp/v4/api"
+	bgppacket "github.com/osrg/gobgp/v4/pkg/packet/bgp"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zaptest/observer"
 	"golang.org/x/sys/unix"
 
 	internalbgp "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/internal/bgp"
@@ -102,7 +105,7 @@ func TestInstanceAuthPasswordListenerKey(t *testing.T) {
 			t.Context(),
 			zap.NewNop(),
 			config,
-			netip.MustParseAddr("10.0.0.1"),
+			[]netip.Addr{netip.MustParseAddr("10.0.0.1")},
 			0,
 			[]internalbgp.Peer{peer},
 			nil,
@@ -224,7 +227,7 @@ func TestInstanceServerLifecycleAndReconciliation(t *testing.T) {
 		t.Context(),
 		zap.NewNop(),
 		config,
-		netip.MustParseAddr("10.0.0.1"),
+		[]netip.Addr{netip.MustParseAddr("10.0.0.1")},
 		0,
 		[]internalbgp.Peer{peer},
 		peerIfaces,
@@ -242,7 +245,7 @@ func TestInstanceServerLifecycleAndReconciliation(t *testing.T) {
 		t.Context(),
 		zap.NewNop(),
 		config,
-		netip.MustParseAddr("10.0.0.1"),
+		[]netip.Addr{netip.MustParseAddr("10.0.0.1")},
 		0,
 		[]internalbgp.Peer{peer},
 		peerIfaces,
@@ -256,7 +259,7 @@ func TestInstanceServerLifecycleAndReconciliation(t *testing.T) {
 		t.Context(),
 		zap.NewNop(),
 		config,
-		netip.MustParseAddr("10.0.0.1"),
+		[]netip.Addr{netip.MustParseAddr("10.0.0.1")},
 		0,
 		[]internalbgp.Peer{peer},
 		peerIfaces,
@@ -270,7 +273,7 @@ func TestInstanceServerLifecycleAndReconciliation(t *testing.T) {
 		t.Context(),
 		zap.NewNop(),
 		config,
-		netip.MustParseAddr("10.0.0.1"),
+		[]netip.Addr{netip.MustParseAddr("10.0.0.1")},
 		0,
 		nil,
 		peerIfaces,
@@ -307,7 +310,7 @@ func TestInstanceServerLifecycleAndReconciliation(t *testing.T) {
 		t.Context(),
 		zap.NewNop(),
 		config,
-		netip.MustParseAddr("10.0.0.9"),
+		[]netip.Addr{netip.MustParseAddr("10.0.0.9")},
 		0,
 		nil,
 		peerIfaces,
@@ -339,7 +342,7 @@ func TestChangedPeerIsUpdatedInPlace(t *testing.T) {
 			ctx,
 			zap.NewNop(),
 			network.BGPInstanceConfigSpec{LocalASN: 65001, Neighbors: []network.BGPNeighborConfigSpec{peer.Config}},
-			netip.MustParseAddr("10.0.0.1"),
+			[]netip.Addr{netip.MustParseAddr("10.0.0.1")},
 			0,
 			[]internalbgp.Peer{peer},
 			nil,
@@ -408,6 +411,212 @@ func TestChangedPeerIsUpdatedInPlace(t *testing.T) {
 	}
 }
 
+func TestDerivedRouterIDIsKeptWhilePeerIsEstablished(t *testing.T) {
+	t.Parallel()
+
+	derived := network.BGPInstanceConfigSpec{}
+	configured := network.BGPInstanceConfigSpec{RouterID: netip.MustParseAddr("10.5.0.9")}
+	addrs := func(addrs ...string) []netip.Addr { return xslices.Map(addrs, netip.MustParseAddr) }
+
+	for _, test := range []struct {
+		name string
+
+		initial    network.BGPInstanceConfigSpec
+		initialID  string
+		deriveSame bool
+		openOnly   bool
+		dropPeer   bool
+		removePeer bool
+		next       network.BGPInstanceConfigSpec
+		candidates []netip.Addr
+
+		expectedID string
+	}{
+		{
+			name:      "lower address added",
+			initial:   derived,
+			initialID: "10.5.0.3",
+			next:      derived, candidates: addrs("10.5.0.2", "10.5.0.3"),
+			expectedID: "10.5.0.3",
+		},
+		{
+			name:      "address removed",
+			initial:   derived,
+			initialID: "10.5.0.3",
+			next:      derived, candidates: addrs("10.5.0.2"),
+			expectedID: "10.5.0.2",
+		},
+		{
+			name:      "server rebuilt anyway",
+			initial:   derived,
+			initialID: "10.5.0.3",
+			next:      network.BGPInstanceConfigSpec{Multipath: true}, candidates: addrs("10.5.0.2", "10.5.0.3"),
+			expectedID: "10.5.0.2",
+		},
+		{
+			name:      "no session established",
+			initial:   derived,
+			initialID: "10.5.0.3",
+			dropPeer:  true,
+			next:      derived, candidates: addrs("10.5.0.2", "10.5.0.3"),
+			expectedID: "10.5.0.2",
+		},
+		{
+			name:       "configured router ID dropped for the same derived one",
+			initial:    network.BGPInstanceConfigSpec{RouterID: netip.MustParseAddr("10.5.0.3")},
+			initialID:  "10.5.0.3",
+			deriveSame: true,
+			next:       derived, candidates: addrs("10.5.0.2", "10.5.0.3"),
+			expectedID: "10.5.0.3",
+		},
+		{
+			name:      "session opening",
+			initial:   derived,
+			initialID: "10.5.0.3",
+			openOnly:  true,
+			next:      derived, candidates: addrs("10.5.0.2", "10.5.0.3"),
+			expectedID: "10.5.0.3",
+		},
+		{
+			name:       "established peer removed",
+			initial:    derived,
+			initialID:  "10.5.0.3",
+			removePeer: true,
+			next:       derived, candidates: addrs("10.5.0.2", "10.5.0.3"),
+			expectedID: "10.5.0.2",
+		},
+		{
+			name:      "router ID configured",
+			initial:   derived,
+			initialID: "10.5.0.3",
+			next:      configured, candidates: addrs("10.5.0.3"),
+			expectedID: "10.5.0.9",
+		},
+		{
+			name:      "configured router ID removed",
+			initial:   configured,
+			initialID: "10.5.0.9",
+			next:      derived, candidates: addrs("10.5.0.3", "10.5.0.9"),
+			expectedID: "10.5.0.3",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx := t.Context()
+			instancePort := freeBGPImportTestPort(t)
+
+			instance := internalbgp.NewInstance()
+			t.Cleanup(instance.Stop)
+
+			peer := internalbgp.Peer{
+				Address: "127.0.0.2",
+				Config:  network.BGPNeighborConfigSpec{Address: netip.MustParseAddr("127.0.0.2"), PeerASN: 65000, Passive: true},
+			}
+
+			core, logs := observer.New(zap.DebugLevel)
+
+			ensure := func(config network.BGPInstanceConfigSpec, candidates []netip.Addr, peers []internalbgp.Peer) {
+				t.Helper()
+
+				config.LocalASN = 65001
+				config.Neighbors = xslices.Map(peers, func(peer internalbgp.Peer) network.BGPNeighborConfigSpec { return peer.Config })
+
+				require.NoError(t, instance.EnsureServer(
+					ctx,
+					zap.New(core),
+					config,
+					candidates,
+					0,
+					peers,
+					nil,
+					instancePort,
+					func() {},
+				))
+			}
+
+			inState := func(state gobgpapi.PeerState_SessionState) func() bool {
+				return func() bool {
+					var matches bool
+
+					require.NoError(t, internalbgp.InstanceServerForTest(instance).ListPeer(ctx, &gobgpapi.ListPeerRequest{}, func(p *gobgpapi.Peer) {
+						matches = p.GetState().GetSessionState() == state
+					}))
+
+					return matches
+				}
+			}
+			established := inState(gobgpapi.PeerState_SESSION_STATE_ESTABLISHED)
+
+			ensure(test.initial, addrs(test.initialID), []internalbgp.Peer{peer})
+
+			if test.deriveSame {
+				ensure(derived, addrs(test.initialID), []internalbgp.Peer{peer})
+			}
+
+			if test.openOnly {
+				// a peer which sends its OPEN but never a KEEPALIVE holds the session in OpenConfirm
+				conn, err := (&net.Dialer{LocalAddr: &net.TCPAddr{IP: net.ParseIP("127.0.0.2")}}).DialContext(ctx, "tcp", net.JoinHostPort("127.0.0.1", strconv.Itoa(int(instancePort))))
+				require.NoError(t, err)
+				t.Cleanup(func() { conn.Close() }) //nolint:errcheck
+
+				open, err := bgppacket.NewBGPOpenMessage(65000, 90, netip.MustParseAddr("10.0.0.2"), nil)
+				require.NoError(t, err)
+
+				openBytes, err := open.Serialize()
+				require.NoError(t, err)
+
+				_, err = conn.Write(openBytes)
+				require.NoError(t, err)
+
+				require.Eventually(t, inState(gobgpapi.PeerState_SESSION_STATE_OPENCONFIRM), 5*time.Second, 10*time.Millisecond, "BGP session did not reach OpenConfirm")
+
+				ensure(test.next, test.candidates, []internalbgp.Peer{peer})
+
+				bgp, err := internalbgp.InstanceServerForTest(instance).GetBgp(ctx, &gobgpapi.GetBgpRequest{})
+				require.NoError(t, err)
+				assert.Equal(t, test.expectedID, bgp.GetGlobal().GetRouterId())
+
+				return
+			}
+
+			fabricPeer := &gobgpapi.Peer{
+				Conf:      &gobgpapi.PeerConf{NeighborAddress: "127.0.0.1", PeerAsn: 65001},
+				Transport: &gobgpapi.Transport{LocalAddress: "127.0.0.2", RemotePort: uint32(instancePort)},
+			}
+
+			fabric := startBGPImportTestServer(t, ctx, 65000, "10.0.0.2", -1, false)
+			require.NoError(t, fabric.AddPeer(ctx, &gobgpapi.AddPeerRequest{Peer: fabricPeer}))
+			require.Eventually(t, established, 5*time.Second, 10*time.Millisecond, "BGP session did not establish")
+
+			if test.dropPeer {
+				require.NoError(t, fabric.DeletePeer(ctx, &gobgpapi.DeletePeerRequest{Address: fabricPeer.Conf.NeighborAddress}))
+				require.Eventually(t, func() bool { return !established() }, 5*time.Second, 10*time.Millisecond, "BGP session did not go down")
+			}
+
+			nextPeers := []internalbgp.Peer{peer}
+			if test.removePeer {
+				nextPeers = nil
+			}
+
+			// the decision to keep the router ID is logged once, not on every reconcile
+			ensure(test.next, test.candidates, nextPeers)
+			ensure(test.next, test.candidates, nextPeers)
+
+			kept := 0
+			if test.expectedID == test.initialID {
+				kept = 1
+			}
+
+			assert.Equal(t, kept, logs.FilterMessageSnippet("keeping the BGP router ID").Len())
+
+			bgp, err := internalbgp.InstanceServerForTest(instance).GetBgp(ctx, &gobgpapi.GetBgpRequest{})
+			require.NoError(t, err)
+			assert.Equal(t, test.expectedID, bgp.GetGlobal().GetRouterId())
+		})
+	}
+}
+
 // TestEBGPPacketTTL verifies the configured and default eBGP TTL on the wire.
 func TestEBGPPacketTTL(t *testing.T) {
 	for _, ttl := range []uint32{0, 2, 42, 255} {
@@ -441,7 +650,7 @@ func testEBGPPacketTTL(t *testing.T, ttl uint32) {
 		t.Context(),
 		zap.NewNop(),
 		network.BGPInstanceConfigSpec{LocalASN: 65001},
-		netip.MustParseAddr("10.0.0.1"),
+		[]netip.Addr{netip.MustParseAddr("10.0.0.1")},
 		0,
 		[]internalbgp.Peer{{
 			Address: "127.0.0.2",

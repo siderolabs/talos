@@ -24,6 +24,9 @@ type ResolvedConfig struct {
 	// that route, as Talos installs address routes with a higher metric than BGP routes.
 	ConnectedPrefixes []netip.Prefix
 	RouterID          netip.Addr
+	// RouterIDCandidates are the IPv4 addresses on the advertised links, lowest first: a derived router ID
+	// is the first of them, and a running instance may keep any of them.
+	RouterIDCandidates []netip.Addr
 	// VRFIndex is the kernel index of the VRF link, zero when the instance runs in the main table.
 	//
 	// The listening socket is bound to the device by name, which the kernel resolves to an index
@@ -146,12 +149,14 @@ func (state *RuntimeState) Resolve(spec network.BGPInstanceConfigSpec) (Resolved
 	}
 
 	advertisedAddresses := state.advertisedAddresses(resolved.AdvertiseLinks)
+	routerIDCandidates := routerIDCandidates(advertisedAddresses)
 
 	return ResolvedConfig{
 		Spec:               resolved,
 		AdvertisedPrefixes: connectedPrefixes(advertisedAddresses),
 		ConnectedPrefixes:  connectedPrefixes(state.domainAddresses(resolved.VRF)),
-		RouterID:           routerID(resolved.RouterID, advertisedAddresses),
+		RouterID:           selectRouterID(resolved.RouterID, routerIDCandidates),
+		RouterIDCandidates: routerIDCandidates,
 		VRFIndex:           vrfIndex,
 	}, nil
 }
@@ -347,16 +352,22 @@ func connectedPrefixes(addresses []netip.Prefix) []netip.Prefix {
 	return slices.Compact(prefixes)
 }
 
-func routerID(configured netip.Addr, advertised []netip.Prefix) netip.Addr {
-	if configured.IsValid() {
+func selectRouterID(configured netip.Addr, candidates []netip.Addr) netip.Addr {
+	if configured.IsValid() || len(candidates) == 0 {
 		return configured
 	}
 
+	return candidates[0]
+}
+
+func routerIDCandidates(advertised []netip.Prefix) []netip.Addr {
+	var candidates []netip.Addr
+
 	for _, prefix := range advertised {
 		if prefix.Addr().Is4() {
-			return prefix.Addr()
+			candidates = append(candidates, prefix.Addr())
 		}
 	}
 
-	return netip.Addr{}
+	return slices.Compact(candidates)
 }

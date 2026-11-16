@@ -47,7 +47,7 @@ neighbors:
         receiveInterval: 300ms # Required minimum receive interval. Zero uses the implementation default.
         detectMultiplier: 3 # BFD detection multiplier. Zero uses the implementation default.
 
-# # BGP router-id. If not set, it is derived from the first advertised address.
+# # BGP router-id. If not set, it is derived from the lowest IPv4 address on the advertised links.
 # routerID: 10.0.0.1
 
 # # Preferred source address set on routes installed from BGP (the kernel route `src` / RTA_PREFSRC,
@@ -64,7 +64,7 @@ name: fabric
 |`localASN` |uint32 |Local autonomous system number for the BGP instance. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 localASN: 65001
 {{< /highlight >}}</details> | |
-|`routerID` |Addr |BGP router-id. If not set, it is derived from the first advertised address. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`routerID` |Addr |BGP router-id. If not set, it is derived from the lowest IPv4 address on the advertised links.<br>A derived router-id is kept while a neighbor session is established or opening, as changing it resets all sessions.<br>It switches to the newly derived address once no session is up, when its address leaves the advertised links, or when the instance is restarted for another change. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 routerID: 10.0.0.1
 {{< /highlight >}}</details> | |
 |`routeSource` |Addr |Preferred source address set on routes installed from BGP (the kernel route `src` / RTA_PREFSRC,<br>equivalent to FRR's `ip protocol bgp route-map SETSRC`). If not set, the kernel selects the source address. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
