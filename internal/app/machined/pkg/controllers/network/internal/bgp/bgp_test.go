@@ -47,7 +47,7 @@ func TestBuildPeer(t *testing.T) {
 	assert.Equal(t, "fe80::1%eth0", peer.GetConf().GetNeighborAddress())
 	assert.Equal(t, uint32(65002), peer.GetConf().GetPeerAsn())
 	assert.Equal(t, uint32(65003), peer.GetConf().GetLocalAsn())
-	assert.True(t, peer.GetConf().GetReplacePeerAsn())
+	assert.False(t, peer.GetConf().GetReplacePeerAsn(), "localASN must not rewrite the peer ASN in AS_PATH")
 	assert.True(t, peer.EbgpMultihop.Enabled)
 	assert.Equal(t, uint32(2), peer.EbgpMultihop.MultihopTtl)
 	assert.True(t, peer.GetTransport().GetPassiveMode())

@@ -50,7 +50,6 @@ func BuildPeer(peer Peer, multipath bool) *gobgpapi.Peer {
 
 	if peer.Config.LocalASN != 0 {
 		result.Conf.LocalAsn = peer.Config.LocalASN
-		result.Conf.ReplacePeerAsn = true
 	}
 
 	if peer.Config.Passive || peer.BindInterface != "" {
