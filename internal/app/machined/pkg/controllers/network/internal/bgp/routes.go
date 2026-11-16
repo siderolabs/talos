@@ -71,23 +71,9 @@ func (instance *Instance) learnedRoutes() map[netip.Prefix][]network.RouteNextHo
 					continue
 				}
 
-				nexthop := PathNexthop(path)
-				if !nexthop.IsValid() || nexthop.IsUnspecified() {
-					continue
+				if nh, ok := LearnedNexthop(path, instance.peerIfaces); ok {
+					learned[dst] = append(learned[dst], nh)
 				}
-
-				nh := network.RouteNextHop{Gateway: nexthop}
-
-				if nexthop.IsLinkLocalUnicast() {
-					// a link-local gateway is only meaningful together with the egress link, which is known
-					// for unnumbered peers only; the kernel rejects a link-local gateway without a device
-					nh.OutLinkName = instance.peerIfaces[path.PeerAddress.WithZone("")]
-					if nh.OutLinkName == "" {
-						continue
-					}
-				}
-
-				learned[dst] = append(learned[dst], nh)
 			}
 		})
 		if err != nil {
@@ -104,6 +90,35 @@ func (instance *Instance) learnedRoutes() map[netip.Prefix][]network.RouteNextHo
 	}
 
 	return learned
+}
+
+// LearnedNexthop returns the next-hop to install for a learned path.
+//
+// A link-local gateway is only meaningful together with the egress link, which is known for unnumbered
+// peers only. Paths from other peers fall back to the global next-hop (RFC 2545 sends both), and are
+// dropped without one: the kernel rejects a link-local gateway without a device.
+func LearnedNexthop(path *apiutil.Path, peerIfaces map[netip.Addr]string) (network.RouteNextHop, bool) {
+	nexthop := PathNexthop(path)
+	if !nexthop.IsValid() || nexthop.IsUnspecified() {
+		return network.RouteNextHop{}, false
+	}
+
+	if !nexthop.IsLinkLocalUnicast() {
+		return network.RouteNextHop{Gateway: nexthop}, true
+	}
+
+	if link := peerIfaces[path.PeerAddress.WithZone("")]; link != "" {
+		return network.RouteNextHop{Gateway: nexthop, OutLinkName: link}, true
+	}
+
+	for _, attr := range path.Attrs {
+		mpReach, ok := attr.(*bgppacket.PathAttributeMpReachNLRI)
+		if ok && mpReach.Nexthop.IsValid() && !mpReach.Nexthop.IsUnspecified() && !mpReach.Nexthop.IsLinkLocalUnicast() {
+			return network.RouteNextHop{Gateway: mpReach.Nexthop}, true
+		}
+	}
+
+	return network.RouteNextHop{}, false
 }
 
 func (instance *Instance) peerStatuses(ctx context.Context) []network.BGPPeerStatusSpec {

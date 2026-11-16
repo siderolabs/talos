@@ -173,3 +173,68 @@ func TestLearnedRouteDuplicateNextHops(t *testing.T) {
 		"best paths sharing a next-hop must collapse into one",
 	)
 }
+
+func TestLearnedNexthop(t *testing.T) {
+	t.Parallel()
+
+	nlri, err := bgppacket.NewIPAddrPrefix(netip.MustParsePrefix("2001:db8:3::/64"))
+	require.NoError(t, err)
+
+	ipv6Path := func(peer netip.Addr, nexthops ...netip.Addr) *apiutil.Path {
+		mpReach, mpErr := bgppacket.NewPathAttributeMpReachNLRI(bgppacket.RF_IPv6_UC, []bgppacket.PathNLRI{{NLRI: nlri}}, nexthops...)
+		require.NoError(t, mpErr)
+
+		return &apiutil.Path{
+			PeerAddress: peer,
+			Attrs:       []bgppacket.PathAttributeInterface{bgppacket.NewPathAttributeOrigin(0), mpReach},
+		}
+	}
+
+	ipv4Nexthop, err := bgppacket.NewPathAttributeNextHop(netip.MustParseAddr("192.0.2.10"))
+	require.NoError(t, err)
+
+	unnumbered := netip.MustParseAddr("fe80::2")
+	peerIfaces := map[netip.Addr]string{unnumbered: "eth0"}
+
+	for _, test := range []struct {
+		path     *apiutil.Path
+		expected resourcenetwork.RouteNextHop
+		ok       bool
+		name     string
+	}{
+		{
+			name: "IPv4 next-hop",
+			path: &apiutil.Path{
+				PeerAddress: netip.MustParseAddr("192.0.2.10"),
+				Attrs:       []bgppacket.PathAttributeInterface{bgppacket.NewPathAttributeOrigin(0), ipv4Nexthop},
+			},
+			expected: resourcenetwork.RouteNextHop{Gateway: netip.MustParseAddr("192.0.2.10")},
+			ok:       true,
+		},
+		{
+			name:     "unnumbered peer link-local next-hop",
+			path:     ipv6Path(unnumbered, netip.MustParseAddr("2001:db8:9::2"), unnumbered),
+			expected: resourcenetwork.RouteNextHop{Gateway: unnumbered, OutLinkName: "eth0"},
+			ok:       true,
+		},
+		{
+			name:     "numbered peer falls back to the global next-hop",
+			path:     ipv6Path(netip.MustParseAddr("2001:db8:9::2"), netip.MustParseAddr("2001:db8:9::2"), netip.MustParseAddr("fe80::3")),
+			expected: resourcenetwork.RouteNextHop{Gateway: netip.MustParseAddr("2001:db8:9::2")},
+			ok:       true,
+		},
+		{
+			name: "link-local next-hop only, unknown link",
+			path: ipv6Path(netip.MustParseAddr("2001:db8:9::2"), netip.MustParseAddr("fe80::3")),
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			nh, ok := internalbgp.LearnedNexthop(test.path, peerIfaces)
+
+			assert.Equal(t, test.ok, ok)
+			assert.Equal(t, test.expected, nh)
+		})
+	}
+}
