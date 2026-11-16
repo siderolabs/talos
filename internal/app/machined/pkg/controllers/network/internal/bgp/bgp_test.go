@@ -57,9 +57,20 @@ func TestBuildPeer(t *testing.T) {
 	assert.Equal(t, uint32(300000), peer.GetBfd().GetDesiredMinimumTxInterval())
 	assert.Equal(t, uint32(400000), peer.GetBfd().GetRequiredMinimumReceive())
 	assert.Equal(t, uint32(3), peer.GetBfd().GetDetectionMultiplier())
+	assert.True(t, peer.GetBfd().GetMultihop(), "BFD to a multihop neighbor must use multihop BFD")
 	require.Len(t, peer.GetAfiSafis(), 2)
 	assert.True(t, peer.GetAfiSafis()[0].GetUseMultiplePaths().GetConfig().GetEnabled())
 	assert.True(t, peer.GetAfiSafis()[1].GetUseMultiplePaths().GetConfig().GetEnabled())
+
+	singleHop := internalbgp.BuildPeer(internalbgp.Peer{
+		Address: "192.0.2.1",
+		Config: network.BGPNeighborConfigSpec{
+			PeerASN: 65002,
+			BFD:     &network.BGPBFDConfigSpec{},
+		},
+	}, false)
+
+	assert.False(t, singleHop.GetBfd().GetMultihop())
 }
 
 func TestBuildOriginatedPath(t *testing.T) {

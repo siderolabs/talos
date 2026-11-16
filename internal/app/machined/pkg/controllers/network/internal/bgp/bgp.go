@@ -76,6 +76,8 @@ func BuildPeer(peer Peer, multipath bool) *gobgpapi.Peer {
 			DesiredMinimumTxInterval: uint32(peer.Config.BFD.TransmitInterval.Microseconds()),
 			RequiredMinimumReceive:   uint32(peer.Config.BFD.ReceiveInterval.Microseconds()),
 			DetectionMultiplier:      uint32(peer.Config.BFD.DetectMultiplier),
+			// single-hop BFD (RFC 5881) drops packets with a TTL below 255
+			Multihop: peer.Config.EBGPMultiHop > 1,
 		}
 	}
 
