@@ -13,7 +13,6 @@ import (
 	"net/http/httptest"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -562,47 +561,6 @@ func TestNetNSPath(t *testing.T) {
 	t.Parallel()
 
 	assert.Equal(t, "/proc/42/ns/net", containersctrl.NetNSPath(42))
-}
-
-// TestCheckCgroup covers telling the container task apart by the cgroups procfs lists for it.
-func TestCheckCgroup(t *testing.T) {
-	t.Parallel()
-
-	const cgroupPath = "/taloscontainers/web"
-
-	for _, test := range []struct {
-		name     string
-		contents string
-		wantErr  string
-	}{
-		{name: "unified", contents: "0::/taloscontainers/web\n"},
-		{name: "unified below", contents: "0::/taloscontainers/web/nested\n"},
-		{name: "cgroup v1", contents: "12:pids:/system\n4:memory:/taloscontainers/web\n"},
-		{
-			name:     "other container",
-			contents: "0::/taloscontainers/web2\n",
-			wantErr:  `it runs in cgroup "/taloscontainers/web2", not "/taloscontainers/web"`,
-		},
-		{
-			name:     "other process",
-			contents: "0::/system/runtime\n",
-			wantErr:  `it runs in cgroup "/system/runtime", not "/taloscontainers/web"`,
-		},
-	} {
-		t.Run(test.name, func(t *testing.T) {
-			t.Parallel()
-
-			path := filepath.Join(t.TempDir(), "cgroup")
-			require.NoError(t, os.WriteFile(path, []byte(test.contents), 0o600))
-
-			err := containersctrl.CheckCgroup(path, cgroupPath)
-			if test.wantErr == "" {
-				assert.NoError(t, err)
-			} else {
-				assert.EqualError(t, err, test.wantErr)
-			}
-		})
-	}
 }
 
 // TestOpenTaskNetNS covers opening the network namespace of a task only while its PID still names a

@@ -11,10 +11,8 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 
 	"github.com/containernetworking/plugins/pkg/ns"
 	"golang.org/x/sys/unix"
@@ -112,7 +110,7 @@ func openTaskNetNS(pid uint32, cgroupPath string) (ns.NetNS, error) {
 
 	defer unix.Close(pidfd) //nolint:errcheck
 
-	if err = checkCgroup(procCgroupPath(pid), cgroupPath); err != nil {
+	if err = cgroup.CheckMembership(procCgroupPath(pid), cgroupPath); err != nil {
 		return nil, fmt.Errorf("PID %d is not the container task: %w", pid, err)
 	}
 
@@ -128,37 +126,6 @@ func openTaskNetNS(pid uint32, cgroupPath string) (ns.NetNS, error) {
 	}
 
 	return netNS, nil
-}
-
-// checkCgroup returns an error unless the process whose cgroup membership is listed at procCgroup
-// runs in cgroupPath, or in a cgroup below it.
-//
-// Each line is hierarchy-ID:controllers:path: a single one on the unified hierarchy, and one per
-// hierarchy with cgroup v1, where any hierarchy placing the process there will do.
-func checkCgroup(procCgroup, cgroupPath string) error {
-	contents, err := os.ReadFile(procCgroup)
-	if err != nil {
-		return err
-	}
-
-	var found []string
-
-	for line := range strings.Lines(string(contents)) {
-		fields := strings.SplitN(strings.TrimSpace(line), ":", 3)
-		if len(fields) != 3 {
-			continue
-		}
-
-		path := fields[2]
-
-		if path == cgroupPath || strings.HasPrefix(path, cgroupPath+"/") {
-			return nil
-		}
-
-		found = append(found, path)
-	}
-
-	return fmt.Errorf("it runs in cgroup %q, not %q", strings.Join(found, ", "), cgroupPath)
 }
 
 // taskCgroupPath returns the cgroup the task of a container runs in, as /proc/<pid>/cgroup shows it

@@ -16,7 +16,6 @@ var (
 	OpenTaskNetNS         = openTaskNetNS
 	TaskNetNSDialer       = taskNetNSDialer
 	TaskCgroupPath        = taskCgroupPath
-	CheckCgroup           = checkCgroup
 
 	LogContainerStatusTransition = logContainerStatusTransition
 )

@@ -5,8 +5,12 @@
 package logind_test
 
 import (
+	"bufio"
 	"context"
+	"net"
+	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -22,7 +26,7 @@ func TestIntegration(t *testing.T) {
 	socketPathService := filepath.Join(dir, "system_bus_service")
 	socketPathClient := filepath.Join(dir, "system_bus_client")
 
-	broker, err := logind.NewBroker(t.Context(), socketPathService, socketPathClient)
+	broker, err := logind.NewBroker(t.Context(), socketPathService, socketPathClient, selfCgroup(t))
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithCancel(t.Context())
@@ -92,7 +96,7 @@ func TestIntegrationNoKubelet(t *testing.T) {
 	socketPathService := filepath.Join(dir, "system_bus_service")
 	socketPathClient := filepath.Join(dir, "system_bus_client")
 
-	broker, err := logind.NewBroker(t.Context(), socketPathService, socketPathClient)
+	broker, err := logind.NewBroker(t.Context(), socketPathService, socketPathClient, selfCgroup(t))
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithCancel(t.Context())
@@ -123,4 +127,122 @@ func TestIntegrationNoKubelet(t *testing.T) {
 	cancel()
 
 	assert.NoError(t, <-errCh)
+}
+
+func TestIntegrationStuckClients(t *testing.T) {
+	dir := t.TempDir()
+
+	socketPathService := filepath.Join(dir, "system_bus_service")
+	socketPathClient := filepath.Join(dir, "system_bus_client")
+
+	broker, err := logind.NewBroker(t.Context(), socketPathService, socketPathClient, selfCgroup(t))
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+
+	errCh := make(chan error, 1)
+
+	go func() {
+		errCh <- broker.Run(ctx)
+	}()
+
+	serviceConn, err := logind.NewServiceMock(socketPathService)
+	require.NoError(t, err)
+
+	defer serviceConn.Close() //nolint:errcheck
+
+	t.Log("connecting a client which never finishes auth")
+
+	stuckConn, err := (&net.Dialer{}).DialContext(t.Context(), "unix", socketPathClient)
+	require.NoError(t, err)
+
+	defer stuckConn.Close() //nolint:errcheck
+
+	_, err = stuckConn.Write([]byte("\x00AUTH\r\n"))
+	require.NoError(t, err)
+
+	reply, err := bufio.NewReader(stuckConn).ReadString('\n')
+	require.NoError(t, err)
+	assert.Equal(t, "REJECTED EXTERNAL\r\n", reply)
+
+	t.Log("connecting a client which never disconnects")
+
+	staleConn, err := NewDBusCon("unix:path=" + socketPathClient)
+	require.NoError(t, err)
+
+	defer staleConn.Close() //nolint:errcheck
+
+	t.Log("connecting kubelet")
+
+	kubeletConn, err := NewDBusCon("unix:path=" + socketPathClient)
+	require.NoError(t, err)
+
+	defer kubeletConn.Close() //nolint:errcheck
+
+	d, err := kubeletConn.CurrentInhibitDelay()
+	require.NoError(t, err)
+
+	assert.Equal(t, 40*constants.KubeletShutdownGracePeriod, d)
+
+	_, err = staleConn.CurrentInhibitDelay()
+	assert.Error(t, err)
+
+	assert.NoError(t, stuckConn.Close())
+	assert.NoError(t, serviceConn.Close())
+	assert.NoError(t, kubeletConn.Close())
+	assert.NoError(t, broker.Close())
+
+	cancel()
+
+	assert.NoError(t, <-errCh)
+}
+
+func TestIntegrationOtherCgroup(t *testing.T) {
+	dir := t.TempDir()
+
+	socketPathService := filepath.Join(dir, "system_bus_service")
+	socketPathClient := filepath.Join(dir, "system_bus_client")
+
+	broker, err := logind.NewBroker(t.Context(), socketPathService, socketPathClient, selfCgroup(t)+"/kubelet")
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+
+	errCh := make(chan error, 1)
+
+	go func() {
+		errCh <- broker.Run(ctx)
+	}()
+
+	serviceConn, err := logind.NewServiceMock(socketPathService)
+	require.NoError(t, err)
+
+	defer serviceConn.Close() //nolint:errcheck
+
+	t.Log("connecting a client outside of the kubelet cgroup")
+
+	_, err = NewDBusCon("unix:path=" + socketPathClient)
+	require.Error(t, err)
+
+	assert.NoError(t, serviceConn.Close())
+	assert.NoError(t, broker.Close())
+
+	cancel()
+
+	assert.NoError(t, <-errCh)
+}
+
+// selfCgroup returns the cgroup of the test process on the unified hierarchy.
+func selfCgroup(t *testing.T) string {
+	t.Helper()
+
+	contents, err := os.ReadFile("/proc/self/cgroup")
+	require.NoError(t, err)
+
+	path, ok := strings.CutPrefix(strings.TrimSpace(string(contents)), "0::")
+	require.True(t, ok, "not on the unified hierarchy: %q", contents)
+
+	return path
 }
