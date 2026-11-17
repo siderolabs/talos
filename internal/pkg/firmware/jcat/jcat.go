@@ -10,6 +10,7 @@
 package jcat
 
 import (
+	"bytes"
 	"compress/gzip"
 	"crypto/fips140"
 	"crypto/sha256"
@@ -65,6 +66,9 @@ func (b Blob) Bytes() ([]byte, error) {
 	return base64.StdEncoding.DecodeString(b.Data)
 }
 
+// MaxSize caps the decompressed size of a jcat file.
+const MaxSize = 16 << 20
+
 // Parse reads a gzip-compressed jcat file.
 func Parse(r io.Reader) (*File, error) {
 	gz, err := gzip.NewReader(r)
@@ -77,17 +81,22 @@ func Parse(r io.Reader) (*File, error) {
 	// jcat files may have trailing bytes after the gzip member
 	gz.Multistream(false)
 
-	var f File
-
-	if err := json.NewDecoder(gz).Decode(&f); err != nil {
-		return nil, fmt.Errorf("error decoding jcat JSON: %w", err)
+	// the file is parsed before its signatures can be checked, so bound what
+	// it expands to; reading to the end also validates the gzip CRC/length
+	// trailer, which would otherwise let a truncated stream through
+	data, err := io.ReadAll(io.LimitReader(gz, MaxSize+1))
+	if err != nil {
+		return nil, fmt.Errorf("error reading jcat gzip stream: %w", err)
 	}
 
-	// drain to force the gzip CRC/length trailer to be validated; json.Decoder
-	// may return as soon as the top-level value is parsed and leave the trailer
-	// unread, which would silently accept a truncated stream.
-	if _, err := io.Copy(io.Discard, gz); err != nil {
-		return nil, fmt.Errorf("error validating jcat gzip trailer: %w", err)
+	if len(data) > MaxSize {
+		return nil, fmt.Errorf("jcat file expands to more than %d bytes", MaxSize)
+	}
+
+	var f File
+
+	if err := json.NewDecoder(bytes.NewReader(data)).Decode(&f); err != nil {
+		return nil, fmt.Errorf("error decoding jcat JSON: %w", err)
 	}
 
 	return &f, nil
@@ -104,13 +113,22 @@ func (f *File) Item(id string) (*Item, bool) {
 	return nil, false
 }
 
+// ErrUnsupportedSignature is returned by Verify for an item whose only
+// signatures are of a kind that isn't implemented, i.e. GPG: nothing failed
+// to verify, there was nothing that could be checked.
+var ErrUnsupportedSignature = errors.New("only GPG signatures found, which are not supported")
+
 // Verify checks the payload against the item: the SHA-256 checksum blob (if present)
 // must match, and at least one PKCS7 signature must verify with a chain to roots.
+//
+// GPG signatures are not checked; an item signed only with GPG fails with
+// ErrUnsupportedSignature.
 //
 //nolint:gocyclo
 func (i *Item) Verify(payload []byte, roots *x509.CertPool) error {
 	var (
 		signatureValid bool
+		unsupported    bool
 		errs           error
 	)
 
@@ -139,11 +157,17 @@ func (i *Item) Verify(payload []byte, roots *x509.CertPool) error {
 			}
 
 			signatureValid = true
+		case KindGPG:
+			unsupported = true
 		}
 	}
 
 	if !signatureValid {
-		if errs == nil {
+		switch {
+		case errs != nil:
+		case unsupported:
+			errs = ErrUnsupportedSignature
+		default:
 			errs = errors.New("no PKCS7 signatures found")
 		}
 

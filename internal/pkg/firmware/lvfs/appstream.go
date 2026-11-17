@@ -24,7 +24,19 @@ type Component struct {
 	Custom   []CustomValue `xml:"custom>value"`
 	Requires struct {
 		Firmwares []FirmwareRequirement `xml:"firmware"`
+		// Others are the requirements of every other kind: hardware,
+		// not_hardware, id, client.
+		Others []Requirement `xml:",any"`
 	} `xml:"requires"`
+}
+
+// Requirement is a non-firmware requirement of a component; XMLName carries
+// its kind.
+type Requirement struct {
+	XMLName xml.Name
+	Compare string `xml:"compare,attr"`
+	Version string `xml:"version,attr"`
+	Value   string `xml:",chardata"`
 }
 
 // ProvidedFirmware is a firmware GUID provided by a component.
@@ -37,7 +49,9 @@ type ProvidedFirmware struct {
 type FirmwareRequirement struct {
 	Compare string `xml:"compare,attr"`
 	Version string `xml:"version,attr"`
-	Value   string `xml:",chardata"`
+	// Depth is set when the requirement is on a parent of the device.
+	Depth string `xml:"depth,attr"`
+	Value string `xml:",chardata"`
 }
 
 // CustomValue is an LVFS custom metadata value.
