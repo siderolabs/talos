@@ -5,11 +5,13 @@
 package block_test
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -212,7 +214,12 @@ func (suite *MountSuite) TestUnmountBusy() {
 		suite.Require().NoError(err)
 	}
 
-	ctest.AssertResource(suite, "b-other", func(mountRequest *block.MountRequest, asrt *assert.Assertions) {
+	// each busy unmount attempt blocks for ~5s retrying EBUSY, and "b-other" may wait behind two of them:
+	// one in an iteration that ran before its teardown, one in the iteration handling it
+	ctx, cancel := context.WithTimeout(suite.Ctx(), 20*time.Second)
+	defer cancel()
+
+	rtestutils.AssertResource(ctx, suite.T(), suite.State(), "b-other", func(mountRequest *block.MountRequest, asrt *assert.Assertions) {
 		asrt.True(mountRequest.Metadata().Finalizers().Empty())
 	})
 
