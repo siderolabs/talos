@@ -8,6 +8,8 @@ package lvm
 import (
 	_ "embed"
 	"encoding/json"
+	"regexp"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -287,5 +289,54 @@ func TestTagsUnmarshal(t *testing.T) {
 
 		require.NoError(t, json.Unmarshal([]byte(tt.in), &v), "input %q", tt.in)
 		assert.Equal(t, tt.want, []string(v), "input %q", tt.in)
+	}
+}
+
+func TestScanFilterConfig(t *testing.T) {
+	t.Parallel()
+
+	idx := slices.Index(commonReportArgs, "--config")
+	require.NotEqual(t, -1, idx, "report args must pass --config")
+	require.Less(t, idx+1, len(commonReportArgs))
+	assert.Equal(t, scanFilterConfig, commonReportArgs[idx+1])
+
+	// Every entry is a reject pattern ("r|<regex>|"); LVM accepts any device
+	// that no pattern matches.
+	var rejects []*regexp.Regexp //nolint:prealloc // testing only, readability over perf
+
+	for _, m := range regexp.MustCompile(`"r\|([^|]+)\|"`).FindAllStringSubmatch(scanFilterConfig, -1) {
+		rejects = append(rejects, regexp.MustCompile(m[1]))
+	}
+
+	require.NotEmpty(t, rejects)
+
+	rejected := func(dev string) bool {
+		return slices.ContainsFunc(rejects, func(re *regexp.Regexp) bool { return re.MatchString(dev) })
+	}
+
+	for _, dev := range []string{
+		"/dev/drbd1000",
+		"/dev/drbd/by-res/pvc-0123/0",
+		"/dev/drbd/by-disk/vg/lv",
+		"/dev/nbd0",
+		"/dev/rbd0",
+		"/dev/rbd/pool/image",
+		"/dev/zd0",
+	} {
+		assert.True(t, rejected(dev), "%s should be filtered out", dev)
+	}
+
+	for _, dev := range []string{
+		"/dev/sda",
+		"/dev/sda1",
+		"/dev/nvme0n1",
+		"/dev/nvme0n1p3",
+		"/dev/vda",
+		"/dev/mapper/vg-lv",
+		"/dev/dm-0",
+		"/dev/md0",
+		"/dev/loop0",
+	} {
+		assert.False(t, rejected(dev), "%s should still be scanned", dev)
 	}
 }

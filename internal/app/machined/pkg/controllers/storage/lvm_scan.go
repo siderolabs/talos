@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -125,8 +126,15 @@ func (ctrl *LVMScanController) Run(ctx context.Context, r controller.Runtime, lo
 	}
 }
 
+// lvmScanTimeout bounds a single vgs/pvs/lvs run, so a device that never
+// answers doesn't stop LVM status refreshes on the node for good.
+const lvmScanTimeout = time.Minute
+
 func (ctrl *LVMScanController) scan(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
-	vgs, err := ctrl.LVM.VGS(ctx)
+	scanCtx, cancel := context.WithTimeout(ctx, lvmScanTimeout)
+	defer cancel()
+
+	vgs, err := ctrl.LVM.VGS(scanCtx)
 	if err != nil {
 		if errors.Is(err, exec.ErrNotFound) {
 			logger.Debug("lvm binary not found; skipping LVM scan")
@@ -137,12 +145,12 @@ func (ctrl *LVMScanController) scan(ctx context.Context, r controller.Runtime, l
 		return fmt.Errorf("vgs: %w", err)
 	}
 
-	pvs, err := ctrl.LVM.PVS(ctx)
+	pvs, err := ctrl.LVM.PVS(scanCtx)
 	if err != nil {
 		return fmt.Errorf("pvs: %w", err)
 	}
 
-	lvs, err := ctrl.LVM.LVS(ctx)
+	lvs, err := ctrl.LVM.LVS(scanCtx)
 	if err != nil {
 		return fmt.Errorf("lvs: %w", err)
 	}

@@ -114,13 +114,31 @@ func (lvm *LVM) run(ctx context.Context, subcommand string, args ...string) (str
 // come back as the literal string "unknown" regardless of the real state.
 // The default shared (read) lock taken by lvs/pvs/vgs is cheap and lets
 // LVM query DM, which is the only way to get accurate active/open state.
+//
+// The reports also pass scanFilterConfig with --config, so the scan never
+// opens replicated or network block devices (see scanFilterConfig).
 var commonReportArgs = []string{
 	"-a",
 	"-o", "+all",
 	"--reportformat", "json",
 	"--units", "b",
 	"--nosuffix",
+	"--config", scanFilterConfig,
 }
+
+// scanFilterConfig keeps the status scans away from block devices where an
+// open has side effects or can block indefinitely.
+//
+// The scans run on every block device event, so without a filter they open
+// every device on the node. On DRBD an open, even read-only, prevents the
+// peer from being promoted ("Peer may not become primary while device is
+// opened read-only"), and while DRBD has I/O suspended the read blocks in
+// D state and keeps the device open until reboot. Network-backed devices
+// (NBD, Ceph RBD) and ZFS zvols are skipped for the same reason.
+//
+// The filter is passed per command, so it only applies to vgs/pvs/lvs and
+// leaves the host lvm.conf untouched for the other LVM commands.
+const scanFilterConfig = `devices { global_filter = [ "r|/dev/drbd|", "r|/dev/nbd|", "r|/dev/rbd|", "r|/dev/zd|" ] }`
 
 // decodeReport unmarshals an LVM JSON report and returns the slice of
 // records stored under `report[*].<section>[*]`.
