@@ -8,6 +8,7 @@ import (
 	"cmp"
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/siderolabs/gen/value"
 	"github.com/siderolabs/gen/xerrors"
@@ -23,6 +24,13 @@ func LocateAndProvision(ctx context.Context, logger *zap.Logger, vc ManagerConte
 	// 1. Setup common status fields
 	vc.Status.MountSpec = vc.Cfg.TypedSpec().Mount
 	vc.Status.SymlinkSpec = vc.Cfg.TypedSpec().Symlink
+
+	// A tmpfs is mounted from its parameters alone, so invalid ones fail the volume before it is ready.
+	if vc.Cfg.TypedSpec().Type == block.VolumeTypeTmpfs {
+		if err := block.ValidateTmpfsParameters(vc.Cfg.TypedSpec().Mount.Parameters); err != nil {
+			return fmt.Errorf("invalid tmpfs volume: %w", err)
+		}
+	}
 
 	// 2. Handle simple types (Tmpfs, Overlay, External, etc.)
 	// If handled, we return early.
@@ -63,7 +71,22 @@ func handleSimpleVolumeTypes(vc ManagerContext) bool {
 	spec := vc.Cfg.TypedSpec()
 
 	switch spec.Type {
-	case block.VolumeTypeTmpfs, block.VolumeTypeDirectory, block.VolumeTypeSymlink, block.VolumeTypeOverlay:
+	case block.VolumeTypeTmpfs:
+		vc.Status.Phase = block.VolumePhaseReady
+		vc.Status.Filesystem = block.FilesystemTypeTmpfs
+
+		// The parameters are only applied on mount, so the size is set once the volume is ready.
+		// A size which can't be resolved (a percentage of the memory) is reported as unknown.
+		if size, ok := block.TmpfsSize(spec.Mount.Parameters, uint64(os.Getpagesize())); ok {
+			vc.Status.SetSize(size)
+		} else {
+			vc.Status.Size = 0
+			vc.Status.PrettySize = ""
+		}
+
+		return true
+
+	case block.VolumeTypeDirectory, block.VolumeTypeSymlink, block.VolumeTypeOverlay:
 		vc.Status.Phase = block.VolumePhaseReady
 
 		return true

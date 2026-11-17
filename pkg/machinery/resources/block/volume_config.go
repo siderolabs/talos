@@ -5,8 +5,13 @@
 package block
 
 import (
+	"errors"
 	"fmt"
+	"math"
 	"os"
+	"slices"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -230,6 +235,227 @@ type ParameterSpec struct {
 	String *string `yaml:"string,omitempty" protobuf:"3"`
 	// Binary value of the parameter.
 	Binary []byte `yaml:"binary,omitempty" protobuf:"5"`
+}
+
+// TmpfsSizeParameter is the mount parameter bounding the size of a tmpfs volume.
+//
+// The kernel accepts a size in bytes, with an optional k/m/g/t/p/e suffix, or a percentage of the memory.
+const TmpfsSizeParameter = "size"
+
+// tmpfsRootParameters set the owner and the permissions of the tmpfs root.
+//
+// The mount spec (FileMode, UID, GID) is applied to the root after mounting and would override them,
+// so they are rejected in favor of it.
+var tmpfsRootParameters = []string{"mode", "uid", "gid"}
+
+// tmpfsBlocksParameter sets the same limit as the size parameter, in pages.
+//
+// The kernel applies whichever of the two comes last, and "nr_blocks=0" makes the tmpfs unbounded,
+// so it is rejected in favor of the size parameter.
+const tmpfsBlocksParameter = "nr_blocks"
+
+// ValidateTmpfsParameters checks the mount parameters of a tmpfs volume.
+func ValidateTmpfsParameters(parameters []ParameterSpec) error {
+	var hasSize bool
+
+	for _, param := range parameters {
+		// A parameter without a value is skipped on mount, so it would be silently ignored.
+		if !param.HasValue() {
+			return fmt.Errorf("tmpfs parameter %q has no value", param.Name)
+		}
+
+		if param.Name == TmpfsSizeParameter && param.Type == FSParameterTypeStringValue {
+			if _, _, err := parseTmpfsSize(*param.String); err != nil {
+				return fmt.Errorf("invalid tmpfs size %q: %w", *param.String, err)
+			}
+
+			// The kernel applies the last size, so another one is most likely a mistake.
+			if hasSize {
+				return fmt.Errorf("tmpfs parameter %q is set more than once", TmpfsSizeParameter)
+			}
+
+			hasSize = true
+		}
+
+		if param.Name == tmpfsBlocksParameter {
+			return fmt.Errorf("tmpfs parameter %q is not supported, use %q instead", param.Name, TmpfsSizeParameter)
+		}
+
+		if slices.Contains(tmpfsRootParameters, param.Name) {
+			return fmt.Errorf("tmpfs parameter %q is not supported, use the mount file mode, UID and GID instead", param.Name)
+		}
+	}
+
+	// An unbounded tmpfs may grow up to half of the memory.
+	if !hasSize {
+		return fmt.Errorf("tmpfs requires the %q parameter", TmpfsSizeParameter)
+	}
+
+	return nil
+}
+
+// TmpfsSize returns the size of a tmpfs volume in bytes, if its size parameter is set in bytes.
+//
+// The size is resolved the way the kernel does: the last size parameter wins, a suffix is converted to bytes,
+// and the size is rounded up to a whole page. A percentage of the memory is not resolved, and an invalid size,
+// including zero (an unbounded tmpfs), is not reported.
+func TmpfsSize(parameters []ParameterSpec, pageSize uint64) (uint64, bool) {
+	value := lastTmpfsSize(parameters)
+	if value == nil {
+		return 0, false
+	}
+
+	size, percent, err := parseTmpfsSize(*value)
+	if err != nil || percent {
+		return 0, false
+	}
+
+	return roundUpToPage(size, pageSize)
+}
+
+// lastTmpfsSize returns the value of the last size parameter, which is the one the kernel applies.
+func lastTmpfsSize(parameters []ParameterSpec) *string {
+	var value *string
+
+	for _, param := range parameters {
+		if param.Name == TmpfsSizeParameter && param.Type == FSParameterTypeStringValue && param.String != nil {
+			value = param.String
+		}
+	}
+
+	return value
+}
+
+// roundUpToPage rounds the size up to a whole page, reporting an overflow.
+func roundUpToPage(size, pageSize uint64) (uint64, bool) {
+	if pageSize == 0 {
+		return 0, false
+	}
+
+	pages := size / pageSize
+	if size%pageSize != 0 {
+		pages++
+	}
+
+	if pages > math.MaxUint64/pageSize {
+		return 0, false
+	}
+
+	return pages * pageSize, true
+}
+
+// parseTmpfsSize parses the tmpfs size parameter like the kernel does (memparse, then an optional percent sign),
+// but more strictly.
+//
+// The number is in base 0: a "0x" prefix selects hexadecimal and a leading zero octal. It may be followed by a
+// k/m/g/t/p/e suffix, or by a percent sign for a percentage of the memory. Unlike the kernel:
+//   - an overflow is an error, while the kernel silently wraps around;
+//   - a zero size is an error, while the kernel treats it as an unbounded tmpfs;
+//   - a suffix followed by a percent sign ("1k%", 1024% of the memory) is an error, while the kernel accepts it.
+func parseTmpfsSize(value string) (size uint64, percent bool, err error) {
+	size, rest, err := parseBase0(value)
+	if err != nil {
+		return 0, false, err
+	}
+
+	shift, percent, err := parseTmpfsSizeSuffix(rest)
+	if err != nil {
+		return 0, false, err
+	}
+
+	if size > math.MaxUint64>>shift {
+		return 0, false, errors.New("size out of range")
+	}
+
+	if size == 0 {
+		return 0, false, errors.New("size 0 makes the tmpfs unbounded")
+	}
+
+	return size << shift, percent, nil
+}
+
+// parseBase0 parses the leading number of value the way the kernel simple_strtoull does with base 0,
+// returning the rest of value. Unlike the kernel, an overflow is an error.
+func parseBase0(value string) (uint64, string, error) {
+	base, digits := detectBase(value)
+
+	end := 0
+	for end < len(digits) && digitValue(digits[end]) < base {
+		end++
+	}
+
+	if end == 0 {
+		return 0, "", errors.New("expected a number")
+	}
+
+	n, err := strconv.ParseUint(digits[:end], base, 64)
+	if err != nil {
+		return 0, "", errors.New("size out of range")
+	}
+
+	return n, digits[end:], nil
+}
+
+// detectBase returns the base of a number in base 0 and its digits: a "0x" prefix followed by a hexadecimal digit
+// selects hexadecimal, and a leading zero octal (the zero is kept, as an octal digit).
+func detectBase(value string) (int, string) {
+	switch {
+	case len(value) > 2 && value[0] == '0' && value[1]|0x20 == 'x' && digitValue(value[2]) < 16:
+		return 16, value[2:]
+	case len(value) > 1 && value[0] == '0':
+		return 8, value
+	default:
+		return 10, value
+	}
+}
+
+// parseTmpfsSizeSuffix parses what follows the number of a tmpfs size: an optional k/m/g/t/p/e suffix,
+// or a percent sign.
+func parseTmpfsSizeSuffix(rest string) (shift uint, percent bool, err error) {
+	if rest != "" {
+		if i := strings.IndexByte("kmgtpe", rest[0]|0x20); i >= 0 {
+			shift = 10 * uint(i+1)
+			rest = rest[1:]
+		}
+	}
+
+	if rest == "%" && shift == 0 {
+		return 0, true, nil
+	}
+
+	if rest != "" {
+		return 0, false, fmt.Errorf("unexpected %q, expected an optional k/m/g/t/p/e suffix or a percent sign", rest)
+	}
+
+	return shift, false, nil
+}
+
+// digitValue returns the value of a hexadecimal digit, or 16 if c is not one.
+func digitValue(c byte) int {
+	switch {
+	case c >= '0' && c <= '9':
+		return int(c - '0')
+	case c|0x20 >= 'a' && c|0x20 <= 'f':
+		return int(c|0x20-'a') + 10
+	default:
+		return 16
+	}
+}
+
+// HasValue reports whether the parameter is applied on mount.
+//
+// A boolean parameter has no value of its own, while a string or binary parameter without a value is skipped.
+func (p ParameterSpec) HasValue() bool {
+	switch p.Type {
+	case FSParameterTypeBooleanValue:
+		return true
+	case FSParameterTypeStringValue:
+		return p.String != nil
+	case FSParameterTypeBinaryValue:
+		return p.Binary != nil
+	default:
+		return false
+	}
 }
 
 // NewBooleanParameter creates a new boolean parameter.

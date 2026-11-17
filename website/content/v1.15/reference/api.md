@@ -5830,6 +5830,7 @@ BlockFilesystemType describes filesystem type.
 | FILESYSTEM_TYPE_VIRTIOFS | 6 |  |
 | FILESYSTEM_TYPE_BTRFS | 7 |  |
 | FILESYSTEM_TYPE_NFS | 8 |  |
+| FILESYSTEM_TYPE_TMPFS | 9 |  |
 
 
 

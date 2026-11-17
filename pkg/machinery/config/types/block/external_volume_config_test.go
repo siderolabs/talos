@@ -309,6 +309,19 @@ func TestExternalVolumeConfigValidate(t *testing.T) {
 			expectedErrors: "invalid filesystem type: ext4",
 		},
 		{
+			name: "tmpfs type",
+
+			cfg: func(t *testing.T) *block.ExternalVolumeConfigV1Alpha1 {
+				c := block.NewExternalVolumeConfigV1Alpha1()
+				c.MetaName = constants.EphemeralPartitionLabel
+				c.FilesystemType = blockres.FilesystemTypeTmpfs
+
+				return c
+			},
+
+			expectedErrors: "invalid filesystem type: tmpfs",
+		},
+		{
 			name: "empty type",
 
 			cfg: func(t *testing.T) *block.ExternalVolumeConfigV1Alpha1 {

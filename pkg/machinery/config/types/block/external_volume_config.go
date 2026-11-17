@@ -310,7 +310,7 @@ func (s *ExternalVolumeConfigV1Alpha1) Validate(validation.RuntimeMode, ...valid
 			validationErrors = errors.Join(validationErrors, errors.New("virtiofs mount spec is not allowed with NFS filesystem type"))
 		}
 
-	case block.FilesystemTypeNone, block.FilesystemTypeXFS, block.FilesystemTypeVFAT, block.FilesystemTypeEXT4, block.FilesystemTypeISO9660, block.FilesystemTypeSwap:
+	case block.FilesystemTypeNone, block.FilesystemTypeXFS, block.FilesystemTypeVFAT, block.FilesystemTypeEXT4, block.FilesystemTypeISO9660, block.FilesystemTypeSwap, block.FilesystemTypeTmpfs:
 		fallthrough
 
 	default:

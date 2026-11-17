@@ -73,9 +73,23 @@ func TestLocateAndProvision(t *testing.T) {
 	}{
 		// --- Simple Volume Types ---
 		{
-			name:          "tmpfs volume is always ready",
-			volumeConfig:  block.VolumeConfigSpec{Type: block.VolumeTypeTmpfs},
+			name: "tmpfs volume is ready",
+			volumeConfig: block.VolumeConfigSpec{
+				Type: block.VolumeTypeTmpfs,
+				Mount: block.MountSpec{
+					Parameters: []block.ParameterSpec{block.NewStringParameter(block.TmpfsSizeParameter, "1048576")},
+				},
+			},
 			expectedPhase: block.VolumePhaseReady,
+			assertStatus: func(t *testing.T, s block.VolumeStatusSpec) {
+				assert.EqualValues(t, 1048576, s.Size)
+				assert.Equal(t, block.FilesystemTypeTmpfs, s.Filesystem)
+			},
+		},
+		{
+			name:          "tmpfs volume without size fails",
+			volumeConfig:  block.VolumeConfigSpec{Type: block.VolumeTypeTmpfs},
+			expectedError: `invalid tmpfs volume: tmpfs requires the "size" parameter`,
 		},
 		{
 			name: "external volume is ready with location",

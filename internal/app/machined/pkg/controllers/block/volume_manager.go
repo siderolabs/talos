@@ -435,11 +435,13 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 						block.VolumeTypeDirectory,
 						block.VolumeTypeOverlay,
 						block.VolumeTypeSymlink,
+						block.VolumeTypeTmpfs,
 					},
 					volumeStatus.TypedSpec().Type,
 				)
 
-				if !suppressVolumeLogs {
+				// errors are logged for every volume type, only the routine phase changes are suppressed
+				if !suppressVolumeLogs || err != nil {
 					fields := []zap.Field{
 						zap.String("phase", fmt.Sprintf("%s -> %s", prevPhase, volumeStatus.TypedSpec().Phase)),
 						zap.Error(err),

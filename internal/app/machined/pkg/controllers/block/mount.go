@@ -16,6 +16,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/cenkalti/backoff/v7"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -49,11 +50,23 @@ type mountContext struct {
 	mountPointCreated   bool
 	unmounter           func() error
 
+	// settingsPending is set for a mount whose root settings (mode, owner, SELinux label) failed to apply,
+	// and which couldn't be unmounted either: it is kept tracked, so the settings are retried instead of
+	// mounting another instance over it.
+	settingsPending bool
+
 	// volumeSize is the size of the volume the filesystem was last grown for.
 	volumeSize uint64
 }
 
-const unmountRetryInterval = 30 * time.Second
+// Failed mount and unmount operations are retried with an exponential backoff, unless an input event comes first.
+//
+// Some failures are transient (e.g. EBUSY on a read-only remount while a write is in flight), so the first retry
+// comes quickly, while persistent failures back off up to retryMaxInterval.
+const (
+	retryInitialInterval = 500 * time.Millisecond
+	retryMaxInterval     = 30 * time.Second
+)
 
 // MountController performs actual mount/unmount operations based on the MountRequests.
 type MountController struct {
@@ -104,23 +117,22 @@ func (ctrl *MountController) Run(ctx context.Context, r controller.Runtime, logg
 		ctrl.activeMounts = map[string]*mountContext{}
 	}
 
-	retryTicker := time.NewTicker(unmountRetryInterval)
-	defer retryTicker.Stop()
+	retryBackoff := backoff.NewExponentialBackOff()
+	retryBackoff.InitialInterval = retryInitialInterval
+	retryBackoff.MaxInterval = retryMaxInterval
+	retryBackoff.Reset()
 
-	shouldRetry := false
+	var retryCh <-chan time.Time
 
 	for {
 		select {
 		case <-r.EventCh():
 		case <-ctx.Done():
 			return nil
-		case <-retryTicker.C:
-			if !shouldRetry {
-				continue
-			}
-
-			shouldRetry = false
+		case <-retryCh:
 		}
+
+		shouldRetry := false
 
 		volumeStatuses, err := safe.ReaderListAll[*block.VolumeStatus](ctx, r)
 		if err != nil {
@@ -265,7 +277,13 @@ func (ctrl *MountController) Run(ctx context.Context, r controller.Runtime, logg
 				}
 
 				if err = ctrl.handleMountOperation(ctx, logger, rootPath, mountSource, mountTarget, mountFilesystem, mountRequest, volumeStatus); err != nil {
-					return err
+					// Returning would park the controller in restart backoff (up to 90s) deaf to events,
+					// holding back the mount requests sorted after this one, and shutdown teardown.
+					logger.Warn("failed to mount, will retry", zap.String("mount_request", mountRequest.Metadata().ID()), zap.Error(err))
+
+					shouldRetry = true
+
+					continue
 				}
 
 				if mountStatusMissing && volumeStatus.Metadata().ID() == constants.UserVolumeMountPoint {
@@ -303,6 +321,14 @@ func (ctrl *MountController) Run(ctx context.Context, r controller.Runtime, logg
 					return fmt.Errorf("failed to create mount status %q: %w", mountRequest.Metadata().ID(), err)
 				}
 			}
+		}
+
+		if shouldRetry {
+			retryCh = time.After(retryBackoff.NextBackOff())
+		} else {
+			retryBackoff.Reset()
+
+			retryCh = nil
 		}
 
 		r.ResetRestartBackoff()
@@ -356,17 +382,21 @@ func (ctrl *MountController) handleMountOperation(
 		return ctrl.handleSymlinkMountOperation(logger, rootPath, mountTarget, mountRequest, volumeStatus)
 
 	case block.VolumeTypeTmpfs:
-		return fmt.Errorf("not implemented yet")
+		return ctrl.handleTmpfsMountOperation(ctx, logger, filepath.Join(rootPath, mountTarget), mountRequest, volumeStatus)
 
 	case block.VolumeTypeExternal:
-		return ctrl.handleDiskMountOperation(ctx, logger, mountSource, filepath.Join(rootPath, mountTarget), mountFilesystem, mountRequest, volumeStatus)
+		return ctrl.handleDiskMountOperation(
+			ctx, logger, mountSource, filepath.Join(rootPath, mountTarget), mountFilesystem, mountRequest, volumeStatus,
+		)
 
 	case block.VolumeTypeDisk, block.VolumeTypePartition:
 		if mountFilesystem == block.FilesystemTypeSwap {
 			return ctrl.handleSwapMountOperation(logger, mountSource, mountRequest, volumeStatus)
 		}
 
-		return ctrl.handleDiskMountOperation(ctx, logger, mountSource, filepath.Join(rootPath, mountTarget), mountFilesystem, mountRequest, volumeStatus)
+		return ctrl.handleDiskMountOperation(
+			ctx, logger, mountSource, filepath.Join(rootPath, mountTarget), mountFilesystem, mountRequest, volumeStatus,
+		)
 
 	default:
 		return fmt.Errorf("unsupported volume type %q", volumeStatus.TypedSpec().Type)
@@ -627,8 +657,49 @@ func (ctrl *MountController) updateTargetSettings(
 // shouldUpdateSettings reports whether the mount may change the metadata of the volume.
 //
 // Read-only volumes preserve their existing metadata, and external volume metadata is owned by the host.
+// A tmpfs is always new on mount, so it has no metadata to preserve: its settings are always applied.
+// If the request is read-only, the tmpfs is mounted writable first and remounted read-only afterwards
+// (see mountReadOnlyOnMount).
 func shouldUpdateSettings(mountRequest *block.MountRequest, volumeStatus *block.VolumeStatus) bool {
-	return !mountRequest.TypedSpec().ReadOnly && volumeStatus.TypedSpec().Type != block.VolumeTypeExternal
+	switch volumeStatus.TypedSpec().Type { //nolint:exhaustive
+	case block.VolumeTypeTmpfs:
+		return true
+	case block.VolumeTypeExternal:
+		return false
+	default:
+		return !mountRequest.TypedSpec().ReadOnly
+	}
+}
+
+// mountReadOnlyOnMount reports whether the filesystem is mounted read-only right away.
+//
+// A read-only tmpfs is mounted writable first, so its settings can be applied, and is then remounted read-only.
+// A writable tmpfs is mounted writable and stays writable.
+func mountReadOnlyOnMount(mountRequest *block.MountRequest, volumeStatus *block.VolumeStatus) bool {
+	return mountRequest.TypedSpec().ReadOnly && volumeStatus.TypedSpec().Type != block.VolumeTypeTmpfs
+}
+
+// applyMountSettings applies the root settings of a new mount: the SELinux label of a detached root,
+// or the mode, owner and SELinux label of the target.
+func (ctrl *MountController) applyMountSettings(
+	mountTarget string,
+	mountRequest *block.MountRequest,
+	volumeStatus *block.VolumeStatus,
+	point *mount.Point,
+) error {
+	if err := labelDetachedRoot(mountRequest, volumeStatus, point); err != nil {
+		return fmt.Errorf("failed to label the root of %q: %w", mountRequest.Metadata().ID(), err)
+	}
+
+	if !shouldUpdateSettings(mountRequest, volumeStatus) || mountRequest.TypedSpec().Detached {
+		return nil
+	}
+
+	if err := ctrl.updateTargetSettings(mountTarget, volumeStatus.TypedSpec().Filesystem, volumeStatus.TypedSpec().MountSpec); err != nil {
+		return fmt.Errorf("failed to update target settings %q: %w", mountRequest.Metadata().ID(), err)
+	}
+
+	return nil
 }
 
 // labelDetachedRoot sets the SELinux label on the root of the filesystem of a detached mount, which has no target to label.
@@ -643,6 +714,8 @@ func labelDetachedRoot(mountRequest *block.MountRequest, volumeStatus *block.Vol
 	return mountops.LabelRoot(point.Root(), volumeStatus.TypedSpec().Filesystem, volumeStatus.TypedSpec().MountSpec)
 }
 
+// handleDiskMountOperation mounts a filesystem of type mountFilesystem from mountSource.
+//
 //nolint:gocyclo,cyclop
 func (ctrl *MountController) handleDiskMountOperation(
 	ctx context.Context,
@@ -729,7 +802,7 @@ func (ctrl *MountController) handleDiskMountOperation(
 			opts = append(opts, mount.WithNoExec())
 		}
 
-		if mountRequest.TypedSpec().ReadOnly {
+		if mountReadOnlyOnMount(mountRequest, volumeStatus) {
 			opts = append(opts, mount.WithReadOnly())
 		}
 
@@ -769,20 +842,34 @@ func (ctrl *MountController) handleDiskMountOperation(
 			return fmt.Errorf("failed to mount %q: %w", mountRequest.Metadata().ID(), err)
 		}
 
-		if err = labelDetachedRoot(mountRequest, volumeStatus, mountpoint); err != nil {
-			manager.Unmount() //nolint:errcheck
-
-			return fmt.Errorf("failed to label the root of %q: %w", mountRequest.Metadata().ID(), err)
+		mountCtx = &mountContext{
+			point:               mountpoint,
+			configuration:       mountconfig.NewSnapshot(volumeStatus.TypedSpec().MountSpec.Parameters),
+			readOnly:            mountReadOnlyOnMount(mountRequest, volumeStatus),
+			disableAccessTime:   mountRequest.TypedSpec().DisableAccessTime,
+			secure:              mountRequest.TypedSpec().Secure,
+			noExec:              mountRequest.TypedSpec().NoExec,
+			detached:            mountRequest.TypedSpec().Detached,
+			securityInitialized: true,
+			mountPointCreated:   mountPointCreated,
+			unmounter:           manager.Unmount,
 		}
 
-		if shouldUpdateTargetSettings {
-			if err = ctrl.updateTargetSettings(mountTarget, volumeStatus.TypedSpec().Filesystem, volumeStatus.TypedSpec().MountSpec); err != nil {
-				if manager.Unmount() == nil && mountPointCreated {
+		if err = ctrl.applyMountSettings(mountTarget, mountRequest, volumeStatus, mountpoint); err != nil {
+			unmountErr := manager.Unmount()
+			if unmountErr == nil {
+				if mountPointCreated {
 					mountops.RemoveMountPoint(logger, mountTarget)
 				}
 
-				return fmt.Errorf("failed to update target settings %q: %w", mountRequest.Metadata().ID(), err)
+				return err
 			}
+
+			// The mount stays up, so it is kept tracked: the settings are retried on it, and a teardown unmounts it.
+			mountCtx.settingsPending = true
+			ctrl.activeMounts[mountRequest.Metadata().ID()] = mountCtx
+
+			return errors.Join(err, fmt.Errorf("failed to unmount %q: %w", mountRequest.Metadata().ID(), unmountErr))
 		}
 
 		logger.Info(
@@ -798,19 +885,13 @@ func (ctrl *MountController) handleDiskMountOperation(
 			zap.Bool("detached", mountRequest.TypedSpec().Detached),
 		)
 
-		mountCtx = &mountContext{
-			point:               mountpoint,
-			configuration:       mountconfig.NewSnapshot(volumeStatus.TypedSpec().MountSpec.Parameters),
-			readOnly:            mountRequest.TypedSpec().ReadOnly,
-			disableAccessTime:   mountRequest.TypedSpec().DisableAccessTime,
-			secure:              mountRequest.TypedSpec().Secure,
-			noExec:              mountRequest.TypedSpec().NoExec,
-			detached:            mountRequest.TypedSpec().Detached,
-			securityInitialized: true,
-			mountPointCreated:   mountPointCreated,
-			unmounter:           manager.Unmount,
-		}
 		ctrl.activeMounts[mountRequest.Metadata().ID()] = mountCtx
+	} else if mountCtx.settingsPending {
+		if err := ctrl.applyMountSettings(mountTarget, mountRequest, volumeStatus, mountCtx.point); err != nil {
+			return err
+		}
+
+		mountCtx.settingsPending = false
 	}
 
 	if mountCtx.readOnly != mountRequest.TypedSpec().ReadOnly { // remount if needed
@@ -899,6 +980,28 @@ func growMountedFilesystem(ctx context.Context, logger *zap.Logger, mountCtx *mo
 	mountCtx.volumeSize = volumeStatus.TypedSpec().Size
 
 	return nil
+}
+
+// handleTmpfsMountOperation mounts a memory-backed volume through the generic filesystem path.
+//
+// The parameters are only applied on mount: a change of the parameters of a mounted tmpfs takes effect
+// on the next mount, as a remount would drop its content.
+func (ctrl *MountController) handleTmpfsMountOperation(
+	ctx context.Context,
+	logger *zap.Logger,
+	mountTarget string,
+	mountRequest *block.MountRequest,
+	volumeStatus *block.VolumeStatus,
+) error {
+	if _, ok := ctrl.activeMounts[mountRequest.Metadata().ID()]; !ok {
+		// The volume manager validates the parameters before the volume is ready; an unbounded tmpfs
+		// must never be mounted, so they are checked again.
+		if err := block.ValidateTmpfsParameters(volumeStatus.TypedSpec().MountSpec.Parameters); err != nil {
+			return fmt.Errorf("invalid tmpfs volume %q: %w", volumeStatus.Metadata().ID(), err)
+		}
+	}
+
+	return ctrl.handleDiskMountOperation(ctx, logger, "", mountTarget, block.FilesystemTypeTmpfs, mountRequest, volumeStatus)
 }
 
 func bindMountOptions(selinuxLabel string, secure, noExec bool) []mount.ManagerOption {
@@ -1062,10 +1165,7 @@ func (ctrl *MountController) handleUnmountOperation(
 	case block.VolumeTypeDirectory:
 		return ctrl.handleDirectoryUnmountOperation(logger, mountRequest, volumeStatus)
 
-	case block.VolumeTypeTmpfs:
-		return fmt.Errorf("not implemented yet")
-
-	case block.VolumeTypeExternal:
+	case block.VolumeTypeTmpfs, block.VolumeTypeExternal:
 		return ctrl.handleDiskUnmountOperation(logger, mountRequest, volumeStatus)
 
 	case block.VolumeTypeDisk, block.VolumeTypePartition, block.VolumeTypeOverlay:

@@ -20,6 +20,7 @@ const (
 	FilesystemTypeVirtiofs                       // virtiofs
 	FilesystemTypeBtrfs                          // btrfs
 	FilesystemTypeNFS                            // nfs
+	FilesystemTypeTmpfs                          // tmpfs
 )
 
 // SupportsTrim returns true if the filesystem supports discarding unused blocks
@@ -28,7 +29,7 @@ func (t FilesystemType) SupportsTrim() bool {
 	switch t {
 	case FilesystemTypeXFS, FilesystemTypeEXT4, FilesystemTypeBtrfs:
 		return true
-	case FilesystemTypeNone, FilesystemTypeVFAT, FilesystemTypeISO9660, FilesystemTypeSwap, FilesystemTypeVirtiofs, FilesystemTypeNFS:
+	case FilesystemTypeNone, FilesystemTypeVFAT, FilesystemTypeISO9660, FilesystemTypeSwap, FilesystemTypeVirtiofs, FilesystemTypeNFS, FilesystemTypeTmpfs:
 		return false
 	default:
 		return false

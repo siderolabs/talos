@@ -221,11 +221,11 @@ func (i *VolumePhase) UnmarshalText(text []byte) error {
 	return err
 }
 
-const _FilesystemTypeName = "nonexfsvfatext4iso9660swapivirtiofsbtrfsnfs"
+const _FilesystemTypeName = "nonexfsvfatext4iso9660swapivirtiofsbtrfsnfstmpfs"
 
-var _FilesystemTypeIndex = [...]uint8{0, 4, 7, 11, 15, 22, 27, 35, 40, 43}
+var _FilesystemTypeIndex = [...]uint8{0, 4, 7, 11, 15, 22, 27, 35, 40, 43, 48}
 
-const _FilesystemTypeLowerName = "nonexfsvfatext4iso9660swapivirtiofsbtrfsnfs"
+const _FilesystemTypeLowerName = "nonexfsvfatext4iso9660swapivirtiofsbtrfsnfstmpfs"
 
 func (i FilesystemType) String() string {
 	if i < 0 || i >= FilesystemType(len(_FilesystemTypeIndex)-1) {
@@ -247,9 +247,10 @@ func _FilesystemTypeNoOp() {
 	_ = x[FilesystemTypeVirtiofs-(6)]
 	_ = x[FilesystemTypeBtrfs-(7)]
 	_ = x[FilesystemTypeNFS-(8)]
+	_ = x[FilesystemTypeTmpfs-(9)]
 }
 
-var _FilesystemTypeValues = []FilesystemType{FilesystemTypeNone, FilesystemTypeXFS, FilesystemTypeVFAT, FilesystemTypeEXT4, FilesystemTypeISO9660, FilesystemTypeSwap, FilesystemTypeVirtiofs, FilesystemTypeBtrfs, FilesystemTypeNFS}
+var _FilesystemTypeValues = []FilesystemType{FilesystemTypeNone, FilesystemTypeXFS, FilesystemTypeVFAT, FilesystemTypeEXT4, FilesystemTypeISO9660, FilesystemTypeSwap, FilesystemTypeVirtiofs, FilesystemTypeBtrfs, FilesystemTypeNFS, FilesystemTypeTmpfs}
 
 var _FilesystemTypeNameToValueMap = map[string]FilesystemType{
 	_FilesystemTypeName[0:4]:   FilesystemTypeNone,
@@ -261,6 +262,7 @@ var _FilesystemTypeNameToValueMap = map[string]FilesystemType{
 	_FilesystemTypeName[27:35]: FilesystemTypeVirtiofs,
 	_FilesystemTypeName[35:40]: FilesystemTypeBtrfs,
 	_FilesystemTypeName[40:43]: FilesystemTypeNFS,
+	_FilesystemTypeName[43:48]: FilesystemTypeTmpfs,
 }
 
 var _FilesystemTypeLowerNameToValueMap = map[string]FilesystemType{
@@ -273,6 +275,7 @@ var _FilesystemTypeLowerNameToValueMap = map[string]FilesystemType{
 	_FilesystemTypeLowerName[27:35]: FilesystemTypeVirtiofs,
 	_FilesystemTypeLowerName[35:40]: FilesystemTypeBtrfs,
 	_FilesystemTypeLowerName[40:43]: FilesystemTypeNFS,
+	_FilesystemTypeLowerName[43:48]: FilesystemTypeTmpfs,
 }
 
 var _FilesystemTypeNames = []string{
@@ -285,6 +288,7 @@ var _FilesystemTypeNames = []string{
 	_FilesystemTypeName[27:35],
 	_FilesystemTypeName[35:40],
 	_FilesystemTypeName[40:43],
+	_FilesystemTypeName[43:48],
 }
 
 // FilesystemTypeString retrieves an enum value from the enum constants string name.

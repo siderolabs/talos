@@ -152,6 +152,82 @@ func (suite *VolumeManagerSuite) TestReadyExternalVolumePropagatesMountSpecUpdat
 	})
 }
 
+func (suite *VolumeManagerSuite) TestReadyTmpfsVolumeFreezesMountSpec() {
+	ctx := suite.Ctx()
+
+	// No DiscoveredVolumesStatus: a tmpfs needs no disk discovery to become ready.
+	lifecycle := block.NewVolumeLifecycle(block.NamespaceName, block.VolumeLifecycleID)
+	suite.Require().NoError(suite.State().Create(ctx, lifecycle))
+
+	volumeConfig := block.NewVolumeConfig(block.NamespaceName, "tmpfs")
+	volumeConfig.TypedSpec().Type = block.VolumeTypeTmpfs
+	volumeConfig.TypedSpec().Mount.TargetPath = "/var/tmpfs"
+	volumeConfig.TypedSpec().Mount.Parameters = []block.ParameterSpec{
+		block.NewStringParameter(block.TmpfsSizeParameter, "1048576"),
+		block.NewStringParameter("nr_inodes", "1024"),
+	}
+	suite.Require().NoError(suite.State().Create(ctx, volumeConfig))
+
+	readyMount := volumeConfig.TypedSpec().Mount
+
+	ctest.AssertResource(suite, "tmpfs", func(status *block.VolumeStatus, asrt *assert.Assertions) {
+		asrt.Equal(block.VolumePhaseReady, status.TypedSpec().Phase)
+		asrt.Equal(block.VolumeTypeTmpfs, status.TypedSpec().Type)
+		asrt.Equal(readyMount, status.TypedSpec().MountSpec)
+		asrt.EqualValues(1048576, status.TypedSpec().Size)
+		asrt.Equal("1.0 MB", status.TypedSpec().PrettySize)
+	})
+
+	// the parameters are only applied on mount, so a change of a ready volume is not propagated
+	volumeConfig, err := safe.StateGetByID[*block.VolumeConfig](ctx, suite.State(), "tmpfs")
+	suite.Require().NoError(err)
+
+	volumeConfig.TypedSpec().Mount.Parameters = []block.ParameterSpec{
+		block.NewStringParameter(block.TmpfsSizeParameter, "2097152"),
+	}
+	suite.Update(volumeConfig)
+
+	suite.Assert().Never(func() bool {
+		status, err := safe.StateGetByID[*block.VolumeStatus](ctx, suite.State(), "tmpfs")
+
+		return err != nil ||
+			status.TypedSpec().Phase != block.VolumePhaseReady ||
+			!assert.ObjectsAreEqual(readyMount, status.TypedSpec().MountSpec) ||
+			status.TypedSpec().Size != 1048576
+	}, time.Second, 50*time.Millisecond)
+}
+
+func (suite *VolumeManagerSuite) TestInvalidTmpfsVolumeFails() {
+	ctx := suite.Ctx()
+
+	lifecycle := block.NewVolumeLifecycle(block.NamespaceName, block.VolumeLifecycleID)
+	suite.Require().NoError(suite.State().Create(ctx, lifecycle))
+
+	volumeConfig := block.NewVolumeConfig(block.NamespaceName, "tmpfs")
+	volumeConfig.TypedSpec().Type = block.VolumeTypeTmpfs
+	volumeConfig.TypedSpec().Mount.TargetPath = "/var/tmpfs"
+	suite.Require().NoError(suite.State().Create(ctx, volumeConfig))
+
+	ctest.AssertResource(suite, "tmpfs", func(status *block.VolumeStatus, asrt *assert.Assertions) {
+		asrt.Equal(block.VolumePhaseFailed, status.TypedSpec().Phase)
+		asrt.Contains(status.TypedSpec().ErrorMessage, `tmpfs requires the "size" parameter`)
+	})
+
+	volumeConfig, err := safe.StateGetByID[*block.VolumeConfig](ctx, suite.State(), "tmpfs")
+	suite.Require().NoError(err)
+
+	volumeConfig.TypedSpec().Mount.Parameters = []block.ParameterSpec{
+		block.NewStringParameter(block.TmpfsSizeParameter, "1048576"),
+	}
+	suite.Update(volumeConfig)
+
+	ctest.AssertResource(suite, "tmpfs", func(status *block.VolumeStatus, asrt *assert.Assertions) {
+		asrt.Equal(block.VolumePhaseReady, status.TypedSpec().Phase)
+		asrt.Equal(volumeConfig.TypedSpec().Mount, status.TypedSpec().MountSpec)
+		asrt.Empty(status.TypedSpec().ErrorMessage)
+	})
+}
+
 func (suite *VolumeManagerSuite) TestFailingUserVolumeDoesNotBlockReset() {
 	suite.assertFailingVolumeDoesNotBlockReset(block.UserVolumeLabel)
 }

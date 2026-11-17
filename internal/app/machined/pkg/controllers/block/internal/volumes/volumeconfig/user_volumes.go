@@ -282,7 +282,8 @@ func externalVolumeSource(ext configconfig.ExternalVolumeConfig) string {
 			return ext.Mount().NFS().ValueOrZero().Source()
 		}
 
-	case block.FilesystemTypeNone, block.FilesystemTypeXFS, block.FilesystemTypeVFAT, block.FilesystemTypeEXT4, block.FilesystemTypeISO9660, block.FilesystemTypeSwap, block.FilesystemTypeBtrfs:
+	case block.FilesystemTypeNone, block.FilesystemTypeXFS, block.FilesystemTypeVFAT, block.FilesystemTypeEXT4, block.FilesystemTypeISO9660, block.FilesystemTypeSwap,
+		block.FilesystemTypeBtrfs, block.FilesystemTypeTmpfs:
 		fallthrough
 
 	default:
@@ -308,7 +309,8 @@ func externalVolumeParameters(ext configconfig.ExternalVolumeConfig) ([]block.Pa
 
 		return nil, errors.New("NFS mount specification is required for NFS external volume")
 
-	case block.FilesystemTypeNone, block.FilesystemTypeXFS, block.FilesystemTypeVFAT, block.FilesystemTypeEXT4, block.FilesystemTypeISO9660, block.FilesystemTypeSwap, block.FilesystemTypeBtrfs:
+	case block.FilesystemTypeNone, block.FilesystemTypeXFS, block.FilesystemTypeVFAT, block.FilesystemTypeEXT4, block.FilesystemTypeISO9660, block.FilesystemTypeSwap,
+		block.FilesystemTypeBtrfs, block.FilesystemTypeTmpfs:
 		fallthrough
 
 	default:
