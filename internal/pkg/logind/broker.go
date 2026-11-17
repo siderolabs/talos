@@ -19,22 +19,30 @@ import (
 	"time"
 
 	"golang.org/x/sync/errgroup"
+	"golang.org/x/sys/unix"
 
+	"github.com/siderolabs/talos/internal/pkg/cgroup"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
+
+const authTimeout = 10 * time.Second
 
 // DBusBroker implements simplified D-Bus broker which allows to connect
 // kubelet D-Bus connection with Talos logind mock.
 //
 // Broker doesn't actually implement auth, and it is supposed that service
 // connects on one socket, while a client connects on another socket.
+// The service must be this process, and the client must run in clientCgroup.
 type DBusBroker struct {
 	listenService, listenClient net.Listener
+	clientCgroup                string
 }
 
 // NewBroker initializes new broker.
-func NewBroker(ctx context.Context, serviceSocketPath, clientSocketPath string) (*DBusBroker, error) {
+//
+// clientCgroup is the cgroup of the client as /proc/<pid>/cgroup shows it.
+func NewBroker(ctx context.Context, serviceSocketPath, clientSocketPath, clientCgroup string) (*DBusBroker, error) {
 	// remove socket paths as with Docker mode paths might persist across container restarts
 	for _, socketPath := range []string{serviceSocketPath, clientSocketPath} {
 		if err := os.RemoveAll(socketPath); err != nil {
@@ -42,7 +50,9 @@ func NewBroker(ctx context.Context, serviceSocketPath, clientSocketPath string) 
 		}
 	}
 
-	broker := &DBusBroker{}
+	broker := &DBusBroker{
+		clientCgroup: clientCgroup,
+	}
 
 	var err error
 
@@ -85,13 +95,62 @@ func (broker *DBusBroker) Run(ctx context.Context) error {
 		mu                      sync.Mutex
 	)
 
-	eg.Go(func() error { return broker.run(ctx, broker.listenService, &mu, &connService, &connClient) })
-	eg.Go(func() error { return broker.run(ctx, broker.listenClient, &mu, &connClient, &connService) })
+	eg.Go(func() error {
+		return broker.run(ctx, broker.listenService, checkService, &mu, &connService, &connClient)
+	})
+	eg.Go(func() error {
+		return broker.run(ctx, broker.listenClient, broker.checkClient, &mu, &connClient, &connService)
+	})
 
 	return eg.Wait()
 }
 
-func (broker *DBusBroker) run(ctx context.Context, l net.Listener, mu *sync.Mutex, ours, theirs *net.Conn) error {
+func checkService(pid int32) error {
+	if int(pid) != os.Getpid() {
+		return errors.New("it is not the logind mock")
+	}
+
+	return nil
+}
+
+func (broker *DBusBroker) checkClient(pid int32) error {
+	return cgroup.CheckMembership(fmt.Sprintf("/proc/%d/cgroup", pid), broker.clientCgroup)
+}
+
+// verifyPeer runs checkPeer on the PID of the process which connected conn, in the PID namespace of this process.
+func verifyPeer(conn *net.UnixConn, checkPeer func(pid int32) error) error {
+	raw, err := conn.SyscallConn()
+	if err != nil {
+		return err
+	}
+
+	var (
+		cred    *unix.Ucred
+		credErr error
+	)
+
+	if err = raw.Control(func(fd uintptr) {
+		cred, credErr = unix.GetsockoptUcred(int(fd), unix.SOL_SOCKET, unix.SO_PEERCRED)
+	}); err != nil {
+		return err
+	}
+
+	if credErr != nil {
+		return credErr
+	}
+
+	if err = checkPeer(cred.Pid); err != nil {
+		return fmt.Errorf("PID %d: %w", cred.Pid, err)
+	}
+
+	return nil
+}
+
+func (broker *DBusBroker) run(ctx context.Context, l net.Listener, checkPeer func(pid int32) error, mu *sync.Mutex, ours, theirs *net.Conn) error {
+	var wg sync.WaitGroup
+
+	defer wg.Wait()
+
 	for ctx.Err() == nil {
 		conn, err := l.Accept()
 		if err != nil {
@@ -102,7 +161,7 @@ func (broker *DBusBroker) run(ctx context.Context, l net.Listener, mu *sync.Mute
 			return err
 		}
 
-		handleConn(ctx, conn.(*net.UnixConn), mu, ours, theirs)
+		wg.Go(func() { handleConn(ctx, conn.(*net.UnixConn), checkPeer, mu, ours, theirs) })
 	}
 
 	return nil
@@ -131,10 +190,24 @@ func extractFiles(oob []byte) []int {
 }
 
 //nolint:gocyclo
-func handleConn(ctx context.Context, conn *net.UnixConn, mu *sync.Mutex, ours, theirs *net.Conn) {
+func handleConn(ctx context.Context, conn *net.UnixConn, checkPeer func(pid int32) error, mu *sync.Mutex, ours, theirs *net.Conn) {
 	defer conn.Close() //nolint: errcheck
 
+	if err := verifyPeer(conn, checkPeer); err != nil {
+		log.Printf("rejected D-Bus peer: %s", err)
+
+		return
+	}
+
+	// unblock the reads below on shutdown
+	stop := context.AfterFunc(ctx, func() { conn.Close() }) //nolint:errcheck
+	defer stop()
+
 	r := bufio.NewReader(conn)
+
+	if err := conn.SetDeadline(time.Now().Add(authTimeout)); err != nil {
+		return
+	}
 
 	if err := handleAuth(r, conn); err != nil {
 		log.Printf("auth failed: %s", err)
@@ -142,7 +215,16 @@ func handleConn(ctx context.Context, conn *net.UnixConn, mu *sync.Mutex, ours, t
 		return
 	}
 
+	if err := conn.SetDeadline(time.Time{}); err != nil {
+		return
+	}
+
 	mu.Lock()
+
+	// the newest connection wins, so a restarted kubelet replaces a peer which never disconnected
+	if *ours != nil {
+		(*ours).Close() //nolint:errcheck
+	}
 
 	*ours = conn
 
@@ -151,7 +233,9 @@ func handleConn(ctx context.Context, conn *net.UnixConn, mu *sync.Mutex, ours, t
 	defer func() {
 		mu.Lock()
 
-		*ours = nil
+		if *ours == net.Conn(conn) {
+			*ours = nil
+		}
 
 		mu.Unlock()
 	}()

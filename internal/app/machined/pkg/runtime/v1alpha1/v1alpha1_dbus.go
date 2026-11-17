@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/siderolabs/talos/internal/pkg/cgroup"
 	"github.com/siderolabs/talos/internal/pkg/logind"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -38,7 +39,7 @@ func (dbus *DBusState) Start() error {
 
 	ctx, dbus.cancel = context.WithCancel(context.Background())
 
-	dbus.broker, err = logind.NewBroker(ctx, constants.DBusServiceSocketPath, constants.DBusClientSocketPath)
+	dbus.broker, err = logind.NewBroker(ctx, constants.DBusServiceSocketPath, constants.DBusClientSocketPath, filepath.Join("/", cgroup.Path(constants.CgroupKubelet)))
 	if err != nil {
 		return err
 	}
