@@ -37,7 +37,7 @@ func (f *blankDiskFixture) writableImageDocument(library string) *hypervisorcfg.
 	doc.DisksConfig[0].ProvisionConfig = hypervisorcfg.VirtualMachineDiskProvision{
 		FromImageConfig: &hypervisorcfg.VirtualMachineDiskFromImage{
 			ImageLibrary: library,
-			ImageFile:    "guest.qcow2",
+			ImageFile:    "guest.img",
 		},
 	}
 
@@ -61,7 +61,7 @@ func (suite *LibvirtSuite) TestWritableImageFromContentLibrary() {
 
 	nodeCtx := client.WithNode(ctx, node)
 	if suite.ReadMachineArch(nodeCtx) != "amd64" {
-		suite.T().Skip("stock CirrOS fixture is amd64")
+		suite.T().Skip("stock OpenWrt fixture is amd64")
 	}
 
 	image, err := os.Open(suite.HypervisorDiskImagePath)
@@ -80,7 +80,7 @@ func (suite *LibvirtSuite) TestWritableImageFromContentLibrary() {
 
 	upload := func(contents io.Reader) string {
 		suite.T().Helper()
-		response, err := suite.Client.ContentLibraryUpload(nodeCtx, library, "guest.qcow2", "", contents)
+		response, err := suite.Client.ContentLibraryUpload(nodeCtx, library, "guest.img", "", contents)
 		suite.Require().NoError(err)
 
 		digest := response.GetDigests().GetSha256()
@@ -92,7 +92,7 @@ func (suite *LibvirtSuite) TestWritableImageFromContentLibrary() {
 		suite.T().Helper()
 		_, err := suite.Client.ContentLibraryService().Delete(nodeCtx, &machine.ContentLibraryServiceDeleteRequest{
 			LibraryId: library,
-			Target:    &machine.ContentLibraryServiceDeleteRequest_Name{Name: "guest.qcow2"},
+			Target:    &machine.ContentLibraryServiceDeleteRequest_Name{Name: "guest.img"},
 		})
 		suite.Require().NoError(err)
 		_, err = suite.Client.ContentLibraryService().Delete(nodeCtx, &machine.ContentLibraryServiceDeleteRequest{
@@ -119,28 +119,62 @@ func (suite *LibvirtSuite) TestWritableImageFromContentLibrary() {
 
 		console := suite.attachAlpineConsole(nodeCtx, fixture.vmName)
 		defer console.cancel()
-		defer func() { suite.T().Logf("bounded CirrOS transcript: %q", console.transcript) }()
+		defer func() { suite.T().Logf("bounded OpenWrt transcript: %q", console.transcript) }()
 
-		suite.Require().NoError(console.send("\n"))
-		suite.Require().NoError(console.expectAfter(0, []byte("login:")))
-		start := console.mark()
-		suite.Require().NoError(console.send("cirros\n"))
-		suite.Require().NoError(console.expectAfter(start, []byte("Password:")))
-		start = console.mark()
-		suite.Require().NoError(console.send("gocubsgo\n"))
-		suite.Require().NoError(console.expectAfter(start, []byte("$ ")))
+		// sendUntil sends first, then resends resend every 10s until want arrives.
+		// Input typed while boot scripts still run can be lost.
+		sendUntil := func(first, resend string, want []byte) error {
+			start := console.mark()
+			if err := console.send(first); err != nil {
+				return err
+			}
 
-		command := "grep -q '^cirros:' /etc/passwd && test \"$(cat /sys/class/block/vda/size)\" = " + size
+			stopResend := make(chan struct{})
+			resendDone := make(chan struct{})
+
+			go func() {
+				defer close(resendDone)
+
+				ticker := time.NewTicker(10 * time.Second)
+				defer ticker.Stop()
+
+				for {
+					select {
+					case <-stopResend:
+						return
+					case <-ticker.C:
+					}
+
+					if console.send(resend) != nil {
+						return
+					}
+				}
+			}()
+
+			err := console.expectAfter(start, want)
+
+			close(stopResend)
+			<-resendDone
+
+			return err
+		}
+
+		// OpenWrt gives a passwordless root shell on Enter. The "press Enter" banner is
+		// printed once at boot and may predate the attach, so do not wait for it.
+		suite.Require().NoError(sendUntil("\n", "\n", []byte(":~# ")))
+
+		command := "grep -q OpenWrt /etc/openwrt_release && test \"$(cat /sys/class/block/vda/size)\" = " + size
 		if write {
-			command += " && echo " + fixture.vmName + " > /home/cirros/talos-sentinel && sync"
+			command += " && echo " + fixture.vmName + " > /root/talos-sentinel && sync"
 		} else {
-			command += " && test \"$(cat /home/cirros/talos-sentinel)\" = " + fixture.vmName
+			command += " && test \"$(cat /root/talos-sentinel)\" = " + fixture.vmName
 		}
 
 		marker := serialNonce("IMAGE")
-		start = console.mark()
-		suite.Require().NoError(console.send(command + " && " + serialPrintf(marker)))
-		suite.Require().NoError(console.expectAfter(start, []byte("\r\n"+marker+"\r\n")))
+		line := command + " && " + serialPrintf(marker)
+
+		// ^C clears any partial line on resend; the command is idempotent.
+		suite.Require().NoError(sendUntil(line, "\x03"+line, []byte("\r\n"+marker+"\r\n")))
 		suite.Require().NoError(console.send("exit\n"))
 		suite.detachAlpineConsole(console)
 	}

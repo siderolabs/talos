@@ -207,7 +207,7 @@ func init() {
 	flag.StringVar(&hypervisorAlpineISOPath, "talos.hypervisor.alpine-iso", "",
 		"path to a stock Alpine virt ISO for the hypervisor serial-console test; unset skips the test needing the image")
 	flag.StringVar(&hypervisorDiskImagePath, "talos.hypervisor.disk-image", "",
-		"path to the checksum-pinned CirrOS disk for writable-image tests; unset skips those tests")
+		"path to the OpenWrt disk decompressed from a checksum-pinned archive, for writable-image tests; unset skips those tests")
 	flag.BoolVar(&lldpEnabled, "talos.lldp", false, "enable LLDP receive tests (requires a cluster created with --with-lldp)")
 	flag.BoolVar(&bgpEnabled, "talos.bgp", false, "enable tests for native BGP (requires a cluster created with --with-bgp)")
 	flag.BoolVar(&bgpCLOSEnabled, "talos.bgp.clos", false, "enable the full-CLOS BGP test (requires a cluster created with --with-bgp-clos)")

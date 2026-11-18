@@ -127,9 +127,10 @@ LIBVIRT_SHA256 ?= dcf579d8a949f4cbf56820529d48f200382a48ea12855ffded7c16a189353c
 ALPINE_VERSION ?= 3.24.4
 # Update the checksum with the image; mirrors of identical bytes can reuse it.
 ALPINE_ISO_SHA256 ?= 157d353f8e54252cad2d9812a0d56bb7fa2231fc154a110e1d180d7480ef8b4f
-# renovate: datasource=github-releases depName=cirros-dev/cirros
-CIRROS_VERSION ?= 0.6.3
-CIRROS_DISK_SHA256 ?= 7d6355852aeb6dbcd191bcda7cd74f1536cfe5cbf8a10495a7283a8396e4b75b
+# renovate: datasource=github-tags extractVersion=^v(?<version>.*)$ depName=openwrt/openwrt
+OPENWRT_VERSION ?= 25.12.6
+# SHA-256 of OPENWRT_DISK_URL (the .img.gz); update with OPENWRT_VERSION.
+OPENWRT_DISK_GZ_SHA256 ?= f8538784d0288b4133a99ac2a68443e4922ffde6343e80df56a5882364b9d499
 
 KUBECTL_URL ?= https://dl.k8s.io/release/$(KUBECTL_VERSION)/bin/$(OPERATING_SYSTEM)/amd64/kubectl
 KUBESTR_URL ?= https://github.com/kastenhq/kubestr/releases/download/$(KUBESTR_VERSION)/kubestr_$(subst v,,$(KUBESTR_VERSION))_Linux_amd64.tar.gz
@@ -137,8 +138,9 @@ HELM_URL ?= https://get.helm.sh/helm-$(HELM_VERSION)-linux-amd64.tar.gz
 CILIUM_CLI_URL ?= https://github.com/cilium/cilium-cli/releases/download/$(CILIUM_CLI_VERSION)/cilium-$(OPERATING_SYSTEM)-amd64.tar.gz
 ALPINE_ISO ?= _out/alpine-virt-x86_64.iso
 ALPINE_ISO_URL ?= https://dl-cdn.alpinelinux.org/alpine/v3.24/releases/x86_64/alpine-virt-$(ALPINE_VERSION)-x86_64.iso
-CIRROS_DISK ?= _out/cirros-x86_64-disk.img
-CIRROS_DISK_URL ?= https://download.cirros-cloud.net/$(CIRROS_VERSION)/cirros-$(CIRROS_VERSION)-x86_64-disk.img
+OPENWRT_DISK_GZ ?= _out/openwrt-x86-64-generic-ext4-combined.img.gz
+OPENWRT_DISK ?= _out/openwrt-x86-64-generic-ext4-combined.img
+OPENWRT_DISK_URL ?= https://downloads.openwrt.org/releases/$(OPENWRT_VERSION)/targets/x86/64/openwrt-$(OPENWRT_VERSION)-x86-64-generic-ext4-combined.img.gz
 
 TESTPKGS ?= github.com/siderolabs/talos/...
 UNITTEST_PARALLELISM ?= 8
@@ -649,9 +651,16 @@ endef
 download-alpine-iso: ## Downloads and verifies the configured Alpine ISO.
 	$(call download-verified-fixture,ALPINE_ISO,ALPINE_ISO_URL,ALPINE_ISO_SHA256,268435456)
 
-.PHONY: download-cirros-disk
-download-cirros-disk: ## Downloads and verifies the stock writable-image guest fixture.
-	$(call download-verified-fixture,CIRROS_DISK,CIRROS_DISK_URL,CIRROS_DISK_SHA256,33554432)
+.PHONY: download-openwrt-disk
+download-openwrt-disk: ## Downloads and unpacks the writable-image guest fixture.
+	$(call download-verified-fixture,OPENWRT_DISK_GZ,OPENWRT_DISK_URL,OPENWRT_DISK_GZ_SHA256,67108864)
+	@set -eu; \
+		dest="$(OPENWRT_DISK)"; \
+		trap 'rm -f "$${dest}.tmp"' 0; \
+		rc=0; gunzip -c "$(OPENWRT_DISK_GZ)" > "$${dest}.tmp" || rc=$$?; \
+		if [ "$$rc" -ne 0 ] && [ "$$rc" -ne 2 ]; then echo "gunzip failed with status $$rc" >&2; exit 1; fi; \
+		chmod 0444 "$${dest}.tmp"; \
+		mv -f "$${dest}.tmp" "$$dest"
 
 $(ARTIFACTS)/kubectl: | $(ARTIFACTS)
 	@curl --fail -L -o $(ARTIFACTS)/kubectl "$(KUBECTL_URL)"

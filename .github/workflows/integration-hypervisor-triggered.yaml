@@ -97,11 +97,11 @@ jobs:
           make download-alpine-iso
       - name: download writable guest disk
         run: |
-          make download-cirros-disk
+          make download-openwrt-disk
       - name: e2e-hypervisor
         env:
           EXTRA_TEST_ARGS: -talos.extensions.libvirt -talos.hypervisor.talos-iso=_out/metal-amd64.iso
-            -talos.hypervisor.alpine-iso=$(ALPINE_ISO) -talos.hypervisor.disk-image=$(CIRROS_DISK)
+            -talos.hypervisor.alpine-iso=$(ALPINE_ISO) -talos.hypervisor.disk-image=$(OPENWRT_DISK)
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-hypervisor
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           QEMU_CONTROLPLANES: "2"
