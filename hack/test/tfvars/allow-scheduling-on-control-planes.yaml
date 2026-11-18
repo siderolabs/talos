@@ -1,0 +1,5 @@
+# Drops the control plane NoSchedule taint, so a cluster without workers can schedule pods.
+apiVersion: v1alpha1
+kind: KubeNodeConfig
+taints:
+  $patch: delete

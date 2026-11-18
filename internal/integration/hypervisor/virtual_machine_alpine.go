@@ -44,6 +44,10 @@ func (suite *AlpineSuite) SuiteName() string { return "hypervisor.AlpineSuite" }
 // TestAlpineCopySurvivesSourceDeletionAndHostReboot requires a cold guest boot from
 // the existing pool copy after both the library alias and immutable object are gone.
 func (suite *AlpineSuite) TestAlpineCopySurvivesSourceDeletionAndHostReboot() {
+	if !suite.hostRebootSupported() {
+		suite.T().Skip("skipping as host reboots are only supported on qemu")
+	}
+
 	node, nodeCtx := suite.requireAlpineGuestNode()
 	doc := suite.prepareAlpineGuestOnNode(node, nodeCtx, nil, 512<<20, "")
 	name := doc.Name()

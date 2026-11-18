@@ -390,6 +390,10 @@ func (suite *DomainSuite) TestDomain() {
 		assert.Equal(collect, pidBeforeReboot, pidAfterServiceRestart, "QEMU PID after the service restart")
 	}, 30*time.Second, 100*time.Millisecond, "service restart must preserve the QEMU process with PID %d", pidBeforeReboot)
 
+	if !suite.hostRebootSupported() {
+		suite.T().Skip("skipping the host reboot check as host reboots are only supported on qemu")
+	}
+
 	// Node-level reboot check: this suite runs without Kubernetes.
 	suite.AssertRebootedNoChecks(
 		suite.ctx, node, func(nodeCtx context.Context) error {

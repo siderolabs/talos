@@ -191,7 +191,7 @@ func (suite *ImageSuite) TestWritableImageFromContentLibrary() {
 	suite.Require().Zero(code, "%s", output)
 	suite.Require().Contains(output, imageDigest)
 
-	if testing.Short() {
+	if testing.Short() || !suite.hostRebootSupported() {
 		return
 	}
 
