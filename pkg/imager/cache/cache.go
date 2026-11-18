@@ -619,10 +619,14 @@ func (layer *cachedLayer) Compressed() (io.ReadCloser, error) {
 
 	cached, err := os.Open(cachePath)
 	if err == nil {
-		return cached, nil
-	}
+		// a cache file left behind by an interrupted download (or one which is
+		// otherwise damaged) doesn't match the layer size, so fetch it again
+		if layer.cachedSizeMatches(cached) {
+			return cached, nil
+		}
 
-	if !errors.Is(err, fs.ErrNotExist) {
+		cached.Close() //nolint:errcheck
+	} else if !errors.Is(err, fs.ErrNotExist) {
 		return nil, err
 	}
 
@@ -631,7 +635,9 @@ func (layer *cachedLayer) Compressed() (io.ReadCloser, error) {
 		return nil, err
 	}
 
-	cacheFile, err := os.Create(cachePath)
+	// download into a temporary file, and only move it into place once the
+	// whole layer has been read, so that the cache never holds a partial layer
+	cacheFile, err := os.CreateTemp(layer.path, ".tmp-"+layerCacheFileName(digest)+"-*")
 	if err != nil {
 		source.Close() //nolint:errcheck
 
@@ -642,18 +648,56 @@ func (layer *cachedLayer) Compressed() (io.ReadCloser, error) {
 		Reader: io.TeeReader(source, cacheFile),
 		source: source,
 		cache:  cacheFile,
+		dest:   cachePath,
 	}, nil
+}
+
+func (layer *cachedLayer) cachedSizeMatches(f *os.File) bool {
+	size, err := layer.Size()
+	if err != nil {
+		return false
+	}
+
+	st, err := f.Stat()
+	if err != nil {
+		return false
+	}
+
+	return st.Size() == size
 }
 
 type cachedLayerReadCloser struct {
 	io.Reader
 
 	source io.Closer
-	cache  io.Closer
+	cache  *os.File
+	dest   string
+	eof    bool
+}
+
+func (reader *cachedLayerReadCloser) Read(p []byte) (int, error) {
+	n, err := reader.Reader.Read(p)
+	if errors.Is(err, io.EOF) {
+		reader.eof = true
+	}
+
+	return n, err
 }
 
 func (reader *cachedLayerReadCloser) Close() error {
-	return cmp.Or(reader.source.Close(), reader.cache.Close())
+	err := cmp.Or(reader.source.Close(), reader.cache.Close())
+
+	if err != nil || !reader.eof {
+		os.Remove(reader.cache.Name()) //nolint:errcheck
+
+		return err
+	}
+
+	if err = move(reader.cache.Name(), reader.dest); err != nil {
+		os.Remove(reader.cache.Name()) //nolint:errcheck
+	}
+
+	return err
 }
 
 func layerCacheFileName(digest v1.Hash) string {

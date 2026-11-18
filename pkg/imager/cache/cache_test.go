@@ -91,6 +91,81 @@ func TestGenerateReusesUncompressedLayer(t *testing.T) {
 	}
 }
 
+func TestGenerateRefetchesTruncatedCachedLayer(t *testing.T) {
+	var layerData bytes.Buffer
+
+	tarWriter := tar.NewWriter(&layerData)
+	require.NoError(t, tarWriter.WriteHeader(&tar.Header{
+		Name: "file",
+		Mode: 0o644,
+		Size: 4,
+	}))
+	_, err := tarWriter.Write([]byte("data"))
+	require.NoError(t, err)
+	require.NoError(t, tarWriter.Close())
+
+	layer := static.NewLayer(layerData.Bytes(), types.OCILayer)
+	image, err := mutate.AppendLayers(empty.Image, layer)
+	require.NoError(t, err)
+
+	digest, err := layer.Digest()
+	require.NoError(t, err)
+
+	var layerPulls atomic.Int32
+
+	registryHandler := registry.New()
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.Method == http.MethodGet && strings.HasSuffix(request.URL.Path, "/blobs/"+digest.String()) {
+			layerPulls.Add(1)
+		}
+
+		registryHandler.ServeHTTP(writer, request)
+	}))
+	t.Cleanup(server.Close)
+
+	ref, err := name.NewTag(strings.TrimPrefix(server.URL, "http://")+"/test/image:latest", name.Insecure)
+	require.NoError(t, err)
+	require.NoError(t, remote.Write(ref, image))
+
+	tempDir := t.TempDir()
+	layerCachePath := filepath.Join(tempDir, "layers")
+
+	generate := func(destination string) {
+		require.NoError(t, cache.Generate(
+			[]string{ref.String()},
+			[]string{"linux/amd64"},
+			true,
+			layerCachePath,
+			destination,
+			true,
+			false,
+		))
+	}
+
+	generate(filepath.Join(tempDir, "first"))
+	require.Equal(t, int32(1), layerPulls.Load())
+
+	// simulate an interrupted download which left an empty file behind
+	cachedLayerPath := filepath.Join(layerCachePath, digest.String())
+	require.NoError(t, os.Truncate(cachedLayerPath, 0))
+
+	secondCachePath := filepath.Join(tempDir, "second")
+	generate(secondCachePath)
+	require.Equal(t, int32(2), layerPulls.Load())
+
+	actual, err := os.ReadFile(filepath.Join(secondCachePath, "blob", strings.ReplaceAll(digest.String(), ":", "-")))
+	require.NoError(t, err)
+	require.True(t, bytes.Equal(layerData.Bytes(), actual), "cached layer bytes changed")
+
+	cached, err := os.ReadFile(cachedLayerPath)
+	require.NoError(t, err)
+	require.True(t, bytes.Equal(layerData.Bytes(), cached), "layer cache was not repaired")
+
+	entries, err := os.ReadDir(layerCachePath)
+	require.NoError(t, err)
+	require.Len(t, entries, 1, "temporary files left in the layer cache")
+}
+
 func TestGenerateReproducible(t *testing.T) {
 	t.Setenv("SOURCE_DATE_EPOCH", "1700000000")
 
