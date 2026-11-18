@@ -235,6 +235,43 @@ func upgradeCurrentToCurrentEnforcing() upgradeSpec {
 	}
 }
 
+func upgradeCurrentToCurrentEnforcingCri() upgradeSpec {
+	installerImage := fmt.Sprintf(
+		"%s/%s:%s",
+		DefaultSettings.TargetInstallImageRegistry,
+		images.DefaultInstallerImageName, //nolint:staticcheck // legacy is only used in tests
+		DefaultSettings.CurrentVersion,
+	)
+
+	return upgradeSpec{
+		ShortName: fmt.Sprintf("%s-same-ver-enforcing-cri", DefaultSettings.CurrentVersion),
+
+		InjectExtraKernelArgs: procfs.NewCmdline("enforcing=1"),
+
+		SourceISOPath:        helpers.ArtifactPath("metal-amd64.iso"),
+		SourceInstallerImage: installerImage,
+		SourceVersion:        DefaultSettings.CurrentVersion,
+		SourceK8sVersion:     currentK8sVersion,
+
+		VersionContract: config.TalosVersionCurrent.DisableEtcd().DisableKubernetes(),
+
+		// a different target image, so that an upgrade reverted on a failed reboot sequence is detected
+		TargetInstallerImage: installerImage + "-extra-cmdline",
+		TargetVersion:        DefaultSettings.CurrentVersion,
+		TargetK8sVersion:     currentK8sVersion,
+
+		ControlplaneNodes: 1,
+		WorkerNodes:       0,
+
+		TargetCmdlineContains: "talos.extra_cmdline=extra-super-cmdline",
+		TargetKexecUsed:       true,
+
+		WithApplyConfig:              true,
+		WithEnforcing:                true,
+		UpgradeUseInmemoryContainerd: false,
+	}
+}
+
 // upgradeStableToCurrentTrustedBoot upgrades the stable Talos release to the current version
 // with TPM-backed disk encryption (trustedboot). Both the source ISO and the source
 // installer are produced from the upstream-tagged imager at the stable release, signed with
@@ -478,6 +515,7 @@ func init() {
 		&UpgradeSuite{specGen: upgradeCurrentToCurrent(true, false, true), track: 0},
 		&UpgradeSuite{specGen: upgradeCurrentToCurrent(true, true, true), track: 0},
 		&UpgradeSuite{specGen: upgradeCurrentToCurrentEnforcing, track: 0},
+		&UpgradeSuite{specGen: upgradeCurrentToCurrentEnforcingCri, track: 0},
 		&UpgradeSuite{specGen: upgradeStableToCurrentTrustedBoot, track: 1},
 		&UpgradeSuite{specGen: upgradeStableToCurrent, track: 1},
 		&UpgradeSuite{specGen: upgradePreviousToStable, track: 1},
