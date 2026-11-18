@@ -936,7 +936,7 @@ var imageCacheCertGenCmd = &cobra.Command{
 			imageCacheCertGenCmdFlags.advertisedNames,
 		)
 		if err != nil {
-			return nil
+			return err
 		}
 
 		if err = generateCAConfigPatch(caPEM); err != nil {
