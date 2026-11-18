@@ -35,5 +35,23 @@ if [ "${consecutive_successes}" -ne 3 ]; then
   exit 1
 fi
 
+# Patches with documents the terraform provider can't decode are applied with the in-tree talosctl.
+if [ -n "${E2E_AWS_CONFIG_PATCH:-}" ]; then
+  PATCH_ARGS=()
+
+  IFS=':' read -r -a PATCHES <<< "${E2E_AWS_CONFIG_PATCH}"
+
+  for patch in "${PATCHES[@]}"; do
+    PATCH_ARGS+=("--patch" "${patch}")
+  done
+
+  NODES=$(${KUBECTL} get nodes -o jsonpath='{.items[*].status.addresses[?(@.type=="InternalIP")].address}')
+
+  ${TALOSCTL} --nodes "${NODES// /,}" patch machineconfig "${PATCH_ARGS[@]}"
+fi
+
 run_talos_integration_test
-run_kubernetes_integration_test
+
+if [ "${SKIP_KUBERNETES_INTEGRATION_TEST:-false}" != "true" ]; then
+  run_kubernetes_integration_test
+fi

@@ -88,7 +88,7 @@ func (suite *StoragePoolSuite) TestStoragePool() {
 	suite.Require().Zero(exitCode, "new target must exist without migrated data: %s", output)
 	fixture.writeSentinel(ctx, 1, "new-data")
 
-	if !testing.Short() {
+	if !testing.Short() && suite.hostRebootSupported() {
 		// Node-level reboot check: this suite runs without Kubernetes.
 		suite.AssertRebootedNoChecks(ctx, fixture.node, func(rebootCtx context.Context) error {
 			return base.IgnoreGRPCUnavailable(suite.Client.Reboot(rebootCtx))
