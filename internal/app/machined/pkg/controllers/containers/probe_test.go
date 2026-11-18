@@ -60,14 +60,21 @@ func listenerPort(t *testing.T, address string) uint32 {
 func closedPort(t *testing.T) uint32 {
 	t.Helper()
 
-	listener, err := (&net.ListenConfig{}).Listen(t.Context(), "tcp", "127.0.0.1:0")
+	fd, err := unix.Socket(unix.AF_INET, unix.SOCK_STREAM|unix.SOCK_CLOEXEC, 0)
 	require.NoError(t, err)
 
-	port := listenerPort(t, listener.Addr().String())
+	t.Cleanup(func() { unix.Close(fd) }) //nolint:errcheck
 
-	require.NoError(t, listener.Close())
+	// Bind without SO_REUSEADDR, so that no other test can bind simultaneously.
+	require.NoError(t, unix.Bind(fd, &unix.SockaddrInet4{Addr: [4]byte{127, 0, 0, 1}}))
 
-	return port
+	addr, err := unix.Getsockname(fd)
+	require.NoError(t, err)
+
+	inet4, ok := addr.(*unix.SockaddrInet4)
+	require.True(t, ok, "unexpected socket address %T", addr)
+
+	return listenerPort(t, net.JoinHostPort("127.0.0.1", strconv.Itoa(inet4.Port)))
 }
 
 func runProbe(t *testing.T, healthCheck containers.ContainerHealthCheckSpec) error {
@@ -92,10 +99,10 @@ func TestProbeTCP(t *testing.T) {
 		Port: listenerPort(t, listener.Addr().String()),
 	}))
 
-	assert.Error(t, runProbe(t, containers.ContainerHealthCheckSpec{
+	assert.ErrorIs(t, runProbe(t, containers.ContainerHealthCheckSpec{
 		Kind: string(config.ContainerHealthCheckKindTCP),
 		Port: closedPort(t),
-	}))
+	}), syscall.ECONNREFUSED)
 }
 
 func TestProbeHTTP(t *testing.T) {
@@ -138,11 +145,11 @@ func TestProbeHTTP(t *testing.T) {
 		}
 	}
 
-	assert.Error(t, runProbe(t, containers.ContainerHealthCheckSpec{
+	assert.ErrorIs(t, runProbe(t, containers.ContainerHealthCheckSpec{
 		Kind: string(config.ContainerHealthCheckKindHTTP),
 		Port: closedPort(t),
 		Path: "/",
-	}))
+	}), syscall.ECONNREFUSED)
 }
 
 func TestProbeGRPC(t *testing.T) {
