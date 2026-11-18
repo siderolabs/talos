@@ -24,6 +24,7 @@ import (
 	"go.uber.org/goleak"
 
 	"github.com/siderolabs/talos/internal/pkg/dns/proxy"
+	"github.com/siderolabs/talos/internal/pkg/testport"
 )
 
 // testServer is a DNS server answering with A records, counting the queries and connections.
@@ -89,12 +90,46 @@ func (l *countingListener) Accept() (net.Conn, error) {
 	return conn, err
 }
 
+// listenSamePort listens on a TCP port picked by the kernel and, if withUDP is set, on the UDP port
+// of the same number.
+//
+// The TCP and UDP port spaces are separate, so another test may already hold the UDP port: the
+// attempt is then repeated with another port.
+func listenSamePort(t *testing.T, withUDP bool) (net.Listener, net.PacketConn) {
+	t.Helper()
+
+	const attempts = 10
+
+	var lastErr error
+
+	for range attempts {
+		tcpListener, err := (&net.ListenConfig{}).Listen(t.Context(), "tcp4", "127.0.0.1:0")
+		require.NoError(t, err)
+
+		if !withUDP {
+			return tcpListener, nil
+		}
+
+		packetConn, err := (&net.ListenConfig{}).ListenPacket(t.Context(), "udp4", tcpListener.Addr().String())
+		if err == nil {
+			return tcpListener, packetConn
+		}
+
+		lastErr = err
+
+		require.NoError(t, tcpListener.Close())
+	}
+
+	require.NoError(t, lastErr, "no port free for both TCP and UDP after %d attempts", attempts)
+
+	return nil, nil
+}
+
 // startServer starts UDP and TCP servers on the same port (or a TLS server if tlsConfig is set).
 func startServer(t *testing.T, handler *testServer, tlsConfig *tls.Config, idleTimeout time.Duration) string {
 	t.Helper()
 
-	tcpListener, err := (&net.ListenConfig{}).Listen(t.Context(), "tcp4", "127.0.0.1:0")
-	require.NoError(t, err)
+	tcpListener, packetConn := listenSamePort(t, tlsConfig == nil)
 
 	var listener net.Listener = &countingListener{Listener: tcpListener, count: &handler.connections}
 
@@ -114,10 +149,7 @@ func startServer(t *testing.T, handler *testServer, tlsConfig *tls.Config, idleT
 
 	servers := []*dns.Server{tcpServer}
 
-	if tlsConfig == nil {
-		packetConn, err := (&net.ListenConfig{}).ListenPacket(t.Context(), "udp4", addr)
-		require.NoError(t, err)
-
+	if packetConn != nil {
 		servers = append(servers, &dns.Server{PacketConn: packetConn, Handler: handler})
 	}
 
@@ -314,21 +346,15 @@ func TestHealthcheck(t *testing.T) {
 
 	assert.Zero(t, healthy.Fails())
 
-	// nothing listens on the port: the health check fails
-	listener, err := (&net.ListenConfig{}).ListenPacket(t.Context(), "udp4", "127.0.0.1:0")
-	require.NoError(t, err)
-
-	deadAddr := listener.LocalAddr().String()
-	require.NoError(t, listener.Close())
-
-	dead := proxy.New(deadAddr, nil)
+	// nothing answers on the port: the health check times out and fails
+	dead := proxy.New(testport.UnansweredUDPAddress(t), nil)
 	dead.Start(10 * time.Millisecond)
 
 	dead.Healthcheck()
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		assert.GreaterOrEqual(collect, dead.Fails(), uint32(2))
-	}, 5*time.Second, 10*time.Millisecond)
+	}, 10*time.Second, 10*time.Millisecond)
 
 	// the health check is retried until it succeeds, stopped by Close
 	dead.Close()

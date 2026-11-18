@@ -23,6 +23,7 @@ import (
 	controllerruntime "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime"
 	talosruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1"
+	"github.com/siderolabs/talos/internal/pkg/testport"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -172,11 +173,7 @@ func (suite *EventsSinkSuite) TestDrain() {
 	suite.Require().Equal(0, suite.handler.len())
 
 	// first, publish wrong endpoint
-	badLis, err := (&net.ListenConfig{}).Listen(ctx, "tcp", "localhost:0")
-	suite.Require().NoError(err)
-
-	badEndpoint := badLis.Addr().String()
-	suite.Require().NoError(badLis.Close())
+	badEndpoint := testport.ClosedAddress(suite.T())
 
 	config := runtimeres.NewEventSinkConfig()
 	config.TypedSpec().Endpoint = badEndpoint

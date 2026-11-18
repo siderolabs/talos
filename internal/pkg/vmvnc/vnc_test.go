@@ -139,8 +139,16 @@ func TestListen(t *testing.T) {
 	require.Error(t, err)
 	require.NoError(t, listener.Close())
 
-	fixed, err := vmvnc.Listen(t.Context(), addr.Port)
-	require.NoError(t, err)
+	// Another process may briefly hold the port once it is released, such as a connection using it as
+	// its source port: retry until it is free.
+	var fixed net.Listener
+
+	require.Eventually(t, func() bool {
+		fixed, err = vmvnc.Listen(t.Context(), addr.Port)
+
+		return err == nil
+	}, 5*time.Second, 10*time.Millisecond)
+
 	require.NoError(t, fixed.Close())
 }
 

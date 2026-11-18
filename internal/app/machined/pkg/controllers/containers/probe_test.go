@@ -32,6 +32,7 @@ import (
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 
 	containersctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/containers"
+	"github.com/siderolabs/talos/internal/pkg/testport"
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
 )
@@ -54,27 +55,6 @@ func listenerPort(t *testing.T, address string) uint32 {
 	require.NoError(t, err)
 
 	return uint32(port)
-}
-
-// closedPort returns a loopback port nothing listens on.
-func closedPort(t *testing.T) uint32 {
-	t.Helper()
-
-	fd, err := unix.Socket(unix.AF_INET, unix.SOCK_STREAM|unix.SOCK_CLOEXEC, 0)
-	require.NoError(t, err)
-
-	t.Cleanup(func() { unix.Close(fd) }) //nolint:errcheck
-
-	// Bind without SO_REUSEADDR, so that no other test can bind simultaneously.
-	require.NoError(t, unix.Bind(fd, &unix.SockaddrInet4{Addr: [4]byte{127, 0, 0, 1}}))
-
-	addr, err := unix.Getsockname(fd)
-	require.NoError(t, err)
-
-	inet4, ok := addr.(*unix.SockaddrInet4)
-	require.True(t, ok, "unexpected socket address %T", addr)
-
-	return listenerPort(t, net.JoinHostPort("127.0.0.1", strconv.Itoa(inet4.Port)))
 }
 
 func runProbe(t *testing.T, healthCheck containers.ContainerHealthCheckSpec) error {
@@ -101,7 +81,7 @@ func TestProbeTCP(t *testing.T) {
 
 	assert.ErrorIs(t, runProbe(t, containers.ContainerHealthCheckSpec{
 		Kind: string(config.ContainerHealthCheckKindTCP),
-		Port: closedPort(t),
+		Port: testport.Closed(t),
 	}), syscall.ECONNREFUSED)
 }
 
@@ -147,7 +127,7 @@ func TestProbeHTTP(t *testing.T) {
 
 	assert.ErrorIs(t, runProbe(t, containers.ContainerHealthCheckSpec{
 		Kind: string(config.ContainerHealthCheckKindHTTP),
-		Port: closedPort(t),
+		Port: testport.Closed(t),
 		Path: "/",
 	}), syscall.ECONNREFUSED)
 }

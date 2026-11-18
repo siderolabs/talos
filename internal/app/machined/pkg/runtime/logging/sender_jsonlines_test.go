@@ -378,9 +378,13 @@ func TestSenderJSONLinesReconnect(t *testing.T) {
 	require.NoError(t, conn.Close())
 	require.NoError(t, lis.Close())
 
-	// A new receiver listens on the same address.
-	lis, err = (&net.ListenConfig{}).Listen(ctx, "tcp", endpoint)
-	require.NoError(t, err)
+	// A new receiver listens on the same address. Another process may briefly hold the port once it
+	// is released, such as a connection using it as its source port: retry until it is free.
+	require.Eventually(t, func() bool {
+		lis, err = (&net.ListenConfig{}).Listen(ctx, "tcp", endpoint)
+
+		return err == nil
+	}, 5*time.Second, 10*time.Millisecond)
 
 	t.Cleanup(func() {
 		require.NoError(t, lis.Close())
