@@ -117,15 +117,104 @@ func TestUserVolumeTransformer(t *testing.T) {
 			},
 		},
 		{
+			name: "tmpfs volume",
+			cfg: []*blockcfg.UserVolumeConfigV1Alpha1{{
+				MetaKind:       blockcfg.UserVolumeConfigKind,
+				MetaAPIVersion: "v1alpha1",
+				MetaName:       "scratch",
+				VolumeType:     new(block.VolumeTypeTmpfs),
+				ProvisioningSpec: blockcfg.ProvisioningSpec{
+					ProvisioningMaxSize: blockcfg.MustSize("64MiB"),
+				},
+			}},
+			checkFunc: func(t *testing.T, resources []volumeconfig.VolumeResource, err error) {
+				require.NoError(t, err)
+				require.Len(t, resources, 1)
+
+				assert.Equal(t, constants.UserVolumePrefix+"scratch", resources[0].VolumeID)
+				assert.Equal(t, block.UserVolumeLabel, resources[0].Label)
+
+				testTransformFunc(t, resources[0].TransformFunc, func(t *testing.T, vc *block.VolumeConfig, err error) {
+					require.NoError(t, err)
+
+					assert.Equal(t, block.VolumeTypeTmpfs, vc.TypedSpec().Type)
+
+					require.Empty(t, vc.TypedSpec().Provisioning)
+
+					assert.Equal(t, "scratch", vc.TypedSpec().Mount.TargetPath)
+					assert.Equal(t, constants.UserVolumeMountPoint, vc.TypedSpec().Mount.ParentID)
+					assert.Nil(t, vc.TypedSpec().Mount.BindTarget)
+					assert.Equal(t, fs.FileMode(0o755), vc.TypedSpec().Mount.FileMode)
+					assert.Equal(t, constants.EphemeralSelinuxLabel, vc.TypedSpec().Mount.SelinuxLabel)
+					assert.Equal(t,
+						[]block.ParameterSpec{block.NewStringParameter(block.TmpfsSizeParameter, "67108864")},
+						vc.TypedSpec().Mount.Parameters,
+					)
+					require.NoError(t, block.ValidateTmpfsParameters(vc.TypedSpec().Mount.Parameters))
+				})
+
+				testMountTransformFunc(t, resources[0].MountTransformFunc, func(t *testing.T, m *block.VolumeMountRequest, err error) {
+					require.NoError(t, err)
+					assert.True(t, m.TypedSpec().Secure)
+					assert.True(t, m.TypedSpec().NoExec)
+				})
+			},
+		},
+		{
+			name: "tmpfs volume with a relative size",
+			cfg: []*blockcfg.UserVolumeConfigV1Alpha1{{
+				MetaKind:       blockcfg.UserVolumeConfigKind,
+				MetaAPIVersion: "v1alpha1",
+				MetaName:       "scratch",
+				VolumeType:     new(block.VolumeTypeTmpfs),
+				ProvisioningSpec: blockcfg.ProvisioningSpec{
+					ProvisioningMaxSize: blockcfg.MustSize("5%"),
+				},
+			}},
+			checkFunc: func(t *testing.T, resources []volumeconfig.VolumeResource, err error) {
+				require.NoError(t, err)
+				require.Len(t, resources, 1)
+
+				testTransformFunc(t, resources[0].TransformFunc, func(t *testing.T, vc *block.VolumeConfig, err error) {
+					require.NoError(t, err)
+
+					assert.Equal(t,
+						[]block.ParameterSpec{block.NewStringParameter(block.TmpfsSizeParameter, "5%")},
+						vc.TypedSpec().Mount.Parameters,
+					)
+					require.NoError(t, block.ValidateTmpfsParameters(vc.TypedSpec().Mount.Parameters))
+				})
+			},
+		},
+		{
+			name: "tmpfs volume without a size",
+			cfg: []*blockcfg.UserVolumeConfigV1Alpha1{{
+				MetaKind:       blockcfg.UserVolumeConfigKind,
+				MetaAPIVersion: "v1alpha1",
+				MetaName:       "scratch",
+				VolumeType:     new(block.VolumeTypeTmpfs),
+			}},
+			checkFunc: func(t *testing.T, resources []volumeconfig.VolumeResource, err error) {
+				require.NoError(t, err)
+				require.Len(t, resources, 1)
+
+				// config validation rejects it; if it got through, the volume manager must fail it rather than mount an unbounded tmpfs
+				testTransformFunc(t, resources[0].TransformFunc, func(t *testing.T, vc *block.VolumeConfig, err error) {
+					require.NoError(t, err)
+					require.Error(t, block.ValidateTmpfsParameters(vc.TypedSpec().Mount.Parameters))
+				})
+			},
+		},
+		{
 			name: "unsupported volume type",
 			cfg: []*blockcfg.UserVolumeConfigV1Alpha1{{
 				MetaKind:       blockcfg.UserVolumeConfigKind,
 				MetaAPIVersion: "v1alpha1",
-				VolumeType:     new(block.VolumeTypeTmpfs),
+				VolumeType:     new(block.VolumeTypeOverlay),
 			}},
 			checkFunc: func(t *testing.T, resources []volumeconfig.VolumeResource, err error) {
 				require.Error(t, err)
-				assert.Equal(t, "unsupported volume type \"tmpfs\"", err.Error())
+				assert.Equal(t, "unsupported volume type \"overlay\"", err.Error())
 
 				require.Empty(t, resources)
 			},

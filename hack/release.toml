@@ -27,6 +27,15 @@ The `.cluster.etcd` section is deprecated, but still supported, and it can't be 
 The new documents are used in the machine configuration generated for Talos 1.15+.
 """
 
+    [notes.tmpfs_user_volumes]
+        title = "tmpfs User Volumes"
+        description = """\
+`UserVolumeConfig` supports a new volume type `tmpfs`: a memory-backed volume mounted under `/var/mnt/<name>`.
+The size of the volume is set with `provisioning.maxSize`, either in bytes (e.g. `64MiB`) or in percents of the memory (e.g. `10%`), and it is required.
+A size above 50% of the memory is reported as a warning, as tmpfs memory is not freed by the OOM killer and can only be swapped out.
+The content of a `tmpfs` volume is lost when the volume is unmounted (e.g. on reboot, or when the volume is removed from the configuration).
+"""
+
     [notes.kubeprism_readiness_check]
         title = "KubePrism Readiness Check"
         description = """\

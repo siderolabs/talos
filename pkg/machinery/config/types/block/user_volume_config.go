@@ -49,6 +49,11 @@ var (
 
 const maxUserVolumeNameLength = constants.PartitionLabelLength - len(constants.UserVolumePrefix)
 
+// tmpfsWarnPercent is the size of a tmpfs volume, in percents of the memory, above which a warning is reported.
+//
+// It matches the size of a tmpfs mounted without a size.
+const tmpfsWarnPercent = 50
+
 // VolumeType is an alias for block.VolumeType.
 type VolumeType = block.VolumeType
 
@@ -59,10 +64,13 @@ type VolumeType = block.VolumeType
 //	  and mounted under `/var/mnt/<name>`.
 //	  The partition label is automatically generated as `u-<name>`.
 //	  The name must not be taken by an existing or external volume.
+//	  A `tmpfs` user volume is backed by memory, its size is set with `provisioning.maxSize`
+//	  (in bytes, or in percents of the memory), and its content is lost on unmount.
 //	examples:
 //	  - value: exampleUserVolumeConfigV1Alpha1Directory()
 //	  - value: exampleUserVolumeConfigV1Alpha1Disk()
 //	  - value: exampleUserVolumeConfigV1Alpha1Partition()
+//	  - value: exampleUserVolumeConfigV1Alpha1Tmpfs()
 //	alias: UserVolumeConfig
 //	schemaRoot: true
 //	schemaMeta: v1alpha1/UserVolumeConfig
@@ -81,6 +89,7 @@ type UserVolumeConfigV1Alpha1 struct {
 	//     - directory
 	//     - disk
 	//     - partition
+	//     - tmpfs
 	VolumeType *VolumeType `yaml:"volumeType,omitempty"`
 	//   description: |
 	//     The provisioning describes how the volume is provisioned.
@@ -162,6 +171,17 @@ func exampleUserVolumeConfigV1Alpha1Directory() *UserVolumeConfigV1Alpha1 {
 	cfg := NewUserVolumeConfigV1Alpha1()
 	cfg.MetaName = userVolumeName
 	cfg.VolumeType = new(block.VolumeTypeDirectory)
+
+	return cfg
+}
+
+func exampleUserVolumeConfigV1Alpha1Tmpfs() *UserVolumeConfigV1Alpha1 {
+	cfg := NewUserVolumeConfigV1Alpha1()
+	cfg.MetaName = userVolumeName
+	cfg.VolumeType = new(block.VolumeTypeTmpfs)
+	cfg.ProvisioningSpec = ProvisioningSpec{
+		ProvisioningMaxSize: MustSize("64MiB"),
+	}
 
 	return cfg
 }
@@ -302,7 +322,13 @@ func (s *UserVolumeConfigV1Alpha1) Validate(validation.RuntimeMode, ...validatio
 		warnings = append(warnings, extraWarnings...)
 		validationErrors = errors.Join(validationErrors, extraErrors)
 
-	case block.VolumeTypeTmpfs, block.VolumeTypeSymlink, block.VolumeTypeOverlay, block.VolumeTypeExternal:
+	case block.VolumeTypeTmpfs:
+		extraWarnings, extraErrors := s.validateTmpfs()
+
+		warnings = append(warnings, extraWarnings...)
+		validationErrors = errors.Join(validationErrors, extraErrors)
+
+	case block.VolumeTypeSymlink, block.VolumeTypeOverlay, block.VolumeTypeExternal:
 		fallthrough
 
 	default:
@@ -318,6 +344,59 @@ func (s *UserVolumeConfigV1Alpha1) Validate(validation.RuntimeMode, ...validatio
 	}
 
 	return warnings, validationErrors
+}
+
+// validateTmpfs validates a tmpfs user volume.
+//
+// A tmpfs is backed by memory: the only provisioning setting is the size (provisioning.maxSize), which is required,
+// as an unbounded tmpfs may take up to half of the memory.
+//
+// The kernel doesn't cap the size against the memory, and tmpfs memory is only reclaimed by swapping it out
+// (the OOM killer can't free it, as the files outlive the processes),
+// so a percentage above tmpfsWarnPercent (the kernel default size) is reported as a warning.
+// A size in bytes can't be checked, as the size of the memory is unknown here.
+func (s *UserVolumeConfigV1Alpha1) validateTmpfs() ([]string, error) {
+	warnings, validationErrors := s.validateTmpfsSize()
+
+	for _, invalid := range []struct {
+		isSet bool
+		name  string
+	}{
+		{!s.ProvisioningSpec.ProvisioningMinSize.IsZero(), "provisioning.minSize"},
+		{s.ProvisioningSpec.ProvisioningGrow != nil, "provisioning.grow"},
+		{!s.ProvisioningSpec.DiskSelectorSpec.Match.IsZero(), "provisioning.diskSelector"},
+		{!s.EncryptionSpec.IsZero(), "encryption spec"},
+		{!s.FilesystemSpec.IsZero(), "filesystem spec"},
+		{s.TrimSpec != nil, "trim spec"},
+		{s.ScrubSpec != nil, "scrub spec"},
+	} {
+		if invalid.isSet {
+			validationErrors = errors.Join(validationErrors, fmt.Errorf("%s is invalid for volumeType tmpfs", invalid.name))
+		}
+	}
+
+	return warnings, validationErrors
+}
+
+// validateTmpfsSize validates provisioning.maxSize of a tmpfs user volume.
+func (s *UserVolumeConfigV1Alpha1) validateTmpfsSize() ([]string, error) {
+	maxSize := s.ProvisioningSpec.ProvisioningMaxSize
+
+	switch {
+	case maxSize.IsZero():
+		return nil, errors.New("provisioning.maxSize is required for volumeType tmpfs")
+	case maxSize.IsNegative():
+		return nil, errors.New("provisioning.maxSize cannot be negative for volumeType tmpfs")
+	}
+
+	if percent, ok := maxSize.RelativeValue(); ok && percent > tmpfsWarnPercent {
+		return []string{fmt.Sprintf(
+			"provisioning.maxSize %d%% for volumeType tmpfs is above %d%% of the memory: tmpfs memory is not freed by the OOM killer and can only be swapped out, so it might exhaust the memory",
+			percent, tmpfsWarnPercent,
+		)}, nil
+	}
+
+	return nil, nil
 }
 
 // UserVolumeConfigSignal is a signal for user volume config.

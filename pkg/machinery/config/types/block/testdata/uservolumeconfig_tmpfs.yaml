@@ -1,0 +1,6 @@
+apiVersion: v1alpha1
+kind: UserVolumeConfig
+name: scratch
+volumeType: tmpfs
+provisioning:
+    maxSize: 64MiB

@@ -8,6 +8,7 @@ import (
 	"cmp"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/siderolabs/gen/xerrors"
 
@@ -133,7 +134,23 @@ func UserVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) {
 				WithConvertEncryptionConfiguration(userVolumeConfig.Encryption()).
 				WriterFunc()
 
-		case block.VolumeTypeTmpfs, block.VolumeTypeSymlink, block.VolumeTypeOverlay, block.VolumeTypeExternal:
+		case block.VolumeTypeTmpfs:
+			userVolumeResource.TransformFunc = NewBuilder().
+				WithType(block.VolumeTypeTmpfs).
+				WithMount(block.MountSpec{
+					TargetPath:   userVolumeConfig.Name(),
+					ParentID:     constants.UserVolumeMountPoint,
+					SelinuxLabel: constants.EphemeralSelinuxLabel,
+					FileMode:     0o755,
+					UID:          0,
+					GID:          0,
+					Parameters: []block.ParameterSpec{
+						block.NewStringParameter(block.TmpfsSizeParameter, tmpfsSize(userVolumeConfig.Provisioning())),
+					},
+				}).
+				WriterFunc()
+
+		case block.VolumeTypeSymlink, block.VolumeTypeOverlay, block.VolumeTypeExternal:
 			fallthrough
 
 		default:
@@ -144,6 +161,22 @@ func UserVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) {
 	}
 
 	return resources, nil
+}
+
+// tmpfsSize returns the tmpfs size parameter for the provisioning max size: a percentage of the memory,
+// or a size in bytes.
+//
+// A missing size yields an empty value, which the volume manager rejects, so an unbounded tmpfs is never mounted.
+func tmpfsSize(provisioning configconfig.VolumeProvisioningConfig) string {
+	if percent, ok := provisioning.RelativeMaxSize().Get(); ok {
+		return strconv.FormatUint(percent, 10) + "%"
+	}
+
+	if size, ok := provisioning.MaxSize().Get(); ok && size > 0 {
+		return strconv.FormatUint(size, 10)
+	}
+
+	return ""
 }
 
 // RawVolumeTransformer is the transformer for raw volume configs.

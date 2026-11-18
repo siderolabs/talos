@@ -64,6 +64,7 @@ type mountInfo struct {
 	fsType     string
 	source     string
 	options    map[string]struct{} // per-mount options (field 6)
+	superOpts  map[string]string   // super-block options, after the source (e.g. size=65536k)
 }
 
 func (m mountInfo) has(opt string) bool {
@@ -101,11 +102,21 @@ func parseMountInfo(r io.Reader) ([]mountInfo, error) {
 			opts[o] = struct{}{}
 		}
 
+		superOpts := make(map[string]string)
+
+		if len(postFields) > 2 {
+			for o := range strings.SplitSeq(postFields[2], ",") {
+				name, value, _ := strings.Cut(o, "=")
+				superOpts[name] = value
+			}
+		}
+
 		out = append(out, mountInfo{
 			mountPoint: preFields[4],
 			options:    opts,
 			fsType:     postFields[0],
 			source:     postFields[1],
+			superOpts:  superOpts,
 		})
 	}
 

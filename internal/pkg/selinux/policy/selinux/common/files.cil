@@ -33,6 +33,8 @@
 
 (type ephemeral_t)
 (call filesystem_f (ephemeral_t))
+; tmpfs user volumes are labeled ephemeral_t on a tmpfs_t superblock
+(allow ephemeral_t tmpfs_t (filesystem (associate)))
 (type system_state_t)
 (call filesystem_f (system_state_t))
 (call protected_f (system_state_t))

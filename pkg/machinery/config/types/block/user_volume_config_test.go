@@ -103,6 +103,18 @@ func TestUserVolumeConfigMarshalUnmarshal(t *testing.T) {
 				return c
 			},
 		},
+		{
+			name:     "tmpfs",
+			filename: "uservolumeconfig_tmpfs.yaml",
+			cfg: func(*testing.T) *block.UserVolumeConfigV1Alpha1 {
+				c := block.NewUserVolumeConfigV1Alpha1()
+				c.MetaName = "scratch"
+				c.VolumeType = new(blockres.VolumeTypeTmpfs)
+				c.ProvisioningSpec.ProvisioningMaxSize = block.MustSize("64MiB")
+
+				return c
+			},
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
@@ -142,7 +154,8 @@ func TestUserVolumeConfigValidate(t *testing.T) {
 
 		cfg func(t *testing.T) *block.UserVolumeConfigV1Alpha1
 
-		expectedErrors string
+		expectedErrors   string
+		expectedWarnings []string
 	}{
 		{
 			name: "no name",
@@ -439,23 +452,141 @@ func TestUserVolumeConfigValidate(t *testing.T) {
 			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
 				c := block.NewUserVolumeConfigV1Alpha1()
 				c.MetaName = constants.EphemeralPartitionLabel
+				c.VolumeType = new(blockres.VolumeTypeOverlay)
+
+				return c
+			},
+
+			expectedErrors: "unsupported volume type \"overlay\"",
+		},
+		{
+			name: "tmpfs without size",
+
+			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
+				c := block.NewUserVolumeConfigV1Alpha1()
+				c.MetaName = "scratch"
+				c.VolumeType = new(blockres.VolumeTypeTmpfs)
+
+				return c
+			},
+
+			expectedErrors: "provisioning.maxSize is required for volumeType tmpfs",
+		},
+		{
+			name: "tmpfs with negative size",
+
+			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
+				c := block.NewUserVolumeConfigV1Alpha1()
+				c.MetaName = "scratch"
+				c.VolumeType = new(blockres.VolumeTypeTmpfs)
+				c.ProvisioningSpec.ProvisioningMaxSize = block.MustSize("-64MiB")
+
+				return c
+			},
+
+			expectedErrors: "provisioning.maxSize cannot be negative for volumeType tmpfs",
+		},
+		{
+			name: "tmpfs with disk provisioning",
+
+			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
+				c := block.NewUserVolumeConfigV1Alpha1()
+				c.MetaName = "scratch"
 				c.VolumeType = new(blockres.VolumeTypeTmpfs)
 
 				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`system_disk`)))
-				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
+				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10MiB")
+				c.ProvisioningSpec.ProvisioningMaxSize = block.MustSize("64MiB")
+				c.ProvisioningSpec.ProvisioningGrow = new(true)
+
+				return c
+			},
+
+			expectedErrors: "provisioning.minSize is invalid for volumeType tmpfs\n" +
+				"provisioning.grow is invalid for volumeType tmpfs\n" +
+				"provisioning.diskSelector is invalid for volumeType tmpfs",
+		},
+		{
+			name: "tmpfs with filesystem, encryption, trim and scrub",
+
+			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
+				c := block.NewUserVolumeConfigV1Alpha1()
+				c.MetaName = "scratch"
+				c.VolumeType = new(blockres.VolumeTypeTmpfs)
+				c.ProvisioningSpec.ProvisioningMaxSize = block.MustSize("64MiB")
+
+				c.FilesystemSpec.FilesystemType = blockres.FilesystemTypeXFS
 				c.EncryptionSpec.EncryptionProvider = blockres.EncryptionProviderLUKS2
-				c.EncryptionSpec.EncryptionCipher = "aes-xts-plain64"
 				c.EncryptionSpec.EncryptionKeys = []block.EncryptionKey{
 					{
 						KeySlot: 0,
 						KeyTPM:  &block.EncryptionKeyTPM{},
 					},
 				}
+				c.TrimSpec = &block.TrimConfig{TrimEnabled: new(true)}
+				c.ScrubSpec = &block.ScrubConfig{ScrubEnabled: new(true)}
 
 				return c
 			},
 
-			expectedErrors: "unsupported volume type \"tmpfs\"",
+			expectedErrors: "encryption spec is invalid for volumeType tmpfs\n" +
+				"filesystem spec is invalid for volumeType tmpfs\n" +
+				"trim spec is invalid for volumeType tmpfs\n" +
+				"scrub spec is invalid for volumeType tmpfs",
+		},
+		{
+			name: "valid tmpfs",
+
+			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
+				c := block.NewUserVolumeConfigV1Alpha1()
+				c.MetaName = "scratch"
+				c.VolumeType = new(blockres.VolumeTypeTmpfs)
+				c.ProvisioningSpec.ProvisioningMaxSize = block.MustSize("64MiB")
+				c.MountSpec.MountSecure = new(false)
+				c.MountSpec.MountDisableAccessTime = new(true)
+
+				return c
+			},
+		},
+		{
+			name: "valid tmpfs with a relative size",
+
+			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
+				c := block.NewUserVolumeConfigV1Alpha1()
+				c.MetaName = "scratch"
+				c.VolumeType = new(blockres.VolumeTypeTmpfs)
+				c.ProvisioningSpec.ProvisioningMaxSize = block.MustSize("10%")
+
+				return c
+			},
+		},
+		{
+			name: "tmpfs at the kernel default size",
+
+			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
+				c := block.NewUserVolumeConfigV1Alpha1()
+				c.MetaName = "scratch"
+				c.VolumeType = new(blockres.VolumeTypeTmpfs)
+				c.ProvisioningSpec.ProvisioningMaxSize = block.MustSize("50%")
+
+				return c
+			},
+		},
+		{
+			name: "tmpfs above the kernel default size",
+
+			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
+				c := block.NewUserVolumeConfigV1Alpha1()
+				c.MetaName = "scratch"
+				c.VolumeType = new(blockres.VolumeTypeTmpfs)
+				c.ProvisioningSpec.ProvisioningMaxSize = block.MustSize("100%")
+
+				return c
+			},
+
+			expectedWarnings: []string{
+				"provisioning.maxSize 100% for volumeType tmpfs is above 50% of the memory: tmpfs memory is not freed by the OOM killer and can only be swapped out, so it might exhaust the memory",
+			},
 		},
 		{
 			name: "valid",
@@ -540,7 +671,9 @@ func TestUserVolumeConfigValidate(t *testing.T) {
 
 			cfg := test.cfg(t)
 
-			_, err := cfg.Validate(validationMode{})
+			warnings, err := cfg.Validate(validationMode{})
+
+			assert.Equal(t, test.expectedWarnings, warnings)
 
 			if test.expectedErrors == "" {
 				require.NoError(t, err)

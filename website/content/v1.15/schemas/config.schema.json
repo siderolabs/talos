@@ -989,7 +989,8 @@
           "enum": [
             "directory",
             "disk",
-            "partition"
+            "partition",
+            "tmpfs"
           ],
           "title": "volumeType",
           "description": "Volume type.\n",
@@ -1045,7 +1046,7 @@
         "apiVersion",
         "kind"
       ],
-      "description": "UserVolumeConfig is a user volume configuration document.\\nUser volume is automatically allocated as a partition on the specified disk\\nand mounted under `/var/mnt/\u003cname\u003e`.\\nThe partition label is automatically generated as `u-\u003cname\u003e`.\\nThe name must not be taken by an existing or external volume.\\n"
+      "description": "UserVolumeConfig is a user volume configuration document.\\nUser volume is automatically allocated as a partition on the specified disk\\nand mounted under `/var/mnt/\u003cname\u003e`.\\nThe partition label is automatically generated as `u-\u003cname\u003e`.\\nThe name must not be taken by an existing or external volume.\\nA `tmpfs` user volume is backed by memory, its size is set with `provisioning.maxSize`\\n(in bytes, or in percents of the memory), and its content is lost on unmount.\\n"
     },
     "block.VirtiofsMountSpec": {
       "properties": {

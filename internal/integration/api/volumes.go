@@ -9,6 +9,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"math/rand"
 	"path/filepath"
 	"slices"
@@ -1295,6 +1296,185 @@ func (suite *VolumesSuite) TestUserVolumesDirectory() {
 	for _, userVolumeID := range userVolumeIDs {
 		rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.State(), userVolumeID)
 	}
+}
+
+// TestUserVolumesTmpfs verifies memory-backed user volumes: from the config document through the volume manager
+// and the mount controller to a tmpfs mounted on the node, usable from a pod, and unmounted on removal.
+func (suite *VolumesSuite) TestUserVolumesTmpfs() {
+	if testing.Short() {
+		suite.T().Skip("skipping test in short mode.")
+	}
+
+	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
+		suite.T().Skip("skipping test for non-qemu provisioner")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+
+	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
+	suite.Require().NoError(err)
+
+	nodeName := k8sNode.Name
+
+	ctx := client.WithNode(suite.ctx, node)
+
+	prefix := fmt.Sprintf("%04x", rand.Int31())
+
+	// an absolute size, which is reported in the volume status, and a percentage of the memory, which is not
+	absVolumeID, pctVolumeID := prefix+"-abs", prefix+"-pct"
+	absUserVolumeID, pctUserVolumeID := constants.UserVolumePrefix+absVolumeID, constants.UserVolumePrefix+pctVolumeID
+
+	const absSize = 64 * 1024 * 1024
+
+	newTmpfsDoc := func(name, size string) *blockcfg.UserVolumeConfigV1Alpha1 {
+		doc := blockcfg.NewUserVolumeConfigV1Alpha1()
+		doc.MetaName = name
+		doc.VolumeType = new(block.VolumeTypeTmpfs)
+		doc.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustSize(size)
+
+		return doc
+	}
+
+	absDoc, pctDoc := newTmpfsDoc(absVolumeID, "64MiB"), newTmpfsDoc(pctVolumeID, "5%")
+
+	suite.T().Logf("creating tmpfs user volumes %s and %s on node %s/%s", absUserVolumeID, pctUserVolumeID, node, nodeName)
+
+	suite.PatchMachineConfig(ctx, absDoc, pctDoc)
+
+	rtestutils.AssertResources(
+		ctx, suite.T(), suite.Client.State(), []string{absUserVolumeID, pctUserVolumeID},
+		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
+			asrt.Equalf(block.VolumePhaseReady, vs.TypedSpec().Phase, "Expected %q, but got %q (%s): %s",
+				block.VolumePhaseReady, vs.TypedSpec().Phase, vs.Metadata().ID(), vs.TypedSpec().ErrorMessage)
+			asrt.Equal(block.VolumeTypeTmpfs, vs.TypedSpec().Type)
+
+			if vs.Metadata().ID() == absUserVolumeID {
+				asrt.EqualValues(absSize, vs.TypedSpec().Size)
+			} else {
+				asrt.Zero(vs.TypedSpec().Size, "a percentage of the memory is not resolved")
+			}
+		},
+	)
+
+	absTarget := filepath.Join(constants.UserVolumeMountPoint, absVolumeID)
+	pctTarget := filepath.Join(constants.UserVolumeMountPoint, pctVolumeID)
+
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.State(), []string{absUserVolumeID, pctUserVolumeID},
+		func(ms *block.MountStatus, asrt *assert.Assertions) {
+			if ms.Metadata().ID() == absUserVolumeID {
+				asrt.Equal(absTarget, ms.TypedSpec().Target)
+			} else {
+				asrt.Equal(pctTarget, ms.TypedSpec().Target)
+			}
+
+			asrt.False(ms.TypedSpec().Detached)
+		})
+
+	// the mounts on the node are tmpfs with the requested size
+	mounts := suite.readNodeMountInfo(ctx)
+
+	absMount, ok := findMount(mounts, absTarget)
+	suite.Require().Truef(ok, "expected a mount at %s", absTarget)
+	suite.Assert().Equal("tmpfs", absMount.fsType)
+	suite.Assert().Equal(strconv.Itoa(absSize/1024)+"k", absMount.superOpts["size"])
+	suite.Assert().True(absMount.has("nosuid") && absMount.has("nodev") && absMount.has("noexec"),
+		"expected a secure mount, got %v", absMount.options)
+
+	pctMount, ok := findMount(mounts, pctTarget)
+	suite.Require().Truef(ok, "expected a mount at %s", pctTarget)
+	suite.Assert().Equal("tmpfs", pctMount.fsType)
+	suite.Assert().NotEmpty(pctMount.superOpts["size"], "expected a bounded tmpfs")
+
+	// the root of the tmpfs gets the mode of the volume (applied after mounting, so it's not in the mount options)
+	rootStream, err := suite.Client.LS(ctx, &machineapi.ListRequest{
+		Root:  absTarget,
+		Types: []machineapi.ListRequest_Type{machineapi.ListRequest_DIRECTORY},
+	})
+	suite.Require().NoError(err)
+
+	var rootMode fs.FileMode
+
+	suite.Require().NoError(helpers.ReadGRPCStream(rootStream, func(info *machineapi.FileInfo, _ string, _ bool) error {
+		if info.Name == absTarget {
+			rootMode = fs.FileMode(info.Mode)
+		}
+
+		return nil
+	}))
+	suite.Assert().Equal(fs.FileMode(0o755), rootMode.Perm())
+
+	// a pod writes to the volume through a hostPath mount
+	podDef, err := suite.NewPod("tmpfs-user-volume-test")
+	suite.Require().NoError(err)
+
+	podDef = podDef.WithNodeName(nodeName).
+		WithNamespace("kube-system").
+		WithHostVolumeMount(absTarget, "/mnt/data")
+
+	suite.Require().NoError(podDef.Create(suite.ctx, 1*time.Minute))
+
+	_, _, err = podDef.Exec(suite.ctx, "mkdir -p /mnt/data/test")
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(podDef.Delete(suite.ctx))
+
+	expectedPath := filepath.Join(absTarget, "test")
+
+	stream, err := suite.Client.LS(ctx, &machineapi.ListRequest{
+		Root:  expectedPath,
+		Types: []machineapi.ListRequest_Type{machineapi.ListRequest_DIRECTORY},
+	})
+	suite.Require().NoError(err)
+
+	var found bool
+
+	suite.Require().NoError(helpers.ReadGRPCStream(stream, func(info *machineapi.FileInfo, _ string, _ bool) error {
+		found = found || info.Name == expectedPath
+
+		return nil
+	}))
+	suite.Require().Truef(found, "expected %s to exist", expectedPath)
+
+	// removing the volume unmounts the tmpfs
+	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.UserVolumeConfigKind, absVolumeID)
+
+	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.State(), absUserVolumeID)
+	rtestutils.AssertNoResource[*block.MountStatus](ctx, suite.T(), suite.Client.State(), absUserVolumeID)
+
+	suite.Eventually(func() bool {
+		_, mounted := findMount(suite.readNodeMountInfo(ctx), absTarget)
+
+		return !mounted
+	}, time.Minute, time.Second, "expected %s to be unmounted", absTarget)
+
+	// clean up
+	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.UserVolumeConfigKind, pctVolumeID)
+
+	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.State(), pctUserVolumeID)
+}
+
+// readNodeMountInfo fetches and parses /proc/self/mountinfo from the node in ctx.
+func (suite *VolumesSuite) readNodeMountInfo(ctx context.Context) []mountInfo {
+	r, err := suite.Client.Read(ctx, "/proc/self/mountinfo")
+	suite.Require().NoError(err)
+
+	defer r.Close() //nolint:errcheck
+
+	mounts, err := parseMountInfo(r)
+	suite.Require().NoError(err)
+
+	return mounts
+}
+
+// findMount returns the last (topmost) mount at mountPoint.
+func findMount(mounts []mountInfo, mountPoint string) (mountInfo, bool) {
+	for _, m := range slices.Backward(mounts) {
+		if m.mountPoint == mountPoint {
+			return m, true
+		}
+	}
+
+	return mountInfo{}, false
 }
 
 // TestRawVolumes performs a series of operations on raw volumes: creating, destroying, etc.
