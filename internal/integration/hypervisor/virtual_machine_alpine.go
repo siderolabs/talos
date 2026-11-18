@@ -53,12 +53,11 @@ func (suite *LibvirtSuite) prepareAlpineGuest() (string, *hypervisorcfg.VirtualM
 
 	node, nodeCtx := suite.requireAlpineGuestNode()
 
-	extraDHCPRecords := suite.Cluster.Info().Network.ExtraDHCPRecords
-	if len(extraDHCPRecords) == 0 {
-		suite.T().Skip("skipping as the cluster has no spare DHCP reservations")
+	ourRecord, ok := suite.LeaseDHCPRecord(suite.T())
+	if !ok {
+		suite.T().Skip("skipping as the cluster has no free DHCP reservations")
 	}
 
-	ourRecord := extraDHCPRecords[len(extraDHCPRecords)-1]
 	doc := suite.prepareAlpineGuestOnNode(node, nodeCtx, &ourRecord, 512<<20, "")
 
 	return node, doc, ourRecord.Gateway.String(), ourRecord.IP.Addr().String()

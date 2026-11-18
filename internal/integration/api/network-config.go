@@ -578,17 +578,16 @@ func (suite *NetworkConfigSuite) TestMacVLANWithDHCP() {
 		suite.T().Skip("skipping if cluster is not qemu")
 	}
 
-	if len(suite.Cluster.Info().Network.ExtraDHCPRecords) == 0 {
-		suite.T().Skip("skipping if no extra DHCP records are configured")
-	}
-
 	if suite.BGPCLOSEnabled {
 		// A full-CLOS node has no net0 to parent the macvlan on: it reaches the cluster over its
 		// fabric uplinks and a BGP-advertised loopback, and the DHCP server is not on that path.
 		suite.T().Skip("skipping macvlan DHCP test on a full-CLOS cluster")
 	}
 
-	dhcpRecord := suite.Cluster.Info().Network.ExtraDHCPRecords[0]
+	dhcpRecord, ok := suite.LeaseDHCPRecord(suite.T())
+	if !ok {
+		suite.T().Skip("skipping as the cluster has no free DHCP reservations")
+	}
 
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 	nodeCtx := client.WithNode(suite.ctx, node)
@@ -614,6 +613,21 @@ func (suite *NetworkConfigSuite) TestMacVLANWithDHCP() {
 
 	addressID := macvlanName + "/" + dhcpRecord.IP.String()
 
+	// Registered before anything is applied, and after the lease: the link must be gone before
+	// its MAC goes back to the pool, even when the test fails part way.
+	suite.T().Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer cancel()
+
+		cleanupCtx := client.WithNode(ctx, node)
+
+		suite.RemoveMachineConfigDocumentsByName(cleanupCtx, network.MacVLANKind, macvlanName)
+		suite.RemoveMachineConfigDocumentsByName(cleanupCtx, network.DHCPv4Kind, macvlanName)
+
+		rtestutils.AssertNoResource[*networkres.AddressStatus](cleanupCtx, suite.T(), suite.Client.State(), addressID)
+		rtestutils.AssertNoResource[*networkres.LinkStatus](cleanupCtx, suite.T(), suite.Client.State(), macvlanName)
+	})
+
 	suite.PatchMachineConfig(nodeCtx, macvlan, dhcp4)
 
 	// DHCP runs, assigning the expected IP address to the macvlan interface
@@ -623,12 +637,6 @@ func (suite *NetworkConfigSuite) TestMacVLANWithDHCP() {
 			asrt.Equal(macvlanName, address.TypedSpec().LinkName)
 		},
 	)
-
-	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.MacVLANKind, macvlanName)
-	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.DHCPv4Kind, macvlanName)
-
-	rtestutils.AssertNoResource[*networkres.AddressStatus](nodeCtx, suite.T(), suite.Client.State(), addressID)
-	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.State(), macvlanName)
 }
 
 // TestVXLANConfig tests creation of vxlan interfaces.

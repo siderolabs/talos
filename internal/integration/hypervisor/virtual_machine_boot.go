@@ -57,12 +57,11 @@ func (suite *LibvirtSuite) TestBootsAndServesItsAPI() {
 		suite.T().Skip("skipping as the cluster is not provisioned by qemu")
 	}
 
-	extraDHCPRecords := suite.Cluster.Info().Network.ExtraDHCPRecords
-	if len(extraDHCPRecords) == 0 {
-		suite.T().Skip("skipping as the cluster has no spare DHCP reservations")
+	ourRecord, ok := suite.LeaseDHCPRecord(suite.T())
+	if !ok {
+		suite.T().Skip("skipping as the cluster has no free DHCP reservations")
 	}
 
-	ourRecord := extraDHCPRecords[len(extraDHCPRecords)-1]
 	hardwareAddr, err := net.ParseMAC(ourRecord.MAC)
 	suite.T().Logf("retrieved DHCP record %s", hardwareAddr)
 
@@ -125,6 +124,8 @@ func (suite *LibvirtSuite) TestBootsAndServesItsAPI() {
 		defer cancel()
 
 		suite.RemoveMachineConfigDocumentsByName(client.WithNode(ctx, node), hypervisorcfg.VirtualMachineConfigKind, name)
+		// The DHCP lease is released after this; the guest must not still hold the address.
+		suite.assertNoDomainWithContext(ctx, node, name)
 	})
 
 	suite.PatchMachineConfig(nodeCtx, doc)
