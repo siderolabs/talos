@@ -97,21 +97,28 @@ func (suite *WalkerSuite) TestIterationMaxRecurseDepth() {
 			result:   []string{".", "dev", "dev/random", "etc", "etc/certs", "etc/certs/ca.crt", "etc/hostname", "lib", "lib/dynalib.so", "usr", "usr/bin", "usr/bin/cp", "usr/bin/mv"},
 		},
 	} {
-		suite.Run(strconv.Itoa(test.maxDepth), func() {
-			suite.T().Parallel()
+		for _, root := range []struct {
+			name string
+			path string
+		}{
+			{name: "clean", path: suite.tmpDir},
+			// the depth should not depend on the way root path is spelled (e.g. "/" contains a separator)
+			{name: "trailing-separator", path: suite.tmpDir + archiver.OSPathSeparator},
+		} {
+			suite.Run(strconv.Itoa(test.maxDepth)+"/"+root.name, func() {
+				ch, err := archiver.Walker(context.Background(), root.path, archiver.WithMaxRecurseDepth(test.maxDepth))
+				suite.Require().NoError(err)
 
-			ch, err := archiver.Walker(context.Background(), suite.tmpDir, archiver.WithMaxRecurseDepth(test.maxDepth))
-			suite.Require().NoError(err)
+				var result []string //nolint:prealloc // this is a test
 
-			var result []string //nolint:prealloc // this is a test
+				for fi := range ch {
+					suite.Require().NoError(fi.Error)
+					result = append(result, fi.RelPath)
+				}
 
-			for fi := range ch {
-				suite.Require().NoError(fi.Error)
-				result = append(result, fi.RelPath)
-			}
-
-			suite.Equal(test.result, result)
-		})
+				suite.Equal(test.result, result)
+			})
+		}
 	}
 }
 
@@ -186,6 +193,75 @@ func (suite *WalkerSuite) TestIterationTypes() {
 		".", "dev", "etc", "etc/certs", "lib", "usr", "usr/bin",
 	},
 		relPaths)
+}
+
+func (suite *WalkerSuite) TestIterationTypesMaxRecurseDepth() {
+	// add a regular file at the top level, so that shallow depths have something to return
+	topFile := filepath.Join(suite.tmpDir, "top.txt")
+	suite.Require().NoError(os.WriteFile(topFile, nil, 0o644))
+
+	defer func() {
+		suite.Require().NoError(os.Remove(topFile))
+	}()
+
+	for _, test := range []struct {
+		maxDepth int
+		result   []string
+	}{
+		{
+			maxDepth: 0,
+			result:   []string{"top.txt"},
+		},
+		{
+			maxDepth: 1,
+			result:   []string{"top.txt"},
+		},
+		{
+			maxDepth: 2,
+			result:   []string{"dev/random", "etc/hostname", "lib/dynalib.so", "top.txt"},
+		},
+		{
+			maxDepth: -1,
+			result:   []string{"dev/random", "etc/certs/ca.crt", "etc/hostname", "lib/dynalib.so", "top.txt", "usr/bin/cp"},
+		},
+	} {
+		suite.Run(strconv.Itoa(test.maxDepth), func() {
+			ch, err := archiver.Walker(context.Background(), suite.tmpDir,
+				archiver.WithMaxRecurseDepth(test.maxDepth),
+				archiver.WithFileTypes(archiver.RegularFileType),
+			)
+			suite.Require().NoError(err)
+
+			var result []string //nolint:prealloc // this is a test
+
+			for fi := range ch {
+				suite.Require().NoError(fi.Error)
+				result = append(result, fi.RelPath)
+			}
+
+			suite.Equal(test.result, result)
+		})
+	}
+}
+
+func (suite *WalkerSuite) TestIterationRootRemoved() {
+	// the root path might disappear between the initial Lstat and the walk,
+	// in that case the walker should report an error instead of panicking
+	for range 1000 {
+		root := filepath.Join(suite.T().TempDir(), "root")
+		suite.Require().NoError(os.Mkdir(root, 0o755))
+
+		ch, err := archiver.Walker(context.Background(), root)
+		suite.Require().NoError(err)
+
+		suite.Require().NoError(os.Remove(root))
+
+		for fi := range ch {
+			if fi.Error != nil {
+				suite.Require().ErrorIs(fi.Error, os.ErrNotExist)
+			}
+		}
+	}
 }
 
 func TestWalkerSuite(t *testing.T) {

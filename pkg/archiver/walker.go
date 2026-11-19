@@ -112,11 +112,22 @@ func Walker(ctx context.Context, rootPath string, options ...WalkerOption) (<-ch
 				FileInfo: fileInfo,
 				Error:    walkErr,
 			}
-			if path == rootPath && !fileInfo.IsDir() {
-				// only one file
-				item.RelPath = filepath.Base(path)
-			} else if item.Error == nil {
-				item.RelPath, item.Error = filepath.Rel(rootPath, path)
+			// fileInfo is nil when walkErr is set for a path which can't be stat'ed
+			// (e.g. the root path got removed after the initial Lstat)
+			if item.Error == nil {
+				if path == rootPath && !fileInfo.IsDir() {
+					// only one file
+					item.RelPath = filepath.Base(path)
+				} else {
+					item.RelPath, item.Error = filepath.Rel(rootPath, path)
+				}
+			}
+
+			// Enforce the depth limit even if a filter omits this directory.
+			var walkResult error
+
+			if item.Error == nil && fileInfo.IsDir() && atMaxDepth(opts.maxRecurseDepth, item.RelPath) {
+				walkResult = filepath.SkipDir
 			}
 
 			// TODO: refactor all those `if item.Error == nil &&` conditions
@@ -140,7 +151,7 @@ func Walker(ctx context.Context, rootPath string, options ...WalkerOption) (<-ch
 				}
 
 				if !matches {
-					return nil
+					return walkResult
 				}
 			}
 
@@ -163,7 +174,7 @@ func Walker(ctx context.Context, rootPath string, options ...WalkerOption) (<-ch
 				}
 
 				if !matches {
-					return nil
+					return walkResult
 				}
 			}
 
@@ -173,11 +184,7 @@ func Walker(ctx context.Context, rootPath string, options ...WalkerOption) (<-ch
 			case ch <- item:
 			}
 
-			if item.Error == nil && fileInfo.IsDir() && atMaxDepth(opts.maxRecurseDepth, rootPath, path) {
-				return filepath.SkipDir
-			}
-
-			return nil
+			return walkResult
 		})
 		if err != nil {
 			select {
@@ -193,15 +200,19 @@ func Walker(ctx context.Context, rootPath string, options ...WalkerOption) (<-ch
 // OSPathSeparator is the string version of the os.PathSeparator.
 const OSPathSeparator = string(os.PathSeparator)
 
-func atMaxDepth(maximum int, root, cur string) bool {
+// atMaxDepth reports whether the directory at relPath (relative to the walk root) should not be descended into.
+//
+// The depth is derived from the relative path, so that it doesn't depend on the way the root path is spelled
+// (e.g. root "/" already contains a path separator).
+func atMaxDepth(maximum int, relPath string) bool {
 	if maximum < 0 {
 		return false
 	}
 
-	if root == cur {
+	if relPath == "." {
 		// always recurse the root directory
 		return false
 	}
 
-	return (strings.Count(cur, OSPathSeparator) - strings.Count(root, OSPathSeparator)) >= maximum
+	return strings.Count(relPath, OSPathSeparator)+1 >= maximum
 }
