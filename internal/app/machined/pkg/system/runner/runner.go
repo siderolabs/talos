@@ -136,6 +136,8 @@ type Options struct {
 	// namespace. It is evaluated at each (re)launch so a recreated namespace is
 	// picked up; a nil return means the namespace is not currently available.
 	Sandbox func() runtime.SandboxLauncher
+	// SandboxDetachedMounts are detached from the sandbox namespace before the process is launched.
+	SandboxDetachedMounts []string
 }
 
 // Option is the functional option func.
@@ -408,5 +410,14 @@ func WithSchedulingPolicy(policy uint) Option {
 func WithSandbox(launcher func() runtime.SandboxLauncher) Option {
 	return func(args *Options) {
 		args.Sandbox = launcher
+	}
+}
+
+// WithSandboxDetachedMounts detaches the mounts at paths from the sandbox
+// namespace before the process is launched inside it. A detached mount stays
+// detached until the namespace is recreated.
+func WithSandboxDetachedMounts(paths ...string) Option {
+	return func(args *Options) {
+		args.SandboxDetachedMounts = append(args.SandboxDetachedMounts, paths...)
 	}
 }

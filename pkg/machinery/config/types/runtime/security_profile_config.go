@@ -7,6 +7,8 @@ package runtime
 //docgen:jsonschema
 
 import (
+	"errors"
+
 	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
@@ -63,6 +65,13 @@ var (
 //	  The categories only take effect when SELinux is enabled. Container runtimes which do not support SELinux
 //	  labels (e.g. gVisor, youki, Spin) fail to start pods when the categories are enabled.
 //
+//	  With `systemContainerdIsolation: true`, the sandbox namespace loses the system containerd directories
+//	  `/system/run/containerd` with its socket and the sockets of its shims, and `/system/var` with the images
+//	  and snapshots of the system containers, so pods can not create or change containers of the system containerd
+//	  through a `hostPath` mount. Tools which talk to the system containerd from a pod (e.g. `ctr`) stop working.
+//	  It requires `workloadIsolation: true` and takes effect after a reboot: until then, running pods keep the
+//	  directories.
+//
 //	  By default, Ctrl-Alt-Delete reboots the machine. With `ignoreCtrlAltDelete: true`, Ctrl-Alt-Delete
 //	  is logged and ignored. Ctrl-Alt-Delete still reboots the machine until a configuration with this
 //	  option is applied. The option has no effect in container mode.
@@ -89,6 +98,11 @@ type SecurityProfileConfigV1Alpha1 struct {
 	//   schema:
 	//     type: boolean
 	SELinuxCategoriesEnabled *bool `yaml:"selinuxCategories,omitempty"`
+	//   description: |
+	//     Hide the system containerd socket from the sandbox namespace.
+	//   schema:
+	//     type: boolean
+	SystemContainerdIsolationEnabled *bool `yaml:"systemContainerdIsolation,omitempty"`
 }
 
 // NewSecurityProfileConfigV1Alpha1 creates a new security profile config document.
@@ -116,6 +130,10 @@ func (s *SecurityProfileConfigV1Alpha1) Clone() config.Document {
 
 // Validate implements config.Validator interface.
 func (s *SecurityProfileConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]string, error) {
+	if s.SystemContainerdIsolation() && !s.WorkloadIsolation() {
+		return nil, errors.New("systemContainerdIsolation requires workloadIsolation")
+	}
+
 	return nil, nil
 }
 
@@ -135,4 +153,9 @@ func (s *SecurityProfileConfigV1Alpha1) IgnoreCtrlAltDelete() bool {
 // SELinuxCategories implements config.SecurityProfileConfig interface.
 func (s *SecurityProfileConfigV1Alpha1) SELinuxCategories() bool {
 	return pointer.SafeDeref(s.SELinuxCategoriesEnabled)
+}
+
+// SystemContainerdIsolation implements config.SecurityProfileConfig interface.
+func (s *SecurityProfileConfigV1Alpha1) SystemContainerdIsolation() bool {
+	return pointer.SafeDeref(s.SystemContainerdIsolationEnabled)
 }

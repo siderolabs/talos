@@ -133,6 +133,10 @@ func (o *SecurityProfileConfigV1Alpha1) DeepCopy() *SecurityProfileConfigV1Alpha
 		cp.SELinuxCategoriesEnabled = new(bool)
 		*cp.SELinuxCategoriesEnabled = *o.SELinuxCategoriesEnabled
 	}
+	if o.SystemContainerdIsolationEnabled != nil {
+		cp.SystemContainerdIsolationEnabled = new(bool)
+		*cp.SystemContainerdIsolationEnabled = *o.SystemContainerdIsolationEnabled
+	}
 	return &cp
 }
 

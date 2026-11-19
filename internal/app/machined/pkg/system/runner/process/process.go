@@ -537,6 +537,7 @@ func (p *processRunner) runInSandbox(
 		Env:                 env,
 		DroppedCapabilities: p.opts.DroppedCapabilities,
 		SelinuxLabel:        p.opts.SelinuxLabel,
+		DetachedMounts:      p.opts.SandboxDetachedMounts,
 		Stdin:               cmdWrapper.stdin,
 		Stdout:              cmdWrapper.stdout,
 		Stderr:              cmdWrapper.stderr,

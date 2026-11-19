@@ -23,6 +23,7 @@ import (
 	"golang.org/x/sys/unix"
 	"kernel.org/pub/linux/libs/security/libcap/cap"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/sandboxd/internal/detach"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/xfs/fsopen"
@@ -43,6 +44,7 @@ type launchRequest struct {
 	Env                 []string
 	DroppedCapabilities []string
 	SelinuxLabel        string
+	DetachedMounts      []string
 }
 
 // launchResponse is returned once the service is started; the service pidfd is
@@ -104,7 +106,8 @@ func ignoreTerminationSignals() func() {
 //
 // Only the root mount is made a slave: the scoped /proc lands on it and must not
 // cover machined's /proc. The mounts under it stay peers of machined's (sandboxd
-// starts once the volumes CRI uses are mounted, see services.Sandboxd).
+// starts once the volumes CRI uses are mounted, see services.Sandboxd), except
+// the parents of the mounts detachMounts detaches, which become slaves of them.
 // /proc is made private so detaching it does not detach machined's /proc.
 func scopeProc() error {
 	if err := unix.MountSetattr(unix.AT_FDCWD, "/", 0, &unix.MountAttr{Propagation: unix.MS_SLAVE}); err != nil {
@@ -139,6 +142,23 @@ func scopeProc() error {
 
 	if _, err = procfs.MountAt("/proc"); err != nil {
 		return fmt.Errorf("mount scoped /proc: %w", err)
+	}
+
+	return nil
+}
+
+// detachMounts detaches the mounts at paths from this namespace. A mount stays
+// detached for the lifetime of the namespace, so a relaunch finds it gone.
+func detachMounts(paths []string) error {
+	for _, path := range paths {
+		detached, err := detach.Mount(path)
+		if err != nil {
+			return err
+		}
+
+		if detached {
+			logf("detached %s", path)
+		}
 	}
 
 	return nil
@@ -295,6 +315,12 @@ func handleLaunch(req launchRequest, fds [4]*os.File) {
 	}
 
 	defer svcConn.Close() //nolint:errcheck
+
+	if err := detachMounts(req.DetachedMounts); err != nil {
+		sendLaunchErr(svcConn, fmt.Sprintf("detach mounts for %s: %v", req.Args[0], err))
+
+		return
+	}
 
 	launcher := cap.NewLauncher(req.Args[0], req.Args, req.Env)
 	launcher.Callback(beforeServiceExec)

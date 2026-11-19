@@ -593,8 +593,11 @@ const (
 	// SystemContainerdNamespace is the Containerd namespace for Talos services.
 	SystemContainerdNamespace = "system"
 
+	// SystemContainerdRunPath is the state directory of the system containerd, which holds its socket.
+	SystemContainerdRunPath = SystemRunPath + "/containerd"
+
 	// SystemContainerdAddress is the path to the system containerd socket.
-	SystemContainerdAddress = SystemRunPath + "/containerd/containerd.sock"
+	SystemContainerdAddress = SystemContainerdRunPath + "/containerd.sock"
 
 	// K8sContainerdNamespace is the Containerd namespace for CRI pods.
 	K8sContainerdNamespace = "k8s.io"

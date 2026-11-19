@@ -851,6 +851,17 @@ Setting `ignoreCtrlAltDelete: true` in the `SecurityProfileConfig` document make
 Ctrl-Alt-Delete still reboots the machine until a configuration with this option is applied.
 """
 
+    [notes.system_containerd_isolation]
+        title = "System containerd Isolation"
+        description = """\
+Setting `systemContainerdIsolation: true` in the `SecurityProfileConfig` document removes the system containerd directories
+`/system/run/containerd` and `/system/var` from the sandbox namespace, so that pods can not create containers in the system containerd through
+a `hostPath` mount of its socket or the sockets of its shims, which move there from `/run/containerd/s`, and can not change the
+images and snapshots of the system containers.
+Tools which talk to the system containerd from a pod (e.g. `ctr`) stop working.
+The option requires `workloadIsolation: true` and takes effect after a reboot: until then, running pods keep the directories.
+"""
+
     [notes.talosctl_upgrade]
         title = "Talosctl upgrade improvements"
         description = """\

@@ -76,6 +76,7 @@ func (c *Client) Launch(cfg runtime.LaunchConfig) (runtime.SandboxHandle, error)
 		Env:                 cfg.Env,
 		DroppedCapabilities: cfg.DroppedCapabilities,
 		SelinuxLabel:        cfg.SelinuxLabel,
+		DetachedMounts:      cfg.DetachedMounts,
 	}); err != nil {
 		svcMachined.Close() //nolint:errcheck
 
