@@ -146,6 +146,18 @@ func cdromDiskSpec(name, library, file, dgst string) hypervisor.VirtualMachineDi
 	}
 }
 
+// blankCDROMDiskSpec is a drive with no medium in it.
+func blankCDROMDiskSpec(name string) hypervisor.VirtualMachineDiskSpec {
+	return hypervisor.VirtualMachineDiskSpec{
+		Name: name,
+		Bus:  "sata",
+		Type: "cdrom",
+		Provision: hypervisor.VirtualMachineDiskProvisionSpec{
+			Blank: true,
+		},
+	}
+}
+
 // diskStatusID is the ID the status of one of the configured disks is published under.
 func (suite *VirtualMachineDiskSuite) diskStatusID(disk string) string {
 	suite.T().Helper()
@@ -555,6 +567,23 @@ func (suite *VirtualMachineDiskSuite) TestResolvesCDROMFromPool() {
 		asrt.Equal(hypervisor.VirtualMachineDiskFromImageSpec{Library: libraryName, File: "talos.iso"}, spec.Image)
 	})
 	suite.assertLibraryHeld(false)
+}
+
+// An empty drive is ready without a content library and matches a loaded drive's format.
+func (suite *VirtualMachineDiskSuite) TestResolvesEmptyCDROMWithoutLibrary() {
+	suite.createVM(blankCDROMDiskSpec("install"))
+
+	suite.assertDisk("install", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
+		asrt.Equal(hypervisor.VirtualMachineDiskPhaseReady, spec.Phase)
+		asrt.Empty(spec.Error)
+		asrt.Empty(spec.SourcePath)
+		asrt.False(spec.Blank)
+		asrt.Empty(spec.Pool)
+		asrt.Empty(spec.Volume)
+		asrt.Equal("raw", spec.Format)
+		asrt.True(spec.ReadOnly)
+		asrt.Equal(hypervisor.VirtualMachineDiskFromImageSpec{}, spec.Image)
+	})
 }
 
 func (suite *VirtualMachineDiskSuite) TestVerifiesDigest() {

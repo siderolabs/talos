@@ -511,6 +511,23 @@ func (suite *VirtualMachineSpecSuite) assertConversionError(name, reason string)
 	}, 30*time.Second, time.Millisecond)
 }
 
+// Disk names are validated on directly authored specs too.
+func (suite *VirtualMachineSpecSuite) TestRejectsDiskNameOutsideAliasCharset() {
+	spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "external-bad-disk")
+	*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
+		CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
+		Memory:     hypervisor.VirtualMachineMemorySpec{Size: 512 << 20},
+		PowerState: "running",
+		Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+		Disks:      []hypervisor.VirtualMachineDiskSpec{{Name: "a/b"}},
+	}
+	suite.Create(spec)
+
+	suite.assertConversionError(spec.Metadata().ID(), `disk name "a/b": name can only contain ASCII letters, digits and hyphens`)
+	ctest.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](suite, spec.Metadata().ID())
+	suite.Destroy(spec)
+}
+
 func (suite *VirtualMachineSpecSuite) TestRejectsCPUOutsideSchemaRange() {
 	for _, count := range []uint32{0, 65536, 4294967295} {
 		suite.logs.TakeAll()

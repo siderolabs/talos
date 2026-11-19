@@ -142,6 +142,51 @@ func TestCDROMPoolRequired(t *testing.T) {
 	}
 }
 
+// An empty cdrom needs no pool, but a given pool is still validated.
+func TestEmptyCDROMPool(t *testing.T) {
+	t.Parallel()
+
+	emptyCDROM := func(pool string) hypervisor.VirtualMachineDisk {
+		disk := cdromDisk()
+		disk.DiskPool = pool
+		disk.ProvisionConfig = hypervisor.VirtualMachineDiskProvision{BlankConfig: &hypervisor.VirtualMachineDiskBlank{}}
+
+		return disk
+	}
+
+	blankWithoutPool := blankDisk("system")
+	blankWithoutPool.DiskPool = ""
+
+	loadedWithoutPool := cdromDisk()
+	loadedWithoutPool.DiskPool = ""
+
+	for _, test := range []struct {
+		name string
+		disk hypervisor.VirtualMachineDisk
+		want string
+	}{
+		{name: "empty cdrom without pool", disk: emptyCDROM("")},
+		{name: "empty cdrom with pool", disk: emptyCDROM("pool1")},
+		{name: "empty cdrom with invalid pool", disk: emptyCDROM("-pool"), want: "disks[0]: pool:"},
+		{name: "blank disk without pool", disk: blankWithoutPool, want: "disks[0]: pool is required"},
+		{name: "loaded cdrom without pool", disk: loadedWithoutPool, want: "disks[0]: pool is required"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := validVirtualMachineConfig()
+			cfg.DisksConfig = []hypervisor.VirtualMachineDisk{test.disk}
+
+			_, err := cfg.Validate(validationMode{})
+			if test.want == "" {
+				require.NoError(t, err)
+			} else {
+				require.ErrorContains(t, err, test.want)
+			}
+		})
+	}
+}
+
 // instanceIDWarning is the warning a seed with no instance-id earns.
 const instanceIDWarning = "guest.cloudInit: no instance-id, so cloud-init cannot tell a reboot from a new instance " +
 	"and edits to userData may not take effect"
@@ -726,8 +771,6 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 
 				return c
 			},
-
-			expectedErrors: "disks[0]: provision.blank: a cdrom has no contents of its own",
 		},
 		{
 			name: "bus outside the enum",

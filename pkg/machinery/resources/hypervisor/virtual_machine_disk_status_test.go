@@ -195,6 +195,34 @@ func TestVirtualMachineDiskStatusIDCoversBlankProvisioning(t *testing.T) {
 	assert.NotEqual(t, id(base), id(fromImage))
 }
 
+// An empty drive never shares a blank disk's status ID.
+func TestVirtualMachineDiskStatusIDSeparatesEmptyDrivesFromBlankDisks(t *testing.T) {
+	t.Parallel()
+
+	disk := hypervisor.VirtualMachineDiskSpec{
+		Name:      "data",
+		Pool:      "pool1",
+		Format:    "raw",
+		Type:      "disk",
+		Provision: hypervisor.VirtualMachineDiskProvisionSpec{Blank: true},
+	}
+
+	drive := disk
+	drive.Type = "cdrom"
+
+	id := func(disk hypervisor.VirtualMachineDiskSpec) string {
+		return hypervisor.VirtualMachineDiskStatusID("guest", disk)
+	}
+
+	assert.NotEqual(t, id(disk), id(drive))
+
+	// Pool and format do not affect an empty drive's ID.
+	moved := drive
+	moved.Pool = "pool2"
+	moved.Format = ""
+	assert.Equal(t, id(drive), id(moved))
+}
+
 func TestVirtualMachineDiskStatusIDCoversImageDestination(t *testing.T) {
 	t.Parallel()
 
