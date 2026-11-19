@@ -38,14 +38,32 @@ const ServiceID = "sandboxd"
 // and the dependent services (whose processes the kernel also killed) re-launch
 // into the new namespace via the per-launch launcher getter.
 type sandboxRunner struct {
-	rt runtime.Runtime
+	rt   runtime.Runtime
+	path string
+}
+
+// Option configures the sandboxd runner.
+type Option func(*sandboxRunner)
+
+// WithPath sets the sandboxd binary, /sbin/sandboxd by default.
+func WithPath(path string) Option {
+	return func(s *sandboxRunner) {
+		s.path = path
+	}
 }
 
 // NewRunner returns a runner.Runner managing the sandboxd lifecycle.
-func NewRunner(rt runtime.Runtime) runner.Runner {
-	return &sandboxRunner{
-		rt: rt,
+func NewRunner(rt runtime.Runtime, opts ...Option) runner.Runner {
+	s := &sandboxRunner{
+		rt:   rt,
+		path: "/sbin/sandboxd",
 	}
+
+	for _, opt := range opts {
+		opt(s)
+	}
+
+	return s
 }
 
 // Open implements runner.Runner.
@@ -147,7 +165,7 @@ func (s *sandboxRunner) Run(ctx context.Context, eventSink events.Recorder, onSt
 	// pending SELinux exec label on the fork thread (init_t -> sandboxd_t) without
 	// contaminating machined's other threads — the mechanism the process runner
 	// uses for dashboard/apid. fd 3 = ready pipe, fd 4 = control socket.
-	launcher := cap.NewLauncher("/sbin/sandboxd", []string{"/sbin/sandboxd"}, os.Environ())
+	launcher := cap.NewLauncher(s.path, []string{s.path}, os.Environ())
 	launcher.Callback(beforeSandboxdExec)
 
 	notifyCh := make(chan reaper.ProcessInfo, 8)
@@ -179,10 +197,18 @@ func (s *sandboxRunner) Run(ctx context.Context, eventSink events.Recorder, onSt
 		return status, fmt.Errorf("finding process for PID %d: %w", pid, err)
 	}
 
+	defer process.Release() //nolint:errcheck
+
+	// The waiter releases its handle, and Release writes Process.Pid, so it must not share the handle used for signals.
+	waitProcess, err := os.FindProcess(pid)
+	if err != nil {
+		return status, fmt.Errorf("finding process for PID %d: %w", pid, err)
+	}
+
 	waitCh := make(chan error, 1)
 
 	go func() {
-		waitCh <- reaper.ProcessWaitWrapper(usingReaper, notifyCh, process)
+		waitCh <- reaper.ProcessWaitWrapper(usingReaper, notifyCh, waitProcess)
 	}()
 
 	// Wait for the init to signal readiness (or die before then).
@@ -217,16 +243,16 @@ func (s *sandboxRunner) Run(ctx context.Context, eventSink events.Recorder, onSt
 	status.Started = true
 
 	if onStart != nil {
-		onStart(int32(process.Pid)) //nolint:gosec
+		onStart(int32(pid)) //nolint:gosec
 	}
 
-	eventSink(events.StateRunning, "sandboxd started with PID %d", process.Pid)
+	eventSink(events.StateRunning, "sandboxd started with PID %d", pid)
 
 	select {
 	case werr := <-waitCh:
 		// Unexpected exit: the kernel has torn down the sandbox namespace. Return
 		// an error so restart.Forever recreates it.
-		fmt.Fprintf(logW, "machined: sandboxd (pid %d) exited, sandbox namespace torn down; restarting\n", process.Pid) //nolint:errcheck
+		fmt.Fprintf(logW, "machined: sandboxd (pid %d) exited, sandbox namespace torn down; restarting\n", pid) //nolint:errcheck
 
 		teardown()
 

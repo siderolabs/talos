@@ -458,10 +458,18 @@ func (p *processRunner) run(ctx context.Context, eventSink events.Recorder, onSt
 		return status, fmt.Errorf("could not find process: %w", err)
 	}
 
+	defer process.Release() //nolint:errcheck
+
+	// The waiter releases its handle, and Release writes Process.Pid, so it must not share the handle used for signals.
+	waitProcess, err := os.FindProcess(pid)
+	if err != nil {
+		return status, fmt.Errorf("could not find process: %w", err)
+	}
+
 	waitCh := make(chan error)
 
 	go func() {
-		waitCh <- reaper.ProcessWaitWrapper(usingReaper, notifyCh, process)
+		waitCh <- reaper.ProcessWaitWrapper(usingReaper, notifyCh, waitProcess)
 	}()
 
 	select {

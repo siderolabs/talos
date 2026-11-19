@@ -6,6 +6,7 @@ package process_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -235,6 +236,41 @@ func (suite *ProcessSuite) TestStopFailingAndRestarting() {
 
 	runCancel()
 	<-done
+}
+
+// TestStopAfterReaped stops the runner after the reaper has already reaped the process: the runner
+// then gets a PID-based process handle, which it signals while the waiter releases it.
+//
+// The runner signals only when it sees the cancellation before the exit, which is not ordered, so
+// stop it several times.
+func (suite *ProcessSuite) TestStopAfterReaped() {
+	if !suite.runReaper {
+		suite.T().Skip("the process is reaped before the runner looks it up only by the reaper")
+	}
+
+	r := process.NewRunner(false, &runner.Args{
+		ID:          "reaped",
+		ProcessArgs: []string{"/bin/bash", "-c", "exit 0"},
+	}, runner.WithLoggingManager(suite.loggingManager))
+
+	suite.Require().NoError(r.Open())
+
+	defer func() { suite.Assert().NoError(r.Close()) }()
+
+	for range 5 {
+		ctx, cancel := context.WithCancel(context.Background())
+
+		_, err := r.Run(ctx, MockEventSink(suite.T()), func(pid int32) {
+			suite.Require().Eventually(func() bool {
+				return errors.Is(syscall.Kill(int(pid), 0), syscall.ESRCH)
+			}, 5*time.Second, time.Millisecond)
+
+			cancel()
+		})
+		suite.Assert().NoError(err)
+
+		cancel()
+	}
 }
 
 func (suite *ProcessSuite) TestStopSigKill() {
