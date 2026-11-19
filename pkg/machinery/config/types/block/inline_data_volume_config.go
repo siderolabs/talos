@@ -44,6 +44,7 @@ var (
 	_ config.InlineDataVolumeConfig = &InlineDataVolumeConfigV1Alpha1{}
 	_ config.ConflictingDocument    = &InlineDataVolumeConfigV1Alpha1{}
 	_ config.NamedDocument          = &InlineDataVolumeConfigV1Alpha1{}
+	_ config.SecretDocument         = &InlineDataVolumeConfigV1Alpha1{}
 	_ config.Validator              = &InlineDataVolumeConfigV1Alpha1{}
 )
 
@@ -93,6 +94,12 @@ type InlineDataVolumeConfigV1Alpha1 struct {
 	//     lowercase and uppercase ASCII letters, digits, and hyphens.
 	//   schemaRequired: true
 	MetaName string `yaml:"name"`
+	//   description: |
+	//     Redacts file paths and contents when the machine configuration is redacted.
+	//     Files are still rendered in full.
+	//
+	//     Defaults to `false`.
+	SecretConfig bool `yaml:"secret,omitempty"`
 	//   description: |
 	//     Files of the volume, keyed by the path relative to the volume root.
 	//
@@ -158,6 +165,28 @@ func (s *InlineDataVolumeConfigV1Alpha1) Clone() config.Document {
 // ConflictsWithKinds implements config.ConflictingDocument interface.
 func (s *InlineDataVolumeConfigV1Alpha1) ConflictsWithKinds() []string {
 	return conflictingVolumeKinds(InlineDataVolumeConfigKind)
+}
+
+// Redact implements config.SecretDocument interface.
+// Secret volumes get paths replaced with replacement-N (sorted order) and non-empty contents with replacement.
+func (s *InlineDataVolumeConfigV1Alpha1) Redact(replacement string) {
+	if !s.SecretConfig {
+		return
+	}
+
+	redacted := make(map[string]InlineDataVolumeFileV1Alpha1, len(s.FilesConfig))
+
+	for i, filePath := range slices.Sorted(maps.Keys(s.FilesConfig)) {
+		file := s.FilesConfig[filePath]
+
+		if file.FileContents != "" {
+			file.FileContents = replacement
+		}
+
+		redacted[replacement+"-"+strconv.Itoa(i)] = file
+	}
+
+	s.FilesConfig = redacted
 }
 
 // InlineDataVolumeConfigSignal is a signal for inline data volume config.

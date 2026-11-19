@@ -94,7 +94,7 @@ func (suite *InlineDataVolumeSuite) TestRender() {
 		asrt.Equal("i-app", r.TypedSpec().VolumeID)
 		asrt.Equal(2, r.TypedSpec().Files)
 		asrt.NotZero(r.TypedSpec().Device)
-		asrt.Equal(filesctrl.InlineDataVolumeContentsHash([]configconfig.InlineDataVolumeFile{
+		asrt.Equal(filesctrl.InlineDataVolumeContentsHash(testHashKey, []configconfig.InlineDataVolumeFile{
 			{Path: "a.conf", Mode: 0o644, Contents: "a1"},
 			{Path: "sub/b.conf", Mode: 0o644, Contents: "b1"},
 		}), r.TypedSpec().ContentsHash)
@@ -193,7 +193,7 @@ func (suite *InlineDataVolumeSuite) TestFailingVolumeDoesNotBlockOthers() {
 	)
 
 	ctest.AssertResource(suite, "good", func(r *files.InlineDataVolumeStatus, asrt *assert.Assertions) {
-		asrt.Equal(filesctrl.InlineDataVolumeContentsHash([]configconfig.InlineDataVolumeFile{
+		asrt.Equal(filesctrl.InlineDataVolumeContentsHash(testHashKey, []configconfig.InlineDataVolumeFile{
 			{Path: "g.conf", Mode: 0o644, Contents: "g2"},
 		}), r.TypedSpec().ContentsHash)
 	})
@@ -213,7 +213,7 @@ func (suite *InlineDataVolumeSuite) TestFailedRenderKeepsStatus() {
 	suite.mount("i-good", goodDir)
 
 	hash := func(path, contents string) string {
-		return filesctrl.InlineDataVolumeContentsHash([]configconfig.InlineDataVolumeFile{
+		return filesctrl.InlineDataVolumeContentsHash(testHashKey, []configconfig.InlineDataVolumeFile{
 			{Path: path, Mode: 0o644, Contents: contents},
 		})
 	}
@@ -333,7 +333,7 @@ func TestInlineDataVolumeSuite(t *testing.T) {
 	suite.Run(t, &InlineDataVolumeSuite{
 		Timeout: 10 * time.Second,
 		AfterSetup: func(suite *ctest.DefaultSuite) {
-			suite.Require().NoError(suite.Runtime().RegisterController(&filesctrl.InlineDataVolumeController{SkipFilesystemCheck: true}))
+			suite.Require().NoError(suite.Runtime().RegisterController(&filesctrl.InlineDataVolumeController{SkipFilesystemCheck: true, HashKey: testHashKey}))
 		},
 	})
 }
@@ -350,7 +350,7 @@ func TestInlineDataVolumeRootPath(t *testing.T) {
 	_, err := (&filesctrl.InlineDataVolumeController{}).RootPath(status)
 	require.ErrorContains(t, err, "the volume mount has no file descriptor of a detached mount")
 
-	path, err := (&filesctrl.InlineDataVolumeController{SkipFilesystemCheck: true}).RootPath(status)
+	path, err := (&filesctrl.InlineDataVolumeController{SkipFilesystemCheck: true, HashKey: testHashKey}).RootPath(status)
 	require.NoError(t, err)
 	assert.Equal(t, dir, path)
 }

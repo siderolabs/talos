@@ -6,6 +6,7 @@ package files
 
 import (
 	"context"
+	"crypto/rand"
 	"errors"
 	"fmt"
 	"os"
@@ -41,6 +42,9 @@ type InlineDataVolumeController struct {
 	// SkipFilesystemCheck disables the check that the volume is a tmpfs, and allows volume mounts
 	// attached to a path instead of a detached mount file descriptor, for tests only.
 	SkipFilesystemCheck bool
+
+	// HashKey keys the contents hash; random if unset.
+	HashKey []byte
 }
 
 // Name implements controller.Controller interface.
@@ -77,6 +81,14 @@ func (ctrl *InlineDataVolumeController) Outputs() []controller.Output {
 
 // Run implements controller.Controller interface.
 func (ctrl *InlineDataVolumeController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+	if ctrl.HashKey == nil {
+		ctrl.HashKey = make([]byte, 32)
+
+		if _, err := rand.Read(ctrl.HashKey); err != nil {
+			return fmt.Errorf("failed to generate hash key: %w", err)
+		}
+	}
+
 	retryTimer := time.NewTimer(inlineDataVolumeRetryInterval)
 	retryTimer.Stop()
 
@@ -261,7 +273,7 @@ func (ctrl *InlineDataVolumeController) renderVolume(
 
 	textFiles := inlineDataVolumeConfig.Files()
 
-	hash, err := WriteInlineDataVolume(root, textFiles)
+	hash, err := WriteInlineDataVolume(root, ctrl.HashKey, textFiles)
 	if err != nil {
 		return err
 	}

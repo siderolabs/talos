@@ -584,6 +584,13 @@
           "markdownDescription": "Name of the volume.\n\nName might be between 1 and 34 characters long and can only contain:\nlowercase and uppercase ASCII letters, digits, and hyphens.",
           "x-intellij-html-description": "\u003cp\u003eName of the volume.\u003c/p\u003e\n\n\u003cp\u003eName might be between 1 and 34 characters long and can only contain:\nlowercase and uppercase ASCII letters, digits, and hyphens.\u003c/p\u003e\n"
         },
+        "secret": {
+          "type": "boolean",
+          "title": "secret",
+          "description": "Redacts file paths and contents when the machine configuration is redacted.\nFiles are still rendered in full.\n\nDefaults to false.\n",
+          "markdownDescription": "Redacts file paths and contents when the machine configuration is redacted.\nFiles are still rendered in full.\n\nDefaults to `false`.",
+          "x-intellij-html-description": "\u003cp\u003eRedacts file paths and contents when the machine configuration is redacted.\nFiles are still rendered in full.\u003c/p\u003e\n\n\u003cp\u003eDefaults to \u003ccode\u003efalse\u003c/code\u003e.\u003c/p\u003e\n"
+        },
         "files": {
           "patternProperties": {
             ".*": {

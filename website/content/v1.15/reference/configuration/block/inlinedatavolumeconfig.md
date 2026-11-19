@@ -42,6 +42,7 @@ files:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`name` |string |Name of the volume.<br><br>Name might be between 1 and 34 characters long and can only contain:<br>lowercase and uppercase ASCII letters, digits, and hyphens.  | |
+|`secret` |bool |Redacts file paths and contents when the machine configuration is redacted.<br>Files are still rendered in full.<br><br>Defaults to `false`.  | |
 |`files` |<a href="#InlineDataVolumeConfig.files.-">map[string]InlineDataVolumeFileV1Alpha1</a> |Files of the volume, keyed by the path relative to the volume root.<br><br>Paths may contain subdirectories, which are created automatically.<br>Path components must not start with `..`, and must be at most 255 bytes long.<br>Paths must be at most 1024 bytes long.<br>There may be at most 256 files in at most 256 distinct directories,<br>and their total size, each rounded up to 4 KiB, must not exceed 1 MiB.  | |
 
 

@@ -48,6 +48,8 @@ func assertFile(t *testing.T, dir, path, contents string, mode fs.FileMode) {
 	assert.Equal(t, mode, st.Mode().Perm(), path)
 }
 
+var testHashKey = []byte("test-key-0123456789abcdef0123456")
+
 func writeInlineDataVolume(t *testing.T, dir string, files []configconfig.InlineDataVolumeFile) string {
 	t.Helper()
 
@@ -56,10 +58,10 @@ func writeInlineDataVolume(t *testing.T, dir string, files []configconfig.Inline
 
 	t.Cleanup(func() { root.Close() }) //nolint:errcheck
 
-	hash, err := filesctrl.WriteInlineDataVolume(root, files)
+	hash, err := filesctrl.WriteInlineDataVolume(root, testHashKey, files)
 	require.NoError(t, err)
 
-	assert.Equal(t, filesctrl.InlineDataVolumeContentsHash(files), hash)
+	assert.Equal(t, filesctrl.InlineDataVolumeContentsHash(testHashKey, files), hash)
 
 	return hash
 }
@@ -126,7 +128,7 @@ func TestWriteInlineDataVolumeRepairs(t *testing.T) {
 	}
 
 	require.NoError(t, os.WriteFile(filepath.Join(dir, "stray"), []byte("x"), 0o644))
-	require.NoError(t, os.MkdirAll(filepath.Join(dir, "..data-"+filesctrl.InlineDataVolumeContentsHash(files), "garbage"), 0o755))
+	require.NoError(t, os.MkdirAll(filepath.Join(dir, "..data-"+filesctrl.InlineDataVolumeContentsHash(testHashKey, files), "garbage"), 0o755))
 	require.NoError(t, os.Symlink("nowhere", filepath.Join(dir, "..tmp-..data")))
 	require.NoError(t, os.Mkdir(filepath.Join(dir, "a.conf"), 0o755))
 
@@ -168,12 +170,12 @@ func TestWriteInlineDataVolumeRemovesPartialSets(t *testing.T) {
 		{Path: "bad\x00name", Mode: 0o644, Contents: "x"},
 	}
 
-	_, err = filesctrl.WriteInlineDataVolume(root, failing)
+	_, err = filesctrl.WriteInlineDataVolume(root, testHashKey, failing)
 	require.Error(t, err)
 
-	hashFailing := filesctrl.InlineDataVolumeContentsHash(failing)
+	hashFailing := filesctrl.InlineDataVolumeContentsHash(testHashKey, failing)
 
-	assert.Equal(t, []string{"..data", "..data-" + hash1, "..data-" + hashFailing, "a.conf"}, listDir(t, dir))
+	assert.ElementsMatch(t, []string{"..data", "..data-" + hash1, "..data-" + hashFailing, "a.conf"}, listDir(t, dir))
 	assertFile(t, dir, "a.conf", "a1", 0o644)
 
 	v2 := []configconfig.InlineDataVolumeFile{
@@ -246,6 +248,20 @@ func TestWriteInlineDataVolumeZeroMode(t *testing.T) {
 
 	// replacing the set removes the unreadable file
 	writeInlineDataVolume(t, dir, []configconfig.InlineDataVolumeFile{{Path: "other", Mode: 0o644, Contents: "o"}})
-	assert.Equal(t, []string{"..data", "..data-" + filesctrl.InlineDataVolumeContentsHash(
+	assert.Equal(t, []string{"..data", "..data-" + filesctrl.InlineDataVolumeContentsHash(testHashKey,
 		[]configconfig.InlineDataVolumeFile{{Path: "other", Mode: 0o644, Contents: "o"}}), "other"}, listDir(t, dir))
+}
+
+func TestInlineDataVolumeContentsHashKeyed(t *testing.T) {
+	t.Parallel()
+
+	files := []configconfig.InlineDataVolumeFile{{Path: "password", Mode: 0o600, Contents: "hunter2"}}
+
+	hash := filesctrl.InlineDataVolumeContentsHash(testHashKey, files)
+
+	assert.Equal(t, hash, filesctrl.InlineDataVolumeContentsHash(testHashKey, files))
+	assert.NotEqual(t, hash, filesctrl.InlineDataVolumeContentsHash([]byte("other-key-0123456789abcdef012345"), files), "the hash must depend on the key")
+	assert.NotEqual(t, hash, filesctrl.InlineDataVolumeContentsHash(testHashKey, []configconfig.InlineDataVolumeFile{
+		{Path: "password", Mode: 0o600, Contents: "hunter3"},
+	}))
 }

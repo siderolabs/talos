@@ -28,7 +28,6 @@ import (
 	"go.yaml.in/yaml/v4"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
-	filesctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/files"
 	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/api/storage"
@@ -1488,10 +1487,8 @@ func (suite *VolumesSuite) TestInlineDataVolumes() {
 		},
 	}
 
-	// assertRendered waits for the volume to be ready, mounted detached, and the status to reflect the files of doc,
-	// returning the device number of the volume.
-	assertRendered := func() uint64 {
-		expectedHash := filesctrl.InlineDataVolumeContentsHash(doc.Files())
+	// assertRendered waits for the volume to be rendered, returning its device and contents hash (changed vs previousHash or not).
+	assertRendered := func(previousHash string, changed bool) (uint64, string) {
 		expectedFiles := len(doc.FilesConfig)
 
 		rtestutils.AssertResources(
@@ -1510,17 +1507,28 @@ func (suite *VolumesSuite) TestInlineDataVolumes() {
 			},
 		)
 
-		var device uint64
+		var (
+			device uint64
+			hash   string
+		)
 
 		rtestutils.AssertResources(
 			ctx, suite.T(), suite.Client.State(), []string{volumeName},
 			func(status *filesres.InlineDataVolumeStatus, asrt *assert.Assertions) {
 				asrt.Equal(volumeID, status.TypedSpec().VolumeID)
-				asrt.Equal(expectedHash, status.TypedSpec().ContentsHash)
+				asrt.NotEmpty(status.TypedSpec().ContentsHash)
+
+				if changed {
+					asrt.NotEqual(previousHash, status.TypedSpec().ContentsHash)
+				} else {
+					asrt.Equal(previousHash, status.TypedSpec().ContentsHash)
+				}
+
 				asrt.Equal(expectedFiles, status.TypedSpec().Files)
 				asrt.NotZero(status.TypedSpec().Device)
 
 				device = status.TypedSpec().Device
+				hash = status.TypedSpec().ContentsHash
 			},
 		)
 
@@ -1528,14 +1536,14 @@ func (suite *VolumesSuite) TestInlineDataVolumes() {
 		_, mounted := findMount(suite.readNodeMountInfo(ctx), mountPoint)
 		suite.Assert().Falsef(mounted, "expected no mount at %s", mountPoint)
 
-		return device
+		return device, hash
 	}
 
 	suite.T().Logf("creating inline data volume %s on node %s", volumeID, node)
 
 	suite.PatchMachineConfig(ctx, doc)
 
-	device := assertRendered()
+	device, hash := assertRendered("", true)
 
 	// changing the contents of a file re-renders the files in place, on the same tmpfs
 	doc.FilesConfig["app.yaml"] = blockcfg.InlineDataVolumeFileV1Alpha1{
@@ -1544,7 +1552,10 @@ func (suite *VolumesSuite) TestInlineDataVolumes() {
 
 	suite.PatchMachineConfig(ctx, doc)
 
-	suite.Assert().Equal(device, assertRendered(), "expected the files to be updated without remounting the volume")
+	updatedDevice, updatedHash := assertRendered(hash, true)
+	suite.Assert().Equal(device, updatedDevice, "expected the files to be updated without remounting the volume")
+
+	hash = updatedHash
 
 	// adding a file
 	doc.FilesConfig["conf.d/more.ini"] = blockcfg.InlineDataVolumeFileV1Alpha1{
@@ -1554,7 +1565,10 @@ func (suite *VolumesSuite) TestInlineDataVolumes() {
 
 	suite.PatchMachineConfig(ctx, doc)
 
-	suite.Assert().Equal(device, assertRendered(), "expected the files to be updated without remounting the volume")
+	updatedDevice, updatedHash = assertRendered(hash, true)
+	suite.Assert().Equal(device, updatedDevice, "expected the files to be updated without remounting the volume")
+
+	hash = updatedHash
 
 	// a user volume with the same name is rejected by the node
 	suite.Run("name conflict", func() {
@@ -1580,7 +1594,9 @@ func (suite *VolumesSuite) TestInlineDataVolumes() {
 
 		// nothing changed
 		rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.State(), constants.UserVolumePrefix+volumeName)
-		suite.Assert().Equal(device, assertRendered())
+
+		unchangedDevice, _ := assertRendered(hash, false)
+		suite.Assert().Equal(device, unchangedDevice)
 	})
 
 	// removing the volume releases the mount
@@ -1590,12 +1606,103 @@ func (suite *VolumesSuite) TestInlineDataVolumes() {
 	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.State(), volumeID)
 	rtestutils.AssertNoResource[*block.MountStatus](ctx, suite.T(), suite.Client.State(), volumeID)
 
-	// re-creating the volume renders the files again
+	// re-creating the volume renders the same hash, the key is kept by the node
 	suite.PatchMachineConfig(ctx, doc)
 
-	assertRendered()
+	assertRendered(hash, false)
 
 	// clean up
+	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.InlineDataVolumeConfigKind, volumeName)
+
+	rtestutils.AssertNoResource[*filesres.InlineDataVolumeStatus](ctx, suite.T(), suite.Client.State(), volumeName)
+	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.State(), volumeID)
+}
+
+// TestSecretInlineDataVolume verifies that the secret flag doesn't affect rendering.
+func (suite *VolumesSuite) TestSecretInlineDataVolume() {
+	if testing.Short() {
+		suite.T().Skip("skipping test in short mode.")
+	}
+
+	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
+		suite.T().Skip("skipping test for non-qemu provisioner")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+
+	ctx := client.WithNode(suite.ctx, node)
+
+	volumeName := fmt.Sprintf("%04x", rand.Int31()) + "-secret"
+	volumeID := constants.InlineDataVolumePrefix + volumeName
+
+	doc := blockcfg.NewInlineDataVolumeConfigV1Alpha1()
+	doc.MetaName = volumeName
+	doc.SecretConfig = true
+	doc.FilesConfig = map[string]blockcfg.InlineDataVolumeFileV1Alpha1{
+		"password": {
+			FileMode:     new(blockcfg.InlineDataVolumeFileMode(0o600)),
+			FileContents: "top-secret-password",
+		},
+		"sub/token": {
+			FileMode:     new(blockcfg.InlineDataVolumeFileMode(0o600)),
+			FileContents: "top-secret-token",
+		},
+	}
+
+	suite.T().Logf("creating secret inline data volume %s on node %s", volumeID, node)
+
+	suite.PatchMachineConfig(ctx, doc)
+
+	suite.T().Cleanup(func() {
+		cleanupCtx := client.WithNode(context.Background(), node)
+
+		suite.RemoveMachineConfigDocumentsByName(cleanupCtx, blockcfg.InlineDataVolumeConfigKind, volumeName)
+	})
+
+	rtestutils.AssertResources(
+		ctx, suite.T(), suite.Client.State(), []string{volumeID},
+		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
+			asrt.Equalf(block.VolumePhaseReady, vs.TypedSpec().Phase, "Expected %q, but got %q (%s): %s",
+				block.VolumePhaseReady, vs.TypedSpec().Phase, vs.Metadata().ID(), vs.TypedSpec().ErrorMessage)
+			asrt.Equal(block.VolumeTypeTmpfs, vs.TypedSpec().Type)
+		},
+	)
+
+	rtestutils.AssertResources(
+		ctx, suite.T(), suite.Client.State(), []string{volumeName},
+		func(status *filesres.InlineDataVolumeStatus, asrt *assert.Assertions) {
+			asrt.Equal(volumeID, status.TypedSpec().VolumeID)
+			asrt.Equal(len(doc.FilesConfig), status.TypedSpec().Files)
+			asrt.NotEmpty(status.TypedSpec().ContentsHash)
+		},
+	)
+
+	cfg, err := suite.ReadConfigFromNode(ctx)
+	suite.Require().NoError(err)
+
+	var found bool
+
+	for _, volume := range cfg.InlineDataVolumeConfigs() {
+		if volume.Name() != volumeName {
+			continue
+		}
+
+		found = true
+
+		contents := map[string]string{}
+
+		for _, file := range volume.Files() {
+			contents[file.Path] = file.Contents
+		}
+
+		suite.Assert().Equal(map[string]string{
+			"password":  "top-secret-password",
+			"sub/token": "top-secret-token",
+		}, contents)
+	}
+
+	suite.Assert().True(found, "expected the inline data volume %s in the machine configuration", volumeName)
+
 	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.InlineDataVolumeConfigKind, volumeName)
 
 	rtestutils.AssertNoResource[*filesres.InlineDataVolumeStatus](ctx, suite.T(), suite.Client.State(), volumeName)

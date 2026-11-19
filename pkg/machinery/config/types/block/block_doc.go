@@ -954,6 +954,13 @@ func (InlineDataVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
+				Name:        "secret",
+				Type:        "bool",
+				Note:        "",
+				Description: "Redacts file paths and contents when the machine configuration is redacted.\nFiles are still rendered in full.\n\nDefaults to `false`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Redacts file paths and contents when the machine configuration is redacted." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
 				Name:        "files",
 				Type:        "map[string]InlineDataVolumeFileV1Alpha1",
 				Note:        "",

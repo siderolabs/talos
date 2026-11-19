@@ -5,6 +5,7 @@
 package files
 
 import (
+	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
@@ -29,8 +30,9 @@ const (
 )
 
 // InlineDataVolumeContentsHash returns the hash identifying a set of inline data volume files.
-func InlineDataVolumeContentsHash(files []configconfig.InlineDataVolumeFile) string {
-	hasher := sha256.New()
+// The hash is keyed, so it doesn't leak secret contents.
+func InlineDataVolumeContentsHash(key []byte, files []configconfig.InlineDataVolumeFile) string {
+	hasher := hmac.New(sha256.New, key)
 
 	for _, file := range files {
 		// length-prefixed to avoid ambiguity
@@ -50,8 +52,8 @@ func InlineDataVolumeContentsHash(files []configconfig.InlineDataVolumeFile) str
 // Files go into `..data-<hash>`, top-level entries link into `..data`, and `..data` is swapped atomically.
 //
 //nolint:gocyclo
-func WriteInlineDataVolume(root *os.Root, files []configconfig.InlineDataVolumeFile) (string, error) {
-	hash := InlineDataVolumeContentsHash(files)
+func WriteInlineDataVolume(root *os.Root, hashKey []byte, files []configconfig.InlineDataVolumeFile) (string, error) {
+	hash := InlineDataVolumeContentsHash(hashKey, files)
 	dataDir := inlineDataVolumeDataDirPrefix + hash
 
 	current, err := root.Readlink(inlineDataVolumeDataLink)

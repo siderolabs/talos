@@ -184,3 +184,48 @@ func TestContentLibraryBackingVolumes(t *testing.T) {
 		})
 	}
 }
+
+func TestRedactSecretInlineDataVolume(t *testing.T) {
+	t.Parallel()
+
+	newInlineDataVolumeDoc := func(name string) *blockcfg.InlineDataVolumeConfigV1Alpha1 {
+		doc := blockcfg.NewInlineDataVolumeConfigV1Alpha1()
+		doc.MetaName = name
+		doc.FilesConfig = map[string]blockcfg.InlineDataVolumeFileV1Alpha1{
+			"app.conf": {FileContents: "key=value\n"},
+		}
+
+		return doc
+	}
+
+	secretDoc := newInlineDataVolumeDoc("secret")
+	secretDoc.SecretConfig = true
+
+	plainDoc := newInlineDataVolumeDoc("plain")
+
+	cfg, err := container.New(secretDoc, plainDoc)
+	require.NoError(t, err)
+
+	contents := func(provider config.Config) map[string]string {
+		result := map[string]string{}
+
+		for _, volume := range provider.InlineDataVolumeConfigs() {
+			for _, file := range volume.Files() {
+				result[volume.Name()+"/"+file.Path] = file.Contents
+			}
+		}
+
+		return result
+	}
+
+	assert.Equal(t, map[string]string{
+		"secret/REDACTED-0": "REDACTED",
+		"plain/app.conf":    "key=value\n",
+	}, contents(cfg.RedactSecrets("REDACTED")))
+
+	// the original config is left intact
+	assert.Equal(t, map[string]string{
+		"secret/app.conf": "key=value\n",
+		"plain/app.conf":  "key=value\n",
+	}, contents(cfg))
+}

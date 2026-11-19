@@ -185,25 +185,29 @@ func TestInlineDataVolumeConfigValidate(t *testing.T) {
 			name: "invalid paths",
 			cfg: func() *block.InlineDataVolumeConfigV1Alpha1 {
 				return newInlineDataVolumeConfig(map[string]block.InlineDataVolumeFileV1Alpha1{
-					"":       {},
-					".":      {},
-					"./a":    {},
-					"/abs":   {},
-					"../up":  {},
-					"a//b":   {},
-					"a/./b":  {},
-					"a/..":   {},
-					"..data": {},
-					"x/":     {},
+					"":           {},
+					".":          {},
+					"./a":        {},
+					"/abs":       {},
+					"../up":      {},
+					"../../up":   {},
+					"a//b":       {},
+					"a/./b":      {},
+					"a/..":       {},
+					"a/../../up": {},
+					"..data":     {},
+					"x/":         {},
 				})
 			},
 			expectedErrors: "file path can't be empty\n" +
 				`file path "." must be a clean relative path` + "\n" +
+				`file path "../../up" must be a clean relative path` + "\n" +
 				`file path "../up" must be a clean relative path` + "\n" +
 				`file path "..data": path components starting with ".." are reserved` + "\n" +
 				`file path "./a" must be a clean relative path` + "\n" +
 				`file path "/abs" must be a clean relative path` + "\n" +
 				`file path "a/.." must be a clean relative path` + "\n" +
+				`file path "a/../../up" must be a clean relative path` + "\n" +
 				`file path "a/./b" must be a clean relative path` + "\n" +
 				`file path "a//b" must be a clean relative path` + "\n" +
 				`file path "x/" must be a clean relative path`,

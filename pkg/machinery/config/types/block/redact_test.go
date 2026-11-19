@@ -95,3 +95,45 @@ func TestSwapVolumeConfigRedact(t *testing.T) {
 	assert.Equal(t, "REDACTED", cfg.EncryptionSpec.EncryptionKeys[0].KeyStatic.KeyData)
 	assert.Equal(t, "REDACTED", cfg.EncryptionSpec.EncryptionKeys[2].KeyStatic.KeyData)
 }
+
+func TestInlineDataVolumeConfigRedact(t *testing.T) {
+	t.Parallel()
+
+	newConfig := func(secret bool) *block.InlineDataVolumeConfigV1Alpha1 {
+		cfg := block.NewInlineDataVolumeConfigV1Alpha1()
+		cfg.MetaName = "app"
+		cfg.SecretConfig = secret
+		cfg.FilesConfig = map[string]block.InlineDataVolumeFileV1Alpha1{
+			"password":   {FileMode: new(block.InlineDataVolumeFileMode(0o600)), FileContents: "hunter2"},
+			"sub/token":  {FileContents: "abc"},
+			"empty.conf": {},
+		}
+
+		return cfg
+	}
+
+	t.Run("secret", func(t *testing.T) {
+		t.Parallel()
+
+		cfg := newConfig(true)
+		cfg.Redact("REDACTED")
+
+		assert.Equal(t, map[string]block.InlineDataVolumeFileV1Alpha1{
+			"REDACTED-0": {},
+			"REDACTED-1": {FileMode: new(block.InlineDataVolumeFileMode(0o600)), FileContents: "REDACTED"},
+			"REDACTED-2": {FileContents: "REDACTED"},
+		}, cfg.FilesConfig)
+
+		_, err := cfg.Validate(validationMode{})
+		assert.NoError(t, err)
+	})
+
+	t.Run("not secret", func(t *testing.T) {
+		t.Parallel()
+
+		cfg := newConfig(false)
+		cfg.Redact("REDACTED")
+
+		assert.Equal(t, newConfig(false).FilesConfig, cfg.FilesConfig)
+	})
+}

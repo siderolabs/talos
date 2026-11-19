@@ -44,6 +44,8 @@ A volume can hold at most 256 files in at most 256 distinct directories, and the
 Each file counts toward the total in whole pages of the system page size (a 1-byte file counts as a full page).
 Path components must be at most 255 bytes long, and paths at most 1024 bytes long.
 The name of an inline data volume must not be taken by a user, existing or external volume.
+
+Set `secret: true` to mark the volume as secret: file paths and contents are redacted from the machine configuration when it is redacted (e.g. in Omni), while the files are still rendered in full.
 """
 
     [notes.kubeprism_readiness_check]
