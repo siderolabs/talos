@@ -47,8 +47,6 @@ var (
 	_ config.SecretDocument      = &UserVolumeConfigV1Alpha1{}
 )
 
-const maxUserVolumeNameLength = constants.PartitionLabelLength - len(constants.UserVolumePrefix)
-
 // tmpfsWarnPercent is the size of a tmpfs volume, in percents of the memory, above which a warning is reported.
 //
 // It matches the size of a tmpfs mounted without a size.
@@ -63,7 +61,7 @@ type VolumeType = block.VolumeType
 //	  User volume is automatically allocated as a partition on the specified disk
 //	  and mounted under `/var/mnt/<name>`.
 //	  The partition label is automatically generated as `u-<name>`.
-//	  The name must not be taken by an existing or external volume.
+//	  The name must not be taken by an existing, external or inline data volume.
 //	  A `tmpfs` user volume is backed by memory, its size is set with `provisioning.maxSize`
 //	  (in bytes, or in percents of the memory), and its content is lost on unmount.
 //	examples:
@@ -246,30 +244,7 @@ func (s *UserVolumeConfigV1Alpha1) Validate(validation.RuntimeMode, ...validatio
 		validationErrors error
 	)
 
-	if s.MetaName == "" {
-		validationErrors = errors.Join(validationErrors, errors.New("name is required"))
-	}
-
-	if len(s.MetaName) < 1 || len(s.MetaName) > maxUserVolumeNameLength {
-		validationErrors = errors.Join(validationErrors, fmt.Errorf("name must be between 1 and %d characters long", maxUserVolumeNameLength))
-	}
-
-	if strings.ContainsFunc(s.MetaName, func(r rune) bool {
-		switch {
-		case r >= 'a' && r <= 'z':
-			return false
-		case r >= 'A' && r <= 'Z':
-			return false
-		case r >= '0' && r <= '9':
-			return false
-		case r == '-':
-			return false
-		default: // invalid symbol
-			return true
-		}
-	}) {
-		validationErrors = errors.Join(validationErrors, errors.New("name can only contain lowercase and uppercase ASCII letters, digits, and hyphens"))
-	}
+	validationErrors = errors.Join(validationErrors, validateVolumeName(s.MetaName, constants.UserVolumePrefix))
 
 	vtype := block.VolumeTypePartition
 	if s.VolumeType != nil {
@@ -571,4 +546,40 @@ func (s UserMountSpec) Secure() bool {
 	}
 
 	return *s.MountSecure
+}
+
+// validateVolumeName validates a volume name, given the volume ID prefix.
+func validateVolumeName(name, idPrefix string) error {
+	var validationErrors error
+
+	maxNameLength := constants.PartitionLabelLength - len(idPrefix)
+
+	if name == "" {
+		validationErrors = errors.Join(validationErrors, errors.New("name is required"))
+	}
+
+	if len(name) < 1 || len(name) > maxNameLength {
+		validationErrors = errors.Join(validationErrors, fmt.Errorf("name must be between 1 and %d characters long", maxNameLength))
+	}
+
+	if strings.ContainsFunc(name, isInvalidVolumeNameRune) {
+		validationErrors = errors.Join(validationErrors, errors.New("name can only contain lowercase and uppercase ASCII letters, digits, and hyphens"))
+	}
+
+	return validationErrors
+}
+
+func isInvalidVolumeNameRune(r rune) bool {
+	switch {
+	case r >= 'a' && r <= 'z':
+		return false
+	case r >= 'A' && r <= 'Z':
+		return false
+	case r >= '0' && r <= '9':
+		return false
+	case r == '-':
+		return false
+	default: // invalid symbol
+		return true
+	}
 }

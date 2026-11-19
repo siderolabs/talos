@@ -525,6 +525,7 @@ var userConfiguredVolumeLabels = []string{
 	block.RawVolumeLabel,
 	block.ExistingVolumeLabel,
 	block.SwapVolumeLabel,
+	block.InlineDataVolumeLabel,
 }
 
 // isFailedUserVolumeProvisioning reports whether a volume is a user-configured volume

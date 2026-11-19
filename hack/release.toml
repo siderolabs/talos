@@ -36,6 +36,16 @@ A size above 50% of the memory is reported as a warning, as tmpfs memory is not 
 The content of a `tmpfs` volume is lost when the volume is unmounted (e.g. on reboot, or when the volume is removed from the configuration).
 """
 
+    [notes.inline_data_volumes]
+        title = "Inline Data Volumes"
+        description = """\
+A new `InlineDataVolumeConfig` document defines a named set of files inline (similar to a Kubernetes ConfigMap), kept in memory (`tmpfs`).
+A volume can hold at most 256 files in at most 256 distinct directories, and their total size must not exceed 1 MiB.
+Each file counts toward the total in whole pages of the system page size (a 1-byte file counts as a full page).
+Path components must be at most 255 bytes long, and paths at most 1024 bytes long.
+The name of an inline data volume must not be taken by a user, existing or external volume.
+"""
+
     [notes.kubeprism_readiness_check]
         title = "KubePrism Readiness Check"
         description = """\

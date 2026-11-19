@@ -25,6 +25,7 @@ import (
 	intmeta "github.com/siderolabs/talos/internal/pkg/meta"
 	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
+	configconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	blockcfg "github.com/siderolabs/talos/pkg/machinery/config/types/block"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
@@ -619,6 +620,75 @@ func (suite *VolumeConfigSuite) TestReconcileUserRawVolumes() {
 
 	// now the resources should be removed
 	ctest.AssertNoResource[*block.VolumeConfig](suite, rawVolumes[0])
+}
+
+func (suite *VolumeConfigSuite) TestReconcileInlineDataVolumes() {
+	newInlineDataVolume := func(name string) *blockcfg.InlineDataVolumeConfigV1Alpha1 {
+		tv := blockcfg.NewInlineDataVolumeConfigV1Alpha1()
+		tv.MetaName = name
+		tv.FilesConfig = map[string]blockcfg.InlineDataVolumeFileV1Alpha1{
+			"a.conf": {FileContents: "a"},
+		}
+
+		return tv
+	}
+
+	setConfig := func(cfg *config.MachineConfig, docs ...configconfig.Document) *config.MachineConfig {
+		ctr, err := container.New(docs...)
+		suite.Require().NoError(err)
+
+		newCfg := config.NewMachineConfig(ctr)
+
+		if cfg == nil {
+			suite.Create(newCfg)
+		} else {
+			newCfg.Metadata().SetVersion(cfg.Metadata().Version())
+			suite.Update(newCfg)
+		}
+
+		return newCfg
+	}
+
+	cfg := setConfig(nil, newInlineDataVolume("config1"), newInlineDataVolume("config2"))
+
+	volumeIDs := []string{"i-config1", "i-config2"}
+
+	ctest.AssertResources(suite, volumeIDs, func(vc *block.VolumeConfig, asrt *assert.Assertions) {
+		asrt.True(vc.Metadata().Labels().Matches(resource.LabelTerm{Key: block.InlineDataVolumeLabel, Op: resource.LabelOpExists}))
+		asrt.Equal(block.VolumeTypeTmpfs, vc.TypedSpec().Type)
+		asrt.Empty(vc.TypedSpec().Mount.ParentID)
+		asrt.NoError(block.ValidateTmpfsParameters(vc.TypedSpec().Mount.Parameters))
+	})
+
+	ctest.AssertResources(suite, volumeIDs, func(vmr *block.VolumeMountRequest, asrt *assert.Assertions) {
+		asrt.Equal(vmr.Metadata().ID(), vmr.TypedSpec().VolumeID)
+		asrt.True(vmr.TypedSpec().Detached)
+		asrt.False(vmr.TypedSpec().ReadOnly)
+		asrt.True(vmr.TypedSpec().Secure)
+		asrt.True(vmr.TypedSpec().NoExec)
+	})
+
+	// simulate other controllers working - add finalizers for volume config & mount request
+	for _, volumeID := range volumeIDs {
+		suite.AddFinalizer(block.NewVolumeConfig(block.NamespaceName, volumeID).Metadata(), "test")
+		suite.AddFinalizer(block.NewVolumeMountRequest(block.NamespaceName, volumeID).Metadata(), "test")
+	}
+
+	setConfig(cfg, newInlineDataVolume("config2"))
+
+	ctest.AssertResources(suite, volumeIDs, func(vc *block.VolumeConfig, asrt *assert.Assertions) {
+		if vc.Metadata().ID() == "i-config2" {
+			asrt.Equal(resource.PhaseRunning, vc.Metadata().Phase())
+		} else {
+			asrt.Equal(resource.PhaseTearingDown, vc.Metadata().Phase())
+		}
+	})
+
+	suite.RemoveFinalizer(block.NewVolumeConfig(block.NamespaceName, "i-config1").Metadata(), "test")
+	suite.RemoveFinalizer(block.NewVolumeMountRequest(block.NamespaceName, "i-config1").Metadata(), "test")
+
+	ctest.AssertNoResource[*block.VolumeConfig](suite, "i-config1")
+	ctest.AssertNoResource[*block.VolumeMountRequest](suite, "i-config1")
 }
 
 func (suite *VolumeConfigSuite) TestReconcileUserSwapVolumes() {

@@ -506,6 +506,11 @@ func (container *Container) ExternalVolumeConfigs() []config.ExternalVolumeConfi
 	return findMatchingDocs[config.ExternalVolumeConfig](container.documents)
 }
 
+// InlineDataVolumeConfigs implements config.Config interface.
+func (container *Container) InlineDataVolumeConfigs() []config.InlineDataVolumeConfig {
+	return findMatchingDocs[config.InlineDataVolumeConfig](container.documents)
+}
+
 // RawVolumeConfigs implements config.Config interface.
 func (container *Container) RawVolumeConfigs() []config.RawVolumeConfig {
 	return findMatchingDocs[config.RawVolumeConfig](container.documents)

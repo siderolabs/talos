@@ -17,3 +17,15 @@ message EtcFileStatusSpec {
   string spec_version = 1;
 }
 
+// InlineDataVolumeStatusSpec describes the rendered files of an inline data volume.
+message InlineDataVolumeStatusSpec {
+  // VolumeID is the ID of the volume holding the files.
+  string volume_id = 1;
+  // ContentsHash is the hash of the rendered files.
+  string contents_hash = 2;
+  // Files is the number of rendered files.
+  int64 files = 3;
+  // Device is the device number of the filesystem holding the files.
+  uint64 device = 4;
+}
+

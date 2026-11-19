@@ -528,6 +528,7 @@ description: Talos gRPC API reference.
 - [resource/definitions/files/files.proto](#resource/definitions/files/files.proto)
     - [EtcFileSpecSpec](#talos.resource.definitions.files.EtcFileSpecSpec)
     - [EtcFileStatusSpec](#talos.resource.definitions.files.EtcFileStatusSpec)
+    - [InlineDataVolumeStatusSpec](#talos.resource.definitions.files.InlineDataVolumeStatusSpec)
   
 - [resource/definitions/hardware/hardware.proto](#resource/definitions/hardware/hardware.proto)
     - [BMCDeviceSpec](#talos.resource.definitions.hardware.BMCDeviceSpec)
@@ -9248,6 +9249,24 @@ EtcFileStatusSpec describes status of rendered secrets.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | spec_version | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.files.InlineDataVolumeStatusSpec"></a>
+
+### InlineDataVolumeStatusSpec
+InlineDataVolumeStatusSpec describes the rendered files of an inline data volume.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| volume_id | [string](#string) |  | VolumeID is the ID of the volume holding the files. |
+| contents_hash | [string](#string) |  | ContentsHash is the hash of the rendered files. |
+| files | [int64](#int64) |  | Files is the number of rendered files. |
+| device | [uint64](#uint64) |  | Device is the device number of the filesystem holding the files. |
 
 
 

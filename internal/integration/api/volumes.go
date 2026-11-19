@@ -28,6 +28,7 @@ import (
 	"go.yaml.in/yaml/v4"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
+	filesctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/files"
 	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/api/storage"
@@ -43,6 +44,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	crires "github.com/siderolabs/talos/pkg/machinery/resources/cri"
+	filesres "github.com/siderolabs/talos/pkg/machinery/resources/files"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
@@ -1451,6 +1453,153 @@ func (suite *VolumesSuite) TestUserVolumesTmpfs() {
 	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.UserVolumeConfigKind, pctVolumeID)
 
 	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.State(), pctUserVolumeID)
+}
+
+// TestInlineDataVolumes verifies inline data volumes: from the config document through the volume manager to a
+// detached tmpfs with the files rendered, updated in place, protected against name conflicts, and released on removal.
+//
+//nolint:gocyclo
+func (suite *VolumesSuite) TestInlineDataVolumes() {
+	if testing.Short() {
+		suite.T().Skip("skipping test in short mode.")
+	}
+
+	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
+		suite.T().Skip("skipping test for non-qemu provisioner")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+
+	ctx := client.WithNode(suite.ctx, node)
+
+	volumeName := fmt.Sprintf("%04x", rand.Int31()) + "-inline"
+	volumeID := constants.InlineDataVolumePrefix + volumeName
+	mountPoint := filepath.Join(constants.InlineDataVolumeMountPoint, volumeID)
+
+	doc := blockcfg.NewInlineDataVolumeConfigV1Alpha1()
+	doc.MetaName = volumeName
+	doc.FilesConfig = map[string]blockcfg.InlineDataVolumeFileV1Alpha1{
+		"app.yaml": {
+			FileContents: "listen: :8080\n",
+		},
+		"conf.d/extra.ini": {
+			FileMode:     new(blockcfg.InlineDataVolumeFileMode(0o600)),
+			FileContents: "[section]\nkey=value\n",
+		},
+	}
+
+	// assertRendered waits for the volume to be ready, mounted detached, and the status to reflect the files of doc,
+	// returning the device number of the volume.
+	assertRendered := func() uint64 {
+		expectedHash := filesctrl.InlineDataVolumeContentsHash(doc.Files())
+		expectedFiles := len(doc.FilesConfig)
+
+		rtestutils.AssertResources(
+			ctx, suite.T(), suite.Client.State(), []string{volumeID},
+			func(vs *block.VolumeStatus, asrt *assert.Assertions) {
+				asrt.Equalf(block.VolumePhaseReady, vs.TypedSpec().Phase, "Expected %q, but got %q (%s): %s",
+					block.VolumePhaseReady, vs.TypedSpec().Phase, vs.Metadata().ID(), vs.TypedSpec().ErrorMessage)
+				asrt.Equal(block.VolumeTypeTmpfs, vs.TypedSpec().Type)
+			},
+		)
+
+		rtestutils.AssertResources(
+			ctx, suite.T(), suite.Client.State(), []string{volumeID},
+			func(ms *block.MountStatus, asrt *assert.Assertions) {
+				asrt.True(ms.TypedSpec().Detached, "expected the inline data volume to be mounted detached")
+			},
+		)
+
+		var device uint64
+
+		rtestutils.AssertResources(
+			ctx, suite.T(), suite.Client.State(), []string{volumeName},
+			func(status *filesres.InlineDataVolumeStatus, asrt *assert.Assertions) {
+				asrt.Equal(volumeID, status.TypedSpec().VolumeID)
+				asrt.Equal(expectedHash, status.TypedSpec().ContentsHash)
+				asrt.Equal(expectedFiles, status.TypedSpec().Files)
+				asrt.NotZero(status.TypedSpec().Device)
+
+				device = status.TypedSpec().Device
+			},
+		)
+
+		// the volume is held by machined only, it is not attached to the host mount tree
+		_, mounted := findMount(suite.readNodeMountInfo(ctx), mountPoint)
+		suite.Assert().Falsef(mounted, "expected no mount at %s", mountPoint)
+
+		return device
+	}
+
+	suite.T().Logf("creating inline data volume %s on node %s", volumeID, node)
+
+	suite.PatchMachineConfig(ctx, doc)
+
+	device := assertRendered()
+
+	// changing the contents of a file re-renders the files in place, on the same tmpfs
+	doc.FilesConfig["app.yaml"] = blockcfg.InlineDataVolumeFileV1Alpha1{
+		FileContents: "listen: :9090\n",
+	}
+
+	suite.PatchMachineConfig(ctx, doc)
+
+	suite.Assert().Equal(device, assertRendered(), "expected the files to be updated without remounting the volume")
+
+	// adding a file
+	doc.FilesConfig["conf.d/more.ini"] = blockcfg.InlineDataVolumeFileV1Alpha1{
+		FileMode:     new(blockcfg.InlineDataVolumeFileMode(0o640)),
+		FileContents: "[more]\n",
+	}
+
+	suite.PatchMachineConfig(ctx, doc)
+
+	suite.Assert().Equal(device, assertRendered(), "expected the files to be updated without remounting the volume")
+
+	// a user volume with the same name is rejected by the node
+	suite.Run("name conflict", func() {
+		cfg, err := suite.ReadConfigFromNode(ctx)
+		suite.Require().NoError(err)
+
+		cfgBytes, err := cfg.Bytes()
+		suite.Require().NoError(err)
+
+		userVolumeDoc := blockcfg.NewUserVolumeConfigV1Alpha1()
+		userVolumeDoc.MetaName = volumeName
+		userVolumeDoc.VolumeType = new(block.VolumeTypeDirectory)
+
+		userVolumeBytes, err := yaml.Marshal(userVolumeDoc)
+		suite.Require().NoError(err)
+
+		_, err = suite.Client.ApplyConfiguration(ctx, &machineapi.ApplyConfigurationRequest{
+			Data: slices.Concat(cfgBytes, []byte("\n---\n"), userVolumeBytes),
+			Mode: machineapi.ApplyConfigurationRequest_AUTO,
+		})
+		suite.Require().Error(err, "a user volume with the name of an inline data volume must be rejected")
+		suite.Require().Contains(err.Error(), "conflicting documents")
+
+		// nothing changed
+		rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.State(), constants.UserVolumePrefix+volumeName)
+		suite.Assert().Equal(device, assertRendered())
+	})
+
+	// removing the volume releases the mount
+	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.InlineDataVolumeConfigKind, volumeName)
+
+	rtestutils.AssertNoResource[*filesres.InlineDataVolumeStatus](ctx, suite.T(), suite.Client.State(), volumeName)
+	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.State(), volumeID)
+	rtestutils.AssertNoResource[*block.MountStatus](ctx, suite.T(), suite.Client.State(), volumeID)
+
+	// re-creating the volume renders the files again
+	suite.PatchMachineConfig(ctx, doc)
+
+	assertRendered()
+
+	// clean up
+	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.InlineDataVolumeConfigKind, volumeName)
+
+	rtestutils.AssertNoResource[*filesres.InlineDataVolumeStatus](ctx, suite.T(), suite.Client.State(), volumeName)
+	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.State(), volumeID)
 }
 
 // readNodeMountInfo fetches and parses /proc/self/mountinfo from the node in ctx.

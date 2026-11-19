@@ -50,6 +50,9 @@ const ExternalVolumeLabel = "talos.dev/external-volume"
 // SwapVolumeLabel is the label for swap volumes.
 const SwapVolumeLabel = "talos.dev/swap-volume"
 
+// InlineDataVolumeLabel is the label for inline data volumes.
+const InlineDataVolumeLabel = "talos.dev/inline-data-volume"
+
 // PlatformLabel is the label for platform volumes.
 const PlatformLabel = "talos.dev/platform"
 

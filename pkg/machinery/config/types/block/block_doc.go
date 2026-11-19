@@ -318,7 +318,7 @@ func (ExistingVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "ExistingVolumeConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "ExistingVolumeConfig is an existing volume configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ExistingVolumeConfig is an existing volume configuration document.\nExisting volumes allow to mount partitions (or whole disks) that were created\noutside of Talos. Volume will be mounted under `/var/mnt/<name>`.\nThe name must not be taken by a user or external volume.\n",
+		Description: "ExistingVolumeConfig is an existing volume configuration document.\nExisting volumes allow to mount partitions (or whole disks) that were created\noutside of Talos. Volume will be mounted under `/var/mnt/<name>`.\nThe name must not be taken by a user, external or inline data volume.\n",
 		Fields: []encoder.Doc{
 			{
 				Type:   "Meta",
@@ -463,7 +463,7 @@ func (ExternalVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "ExternalVolumeConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "ExternalVolumeConfig is an external disk mount configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ExternalVolumeConfig is an external disk mount configuration document.\nExternal volumes allow to mount volumes that were created outside of Talos,\nover the network or API. Volume will be mounted under `/var/mnt/<name>`.\nThe name must not be taken by a user or existing volume.\n",
+		Description: "ExternalVolumeConfig is an external disk mount configuration document.\nExternal volumes allow to mount volumes that were created outside of Talos,\nover the network or API. Volume will be mounted under `/var/mnt/<name>`.\nThe name must not be taken by a user, existing or inline data volume.\n",
 		Fields: []encoder.Doc{
 			{
 				Type:   "Meta",
@@ -936,6 +936,70 @@ func (SwapVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (InlineDataVolumeConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "InlineDataVolumeConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "InlineDataVolumeConfig is an inline data volume configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "InlineDataVolumeConfig is an inline data volume configuration document.\nInline data volume is a set of files defined inline, similar to a Kubernetes ConfigMap.\nThe files are kept in memory (`tmpfs`), which only Talos can write to.\nThe name must not be taken by a user, existing or external volume.\n\nChanges to the files are applied in place:\nthe files are replaced atomically as a whole, by swapping the `..data` symbolic link\nto a directory holding the new set of files.\nEach top-level entry of the volume is a symbolic link into `..data`.\n",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the volume.\n\nName might be between 1 and 34 characters long and can only contain:\nlowercase and uppercase ASCII letters, digits, and hyphens.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "files",
+				Type:        "map[string]InlineDataVolumeFileV1Alpha1",
+				Note:        "",
+				Description: "Files of the volume, keyed by the path relative to the volume root.\n\nPaths may contain subdirectories, which are created automatically.\nPath components must not start with `..`, and must be at most 255 bytes long.\nPaths must be at most 1024 bytes long.\nThere may be at most 256 files in at most 256 distinct directories,\nand their total size, each rounded up to 4 KiB, must not exceed 1 MiB.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Files of the volume, keyed by the path relative to the volume root." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleInlineDataVolumeConfigV1Alpha1())
+
+	return doc
+}
+
+func (InlineDataVolumeFileV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "InlineDataVolumeFileV1Alpha1",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "InlineDataVolumeFileV1Alpha1 describes a single file of an inline data volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "InlineDataVolumeFileV1Alpha1 describes a single file of an inline data volume.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "InlineDataVolumeConfigV1Alpha1",
+				FieldName: "files",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "mode",
+				Type:        "InlineDataVolumeFileMode",
+				Note:        "",
+				Description: "The file's permissions in octal.\n\nDefaults to `0o644`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The file's permissions in octal." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "contents",
+				Type:        "string",
+				Note:        "",
+				Description: "The contents of the file.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The contents of the file." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
 func (TrimConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "TrimConfig",
@@ -1004,7 +1068,7 @@ func (UserVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "UserVolumeConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "UserVolumeConfig is a user volume configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "UserVolumeConfig is a user volume configuration document.\nUser volume is automatically allocated as a partition on the specified disk\nand mounted under `/var/mnt/<name>`.\nThe partition label is automatically generated as `u-<name>`.\nThe name must not be taken by an existing or external volume.\nA `tmpfs` user volume is backed by memory, its size is set with `provisioning.maxSize`\n(in bytes, or in percents of the memory), and its content is lost on unmount.\n",
+		Description: "UserVolumeConfig is a user volume configuration document.\nUser volume is automatically allocated as a partition on the specified disk\nand mounted under `/var/mnt/<name>`.\nThe partition label is automatically generated as `u-<name>`.\nThe name must not be taken by an existing, external or inline data volume.\nA `tmpfs` user volume is backed by memory, its size is set with `provisioning.maxSize`\n(in bytes, or in percents of the memory), and its content is lost on unmount.\n",
 		Fields: []encoder.Doc{
 			{
 				Type:   "Meta",
@@ -1466,6 +1530,8 @@ func GetFileDoc() *encoder.FileDoc {
 			RawVolumeConfigV1Alpha1{}.Doc(),
 			ScrubConfig{}.Doc(),
 			SwapVolumeConfigV1Alpha1{}.Doc(),
+			InlineDataVolumeConfigV1Alpha1{}.Doc(),
+			InlineDataVolumeFileV1Alpha1{}.Doc(),
 			TrimConfig{}.Doc(),
 			UserVolumeConfigV1Alpha1{}.Doc(),
 			UserMountSpec{}.Doc(),

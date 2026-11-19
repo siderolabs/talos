@@ -4,7 +4,7 @@ description: |
     User volume is automatically allocated as a partition on the specified disk
     and mounted under `/var/mnt/<name>`.
     The partition label is automatically generated as `u-<name>`.
-    The name must not be taken by an existing or external volume.
+    The name must not be taken by an existing, external or inline data volume.
     A `tmpfs` user volume is backed by memory, its size is set with `provisioning.maxSize`
     (in bytes, or in percents of the memory), and its content is lost on unmount.
 title: UserVolumeConfig
