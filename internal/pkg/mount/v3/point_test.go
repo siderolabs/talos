@@ -8,6 +8,7 @@ package mount_test
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -52,4 +53,36 @@ func TestDetachedMountHardened(t *testing.T) {
 
 	_, err = xfs.OpenFile(point.Root(), "null", os.O_RDONLY, 0)
 	require.ErrorIs(t, err, unix.EACCES)
+}
+
+func TestRemountReadOnlyBind(t *testing.T) {
+	if os.Geteuid() != 0 {
+		t.Skip("requires root for mount operations")
+	}
+
+	target := filepath.Join(t.TempDir(), "volume")
+	bind := filepath.Join(t.TempDir(), "bind")
+
+	mgr := mount.NewManager(mount.WithTarget(target), mount.WithFsopen("tmpfs"))
+
+	point, err := mgr.Mount()
+	require.NoError(t, err)
+
+	t.Cleanup(func() { mgr.Unmount() }) //nolint:errcheck
+
+	require.NoError(t, os.Mkdir(bind, 0o755))
+	require.NoError(t, unix.Mount(target, bind, "", unix.MS_BIND, ""))
+
+	t.Cleanup(func() { unix.Unmount(bind, 0) }) //nolint:errcheck
+
+	require.NoError(t, point.RemountReadOnly())
+
+	// as the container runtime does for a read-write hostPath volume
+	require.NoError(t, unix.Mount("", bind, "", unix.MS_REMOUNT|unix.MS_BIND, ""))
+
+	require.ErrorIs(t, os.WriteFile(filepath.Join(bind, "file"), nil, 0o600), unix.EROFS)
+
+	require.NoError(t, point.RemountReadWrite())
+
+	require.NoError(t, os.WriteFile(filepath.Join(bind, "file"), nil, 0o600))
 }

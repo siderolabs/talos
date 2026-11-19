@@ -804,6 +804,12 @@ func (ctrl *MountController) handleDiskMountOperation(
 
 		if mountReadOnlyOnMount(mountRequest, volumeStatus) {
 			opts = append(opts, mount.WithReadOnly())
+
+			// The container runtime remounts the bind of a pod hostPath volume read-write, which clears the
+			// read-only attribute of that mount: only a read-only superblock refuses writes through every mount.
+			if !mountRequest.TypedSpec().Detached {
+				fsOpts = append(fsOpts, fsopen.WithBoolParameter("ro"))
+			}
 		}
 
 		if mountRequest.TypedSpec().Detached {

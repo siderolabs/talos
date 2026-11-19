@@ -14,6 +14,7 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	"unsafe"
 
 	"github.com/siderolabs/go-retry/retry"
 	"golang.org/x/sys/unix"
@@ -325,10 +326,17 @@ func (p *Point) Root() xfs.Root {
 	return p.root
 }
 
-// RemountReadOnly remounts the mount point as read-only.
+// RemountReadOnly remounts the filesystem and the mount point as read-only.
+//
+// The read-only attribute of a mount does not propagate to its copies in other mount namespaces,
+// and a bind of it can be remounted read-write. A read-only superblock refuses writes through all of them.
 func (p *Point) RemountReadOnly() error {
 	if p.detached {
 		return nil
+	}
+
+	if err := p.reconfigure("ro"); err != nil {
+		return err
 	}
 
 	return p.setattr(&unix.MountAttr{
@@ -336,15 +344,48 @@ func (p *Point) RemountReadOnly() error {
 	}, 0)
 }
 
-// RemountReadWrite remounts the mount point as read-write.
+// RemountReadWrite remounts the filesystem and the mount point as read-write.
 func (p *Point) RemountReadWrite() error {
 	if p.detached {
 		return nil
 	}
 
+	if err := p.reconfigure("rw"); err != nil {
+		return err
+	}
+
 	return p.setattr(&unix.MountAttr{
 		Attr_clr: unix.MOUNT_ATTR_RDONLY,
 	}, 0)
+}
+
+// reconfigure sets a flag on the superblock of the mount point, keeping the other parameters of the filesystem.
+func (p *Point) reconfigure(flag string) error {
+	target, err := unix.BytePtrFromString(p.target)
+	if err != nil {
+		return err
+	}
+
+	dirfd := unix.AT_FDCWD
+
+	r, _, errno := unix.Syscall(unix.SYS_FSPICK, uintptr(dirfd), uintptr(unsafe.Pointer(target)), unix.FSPICK_CLOEXEC)
+	if errno != 0 {
+		return fmt.Errorf("fspick %q: %w", p.target, errno)
+	}
+
+	fd := int(r)
+
+	defer unix.Close(fd) //nolint:errcheck
+
+	if err = unix.FsconfigSetFlag(fd, flag); err != nil {
+		return fmt.Errorf("set %q on %q: %w", flag, p.target, err)
+	}
+
+	if err = unix.FsconfigReconfigure(fd); err != nil {
+		return fmt.Errorf("reconfigure %q with %q: %w", p.target, flag, err)
+	}
+
+	return nil
 }
 
 // SetDisableAccessTime sets or clears the noatime mount attribute.
