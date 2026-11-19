@@ -13,6 +13,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
 	"github.com/siderolabs/talos/pkg/imager/utils"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 )
 
@@ -108,7 +109,7 @@ func (options Options) grubPlatformDir() string {
 		return ""
 	}
 
-	if options.Arch == "arm64" {
+	if options.Arch == constants.ArchArm64 {
 		return grubARM64EFIDirectory
 	}
 

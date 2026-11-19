@@ -11,12 +11,18 @@ import (
 	"github.com/siderolabs/crypto/x509"
 )
 
-// SupportedArchitectures is the list of architectures supported by Talos.
-// It is used in kubernetes pod scheduling constraints.
-var SupportedArchitectures = []string{
-	"amd64",
-	"arm64",
-}
+// Architecture names: Go, OCI and Talos use the Arch* names, the kernel (uname -m) and QEMU
+// the KernelArch* names.
+const (
+	// ArchAmd64 is the 64-bit x86 architecture.
+	ArchAmd64 = "amd64"
+	// ArchArm64 is the 64-bit ARM architecture.
+	ArchArm64 = "arm64"
+	// KernelArchAmd64 is the kernel and QEMU name of ArchAmd64.
+	KernelArchAmd64 = "x86_64"
+	// KernelArchArm64 is the kernel and QEMU name of ArchArm64.
+	KernelArchArm64 = "aarch64"
+)
 
 const (
 	// DefaultKernelVersion is the default Linux kernel version.

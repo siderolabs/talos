@@ -29,11 +29,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
-const (
-	amd64 = "amd64"
-	arm64 = "arm64"
-)
-
 // Install validates the grub configuration and writes it to the disk.
 func (c *Config) Install(opts options.InstallOptions) (*options.InstallResult, error) {
 	mountSpecs := []mount.Spec{
@@ -138,7 +133,7 @@ func (c *Config) generateGrubImage(ctx context.Context, opts options.InstallOpti
 	const grubPrefix = "(hd0,gpt3)/grub" // EFI, BIOS, BOOT
 
 	// in amd64 mode only, install GRUB BIOS mode
-	if opts.Arch == "amd64" {
+	if opts.Arch == constants.ArchAmd64 {
 		grub32Modules := []string{
 			"biosdisk",
 			"part_msdos",
@@ -175,9 +170,9 @@ func (c *Config) generateGrubImage(ctx context.Context, opts options.InstallOpti
 
 	// install GRUB in UEFI mode
 	switch opts.Arch {
-	case "amd64":
+	case constants.ArchAmd64:
 		platform = "x86_64-efi"
-	case "arm64":
+	case constants.ArchArm64:
 		platform = "arm64-efi"
 	default:
 		return fmt.Errorf("unsupported architecture for grub image: %s", opts.Arch)
@@ -309,17 +304,17 @@ func (c *Config) runGrubInstall(ctx context.Context, opts options.InstallOptions
 	var platforms []string
 
 	switch opts.Arch {
-	case amd64:
+	case constants.ArchAmd64:
 		if efiMode {
 			platforms = append(platforms, "x86_64-efi")
 		}
 
 		platforms = append(platforms, "i386-pc")
-	case arm64:
+	case constants.ArchArm64:
 		platforms = []string{"arm64-efi"}
 	}
 
-	if runtime.GOARCH == amd64 && opts.Arch == amd64 {
+	if runtime.GOARCH == constants.ArchAmd64 && opts.Arch == constants.ArchAmd64 {
 		// let grub choose the platform automatically if not building an image
 		platforms = []string{""}
 	}

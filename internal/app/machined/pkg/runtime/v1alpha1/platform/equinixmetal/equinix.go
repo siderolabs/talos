@@ -115,11 +115,11 @@ func (p *EquinixMetal) Mode() runtime.Mode {
 // KernelArgs implements the runtime.Platform interface.
 func (p *EquinixMetal) KernelArgs(arch string, _ quirks.Quirks) procfs.Parameters {
 	switch arch {
-	case "amd64":
+	case constants.ArchAmd64:
 		return []*procfs.Parameter{
 			procfs.NewParameter("console").Append("ttyS1,115200n8"),
 		}
-	case "arm64":
+	case constants.ArchArm64:
 		return []*procfs.Parameter{
 			procfs.NewParameter("console").Append("ttyAMA0,115200"),
 		}

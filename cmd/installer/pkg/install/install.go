@@ -809,7 +809,7 @@ func (i *Installer) handlePartitionDataPopulation(ctx context.Context, idx int, 
 
 //nolint:gocyclo,cyclop
 func (i *Installer) handleGrubBlocklist(gptdev gpt.Device, pt *gpt.Table) error {
-	if i.options.Arch != "amd64" {
+	if i.options.Arch != constants.ArchAmd64 {
 		return nil
 	}
 

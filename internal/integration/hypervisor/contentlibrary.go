@@ -10,9 +10,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"io"
-	"math/rand"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -27,10 +25,7 @@ import (
 	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
-	blockcfg "github.com/siderolabs/talos/pkg/machinery/config/types/block"
-	hypervisorcfg "github.com/siderolabs/talos/pkg/machinery/config/types/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
-	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 )
 
@@ -86,62 +81,6 @@ func (suite *ContentLibrarySuite) provisionLibrary() (context.Context, string, s
 	return ctx, name, path
 }
 
-// provisionContentLibrary declares a content library on a directory user volume of node and waits
-// for it to come up.
-//
-// It returns the library's ID and the path its contents sit at. The library and the volume backing
-// it are removed when the test ends.
-func provisionContentLibrary(suite *base.APISuite, ctx context.Context, node string) (string, string) { //nolint:revive
-	suite.T().Helper()
-
-	// Randomized so repeated runs against the same cluster don't collide on a leftover volume.
-	name := fmt.Sprintf("cl-%04x", rand.Int31())
-	volumeID := constants.UserVolumePrefix + name
-
-	suite.T().Logf("testing the content library %q on node %s", name, node)
-
-	// A directory volume, not a partition: none of these tests store more than a few kilobytes, and a
-	// partition would claim a spare disk which the storage tests need, and which removing the document
-	// does not hand back.
-	volumeDoc := blockcfg.NewUserVolumeConfigV1Alpha1()
-	volumeDoc.MetaName = name
-	volumeDoc.VolumeType = new(block.VolumeTypeDirectory)
-
-	libraryDoc := hypervisorcfg.NewContentLibraryConfigV1Alpha1()
-	libraryDoc.MetaName = name
-	libraryDoc.BackingConfig.VolumeName = name
-
-	suite.PatchMachineConfig(ctx, volumeDoc, libraryDoc)
-
-	suite.T().Cleanup(func() {
-		// A context of its own: cleanups run after TearDownTest, which has already canceled the
-		// suite's context by then.
-		cleanupCtx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-		defer cancel()
-
-		nodeCtx := client.WithNode(cleanupCtx, node)
-
-		suite.RemoveMachineConfigDocumentsByName(nodeCtx, hypervisorcfg.ContentLibraryConfigKind, name)
-		suite.RemoveMachineConfigDocumentsByName(nodeCtx, blockcfg.UserVolumeConfigKind, name)
-
-		rtestutils.AssertNoResource[*hypervisor.ContentLibraryStatus](nodeCtx, suite.T(), suite.Client.State(), name)
-	})
-
-	rtestutils.AssertResources(ctx, suite.T(), suite.Client.State(), []string{volumeID},
-		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
-			asrt.Equal(block.VolumePhaseReady, vs.TypedSpec().Phase)
-		},
-	)
-
-	rtestutils.AssertResources(ctx, suite.T(), suite.Client.State(), []string{name},
-		func(cls *hypervisor.ContentLibraryStatus, asrt *assert.Assertions) {
-			asrt.True(cls.TypedSpec().Phase == hypervisor.ContentLibraryPhaseReady, "error: %q", cls.TypedSpec().Error)
-		},
-	)
-
-	return name, filepath.Join(constants.UserVolumeMountPoint, name)
-}
-
 // TestLibraryBecomesReady covers a library declared on a user volume being reported as ready, and
 // pointed at the volume it was declared on.
 func (suite *ContentLibrarySuite) TestLibraryBecomesReady() {
@@ -157,10 +96,6 @@ func (suite *ContentLibrarySuite) TestLibraryBecomesReady() {
 
 	// An empty library lists nothing, rather than failing.
 	suite.Assert().Empty(suite.list(ctx, name))
-}
-
-func contentLibraryObjectPath(path string, identity digest.Digest) string {
-	return filepath.Join(path, "objects", "sha256", identity.Encoded())
 }
 
 // TestUploadListDelete covers the contents of a library over its whole life: uploaded, listed,

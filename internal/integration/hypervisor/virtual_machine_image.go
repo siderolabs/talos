@@ -26,28 +26,21 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	hypervisorcfg "github.com/siderolabs/talos/pkg/machinery/config/types/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 )
 
-func (f *blankDiskFixture) writableImageDocument(library string) *hypervisorcfg.VirtualMachineConfigV1Alpha1 {
-	doc := f.document("2GiB", hypervisorhelpers.PowerStateRunning)
-	doc.MemoryConfig.MemorySize = meta.MustByteSize("256MiB")
-	doc.ConsoleConfig.SerialConfig.SerialEnabled = new(true)
-	doc.DisksConfig[0].ProvisionConfig = hypervisorcfg.VirtualMachineDiskProvision{
-		FromImageConfig: &hypervisorcfg.VirtualMachineDiskFromImage{
-			ImageLibrary: library,
-			ImageFile:    "guest.img",
-		},
-	}
+// ImageSuite verifies writable disks provisioned from images.
+type ImageSuite struct{ LibvirtSuite }
 
-	return doc
-}
+// SuiteName implements base.NamedSuite.
+func (suite *ImageSuite) SuiteName() string { return "hypervisor.ImageSuite" }
 
 // TestWritableImageFromContentLibrary runs import and guest I/O in short CI.
 // Full CI also covers alias replacement, source-free node restart, offline
 // growth and configuration withdrawal/re-addition with persistent guest writes.
-func (suite *LibvirtSuite) TestWritableImageFromContentLibrary() {
+func (suite *ImageSuite) TestWritableImageFromContentLibrary() {
 	suite.requireContentLibrary()
 
 	if suite.HypervisorDiskImagePath == "" {
@@ -60,7 +53,7 @@ func (suite *LibvirtSuite) TestWritableImageFromContentLibrary() {
 	node := suite.RandomDiscoveredNodeInternalIP()
 
 	nodeCtx := client.WithNode(ctx, node)
-	if suite.ReadMachineArch(nodeCtx) != "amd64" {
+	if suite.ReadMachineArch(nodeCtx) != constants.ArchAmd64 {
 		suite.T().Skip("stock OpenWrt fixture is amd64")
 	}
 
@@ -74,7 +67,7 @@ func (suite *LibvirtSuite) TestWritableImageFromContentLibrary() {
 	// These helpers register library/backing and VM/domain/disk cleanup with T().Cleanup.
 	// Short-mode returns and failed assertions still run that resource cleanup.
 	library, libraryPath := provisionContentLibrary(&suite.APISuite, nodeCtx, node)
-	fixture := newBlankDiskFixtureOnNode(ctx, suite, "vm-image", node)
+	fixture := newBlankDiskFixtureOnNode(ctx, &suite.LibvirtSuite, "vm-image", node)
 	fixture.volumeFile = fixture.vmName + "__" + fixture.diskName + ".img"
 	doc := fixture.writableImageDocument(library)
 
@@ -234,4 +227,8 @@ func (suite *LibvirtSuite) TestWritableImageFromContentLibrary() {
 	suite.PatchMachineConfig(nodeCtx, doc)
 	assertDisk(3 << 30)
 	checkGuest("6291456", false)
+}
+
+func init() {
+	allSuites = append(allSuites, new(ImageSuite))
 }

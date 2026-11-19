@@ -67,7 +67,7 @@ func TestPrepareBootPartitionsImageMode(t *testing.T) {
 	}
 
 	partitionOptions, err := grub.NewConfig().PrepareBootPartitions(options.InstallOptions{
-		Arch:        "arm64",
+		Arch:        constants.ArchArm64,
 		Version:     "v1.14.0",
 		ImageMode:   true,
 		MountPrefix: mountPrefix,
@@ -116,7 +116,7 @@ func TestPrepareBootPartitionsInstallMode(t *testing.T) {
 	mountPrefix := t.TempDir()
 
 	partitionOptions, err := grub.NewConfig().PrepareBootPartitions(options.InstallOptions{
-		Arch:        "arm64",
+		Arch:        constants.ArchArm64,
 		Version:     "v1.14.0",
 		MountPrefix: mountPrefix,
 		Printf:      t.Logf,

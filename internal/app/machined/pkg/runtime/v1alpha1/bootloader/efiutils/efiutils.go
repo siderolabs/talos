@@ -8,6 +8,8 @@ package efiutils
 import (
 	"fmt"
 	"path/filepath"
+
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // Name returns the standard EFI file path for the given architecture.
@@ -15,9 +17,9 @@ func Name(arch string) (string, error) {
 	basePath := filepath.Join("EFI", "boot")
 
 	switch arch {
-	case "amd64":
+	case constants.ArchAmd64:
 		return filepath.Join(basePath, "BOOTX64.efi"), nil
-	case "arm64":
+	case constants.ArchArm64:
 		return filepath.Join(basePath, "BOOTAA64.efi"), nil
 	default:
 		return "", fmt.Errorf("unsupported architecture: %s", arch)

@@ -33,11 +33,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 )
 
-const (
-	arm64 = "arm64"
-	amd64 = "amd64"
-)
-
 // Input describes inputs for image generation.
 type Input struct {
 	// Kernel is a vmlinuz file.

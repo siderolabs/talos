@@ -5,6 +5,7 @@
 package profile
 
 import (
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/imager/imageropts"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 )
@@ -173,7 +174,7 @@ func (o *Output) selectBootloader(current BootloaderKind, arch, version string, 
 	case secureboot:
 		// secureboot is always using sd-boot
 		return BootLoaderKindSDBoot
-	case arch == "arm64" && useSDBoot:
+	case arch == constants.ArchArm64 && useSDBoot:
 		// arm64 always uses sd-boot for Talos >= 1.10
 		return BootLoaderKindSDBoot
 	case !useSDBoot:

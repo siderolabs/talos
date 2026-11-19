@@ -73,7 +73,7 @@ func TestGenerateAssets(t *testing.T) {
 			require.NoError(t, os.WriteFile(dbPath, []byte(dbContents), 0o644))
 
 			opts := options.InstallOptions{
-				Arch:        "amd64",
+				Arch:        constants.ArchAmd64,
 				MountPrefix: mountPrefix,
 				BootAssets: options.BootAssets{
 					UKIPath:    ukiPath,

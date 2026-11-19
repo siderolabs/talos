@@ -22,6 +22,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/imager"
 	"github.com/siderolabs/talos/pkg/imager/profile"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/reporter"
 )
 
@@ -30,7 +31,7 @@ func buildBaseInstaller(t *testing.T) string {
 	t.Helper()
 
 	baseImg, err := mutate.ConfigFile(empty.Image, &v1.ConfigFile{
-		Architecture: "amd64",
+		Architecture: constants.ArchAmd64,
 		OS:           "linux",
 		Config: v1.Config{
 			Entrypoint: []string{"/bin/installer"},
@@ -46,7 +47,7 @@ func buildBaseInstaller(t *testing.T) string {
 	ociLayout, err := layout.Write(ociPath, empty.Index)
 	require.NoError(t, err)
 
-	require.NoError(t, ociLayout.AppendImage(baseImg, layout.WithPlatform(v1.Platform{OS: "linux", Architecture: "amd64"})))
+	require.NoError(t, ociLayout.AppendImage(baseImg, layout.WithPlatform(v1.Platform{OS: "linux", Architecture: constants.ArchAmd64})))
 
 	return ociPath
 }
@@ -75,7 +76,7 @@ func TestOutInstallerReproducible(t *testing.T) {
 		tempDir := t.TempDir()
 
 		prof := profile.Profile{
-			Arch:    "amd64",
+			Arch:    constants.ArchAmd64,
 			Version: "1.9.0",
 			Input: profile.Input{
 				Kernel: profile.FileAsset{Path: kernelPath},

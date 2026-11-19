@@ -9,6 +9,8 @@ import (
 	"fmt"
 
 	"github.com/blang/semver/v4"
+
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // Arch represents an architecture supported by Talos.
@@ -16,8 +18,8 @@ type Arch = string
 
 // Architecture constants.
 const (
-	ArchAmd64 = "amd64"
-	ArchArm64 = "arm64"
+	ArchAmd64 = constants.ArchAmd64
+	ArchArm64 = constants.ArchArm64
 )
 
 // BootMethod represents a boot method supported by Talos.

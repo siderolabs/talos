@@ -38,6 +38,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/imager/filemap"
 	"github.com/siderolabs/talos/pkg/imager/utils"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 const (
@@ -402,7 +403,7 @@ func processImageAllPlatforms(
 
 	if rmt.MediaType != types.OCIImageIndex && rmt.MediaType != types.DockerManifestList {
 		return processImage(src, tmpDir, imageLayerCachePath, "linux/amd64", nameOptions, craneOpts,
-			append(remoteOpts, remote.WithPlatform(v1.Platform{OS: "linux", Architecture: "amd64"})),
+			append(remoteOpts, remote.WithPlatform(v1.Platform{OS: "linux", Architecture: constants.ArchAmd64})),
 			sigRemoteOpts, withCosignSignatures)
 	}
 

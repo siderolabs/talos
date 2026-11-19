@@ -38,7 +38,7 @@ func New() *Config {
 // when formatting the filesystem.
 // In install mode, this only returns a list of partitions to create, and the assets are written to the partitions during Install.
 func (c *Config) PrepareBootPartitions(opts options.InstallOptions) ([]partition.Options, error) {
-	if opts.Arch == "arm64" {
+	if opts.Arch == constants.ArchArm64 {
 		return nil, fmt.Errorf("dual-boot bootloader is not supported on arm64 architecture, either GRUB or sd-boot must be used")
 	}
 

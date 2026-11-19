@@ -28,6 +28,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	hypervisorcfg "github.com/siderolabs/talos/pkg/machinery/config/types/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 	networkres "github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -68,7 +69,7 @@ func (suite *VirtualMachineSuite) TestConfigProjectionLifecycle() {
 	// Virtual machine profiles are only shipped for amd64, so no domain spec is rendered elsewhere.
 	//
 	// TODO(@shanduur): we need to support arm64 in the future, revert this check
-	if arch := suite.ReadMachineArch(nodeCtx); arch != "amd64" {
+	if arch := suite.ReadMachineArch(nodeCtx); arch != constants.ArchAmd64 {
 		suite.T().Skipf("skipping virtual machine projections on arch %q", arch)
 	}
 
@@ -288,7 +289,7 @@ func (suite *VirtualMachineSuite) TestInterfaceProjection() {
 	// Virtual machine profiles are only shipped for amd64, so no domain spec is rendered elsewhere.
 	//
 	// TODO(@shanduur): we need to support arm64 in the future, revert this check
-	if arch := suite.ReadMachineArch(nodeCtx); arch != "amd64" {
+	if arch := suite.ReadMachineArch(nodeCtx); arch != constants.ArchAmd64 {
 		suite.T().Skipf("skipping virtual machine projections on arch %q", arch)
 	}
 

@@ -751,7 +751,7 @@ func renderVirtualMachineDomain(
 		OS: &libvirtxml.DomainOS{
 			Type: &libvirtxml.DomainOSType{
 				Type:    "hvm",
-				Arch:    "x86_64",
+				Arch:    constants.KernelArchAmd64,
 				Machine: profile.Machine,
 			},
 		},
@@ -883,7 +883,7 @@ func renderVirtualMachineConsole(domain *libvirtxml.Domain, console hypervisor.V
 			},
 		}
 
-		if runtime.GOARCH == "amd64" {
+		if runtime.GOARCH == constants.ArchAmd64 {
 			// Default to VGA; an explicitly selected model may require guest drivers.
 			// Leave other architectures' device defaults to libvirt.
 			videoModel := video.Model

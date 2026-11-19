@@ -354,7 +354,7 @@ func (i *Imager) buildImage(ctx context.Context, path string, printf func(string
 
 	metaContents := slices.Clone(i.prof.Customization.MetaContents)
 
-	if i.prof.Arch == "amd64" && !i.prof.SecureBootEnabled() && quirks.New(i.prof.Version).UseSDBootForUEFI() {
+	if i.prof.Arch == constants.ArchAmd64 && !i.prof.SecureBootEnabled() && quirks.New(i.prof.Version).UseSDBootForUEFI() {
 		// allow overriding the bootloader if provided
 		if i.prof.Output.ImageOptions.Bootloader == profile.BootLoaderKindDualBoot {
 			metaContents = append(metaContents, meta.Value{

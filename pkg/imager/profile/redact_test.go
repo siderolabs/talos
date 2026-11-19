@@ -30,7 +30,7 @@ func TestRedacted(t *testing.T) {
 	t.Parallel()
 
 	prof := profile.Profile{
-		Arch:     "amd64",
+		Arch:     constants.ArchAmd64,
 		Platform: "metal",
 		Customization: profile.CustomizationProfile{
 			ExtraKernelArgs: []string{"console=ttyS0"},
@@ -84,7 +84,7 @@ func TestRedactedInvalidConfig(t *testing.T) {
 func TestRedactedEmpty(t *testing.T) {
 	t.Parallel()
 
-	prof := profile.Profile{Arch: "amd64"}
+	prof := profile.Profile{Arch: constants.ArchAmd64}
 
 	assert.Equal(t, prof, prof.Redacted())
 }

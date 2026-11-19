@@ -29,7 +29,7 @@ import (
 )
 
 func qemuDefaultGenOps() []generate.Option {
-	if runtime.GOARCH != "arm64" {
+	if runtime.GOARCH != constants.ArchArm64 {
 		return nil
 	}
 

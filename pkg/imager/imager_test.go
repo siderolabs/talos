@@ -15,6 +15,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/imager"
 	"github.com/siderolabs/talos/pkg/imager/profile"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/reporter"
 )
 
@@ -33,7 +34,7 @@ func TestImager(t *testing.T) {
 
 			prof: profile.Profile{
 				BaseProfileName: "metal",
-				Arch:            "amd64",
+				Arch:            constants.ArchAmd64,
 				Output: profile.Output{
 					Kind:      profile.OutKindCmdline,
 					OutFormat: profile.OutFormatRaw,
@@ -48,7 +49,7 @@ func TestImager(t *testing.T) {
 
 			prof: profile.Profile{
 				BaseProfileName: "metal",
-				Arch:            "arm64",
+				Arch:            constants.ArchArm64,
 				Output: profile.Output{
 					Kind:      profile.OutKindCmdline,
 					OutFormat: profile.OutFormatRaw,
@@ -63,7 +64,7 @@ func TestImager(t *testing.T) {
 
 			prof: profile.Profile{
 				BaseProfileName: "metal",
-				Arch:            "amd64",
+				Arch:            constants.ArchAmd64,
 				Output: profile.Output{
 					Kind:      profile.OutKindCmdline,
 					OutFormat: profile.OutFormatRaw,
@@ -78,7 +79,7 @@ func TestImager(t *testing.T) {
 
 			prof: profile.Profile{
 				BaseProfileName: "metal",
-				Arch:            "arm64",
+				Arch:            constants.ArchArm64,
 				Output: profile.Output{
 					Kind:      profile.OutKindCmdline,
 					OutFormat: profile.OutFormatRaw,
@@ -93,7 +94,7 @@ func TestImager(t *testing.T) {
 
 			prof: profile.Profile{
 				BaseProfileName: "metal",
-				Arch:            "amd64",
+				Arch:            constants.ArchAmd64,
 				Output: profile.Output{
 					Kind:      profile.OutKindCmdline,
 					OutFormat: profile.OutFormatRaw,
@@ -108,7 +109,7 @@ func TestImager(t *testing.T) {
 
 			prof: profile.Profile{
 				BaseProfileName: "metal",
-				Arch:            "arm64",
+				Arch:            constants.ArchArm64,
 				Output: profile.Output{
 					Kind:      profile.OutKindCmdline,
 					OutFormat: profile.OutFormatRaw,
@@ -123,7 +124,7 @@ func TestImager(t *testing.T) {
 
 			prof: profile.Profile{
 				BaseProfileName: "metal",
-				Arch:            "amd64",
+				Arch:            constants.ArchAmd64,
 				Output: profile.Output{
 					Kind:      profile.OutKindCmdline,
 					OutFormat: profile.OutFormatRaw,
@@ -138,7 +139,7 @@ func TestImager(t *testing.T) {
 
 			prof: profile.Profile{
 				BaseProfileName: "metal",
-				Arch:            "arm64",
+				Arch:            constants.ArchArm64,
 				Output: profile.Output{
 					Kind:      profile.OutKindCmdline,
 					OutFormat: profile.OutFormatRaw,
@@ -153,7 +154,7 @@ func TestImager(t *testing.T) {
 
 			prof: profile.Profile{
 				BaseProfileName: "metal",
-				Arch:            "amd64",
+				Arch:            constants.ArchAmd64,
 				Output: profile.Output{
 					Kind:      profile.OutKindCmdline,
 					OutFormat: profile.OutFormatRaw,
@@ -168,7 +169,7 @@ func TestImager(t *testing.T) {
 
 			prof: profile.Profile{
 				BaseProfileName: "metal",
-				Arch:            "arm64",
+				Arch:            constants.ArchArm64,
 				Output: profile.Output{
 					Kind:      profile.OutKindCmdline,
 					OutFormat: profile.OutFormatRaw,
@@ -183,7 +184,7 @@ func TestImager(t *testing.T) {
 
 			prof: profile.Profile{
 				BaseProfileName: "aws",
-				Arch:            "amd64",
+				Arch:            constants.ArchAmd64,
 				Output: profile.Output{
 					Kind:      profile.OutKindCmdline,
 					OutFormat: profile.OutFormatRaw,
@@ -198,7 +199,7 @@ func TestImager(t *testing.T) {
 
 			prof: profile.Profile{
 				BaseProfileName: "aws",
-				Arch:            "arm64",
+				Arch:            constants.ArchArm64,
 				Output: profile.Output{
 					Kind:      profile.OutKindCmdline,
 					OutFormat: profile.OutFormatRaw,
@@ -213,7 +214,7 @@ func TestImager(t *testing.T) {
 
 			prof: profile.Profile{
 				BaseProfileName: "metal",
-				Arch:            "amd64",
+				Arch:            constants.ArchAmd64,
 				Output: profile.Output{
 					Kind:      profile.OutKindCmdline,
 					OutFormat: profile.OutFormatRaw,
@@ -228,7 +229,7 @@ func TestImager(t *testing.T) {
 
 			prof: profile.Profile{
 				BaseProfileName: "metal",
-				Arch:            "arm64",
+				Arch:            constants.ArchArm64,
 				Output: profile.Output{
 					Kind:      profile.OutKindCmdline,
 					OutFormat: profile.OutFormatRaw,
@@ -243,7 +244,7 @@ func TestImager(t *testing.T) {
 
 			prof: profile.Profile{
 				BaseProfileName: "aws",
-				Arch:            "amd64",
+				Arch:            constants.ArchAmd64,
 				Output: profile.Output{
 					Kind:      profile.OutKindCmdline,
 					OutFormat: profile.OutFormatRaw,
@@ -258,7 +259,7 @@ func TestImager(t *testing.T) {
 
 			prof: profile.Profile{
 				BaseProfileName: "aws",
-				Arch:            "arm64",
+				Arch:            constants.ArchArm64,
 				Output: profile.Output{
 					Kind:      profile.OutKindCmdline,
 					OutFormat: profile.OutFormatRaw,

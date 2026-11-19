@@ -18,6 +18,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/siderolabs/talos/pkg/images"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 type imageHandler func(ctx context.Context, img v1.Image) error
@@ -38,7 +39,7 @@ func newManager() (*fetchManager, error) {
 
 	puller, err := remote.NewPuller(
 		remote.WithPlatform(v1.Platform{
-			Architecture: string(ArchAmd64),
+			Architecture: constants.ArchAmd64,
 			OS:           "linux",
 		}),
 	)

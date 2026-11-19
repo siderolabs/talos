@@ -16,7 +16,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"libvirt.org/go/libvirtxml"
 
@@ -29,8 +28,14 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 )
 
+// LogsSuite verifies serial console history.
+type LogsSuite struct{ LibvirtSuite }
+
+// SuiteName implements base.NamedSuite.
+func (suite *LogsSuite) SuiteName() string { return "hypervisor.LogsSuite" }
+
 // TestAlpineSerialHistory exercises retained guest output through the real Logs RPC.
-func (suite *LibvirtSuite) TestAlpineSerialHistory() {
+func (suite *LogsSuite) TestAlpineSerialHistory() {
 	node, doc, gateway, guestIP := suite.prepareAlpineGuest()
 	ctx := client.WithNode(suite.ctx, node)
 	console := suite.loginAlpineConsole(ctx, doc.Name())
@@ -133,7 +138,7 @@ func (suite *LibvirtSuite) TestAlpineSerialHistory() {
 }
 
 // TestAlpineSerialHistoryRotation forces actual virtlogd rollover with guest output.
-func (suite *LibvirtSuite) TestAlpineSerialHistoryRotation() {
+func (suite *LogsSuite) TestAlpineSerialHistoryRotation() {
 	if testing.Short() {
 		suite.T().Skip("skipping bounded 12 MiB virtlogd rotation workload in short mode")
 	}
@@ -218,76 +223,6 @@ printf 'files=%s\n' "$count"
 	body := suite.vmLogSnapshot(ctx, doc.Name(), -1)
 	suite.Require().Contains(string(body), fresh)
 	suite.Require().NotContains(string(body), old, "initial history read must not concatenate rotated backups")
-}
-
-func serialNonce(label string) string {
-	return "SERIAL_" + label + "_" + strings.ReplaceAll(uuid.NewString(), "-", "")
-}
-
-func serialPrintf(marker string) string {
-	// Split the expected marker on the wire even when terminal echo is on.
-	return "printf '\\nSERIAL_%s\\n' '" + strings.TrimPrefix(marker, "SERIAL_") + "'\n"
-}
-
-func (suite *LibvirtSuite) attachAlpineConsole(ctx context.Context, name string) *alpineConsole {
-	suite.T().Helper()
-
-	streamCtx, cancel := context.WithTimeout(ctx, 5*time.Minute)
-	stream, err := suite.Client.HypervisorService().ConsoleStream(streamCtx)
-	suite.Require().NoError(err)
-	suite.T().Cleanup(cancel)
-	suite.Require().NoError(stream.Send(&machine.ConsoleRequest{
-		Request: &machine.ConsoleRequest_Attach{
-			Attach: &machine.ConsoleAttach{
-				Name: name,
-			},
-		},
-	}))
-
-	return &alpineConsole{
-		stream: stream,
-		cancel: cancel,
-	}
-}
-
-func (suite *LibvirtSuite) loginAlpineConsole(ctx context.Context, name string) *alpineConsole {
-	suite.T().Helper()
-	console := suite.attachAlpineConsole(ctx, name)
-
-	defer func() {
-		if suite.T().Failed() {
-			suite.T().Logf("Alpine login serial transcript (bounded): %q", console.transcript)
-		}
-	}()
-
-	suite.Require().NoError(console.send("\n"))
-	suite.Require().NoError(console.expectAfter(0, []byte("login:")))
-	start := console.mark()
-	suite.Require().NoError(console.send("root\n"))
-	suite.Require().NoError(console.expectAfter(start, []byte("localhost:~#")))
-
-	return console
-}
-
-func (suite *LibvirtSuite) vmLogSnapshot(ctx context.Context, name string, tail int32) []byte {
-	suite.T().Helper()
-
-	readCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-
-	stream, err := suite.Client.LogsWithKind(readCtx, constants.SystemContainerdNamespace,
-		common.ContainerDriver_CONTAINERD, name, false, tail, machine.LogKind_LOG_KIND_VM)
-	suite.Require().NoError(err)
-	reader, err := client.ReadStream(stream)
-
-	suite.Require().NoError(err)
-	defer func() { suite.Assert().NoError(reader.Close()) }()
-
-	body, err := io.ReadAll(io.LimitReader(reader, (3<<20)+1))
-	suite.Require().NoError(err)
-	suite.Require().LessOrEqual(len(body), 3<<20, "active VM log snapshot exceeded pinned virtlogd bound")
-
-	return body
 }
 
 type vmLogFollower struct {
@@ -405,4 +340,8 @@ func (suite *LibvirtSuite) awaitSerialSignal(seen <-chan struct{}, operation str
 	case <-time.After(45 * time.Second):
 		suite.Require().FailNow("serial history deadline", operation)
 	}
+}
+
+func init() {
+	allSuites = append(allSuites, new(LogsSuite))
 }

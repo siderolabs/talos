@@ -41,6 +41,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	hypervisorcfg "github.com/siderolabs/talos/pkg/machinery/config/types/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -270,7 +271,7 @@ func (suite *VirtualMachineSpecSuite) TestVNCDevices() {
 						asrt.Empty(domain.Devices.Graphics)
 					}
 
-					if vnc && runtime.GOARCH == "amd64" {
+					if vnc && runtime.GOARCH == constants.ArchAmd64 {
 						if asrt.Len(domain.Devices.Videos, 1) {
 							asrt.Equal("vga", domain.Devices.Videos[0].Model.Type)
 						}
@@ -302,7 +303,7 @@ func (suite *VirtualMachineSpecSuite) TestVNCDevices() {
 }
 
 func (suite *VirtualMachineSpecSuite) TestBuiltinProfilesRenderGuestHardware() {
-	if runtime.GOARCH != "amd64" {
+	if runtime.GOARCH != constants.ArchAmd64 {
 		suite.T().Skip("VM hardware profiles are only supported on amd64")
 	}
 
@@ -393,7 +394,7 @@ func (suite *VirtualMachineSpecSuite) TestBuiltinProfilesRenderGuestHardware() {
 					asrt.NoError(validateDomainXML([]byte(res.TypedSpec().DomainXML)))
 					asrt.Equal(&libvirtxml.DomainOSType{
 						Type:    "hvm",
-						Arch:    "x86_64",
+						Arch:    constants.KernelArchAmd64,
 						Machine: tc.machine,
 					}, domain.OS.Type)
 					asrt.Equal(string(wantXML), res.TypedSpec().DomainXML+"\n")
@@ -415,7 +416,7 @@ func (suite *VirtualMachineSpecSuite) TestBuiltinProfilesRenderGuestHardware() {
 }
 
 func (suite *VirtualMachineSpecSuite) TestCustomProfilesRenderGuestHardware() {
-	if runtime.GOARCH != "amd64" {
+	if runtime.GOARCH != constants.ArchAmd64 {
 		suite.T().Skip("VM hardware profiles are only supported on amd64")
 	}
 
@@ -585,7 +586,7 @@ func (suite *VirtualMachineSpecSuite) TestCustomProfilesRenderGuestHardware() {
 					asrt.NoError(validateDomainXML([]byte(res.TypedSpec().DomainXML)))
 					asrt.Equal(&libvirtxml.DomainOSType{
 						Type:    "hvm",
-						Arch:    "x86_64",
+						Arch:    constants.KernelArchAmd64,
 						Machine: tc.machine,
 					}, domain.OS.Type)
 					asrt.Equal(string(wantXML), res.TypedSpec().DomainXML+"\n")
@@ -607,7 +608,7 @@ func (suite *VirtualMachineSpecSuite) TestCustomProfilesRenderGuestHardware() {
 }
 
 func (suite *VirtualMachineSpecSuite) TestProfileUpdatesReplaceGuestHardware() {
-	if runtime.GOARCH != "amd64" {
+	if runtime.GOARCH != constants.ArchAmd64 {
 		suite.T().Skip("VM hardware profiles are only supported on amd64")
 	}
 
@@ -788,7 +789,7 @@ func (suite *VirtualMachineSpecSuite) TestProfileUpdatesReplaceGuestHardware() {
 }
 
 func (suite *VirtualMachineSpecSuite) TestProfileRendersGuestHardwareAndMissingProfile() {
-	if runtime.GOARCH != "amd64" {
+	if runtime.GOARCH != constants.ArchAmd64 {
 		suite.T().Skip("VM hardware profiles are only supported on amd64")
 	}
 
@@ -848,7 +849,7 @@ func (suite *VirtualMachineSpecSuite) TestProfileRendersGuestHardwareAndMissingP
 
 // The profile's timer settings reach the rendered clock.
 func (suite *VirtualMachineSpecSuite) TestProfileTimers() {
-	if runtime.GOARCH != "amd64" {
+	if runtime.GOARCH != constants.ArchAmd64 {
 		suite.T().Skip("VM hardware profiles are only supported on amd64")
 	}
 
@@ -953,7 +954,7 @@ func (suite *VirtualMachineSpecSuite) TestVideoDevice() {
 
 			asrt.NoError(validateDomainXML([]byte(res.TypedSpec().DomainXML)))
 
-			if tc.noVNC || runtime.GOARCH != "amd64" {
+			if tc.noVNC || runtime.GOARCH != constants.ArchAmd64 {
 				asrt.Empty(domain.Devices.Videos)
 
 				return

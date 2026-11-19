@@ -17,6 +17,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/pkg/zboot"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // Load handles zboot for arm64 and calls unix.KexecFileLoad with error handling and sets the machine state to kexec prepared.
@@ -24,7 +25,7 @@ func Load(r runtime.Runtime, kernel *os.File, initrdFD int, cmdline string) erro
 	kernelFD := int(kernel.Fd())
 
 	// on arm64 we need to extract the kernel from the zboot image if it's compressed
-	if goruntime.GOARCH == "arm64" {
+	if goruntime.GOARCH == constants.ArchArm64 {
 		var (
 			fileCloser io.Closer
 			extractErr error

@@ -28,6 +28,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	hypervisorcfg "github.com/siderolabs/talos/pkg/machinery/config/types/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -81,7 +82,7 @@ firmware: {type: uefi}
 }
 
 func (suite *VirtualMachineProjectionSuite) TestProfileCatalogueAndCleanup() {
-	if runtime.GOARCH != "amd64" {
+	if runtime.GOARCH != constants.ArchAmd64 {
 		suite.T().Skip("builtin VM profiles are only supported on amd64")
 	}
 

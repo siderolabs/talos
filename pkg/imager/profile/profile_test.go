@@ -18,13 +18,14 @@ import (
 
 	"github.com/siderolabs/talos/pkg/imager/profile"
 	"github.com/siderolabs/talos/pkg/machinery/config/merge"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/version"
 )
 
 func TestFillDefaults(t *testing.T) {
 	t.Parallel()
 
-	arches := []string{"amd64", "arm64"}
+	arches := []string{constants.ArchAmd64, constants.ArchArm64}
 	versions := []string{"1.9.0", "1.10.0", "1.11.0", "1.12.0", "1.13.0", "1.14.0", "1.15.0"}
 
 	lastVersion := semver.MustParse(versions[len(versions)-1])

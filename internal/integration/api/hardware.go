@@ -111,7 +111,7 @@ func (suite *HardwareSuite) TestBIOSVersion() {
 	)
 	suite.Require().NoError(err)
 
-	if arch := suite.ReadMachineArch(ctx); arch != "amd64" {
+	if arch := suite.ReadMachineArch(ctx); arch != constants.ArchAmd64 {
 		suite.T().Skipf("skipping BIOS version check on arch %q", arch)
 	}
 

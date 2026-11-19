@@ -8,6 +8,8 @@ import (
 	"context"
 	"errors"
 	"runtime"
+
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 func (check *preflightCheckContext) verifyPlatformSpecific(ctx context.Context) error {
@@ -15,7 +17,7 @@ func (check *preflightCheckContext) verifyPlatformSpecific(ctx context.Context) 
 }
 
 func (check *preflightCheckContext) verifyAppleMachine(context.Context) error {
-	if runtime.GOARCH != "arm64" {
+	if runtime.GOARCH != constants.ArchArm64 {
 		return errors.New("currently qemu on darwin is supported only on arm machines")
 	}
 

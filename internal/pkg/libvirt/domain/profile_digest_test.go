@@ -12,6 +12,7 @@ import (
 	"libvirt.org/go/libvirtxml"
 
 	libvirtdomain "github.com/siderolabs/talos/internal/pkg/libvirt/domain"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 func TestProfileIndependentDefinitionDigest(t *testing.T) {
@@ -32,7 +33,7 @@ func TestProfileIndependentDefinitionDigest(t *testing.T) {
 		OS: &libvirtxml.DomainOS{
 			Type: &libvirtxml.DomainOSType{
 				Type:    "hvm",
-				Arch:    "x86_64",
+				Arch:    constants.KernelArchAmd64,
 				Machine: "q35",
 			},
 		},

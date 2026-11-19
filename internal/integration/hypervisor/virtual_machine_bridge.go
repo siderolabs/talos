@@ -24,9 +24,15 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
+// BridgeSuite attaches virtual machine interfaces to host bridges.
+type BridgeSuite struct{ LibvirtSuite }
+
+// SuiteName implements base.NamedSuite.
+func (suite *BridgeSuite) SuiteName() string { return "hypervisor.BridgeSuite" }
+
 // TestBridgeAttachment verifies that a bridge-attached interface adds a tap port to the bridge,
 // and that the port survives a change of the bridge's settings.
-func (suite *LibvirtSuite) TestBridgeAttachment() {
+func (suite *BridgeSuite) TestBridgeAttachment() {
 	node := suite.RandomDiscoveredNodeInternalIP()
 	nodeCtx := client.WithNode(suite.ctx, node)
 	name := "vm-bridge-" + uuid.NewString()
@@ -108,4 +114,8 @@ func (suite *LibvirtSuite) TestBridgeAttachment() {
 	suite.RemoveMachineConfigDocumentsByName(nodeCtx, hypervisorcfg.VirtualMachineConfigKind, name)
 	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](nodeCtx, suite.T(), suite.Client.State(), name)
 	suite.assertNoDomain(node, name)
+}
+
+func init() {
+	allSuites = append(allSuites, new(BridgeSuite))
 }

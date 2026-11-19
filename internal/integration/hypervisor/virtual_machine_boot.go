@@ -28,6 +28,12 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/perf"
 )
 
+// BootSuite boots a Talos ISO and talks to the guest.
+type BootSuite struct{ LibvirtSuite }
+
+// SuiteName implements base.NamedSuite.
+func (suite *BootSuite) SuiteName() string { return "hypervisor.BootSuite" }
+
 const (
 	// guestCPUCount and guestMemory are what the guest is asked for, and what it is then checked to
 	// have: a Talos guest needs enough of both to reach its API at all.
@@ -45,7 +51,7 @@ const (
 // booted far enough to bring up networking, took the DHCP lease reserved for the address the
 // virtual machine was configured with, and answers its own Talos API describing the hardware it was
 // given.
-func (suite *LibvirtSuite) TestBootsAndServesItsAPI() {
+func (suite *BootSuite) TestBootsAndServesItsAPI() {
 	suite.requireContentLibrarySupport()
 
 	if suite.HypervisorTalosISOPath == "" {
@@ -242,4 +248,8 @@ func (suite *LibvirtSuite) assertGuestHardware(guest *client.Client) {
 
 	suite.Assert().InEpsilon(wanted.Value(), total, 0.1,
 		"the guest must see close to the %s it was given, saw %d bytes", guestMemory, total)
+}
+
+func init() {
+	allSuites = append(allSuites, new(BootSuite))
 }

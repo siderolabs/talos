@@ -113,7 +113,7 @@ func TestImagerRedactsOutput(t *testing.T) {
 
 			imgr, err := imager.New(profile.Profile{
 				BaseProfileName: "metal",
-				Arch:            "amd64",
+				Arch:            constants.ArchAmd64,
 				Output: profile.Output{
 					Kind:      profile.OutKindCmdline,
 					OutFormat: profile.OutFormatRaw,

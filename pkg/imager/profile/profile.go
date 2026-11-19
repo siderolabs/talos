@@ -13,6 +13,7 @@ import (
 	"github.com/siderolabs/go-pointer"
 	"go.yaml.in/yaml/v4"
 
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 	"github.com/siderolabs/talos/pkg/machinery/overlay"
 )
@@ -76,7 +77,7 @@ func (p *Profile) SecureBootEnabled() bool {
 //
 //nolint:gocyclo,cyclop
 func (p *Profile) Validate() error {
-	if p.Arch != amd64 && p.Arch != arm64 {
+	if p.Arch != constants.ArchAmd64 && p.Arch != constants.ArchArm64 {
 		return xerrors.NewTaggedf[InvalidInputTag]("invalid arch %q", p.Arch)
 	}
 

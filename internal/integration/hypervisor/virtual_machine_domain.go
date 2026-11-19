@@ -10,7 +10,6 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -28,53 +27,22 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	hypervisorcfg "github.com/siderolabs/talos/pkg/machinery/config/types/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
-const (
-	libvirtDomainName = "talos-integration-libvirt"
-	libvirtURI        = "qemu+unix:///system?socket=/run/libvirt/virtqemud-sock"
-)
+// DomainSuite verifies domain definition and console access through libvirt.
+type DomainSuite struct{ LibvirtSuite }
 
-// LibvirtSuite verifies the libvirt extension on QEMU.
-type LibvirtSuite struct {
-	base.APISuite
+// SuiteName implements base.NamedSuite.
+func (suite *DomainSuite) SuiteName() string { return "hypervisor.DomainSuite" }
 
-	ctx       context.Context //nolint:containedctx
-	ctxCancel context.CancelFunc
-}
-
-// SuiteName ...
-func (suite *LibvirtSuite) SuiteName() string {
-	return "hypervisor.LibvirtSuite"
-}
-
-// SetupTest ...
-func (suite *LibvirtSuite) SetupTest() {
-	if !suite.ExtensionsLibvirt {
-		suite.T().Skip("skipping as libvirt extension integration tests are not enabled")
-	}
-
-	if !suite.Capabilities().SupportsReboot {
-		suite.T().Skip("cluster doesn't support reboot")
-	}
-
-	// Allow time for domain operations as well as a node reboot, and for a test to boot a guest
-	// from an ISO more than once.
-	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 20*time.Minute)
-}
-
-// TearDownTest ...
-func (suite *LibvirtSuite) TearDownTest() {
-	if suite.ctxCancel != nil {
-		suite.ctxCancel()
-	}
-}
+const libvirtDomainName = "talos-integration-libvirt"
 
 // TestDomainDefinition verifies the running/stopped lifecycle of transient domains.
-func (suite *LibvirtSuite) TestDomainDefinition() {
+func (suite *DomainSuite) TestDomainDefinition() {
 	node := suite.RandomDiscoveredNodeInternalIP()
 	nodeCtx := client.WithNode(suite.ctx, node)
 	name := "vm-define-" + uuid.NewString()
@@ -128,7 +96,7 @@ func (suite *LibvirtSuite) TestDomainDefinition() {
 }
 
 // TestConsoleAttach verifies a live console session owns the managed VM's libvirt console.
-func (suite *LibvirtSuite) TestConsoleAttach() {
+func (suite *DomainSuite) TestConsoleAttach() {
 	node := suite.RandomDiscoveredNodeInternalIP()
 	nodeCtx := client.WithNode(suite.ctx, node)
 	name := "vm-console-" + uuid.NewString()
@@ -191,7 +159,7 @@ func (suite *LibvirtSuite) TestConsoleAttach() {
 }
 
 // TestVNCAttach verifies machined can connect to the guest's sVirt-labeled VNC socket.
-func (suite *LibvirtSuite) TestVNCAttach() {
+func (suite *DomainSuite) TestVNCAttach() {
 	node := suite.RandomDiscoveredNodeInternalIP()
 	nodeCtx := client.WithNode(suite.ctx, node)
 	name := "vm-vnc-" + uuid.NewString()
@@ -239,47 +207,6 @@ func (suite *LibvirtSuite) TestVNCAttach() {
 	}
 
 	suite.Require().Equal(version, string(greeting))
-}
-
-func (suite *LibvirtSuite) assertStoppedDomain(ctx context.Context, node, name string) {
-	suite.T().Helper()
-
-	// Check backend absence independently of the managed VM's observed stopped state.
-	suite.assertNoDomainWithContext(ctx, node, name)
-	suite.assertVirtualMachineStatus(ctx, name, hypervisorhelpers.VirtualMachinePowerStateStopped)
-}
-
-func (suite *LibvirtSuite) assertVirtualMachineStatus(ctx context.Context, name string, powerState hypervisorhelpers.VirtualMachinePowerState) {
-	suite.T().Helper()
-
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), name,
-		func(status *hypervisor.VirtualMachineStatus, asrt *assert.Assertions) {
-			asrt.Equal(powerState, status.TypedSpec().PowerState)
-			asrt.Equal(hypervisorhelpers.VirtualMachineStageReady, status.TypedSpec().Stage)
-			asrt.Empty(status.TypedSpec().Error)
-		},
-	)
-}
-
-func (suite *LibvirtSuite) assertNoDomain(node, name string) {
-	suite.T().Helper()
-
-	suite.assertNoDomainWithContext(suite.ctx, node, name)
-}
-
-func (suite *LibvirtSuite) assertNoDomainWithContext(ctx context.Context, node, name string) {
-	suite.T().Helper()
-
-	suite.Require().Eventually(func() bool {
-		_, listCode := suite.RunDebugContainer(ctx, node, "/usr/local/bin/virsh", "--connect", libvirtURI, "list", "--all")
-		if listCode != 0 {
-			return false
-		}
-
-		_, lookupCode := suite.RunDebugContainer(ctx, node, "/usr/local/bin/virsh", "--connect", libvirtURI, "dominfo", name)
-
-		return lookupCode != 0
-	}, 2*time.Minute, time.Second, "domain %q still exists", name)
 }
 
 func (suite *LibvirtSuite) assertLibvirtConsoleAttached(ctx context.Context, node, name string, recvResult <-chan error) {
@@ -355,46 +282,8 @@ exit 1
 	}
 }
 
-func (suite *LibvirtSuite) assertRunningTransientDomain(node, name string, cpus uint) {
-	suite.T().Helper()
-
-	suite.assertRunningTransientDomainWithDevices(node, name, cpus, 0, 0)
-}
-
-func (suite *LibvirtSuite) assertRunningTransientDomainWithDevices(node, name string, cpus uint, disks, interfaces int) {
-	suite.T().Helper()
-
-	suite.assertVirtualMachineStatus(client.WithNode(suite.ctx, node), name, hypervisorhelpers.VirtualMachinePowerStateRunning)
-
-	// The status contract does not include XML or persistence; verify those via libvirt.
-	suite.Require().Eventually(func() bool {
-		text, code := suite.RunDebugContainer(suite.ctx, node, "/usr/local/bin/virsh", "--connect", libvirtURI, "dumpxml", name)
-		if code != 0 {
-			return false
-		}
-
-		if !definedDomainMatches(text, name, cpus, disks, interfaces) {
-			return false
-		}
-
-		info, infoCode := suite.RunDebugContainer(suite.ctx, node, "/usr/local/bin/virsh", "--connect", libvirtURI, "dominfo", name)
-
-		return infoCode == 0 && regexp.MustCompile(`(?m)^Persistent:\s+no\s*$`).MatchString(info)
-	}, 2*time.Minute, time.Second, "domain %q was not running transiently with %d CPUs", name, cpus)
-}
-
-func definedDomainMatches(text, name string, cpus uint, disks, interfaces int) bool {
-	var domain libvirtxml.Domain
-
-	if err := domain.Unmarshal(text); err != nil || domain.Name != name || domain.VCPU == nil || domain.VCPU.Value != cpus {
-		return false
-	}
-
-	return domain.Devices != nil && len(domain.Devices.Disks) == disks && len(domain.Devices.Interfaces) == interfaces
-}
-
 // TestDomain verifies libvirt can run a QEMU domain and save it across a reboot.
-func (suite *LibvirtSuite) TestDomain() {
+func (suite *DomainSuite) TestDomain() {
 	node := suite.RandomDiscoveredNodeInternalIP()
 	nodeCtx := client.WithNode(suite.ctx, node)
 
@@ -411,12 +300,12 @@ func (suite *LibvirtSuite) TestDomain() {
 	)
 
 	switch arch := suite.ReadMachineArch(nodeCtx); arch {
-	case "amd64":
+	case constants.ArchAmd64:
 		machineType = "pc"
-		qemuArch = "x86_64"
-	case "arm64":
+		qemuArch = constants.KernelArchAmd64
+	case constants.ArchArm64:
 		machineType = "virt"
-		qemuArch = "aarch64"
+		qemuArch = constants.KernelArchArm64
 	default:
 		suite.Require().FailNow("unsupported architecture", "architecture %q is not supported by the libvirt integration test", arch)
 	}
@@ -525,14 +414,6 @@ func (suite *LibvirtSuite) TestDomain() {
 	suite.Require().NotZero(pidAfterRestore, "expected QEMU to restore domain %q", libvirtDomainName)
 }
 
-func (suite *LibvirtSuite) runVirsh(node string, args ...string) string {
-	command := append([]string{"/usr/local/bin/virsh", "--connect", libvirtURI}, args...)
-	output, exitCode := suite.RunDebugContainer(suite.ctx, node, command...)
-	suite.Require().EqualValues(0, exitCode, "virsh %s failed: %s", strings.Join(args, " "), output)
-
-	return strings.TrimSpace(output)
-}
-
 func (suite *LibvirtSuite) assertConsoleRejected(ctx context.Context, name string, code codes.Code) {
 	suite.T().Helper()
 
@@ -571,5 +452,5 @@ func (suite *LibvirtSuite) libvirtDomainPID(ctx context.Context) (int32, error) 
 }
 
 func init() {
-	allSuites = append(allSuites, &LibvirtSuite{})
+	allSuites = append(allSuites, new(DomainSuite))
 }

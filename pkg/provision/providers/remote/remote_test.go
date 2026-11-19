@@ -21,6 +21,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/provision"
 	remoteprovisionpb "github.com/siderolabs/talos/pkg/provision/api"
 	"github.com/siderolabs/talos/pkg/provision/providers/remote"
@@ -38,7 +39,7 @@ type fakeServer struct {
 }
 
 func (*fakeServer) Ping(context.Context, *emptypb.Empty) (*remoteprovisionpb.PingResponse, error) {
-	return &remoteprovisionpb.PingResponse{ServerVersion: "fake", HostArch: "amd64"}, nil
+	return &remoteprovisionpb.PingResponse{ServerVersion: "fake", HostArch: constants.ArchAmd64}, nil
 }
 
 func (*fakeServer) Create(req *remoteprovisionpb.CreateRequest, stream grpc.ServerStreamingServer[remoteprovisionpb.CreateEvent]) error {

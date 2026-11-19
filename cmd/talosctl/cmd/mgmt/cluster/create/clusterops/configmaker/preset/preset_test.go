@@ -13,6 +13,7 @@ import (
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/constants"
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/clusterops"
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/clusterops/configmaker/preset"
+	machineryconstants "github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 func TestValidatePresets(t *testing.T) {
@@ -83,7 +84,7 @@ func applyPreset(t *testing.T, presets ...string) (clusterops.Common, clusterops
 
 	cOps := clusterops.GetCommon()
 	qOps := clusterops.GetQemu()
-	qOps.TargetArch = "arm64"
+	qOps.TargetArch = machineryconstants.ArchArm64
 	cOps.TalosVersion = "v9.9.9"
 
 	err = preset.Apply(preset.Options{
@@ -135,7 +136,7 @@ func TestInstallerImageWithPort(t *testing.T) {
 
 	cOps := clusterops.GetCommon()
 	qOps := clusterops.GetQemu()
-	qOps.TargetArch = "arm64"
+	qOps.TargetArch = machineryconstants.ArchArm64
 	cOps.TalosVersion = "v9.9.9"
 
 	err = preset.Apply(preset.Options{

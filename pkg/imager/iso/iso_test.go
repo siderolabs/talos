@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/pkg/imager/iso"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 func TestVolumeID(t *testing.T) {
@@ -56,14 +57,14 @@ func TestCreateGRUBPlatform(t *testing.T) {
 	}{
 		{
 			name:    "amd64 BIOS only",
-			arch:    "amd64",
+			arch:    constants.ArchAmd64,
 			version: "v1.12.0",
 
 			expectedDirectory: "--directory=/usr/lib/grub/i386-pc",
 		},
 		{
 			name:    "arm64 EFI only",
-			arch:    "arm64",
+			arch:    constants.ArchArm64,
 			version: "v1.12.0",
 
 			expectedDirectory: "--directory=/usr/lib/grub/arm64-efi",
@@ -71,7 +72,7 @@ func TestCreateGRUBPlatform(t *testing.T) {
 		{
 			// legacy GRUB ISOs cover both BIOS and UEFI boot, grub-mkrescue auto-detects the platforms
 			name:    "legacy amd64",
-			arch:    "amd64",
+			arch:    constants.ArchAmd64,
 			version: "v1.9.0",
 		},
 	} {

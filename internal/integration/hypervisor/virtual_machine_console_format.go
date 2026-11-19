@@ -23,9 +23,15 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 )
 
+// ConsoleFormatSuite formats a blank disk from a guest console.
+type ConsoleFormatSuite struct{ LibvirtSuite }
+
+// SuiteName implements base.NamedSuite.
+func (suite *ConsoleFormatSuite) SuiteName() string { return "hypervisor.ConsoleFormatSuite" }
+
 // TestAlpineConsoleBlankDiskFormat formats only the disposable blank /dev/vda
 // from the stock Alpine live ISO, then verifies a write across unmount/remount.
-func (suite *LibvirtSuite) TestAlpineConsoleBlankDiskFormat() {
+func (suite *ConsoleFormatSuite) TestAlpineConsoleBlankDiskFormat() {
 	node, nodeCtx := suite.requireAlpineGuestNode()
 	// Reuse the ISO upload and cleanup, without a DHCP reservation or guest networking.
 	live := suite.prepareAlpineGuestOnNode(node, nodeCtx, nil, 512<<20, "")
@@ -34,7 +40,7 @@ func (suite *LibvirtSuite) TestAlpineConsoleBlankDiskFormat() {
 	suite.assertStoppedDomain(nodeCtx, node, live.Name())
 	suite.RemoveMachineConfigDocumentsByName(nodeCtx, hypervisorcfg.VirtualMachineConfigKind, live.Name())
 
-	disk := newBlankDiskFixtureOnNode(suite.ctx, suite, "vm-alpine-format", node)
+	disk := newBlankDiskFixtureOnNode(suite.ctx, &suite.LibvirtSuite, "vm-alpine-format", node)
 	doc := disk.document("128MiB", hypervisorhelpers.PowerStateRunning)
 	doc.MemoryConfig.MemorySize = meta.MustByteSize("512MiB")
 	doc.ConsoleConfig.SerialConfig.SerialEnabled = new(true)
@@ -101,4 +107,8 @@ func (suite *LibvirtSuite) TestAlpineConsoleBlankDiskFormat() {
 	suite.Require().NoError(console.expectAfter(completion, []byte("_END\r\n")))
 	suite.Require().Equal("0", strings.SplitN(string(console.transcript[completion:]), "_END\r\n", 2)[0], "format, remount or readback failed")
 	suite.detachAlpineConsole(console)
+}
+
+func init() {
+	allSuites = append(allSuites, new(ConsoleFormatSuite))
 }

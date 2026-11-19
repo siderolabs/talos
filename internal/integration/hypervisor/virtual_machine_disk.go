@@ -9,10 +9,8 @@ package hypervisor
 import (
 	"bytes"
 	"context"
-	"io"
 	"os"
 	"path/filepath"
-	"testing"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
@@ -22,18 +20,21 @@ import (
 	"google.golang.org/grpc/codes"
 	grpcstatus "google.golang.org/grpc/status"
 
-	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	hypervisorcfg "github.com/siderolabs/talos/pkg/machinery/config/types/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
-	storagecfg "github.com/siderolabs/talos/pkg/machinery/config/types/storage"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
-	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
 )
+
+// CDROMSuite verifies CD-ROMs provisioned from content libraries.
+type CDROMSuite struct{ LibvirtSuite }
+
+// SuiteName implements base.NamedSuite.
+func (suite *CDROMSuite) SuiteName() string { return "hypervisor.CDROMSuite" }
 
 // isoName is the library file the cdrom tests attach. Its contents are not a real ISO: nothing
 // boots it, and the domain only has to name it.
@@ -42,33 +43,8 @@ const isoName = "install.iso"
 // contentLibraryControllerName mirrors the controller whose mount requests are keyed by its name.
 const contentLibraryControllerName = "hypervisor.ContentLibraryController"
 
-// requireContentLibrarySupport is requireContentLibrary for the cases kept out of the short pipeline.
-func (suite *LibvirtSuite) requireContentLibrarySupport() {
-	suite.T().Helper()
-
-	if testing.Short() {
-		suite.T().Skip("skipping test in short mode.")
-	}
-
-	suite.requireContentLibrary()
-}
-
-// requireContentLibrary skips unless the cluster can hold the library these tests source their
-// image from. LibvirtSuite itself only requires the hypervisor.
-func (suite *LibvirtSuite) requireContentLibrary() {
-	suite.T().Helper()
-
-	if !suite.Capabilities().SupportsVolumes {
-		suite.T().Skip("cluster doesn't support volumes")
-	}
-
-	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
-		suite.T().Skip("skipping test for non-qemu provisioner")
-	}
-}
-
 // TestCDROMFromContentLibrary attaches an independent pool copy of a library object.
-func (suite *LibvirtSuite) TestCDROMFromContentLibrary() {
+func (suite *CDROMSuite) TestCDROMFromContentLibrary() {
 	suite.requireContentLibrarySupport()
 
 	node := suite.RandomDiscoveredNodeInternalIP()
@@ -166,7 +142,7 @@ func (suite *LibvirtSuite) TestCDROMFromContentLibrary() {
 
 // TestCDROMWaitsForItsImage covers a cdrom naming a file the library does not hold: the disk says
 // why, and no domain is defined until the image shows up.
-func (suite *LibvirtSuite) TestCDROMWaitsForItsImage() {
+func (suite *CDROMSuite) TestCDROMWaitsForItsImage() {
 	suite.requireContentLibrarySupport()
 
 	node := suite.RandomDiscoveredNodeInternalIP()
@@ -230,7 +206,7 @@ func (suite *LibvirtSuite) TestCDROMWaitsForItsImage() {
 //
 // It asserts provisioning only. Nothing here waits for the guest to boot: observing that needs a
 // serial console history or guest networking, neither of which exists yet.
-func (suite *LibvirtSuite) TestCDROMFromTalosISO() {
+func (suite *CDROMSuite) TestCDROMFromTalosISO() {
 	suite.requireContentLibrarySupport()
 
 	if suite.HypervisorTalosISOPath == "" {
@@ -321,25 +297,8 @@ func (suite *LibvirtSuite) TestCDROMFromTalosISO() {
 	suite.assertNoDomain(node, name)
 }
 
-// digestOfISO hashes the ISO in one streaming pass, so a large image never lands in memory.
-func (suite *LibvirtSuite) digestOfISO() digest.Digest {
-	suite.T().Helper()
-
-	f, err := os.Open(suite.HypervisorTalosISOPath)
-	suite.Require().NoError(err)
-
-	defer f.Close() //nolint:errcheck
-
-	digester := digest.SHA256.Digester()
-
-	_, err = io.Copy(digester.Hash(), f)
-	suite.Require().NoError(err)
-
-	return digester.Digest()
-}
-
 // TestCDROMImageIsHeldWhileAttached checks pool-copy lifetime, alias independence and identity changes.
-func (suite *LibvirtSuite) TestCDROMImageIsHeldWhileAttached() {
+func (suite *CDROMSuite) TestCDROMImageIsHeldWhileAttached() {
 	suite.requireContentLibrarySupport()
 
 	node := suite.RandomDiscoveredNodeInternalIP()
@@ -509,7 +468,7 @@ func (suite *LibvirtSuite) TestCDROMImageIsHeldWhileAttached() {
 // The library cannot be dropped from the configuration while a virtual machine names it — validation
 // refuses that apply — so the guest goes first, and the library after it. Nothing here needs a
 // bootable image, so it runs in the short pipeline too.
-func (suite *LibvirtSuite) TestContentLibraryIsReleasedWithItsGuest() {
+func (suite *CDROMSuite) TestContentLibraryIsReleasedWithItsGuest() {
 	suite.requireContentLibrary()
 
 	node := suite.RandomDiscoveredNodeInternalIP()
@@ -597,64 +556,6 @@ func (suite *LibvirtSuite) TestContentLibraryIsReleasedWithItsGuest() {
 	rtestutils.AssertNoResource[*block.VolumeMountStatus](nodeCtx, suite.T(), suite.Client.State(), mountRequestID)
 }
 
-// provisionContentLibraryPool creates a distinct pool directory on the library's filesystem volume.
-// The pool owns its own mount request and files, independently of the source library resource.
-func (suite *LibvirtSuite) provisionContentLibraryPool(ctx context.Context, node, library string) (string, string) {
-	suite.T().Helper()
-	suite.AssertServicesRunning(ctx, node, map[string]string{"ext-virtstoraged": "Running"})
-
-	pool := storagecfg.NewStoragePoolConfigV1Alpha1()
-	pool.MetaName = "copy-" + uuid.NewString()
-	pool.VolumeConfig.VolumeName = library
-
-	var target string
-
-	suite.T().Cleanup(func() {
-		cleanupCtx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-		defer cancel()
-
-		nodeCtx := client.WithNode(cleanupCtx, node)
-		suite.RemoveMachineConfigDocumentsByName(nodeCtx, storagecfg.StoragePoolConfigKind, pool.MetaName)
-		rtestutils.AssertNoResource[*storage.StoragePoolStatus](nodeCtx, suite.T(), suite.Client.State(), pool.MetaName)
-
-		if target != "" {
-			output, code := suite.RunDebugContainer(cleanupCtx, node, "/nix/var/nix/profiles/default/bin/busybox", "rm", "-rf", "--", target)
-			suite.Assert().Zero(code, "remove test-created pool directory: %s", output)
-		}
-	})
-	suite.PatchMachineConfig(ctx, pool)
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), pool.MetaName,
-		func(status *storage.StoragePoolStatus, asrt *assert.Assertions) {
-			asrt.Equal(storage.StoragePoolPhaseReady, status.TypedSpec().Phase, status.TypedSpec().Error)
-
-			if !asrt.Equal(pool.MetaName, filepath.Base(status.TypedSpec().TargetPath)) || !asrt.True(filepath.IsAbs(status.TypedSpec().TargetPath)) {
-				return
-			}
-
-			target = filepath.Clean(status.TypedSpec().TargetPath)
-		})
-
-	return pool.MetaName, target
-}
-
-// diskStatusID is the ID the disk status of one configured disk is published under.
-//
-// The ID covers what the disk is provisioned from as well as its name, so it is built from the same
-// document the test applied rather than written out by hand.
-func diskStatusID(vm string, disk hypervisorcfg.VirtualMachineDisk) string {
-	image := disk.ProvisionConfig.FromImageConfig
-
-	return hypervisor.VirtualMachineDiskStatusID(vm, hypervisor.VirtualMachineDiskSpec{
-		Name:   disk.Name(),
-		Pool:   disk.Pool(),
-		Format: disk.Format().String(),
-		Type:   disk.Type().String(),
-		Provision: hypervisor.VirtualMachineDiskProvisionSpec{
-			FromImage: &hypervisor.VirtualMachineDiskFromImageSpec{
-				Library: image.ImageLibrary,
-				File:    image.ImageFile,
-				Digest:  image.ImageDigest,
-			},
-		},
-	})
+func init() {
+	allSuites = append(allSuites, new(CDROMSuite))
 }

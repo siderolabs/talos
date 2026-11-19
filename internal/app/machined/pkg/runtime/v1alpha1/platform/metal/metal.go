@@ -148,7 +148,7 @@ func readConfigFromISO(ctx context.Context, r state.State) ([]byte, error) {
 // KernelArgs implements the runtime.Platform interface.
 func (m *Metal) KernelArgs(arch string, quirks quirks.Quirks) procfs.Parameters {
 	switch arch {
-	case "amd64":
+	case constants.ArchAmd64:
 		if quirks.SupportsMetalPlatformConsoleTTYS0() {
 			return procfs.Parameters{
 				procfs.NewParameter("console").Append("ttyS0").Append("tty0"),
@@ -158,7 +158,7 @@ func (m *Metal) KernelArgs(arch string, quirks quirks.Quirks) procfs.Parameters 
 		return procfs.Parameters{
 			procfs.NewParameter("console").Append("tty0"),
 		}
-	case "arm64":
+	case constants.ArchArm64:
 		return procfs.Parameters{
 			procfs.NewParameter("console").Append("ttyAMA0").Append("tty0"),
 		}

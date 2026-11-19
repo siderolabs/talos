@@ -306,7 +306,7 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 				serial := ""
 
 				// ide driver is not supported on arm64
-				if qOps.TargetArch == "arm64" {
+				if qOps.TargetArch == constants.ArchArm64 {
 					driver = "virtio"
 				}
 

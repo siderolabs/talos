@@ -203,7 +203,7 @@ func (m *Qemu) AddExtraGenOps() error {
 
 	// disable kexec, if bootloader is disabled, and
 	// also disable kexec on arm64 due to https://github.com/siderolabs/talos/issues/12393
-	if !m.EOps.BootloaderEnabled || m.EOps.TargetArch == "arm64" {
+	if !m.EOps.BootloaderEnabled || m.EOps.TargetArch == constants.ArchArm64 {
 		m.GenOps = slices.Concat(m.GenOps, []generate.Option{
 			generate.WithSysctls(map[string]string{
 				"kernel.kexec_load_disabled": "1",

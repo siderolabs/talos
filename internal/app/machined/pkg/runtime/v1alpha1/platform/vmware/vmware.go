@@ -29,14 +29,14 @@ func (v *VMware) Mode() runtime.Mode {
 // KernelArgs implements the runtime.Platform interface.
 func (v *VMware) KernelArgs(arch string, _ quirks.Quirks) procfs.Parameters {
 	switch arch {
-	case "amd64":
+	case constants.ArchAmd64:
 		return []*procfs.Parameter{
 			procfs.NewParameter(constants.KernelParamConfig).Append(constants.ConfigGuestInfo),
 			procfs.NewParameter("console").Append("tty0").Append("ttyS0"),
 			procfs.NewParameter("earlyprintk").Append("ttyS0,115200"),
 			procfs.NewParameter(constants.KernelParamNetIfnames).Append("0"),
 		}
-	case "arm64":
+	case constants.ArchArm64:
 		return []*procfs.Parameter{
 			procfs.NewParameter(constants.KernelParamConfig).Append(constants.ConfigGuestInfo),
 			procfs.NewParameter("console").Append("tty0").Append("ttyAMA0"),

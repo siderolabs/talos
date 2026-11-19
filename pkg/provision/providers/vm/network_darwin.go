@@ -21,6 +21,7 @@ import (
 	"github.com/siderolabs/go-retry/retry"
 	"go4.org/netipx"
 
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/provision"
 )
 
@@ -266,10 +267,10 @@ func hostQemu() (binary, machineType string, err error) {
 	var qemuArch string
 
 	switch runtime.GOARCH {
-	case "arm64":
-		qemuArch, machineType = "aarch64", "virt"
-	case "amd64":
-		qemuArch, machineType = "x86_64", "q35"
+	case constants.ArchArm64:
+		qemuArch, machineType = constants.KernelArchArm64, "virt"
+	case constants.ArchAmd64:
+		qemuArch, machineType = constants.KernelArchAmd64, "q35"
 	default:
 		return "", "", fmt.Errorf("unsupported host architecture %q", runtime.GOARCH)
 	}

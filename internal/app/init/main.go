@@ -241,7 +241,7 @@ func bindMountExtra() error {
 func cpuInfo() {
 	log.Printf("CPU: %s, %d core(s), %d thread(s) per core", cpuid.CPU.BrandName, cpuid.CPU.PhysicalCores, cpuid.CPU.ThreadsPerCore)
 
-	if runtime.GOARCH == "amd64" {
+	if runtime.GOARCH == constants.ArchAmd64 {
 		log.Printf("x86_64 microarchitecture level: %d", cpuid.CPU.X64Level())
 
 		if cpuid.CPU.X64Level() < constants.MinimumGOAMD64Level {

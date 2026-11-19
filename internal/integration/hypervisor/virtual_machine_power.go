@@ -8,7 +8,6 @@ package hypervisor
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -25,6 +24,12 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 )
+
+// PowerSuite verifies power state changes and their overrides.
+type PowerSuite struct{ LibvirtSuite }
+
+// SuiteName implements base.NamedSuite.
+func (suite *PowerSuite) SuiteName() string { return "hypervisor.PowerSuite" }
 
 // prepareDisklessVM creates a disposable diskless guest for host-local power tests.
 func (suite *LibvirtSuite) prepareDisklessVM() (string, context.Context, string) {
@@ -59,7 +64,7 @@ func (suite *LibvirtSuite) prepareDisklessVM() (string, context.Context, string)
 }
 
 // TestPowerUncooperativeVM exercises power requests and the forced escape from an uncooperative guest.
-func (suite *LibvirtSuite) TestPowerUncooperativeVM() {
+func (suite *PowerSuite) TestPowerUncooperativeVM() {
 	node, nodeCtx, name := suite.prepareDisklessVM()
 
 	// The diskless guest has no OS to answer the power button,
@@ -122,7 +127,7 @@ func (suite *LibvirtSuite) TestPowerUncooperativeVM() {
 }
 
 // TestAlpineGracefulPower requires guest-visible reboot and shutdown, not only accepted RPCs.
-func (suite *LibvirtSuite) TestAlpineGracefulPower() {
+func (suite *PowerSuite) TestAlpineGracefulPower() {
 	node, nodeCtx := suite.requireAlpineGuestNode()
 	doc := suite.prepareAlpineGuestOnNode(node, nodeCtx, nil, 512<<20, "")
 	name := doc.Name()
@@ -169,7 +174,7 @@ func (suite *LibvirtSuite) alpinePowerBootID(console *alpineConsole) string {
 
 // TestPowerOverrideEndsWithHostReboot verifies a stop lasts only for the boot it was asked in: the
 // next boot drives the virtual machine to the power state its configuration declares.
-func (suite *LibvirtSuite) TestPowerOverrideEndsWithHostReboot() {
+func (suite *PowerSuite) TestPowerOverrideEndsWithHostReboot() {
 	if testing.Short() {
 		suite.T().Skip("skipping the host reboot test in short mode")
 	}
@@ -252,26 +257,6 @@ func (suite *LibvirtSuite) waitForGracefulStop(ctx context.Context, node, name s
 	return false
 }
 
-// qemuPID reports the process the named virtual machine is running in, or zero when it is not.
-func (suite *LibvirtSuite) qemuPID(ctx context.Context, name string) int32 {
-	suite.T().Helper()
-
-	response, err := suite.Client.Processes(ctx)
-	if err != nil {
-		if base.IgnoreGRPCUnavailable(err) == nil {
-			return 0
-		}
-
-		suite.Require().NoError(err)
-	}
-
-	for _, message := range response.Messages {
-		for _, process := range message.Processes {
-			if strings.Contains(process.Executable, "/qemu-system-") && strings.Contains(process.Args, fmt.Sprintf("guest=%s,", name)) {
-				return process.Pid
-			}
-		}
-	}
-
-	return 0
+func init() {
+	allSuites = append(allSuites, new(PowerSuite))
 }

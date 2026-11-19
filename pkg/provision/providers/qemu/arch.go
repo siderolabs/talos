@@ -9,6 +9,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"slices"
+
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // Arch abstracts away differences between different architectures.
@@ -16,8 +18,8 @@ type Arch string
 
 // Arch constants.
 const (
-	ArchAmd64 Arch = "amd64"
-	ArchArm64 Arch = "arm64"
+	ArchAmd64 Arch = constants.ArchAmd64
+	ArchArm64 Arch = constants.ArchArm64
 )
 
 // Valid returns an error if the architecture is not supported.
@@ -34,9 +36,9 @@ func (arch Arch) Valid() error {
 func (arch Arch) QemuArch() string {
 	switch arch {
 	case ArchAmd64:
-		return "x86_64"
+		return constants.KernelArchAmd64
 	case ArchArm64:
-		return "aarch64"
+		return constants.KernelArchArm64
 	default:
 		panic("unsupported architecture")
 	}

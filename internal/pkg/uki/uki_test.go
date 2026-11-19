@@ -188,7 +188,7 @@ func TestBuildUKI(t *testing.T) {
 		ukifyUKISigned := filepath.Join(tempDir, fmt.Sprintf("uki-ukify-signed-%s.efi", talosVersion))
 
 		builder := &uki.Builder{
-			Arch:       "amd64",
+			Arch:       constants.ArchAmd64,
 			Version:    talosVersion,
 			SdStubPath: sdStubPath,
 			SdBootPath: sdStubPath, // this doesn't matter for the test
@@ -204,7 +204,7 @@ func TestBuildUKI(t *testing.T) {
 		require.NoError(t, builder.Build(t.Logf))
 
 		signedBuilder := &uki.Builder{
-			Arch:             "amd64",
+			Arch:             constants.ArchAmd64,
 			Version:          talosVersion,
 			SdStubPath:       sdStubPath,
 			SdBootPath:       sdStubPath, // this doesn't matter for the test

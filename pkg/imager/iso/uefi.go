@@ -134,7 +134,7 @@ func (options Options) CreateUEFI(ctx context.Context, printf func(string, ...an
 
 	efiBootPath := "EFI/BOOT/BOOTX64.EFI"
 
-	if options.Arch == "arm64" {
+	if options.Arch == constants.ArchArm64 {
 		efiBootPath = "EFI/BOOT/BOOTAA64.EFI"
 	}
 

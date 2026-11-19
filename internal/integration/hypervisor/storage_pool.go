@@ -30,13 +30,19 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
 )
 
+// StoragePoolSuite verifies storage pools.
+type StoragePoolSuite struct{ LibvirtSuite }
+
+// SuiteName implements base.NamedSuite.
+func (suite *StoragePoolSuite) SuiteName() string { return "hypervisor.StoragePoolSuite" }
+
 // TestStoragePool exercises declarative pools against the real storage daemon.
-func (suite *LibvirtSuite) TestStoragePool() {
+func (suite *StoragePoolSuite) TestStoragePool() {
 	// Allow a reboot in addition to storage pool reconciliation.
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 
-	fixture := storagePoolFixture{suite: suite, node: suite.RandomDiscoveredNodeInternalIP()}
+	fixture := storagePoolFixture{suite: &suite.LibvirtSuite, node: suite.RandomDiscoveredNodeInternalIP()}
 	// Unique names ensure cleanup cannot remove pre-existing documents or pool data.
 	suffix := uuid.NewString()[:8]
 	fixture.poolName = "vm-images-" + suffix
@@ -296,4 +302,8 @@ func (f *storagePoolFixture) cleanupDefinition() {
 
 	output, exitCode = f.virsh(ctx, "pool-undefine", f.poolName)
 	f.suite.Assert().Zero(exitCode, "undefine test pool during cleanup: %s", output)
+}
+
+func init() {
+	allSuites = append(allSuites, new(StoragePoolSuite))
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/pkg/imager/profile"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 )
 
@@ -39,7 +40,7 @@ func createOutputWithOverride(kind profile.OutputKind, bootloader profile.Bootlo
 		}
 	}
 
-	out.FillDefaults("amd64", "v1.12.0", secureBoot)
+	out.FillDefaults(constants.ArchAmd64, "v1.12.0", secureBoot)
 
 	return out
 }
@@ -54,26 +55,26 @@ func TestBootloaderSetting(t *testing.T) {
 		wantImage  profile.BootloaderKind
 	}{
 		// Talos < 1.10: GRUB for both amd64/arm64, ISO options not supported
-		{"amd64", "1.9.0", false, profile.BootLoaderKindGrub},
-		{"amd64", "1.9.0", true, profile.BootLoaderKindSDBoot},
-		{"arm64", "1.9.0", false, profile.BootLoaderKindGrub},
-		{"arm64", "1.9.0", true, profile.BootLoaderKindSDBoot},
+		{constants.ArchAmd64, "1.9.0", false, profile.BootLoaderKindGrub},
+		{constants.ArchAmd64, "1.9.0", true, profile.BootLoaderKindSDBoot},
+		{constants.ArchArm64, "1.9.0", false, profile.BootLoaderKindGrub},
+		{constants.ArchArm64, "1.9.0", true, profile.BootLoaderKindSDBoot},
 
 		// Talos 1.10-1.11: amd64=dual-boot, arm64=sd-boot, ISO options not supported
-		{"amd64", "1.10.0", false, profile.BootLoaderKindDualBoot},
-		{"amd64", "1.10.0", true, profile.BootLoaderKindSDBoot},
-		{"arm64", "1.10.0", false, profile.BootLoaderKindSDBoot},
-		{"arm64", "1.10.0", true, profile.BootLoaderKindSDBoot},
-		{"amd64", "1.11.0", false, profile.BootLoaderKindDualBoot},
-		{"amd64", "1.11.0", true, profile.BootLoaderKindSDBoot},
-		{"arm64", "1.11.0", false, profile.BootLoaderKindSDBoot},
-		{"arm64", "1.11.0", true, profile.BootLoaderKindSDBoot},
+		{constants.ArchAmd64, "1.10.0", false, profile.BootLoaderKindDualBoot},
+		{constants.ArchAmd64, "1.10.0", true, profile.BootLoaderKindSDBoot},
+		{constants.ArchArm64, "1.10.0", false, profile.BootLoaderKindSDBoot},
+		{constants.ArchArm64, "1.10.0", true, profile.BootLoaderKindSDBoot},
+		{constants.ArchAmd64, "1.11.0", false, profile.BootLoaderKindDualBoot},
+		{constants.ArchAmd64, "1.11.0", true, profile.BootLoaderKindSDBoot},
+		{constants.ArchArm64, "1.11.0", false, profile.BootLoaderKindSDBoot},
+		{constants.ArchArm64, "1.11.0", true, profile.BootLoaderKindSDBoot},
 
 		// Talos >= 1.12: amd64=dual-boot, arm64=sd-boot, ISO options supported
-		{"amd64", "1.12.0", false, profile.BootLoaderKindDualBoot},
-		{"amd64", "1.12.0", true, profile.BootLoaderKindSDBoot},
-		{"arm64", "1.12.0", false, profile.BootLoaderKindSDBoot},
-		{"arm64", "1.12.0", true, profile.BootLoaderKindSDBoot},
+		{constants.ArchAmd64, "1.12.0", false, profile.BootLoaderKindDualBoot},
+		{constants.ArchAmd64, "1.12.0", true, profile.BootLoaderKindSDBoot},
+		{constants.ArchArm64, "1.12.0", false, profile.BootLoaderKindSDBoot},
+		{constants.ArchArm64, "1.12.0", true, profile.BootLoaderKindSDBoot},
 	}
 
 	for _, tt := range tests {
