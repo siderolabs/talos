@@ -34,14 +34,15 @@ var validMountOptions = []string{
 // typed so that Talos can reason about what a container is allowed to reach.
 type ContainerMount struct {
 	//   description: |
-	//     Mount a user, existing or external volume by name.
+	//     Mount a user, existing, external or inline data volume by name.
 	//
-	//     The name is that of a `UserVolumeConfig`, `ExistingVolumeConfig` or
-	//     `ExternalVolumeConfig` document. Volume names are unique across those kinds, so the
+	//     The name is that of a `UserVolumeConfig`, `ExistingVolumeConfig`, `ExternalVolumeConfig`
+	//     or `InlineDataVolumeConfig` document. Volume names are unique across those kinds, so the
 	//     name resolves to one volume. The volume must be declared in the same configuration.
 	//
-	//     The volume is mounted from `/var/mnt/<name>` on the host. Declaring this mount also
-	//     makes the container wait for the volume to be mounted before it starts.
+	//     The volume is mounted from `/var/mnt/<name>` on the host; an inline data volume is a read-only bind
+	//     under `/run/inline-data-volumes`, which picks up file updates live. The container waits for the
+	//     volume to be ready before it starts.
 	VolumeMount *VolumeMount `yaml:"volume,omitempty"`
 	// docgen:nodoc
 	//
@@ -63,7 +64,7 @@ type VolumeMount struct {
 	//   description: |
 	//     Name of the volume to mount.
 	//
-	//     The name of a `UserVolumeConfig`, `ExistingVolumeConfig` or `ExternalVolumeConfig` document.
+	//     The name of a `UserVolumeConfig`, `ExistingVolumeConfig`, `ExternalVolumeConfig` or `InlineDataVolumeConfig` document.
 	VolumeName string `yaml:"name"`
 	//   description: |
 	//     Absolute path inside the container's mount namespace.
@@ -73,6 +74,9 @@ type VolumeMount struct {
 	//
 	//     A volume whose `ExistingVolumeConfig` or `ExternalVolumeConfig` declares it
 	//     read-only must be mounted with `ro`.
+	//
+	//     An inline data volume is always mounted `ro`, `nosuid`, `nodev`, `noexec` and `rprivate`,
+	//     so `ro` may be omitted, and `rw` and `rshared` are rejected.
 	//   values:
 	//     - ro
 	//     - rw
@@ -258,6 +262,9 @@ func (m *VolumeMount) Destination() string { return m.MountDestination }
 
 // MountOptions implements config.ContainerVolumeMountConfig interface.
 func (m *VolumeMount) MountOptions() []string { return normalizeWritableOptions(m.MountOpts) }
+
+// Writable implements config.ContainerVolumeMountConfig interface.
+func (m *VolumeMount) Writable() bool { return slices.Contains(m.MountOpts, "rw") }
 
 // Destination implements config.ContainerTmpfsMountConfig interface.
 func (m *TmpfsMount) Destination() string { return m.MountDestination }

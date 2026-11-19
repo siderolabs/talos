@@ -60,6 +60,7 @@ func (suite *MountsSuite) TearDownTest() {
 
 // mountInfo is one parsed entry from /proc/self/mountinfo.
 type mountInfo struct {
+	majorMinor string
 	mountPoint string
 	fsType     string
 	source     string
@@ -74,7 +75,7 @@ func (m mountInfo) has(opt string) bool {
 }
 
 // parseMountInfo parses /proc/self/mountinfo per Linux kernel docs:
-// fields[4] = mount point, fields[5] = per-mount options, after " - ":
+// fields[2] = major:minor, fields[4] = mount point, fields[5] = per-mount options, after " - ":
 // fstype, source, super-options.
 func parseMountInfo(r io.Reader) ([]mountInfo, error) {
 	var out []mountInfo
@@ -112,6 +113,7 @@ func parseMountInfo(r io.Reader) ([]mountInfo, error) {
 		}
 
 		out = append(out, mountInfo{
+			majorMinor: preFields[2],
 			mountPoint: preFields[4],
 			options:    opts,
 			fsType:     postFields[0],

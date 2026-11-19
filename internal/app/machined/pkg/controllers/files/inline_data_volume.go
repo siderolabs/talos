@@ -33,12 +33,14 @@ import (
 // inlineDataVolumeRetryInterval is the delay before retrying to render the inline data volumes which failed.
 const inlineDataVolumeRetryInterval = 30 * time.Second
 
-// InlineDataVolumeController renders the files of inline data volumes.
+// InlineDataVolumeController renders the files of inline data volumes and binds them read-only.
 //
-// A volume which fails to render doesn't fail the controller: the error is logged, the volume keeps
-// its previous files and status, and it's retried on the next event or after inlineDataVolumeRetryInterval,
-// so the other volumes are not held back by the controller restart backoff.
+// A failed render or bind is logged and retried without restarting the controller, so other volumes aren't held back.
 type InlineDataVolumeController struct {
+	// Binder makes the read-only binds, defaults to bind mounts.
+	Binder InlineDataVolumeBinder
+	// MountPoint is the directory of the binds, defaults to constants.InlineDataVolumeMountPoint.
+	MountPoint string
 	// SkipFilesystemCheck disables the check that the volume is a tmpfs, and allows volume mounts
 	// attached to a path instead of a detached mount file descriptor, for tests only.
 	SkipFilesystemCheck bool
@@ -66,6 +68,17 @@ func (ctrl *InlineDataVolumeController) Inputs() []controller.Input {
 			Type:      block.VolumeMountStatusType,
 			Kind:      controller.InputStrong,
 		},
+		{
+			Namespace: files.NamespaceName,
+			Type:      files.InlineDataVolumeMountRequestType,
+			Kind:      controller.InputStrong,
+		},
+		{
+			// the consumers remove their finalizers from the statuses
+			Namespace: files.NamespaceName,
+			Type:      files.InlineDataVolumeMountStatusType,
+			Kind:      controller.InputDestroyReady,
+		},
 	}
 }
 
@@ -74,6 +87,10 @@ func (ctrl *InlineDataVolumeController) Outputs() []controller.Output {
 	return []controller.Output{
 		{
 			Type: files.InlineDataVolumeStatusType,
+			Kind: controller.OutputExclusive,
+		},
+		{
+			Type: files.InlineDataVolumeMountStatusType,
 			Kind: controller.OutputExclusive,
 		},
 	}
@@ -117,9 +134,16 @@ func (ctrl *InlineDataVolumeController) Run(ctx context.Context, r controller.Ru
 	}
 }
 
+type inlineDataVolume struct {
+	// path opens the volume root, valid while the finalizer on the mount status is held.
+	path   string
+	device uint64
+	hash   string
+}
+
 // reconcile renders and releases the inline data volumes.
 //
-// Returns whether any volume failed to render, and an error only for failures of the whole controller.
+// Returns whether any volume failed to render or bind, and an error only for failures of the whole controller.
 func (ctrl *InlineDataVolumeController) reconcile(ctx context.Context, r controller.Runtime, logger *zap.Logger) (bool, error) {
 	inlineDataVolumeConfigs, err := configuredInlineDataVolumes(ctx, r)
 	if err != nil {
@@ -133,17 +157,29 @@ func (ctrl *InlineDataVolumeController) reconcile(ctx context.Context, r control
 
 	r.StartTrackingOutputs()
 
-	released, failed, errs := ctrl.renderVolumes(ctx, r, logger, inlineDataVolumeConfigs, volumeMountStatuses)
+	rendered, released, failed, errs := ctrl.renderVolumes(ctx, r, logger, inlineDataVolumeConfigs, volumeMountStatuses)
 
-	if err = ctrl.releaseVolumes(ctx, r, logger, released); err != nil {
+	inUse, mountsFailed, err := ctrl.reconcileMounts(ctx, r, logger, rendered, released)
+	if err != nil {
+		// volumes in use unknown, don't release any
 		errs = errors.Join(errs, err)
+	} else {
+		// the binds of released volumes are being torn down; the ones still held (by a running
+		// container) pin the filesystem, so the volume mount is kept until they are gone
+		for name := range inUse {
+			delete(released, name)
+		}
+
+		if err = ctrl.releaseVolumes(ctx, r, logger, released); err != nil {
+			errs = errors.Join(errs, err)
+		}
 	}
 
 	if err = safe.CleanupOutputs[*files.InlineDataVolumeStatus](ctx, r); err != nil {
 		errs = errors.Join(errs, err)
 	}
 
-	return failed, errs
+	return failed || mountsFailed, errs
 }
 
 func configuredInlineDataVolumes(ctx context.Context, r controller.Reader) (map[string]configconfig.InlineDataVolumeConfig, error) {
@@ -163,21 +199,21 @@ func configuredInlineDataVolumes(ctx context.Context, r controller.Reader) (map[
 	return inlineDataVolumeConfigs, nil
 }
 
-// renderVolumes renders the files of every configured inline data volume which is mounted.
+// renderVolumes renders every configured, mounted inline data volume.
 //
-// Returns the mounts of the volumes which are no longer configured or being unmounted, by name,
-// and whether any volume failed to render.
-// A volume which fails to render keeps its previous status, as its previous files are still in place.
+// Returns the rendered volumes, the mounts to release, and whether any render failed.
+// A failed volume keeps its previous files and status.
 func (ctrl *InlineDataVolumeController) renderVolumes(
 	ctx context.Context, r controller.Runtime, logger *zap.Logger,
 	inlineDataVolumeConfigs map[string]configconfig.InlineDataVolumeConfig,
 	volumeMountStatuses safe.List[*block.VolumeMountStatus],
-) (map[string]*block.VolumeMountStatus, bool, error) {
+) (map[string]inlineDataVolume, map[string]*block.VolumeMountStatus, bool, error) {
 	var (
 		errs   error
 		failed bool
 	)
 
+	rendered := map[string]inlineDataVolume{}
 	released := map[string]*block.VolumeMountStatus{}
 
 	for volumeMountStatus := range volumeMountStatuses.All() {
@@ -194,7 +230,8 @@ func (ctrl *InlineDataVolumeController) renderVolumes(
 			continue
 		}
 
-		if err := ctrl.renderVolume(ctx, r, logger, volumeMountStatus, inlineDataVolumeConfig); err != nil {
+		volume, err := ctrl.renderVolume(ctx, r, logger, volumeMountStatus, inlineDataVolumeConfig)
+		if err != nil {
 			failed = true
 
 			logger.Error("failed to render inline data volume", zap.String("volume", name), zap.Error(err))
@@ -202,10 +239,14 @@ func (ctrl *InlineDataVolumeController) renderVolumes(
 			if err = keepStatus(ctx, r, name); err != nil {
 				errs = errors.Join(errs, err)
 			}
+
+			continue
 		}
+
+		rendered[name] = volume
 	}
 
-	return released, failed, errs
+	return rendered, released, failed, errs
 }
 
 // keepStatus keeps the existing status of an inline data volume through the cleanup of the outputs.
@@ -242,40 +283,40 @@ func inlineDataVolumeName(volumeMountStatus *block.VolumeMountStatus) (string, b
 func (ctrl *InlineDataVolumeController) renderVolume(
 	ctx context.Context, r controller.Runtime, logger *zap.Logger,
 	volumeMountStatus *block.VolumeMountStatus, inlineDataVolumeConfig configconfig.InlineDataVolumeConfig,
-) error {
+) (inlineDataVolume, error) {
 	if volumeMountStatus.TypedSpec().ReadOnly {
-		return errors.New("the volume is mounted read-only")
+		return inlineDataVolume{}, errors.New("the volume is mounted read-only")
 	}
 
 	// keeps the file descriptor of the mount valid
 	if !volumeMountStatus.Metadata().Finalizers().Has(ctrl.Name()) {
 		if err := r.AddFinalizer(ctx, volumeMountStatus.Metadata(), ctrl.Name()); err != nil {
-			return fmt.Errorf("failed to add finalizer: %w", err)
+			return inlineDataVolume{}, fmt.Errorf("failed to add finalizer: %w", err)
 		}
 	}
 
 	path, err := ctrl.RootPath(volumeMountStatus)
 	if err != nil {
-		return err
+		return inlineDataVolume{}, err
 	}
 
 	root, err := os.OpenRoot(path)
 	if err != nil {
-		return fmt.Errorf("failed to open volume root: %w", err)
+		return inlineDataVolume{}, fmt.Errorf("failed to open volume root: %w", err)
 	}
 
 	defer root.Close() //nolint:errcheck
 
 	device, err := ctrl.checkRoot(root)
 	if err != nil {
-		return err
+		return inlineDataVolume{}, err
 	}
 
 	textFiles := inlineDataVolumeConfig.Files()
 
 	hash, err := WriteInlineDataVolume(root, ctrl.HashKey, textFiles)
 	if err != nil {
-		return err
+		return inlineDataVolume{}, err
 	}
 
 	if err = safe.WriterModify(ctx, r, files.NewInlineDataVolumeStatus(files.NamespaceName, inlineDataVolumeConfig.Name()),
@@ -296,10 +337,10 @@ func (ctrl *InlineDataVolumeController) renderVolume(
 			return nil
 		},
 	); err != nil {
-		return fmt.Errorf("failed to write status: %w", err)
+		return inlineDataVolume{}, fmt.Errorf("failed to write status: %w", err)
 	}
 
-	return nil
+	return inlineDataVolume{path: path, device: device, hash: hash}, nil
 }
 
 // RootPath returns the /proc/self/fd path of the detached mount.
@@ -351,7 +392,7 @@ func (ctrl *InlineDataVolumeController) checkRoot(root *os.Root) (uint64, error)
 	return stat.Dev, nil
 }
 
-// releaseVolumes releases the mounts of the inline data volumes which are no longer configured or being unmounted.
+// releaseVolumes removes the finalizer from the mounts of released volumes.
 func (ctrl *InlineDataVolumeController) releaseVolumes(
 	ctx context.Context, r controller.Runtime, logger *zap.Logger, released map[string]*block.VolumeMountStatus,
 ) error {

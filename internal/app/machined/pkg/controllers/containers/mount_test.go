@@ -22,6 +22,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
+	"github.com/siderolabs/talos/pkg/machinery/resources/files"
 )
 
 const (
@@ -150,6 +151,125 @@ func (suite *MountSuite) finishInstance() {
 func (suite *MountSuite) assertMountsReady(ready bool) {
 	ctest.AssertResource(suite, mountContainer, func(status *containers.ContainerMountStatus, asrt *assert.Assertions) {
 		asrt.Equal(ready, status.TypedSpec().Ready, "error: %q", status.TypedSpec().Error)
+	})
+}
+
+func (suite *MountSuite) TestInlineDataVolumeMountsReadOnlyBind() {
+	inlineDataVolume := blockcfg.NewInlineDataVolumeConfigV1Alpha1()
+	inlineDataVolume.MetaName = testVolumeName
+	inlineDataVolume.FilesConfig = map[string]blockcfg.InlineDataVolumeFileV1Alpha1{
+		"index.html": {FileContents: "hello"},
+	}
+
+	suite.replaceVolumes(inlineDataVolume)
+
+	const (
+		requestID = mountContainer + "." + testVolumeName
+		target    = "/run/inline-data-volumes/" + requestID
+	)
+
+	// no options: an inline data volume is read-only without asking for it
+	suite.createSpec(suite.volumeMount())
+
+	ctest.AssertResource(suite, requestID, func(request *files.InlineDataVolumeMountRequest, asrt *assert.Assertions) {
+		asrt.Equal(testVolumeName, request.TypedSpec().VolumeName)
+		asrt.Equal(mountControllerName, request.TypedSpec().Requester)
+	})
+
+	requests, err := safe.StateListAll[*block.VolumeMountRequest](suite.Ctx(), suite.State())
+	suite.Require().NoError(err)
+	suite.Assert().Zero(requests.Len())
+
+	ctest.AssertResource(suite, mountContainer, func(status *containers.ContainerMountStatus, asrt *assert.Assertions) {
+		asrt.False(status.TypedSpec().Ready)
+		asrt.Contains(status.TypedSpec().Error, `waiting for the files of inline data volume "web-content" to be rendered`)
+	})
+
+	other := files.NewInlineDataVolumeMountStatus(files.NamespaceName, "other."+testVolumeName)
+	other.TypedSpec().Target = "/run/inline-data-volumes/other." + testVolumeName
+	suite.Create(other)
+
+	suite.assertMountsReady(false)
+
+	status := files.NewInlineDataVolumeMountStatus(files.NamespaceName, requestID)
+	status.TypedSpec().VolumeName = testVolumeName
+	status.TypedSpec().Target = target
+	suite.Create(status)
+
+	ctest.AssertResource(suite, mountContainer, func(status *containers.ContainerMountStatus, asrt *assert.Assertions) {
+		asrt.True(status.TypedSpec().Ready, "error: %q", status.TypedSpec().Error)
+
+		if !asrt.Len(status.TypedSpec().Mounts, 1) {
+			return
+		}
+
+		asrt.Equal(target, status.TypedSpec().Mounts[0].Source)
+		asrt.Equal("i-"+testVolumeName, status.TypedSpec().Mounts[0].VolumeID)
+		asrt.Equal(testVolumeName, status.TypedSpec().Mounts[0].VolumeName)
+		// the declared options, matched against the spec; ro and the hardening are applied later, in MountsResolvedToOCI
+		asrt.Empty(status.TypedSpec().Mounts[0].Options)
+	})
+
+	containerSpec, err := safe.StateGetByID[*containers.ContainerSpec](suite.Ctx(), suite.State(), mountContainer)
+	suite.Require().NoError(err)
+
+	resolved, err := containers.GetResolvedMountStatus(suite.Ctx(), suite.State(), mountContainer)
+	suite.Require().NoError(err)
+	suite.Assert().Empty(containerSpec.TypedSpec().ResolvedWaitingFor(resolved))
+
+	ctest.AssertResource(suite, requestID, func(status *files.InlineDataVolumeMountStatus, asrt *assert.Assertions) {
+		asrt.True(status.Metadata().Finalizers().Has(mountControllerName))
+	})
+
+	suite.Require().NoError(suite.State().Destroy(suite.Ctx(),
+		containers.NewContainerSpec(containers.NamespaceName, mountContainer).Metadata()))
+
+	ctest.AssertNoResource[*files.InlineDataVolumeMountRequest](suite, requestID)
+	ctest.AssertResource(suite, requestID, func(status *files.InlineDataVolumeMountStatus, asrt *assert.Assertions) {
+		asrt.False(status.Metadata().Finalizers().Has(mountControllerName))
+	})
+}
+
+func (suite *MountSuite) TestInlineDataVolumeBindHeldWhileInstanceIsLive() {
+	inlineDataVolume := blockcfg.NewInlineDataVolumeConfigV1Alpha1()
+	inlineDataVolume.MetaName = testVolumeName
+	inlineDataVolume.FilesConfig = map[string]blockcfg.InlineDataVolumeFileV1Alpha1{
+		"index.html": {FileContents: "hello"},
+	}
+
+	suite.replaceVolumes(inlineDataVolume)
+
+	const requestID = mountContainer + "." + testVolumeName
+
+	suite.createSpec(suite.volumeMount("ro"))
+
+	ctest.AssertResource(suite, requestID, func(*files.InlineDataVolumeMountRequest, *assert.Assertions) {})
+
+	status := files.NewInlineDataVolumeMountStatus(files.NamespaceName, requestID)
+	status.TypedSpec().VolumeName = testVolumeName
+	status.TypedSpec().Target = "/run/inline-data-volumes/" + requestID
+	suite.Create(status)
+
+	suite.assertMountsReady(true)
+
+	suite.createInstance()
+
+	_, err := suite.State().Teardown(suite.Ctx(), status.Metadata())
+	suite.Require().NoError(err)
+
+	ctest.AssertResource(suite, mountContainer, func(status *containers.ContainerMountStatus, asrt *assert.Assertions) {
+		asrt.False(status.TypedSpec().Ready)
+		asrt.Contains(status.TypedSpec().Error, `inline data volume "web-content" is pending unmount, waiting for the container to stop`)
+	})
+
+	ctest.AssertResource(suite, requestID, func(status *files.InlineDataVolumeMountStatus, asrt *assert.Assertions) {
+		asrt.True(status.Metadata().Finalizers().Has(mountControllerName))
+	})
+
+	suite.finishInstance()
+
+	ctest.AssertResource(suite, requestID, func(status *files.InlineDataVolumeMountStatus, asrt *assert.Assertions) {
+		asrt.False(status.Metadata().Finalizers().Has(mountControllerName))
 	})
 }
 
@@ -346,7 +466,7 @@ func (suite *MountSuite) TestUnresolvedVolumeIsNotRequested() {
 
 	ctest.AssertResource(suite, mountContainer, func(status *containers.ContainerMountStatus, asrt *assert.Assertions) {
 		asrt.False(status.TypedSpec().Ready)
-		asrt.Equal(`no UserVolumeConfig, ExistingVolumeConfig or ExternalVolumeConfig named "web-content" is configured`, status.TypedSpec().Error)
+		asrt.Equal(`no UserVolumeConfig, ExistingVolumeConfig, ExternalVolumeConfig or InlineDataVolumeConfig named "web-content" is configured`, status.TypedSpec().Error)
 	})
 
 	requests, err := safe.StateListAll[*block.VolumeMountRequest](suite.Ctx(), suite.State())

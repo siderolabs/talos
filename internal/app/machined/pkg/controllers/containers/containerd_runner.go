@@ -446,11 +446,18 @@ func MountsResolvedToOCI(mounts []containersres.ResolvedMountSpec) []specs.Mount
 		// here, MountController has resolved its source to that path, so the two kinds are the same
 		// operation and differ only in who decided the source.
 		case containersres.MountKindHostPath, containersres.MountKindVolume:
+			options := mount.Options
+
+			// inline data volume binds are always hardened
+			if isInlineDataVolumeMount(mount) {
+				options = inlineDataVolumeOptions(options)
+			}
+
 			out = append(out, specs.Mount{
 				Type:        "bind",
 				Source:      mount.Source,
 				Destination: mount.Destination,
-				Options:     append([]string{"rbind"}, mount.Options...),
+				Options:     append([]string{"rbind"}, options...),
 			})
 		}
 	}
@@ -473,9 +480,13 @@ func WithResolvedDevices(devices []containersres.ResolvedDeviceSpec) oci.SpecOpt
 
 // MountsRequestSharedPropagation reports whether any declared mount asks for
 // rshared propagation, which requires the rootfs itself to be shared
-// for the bind to join the host peer group (see ociSpecOpts).
+// for the bind to join the host peer group (see ociSpecOpts). Inline data volume mounts are always private.
 func MountsRequestSharedPropagation(mounts []containersres.ResolvedMountSpec) bool {
 	for _, mount := range mounts {
+		if isInlineDataVolumeMount(mount) {
+			continue
+		}
+
 		if slices.Contains(mount.Options, "rshared") {
 			return true
 		}

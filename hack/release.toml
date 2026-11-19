@@ -43,6 +43,14 @@ A new `InlineDataVolumeConfig` document defines a named set of files inline (sim
 A volume can hold at most 256 files in at most 256 distinct directories, and their total size must not exceed 1 MiB.
 Each file counts toward the total in whole pages of the system page size (a 1-byte file counts as a full page).
 Path components must be at most 255 bytes long, and paths at most 1024 bytes long.
+
+An inline data volume can be mounted into Talos containers with a `volume` mount in `ContainerConfig`, just like a user volume.
+The mount is always read-only, so `ro` may be omitted, and `rw` or `rshared` are rejected.
+Every container mounting the volume gets a read-only bind of the same files, under `/run/inline-data-volumes` on the host.
+Changes to the files are applied atomically without restarting the containers, and show up in all of them at once.
+Applications may watch for the changes and re-read the files.
+The files of inline data volumes are listed by `talosctl list` and `talosctl usage` only for the `os:admin` role.
+
 The name of an inline data volume must not be taken by a user, existing or external volume.
 
 Set `secret: true` to mark the volume as secret: file paths and contents are redacted from the machine configuration when it is redacted (e.g. in Omni), while the files are still rendered in full.

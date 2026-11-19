@@ -5,8 +5,10 @@
 package files_test
 
 import (
+	"maps"
 	"os"
 	"path/filepath"
+	"sync"
 	"testing"
 	"time"
 
@@ -33,6 +35,73 @@ const inlineDataVolumeControllerName = "files.InlineDataVolumeController"
 
 type InlineDataVolumeSuite struct {
 	ctest.DefaultSuite
+
+	binder     *fakeBinder
+	mountPoint string
+}
+
+// fakeBinder fakes bind mounts with symlinks.
+type fakeBinder struct {
+	mu    sync.Mutex
+	binds map[string]string
+	fail  bool
+}
+
+func (b *fakeBinder) Bound(target string, _ uint64) (bool, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	_, ok := b.binds[target]
+
+	return ok, nil
+}
+
+func (b *fakeBinder) Bind(source, target string) error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	if b.fail {
+		return os.ErrPermission
+	}
+
+	if err := os.MkdirAll(filepath.Dir(target), 0o700); err != nil {
+		return err
+	}
+
+	if err := os.Symlink(source, target); err != nil {
+		return err
+	}
+
+	b.binds[target] = source
+
+	return nil
+}
+
+func (b *fakeBinder) Unbind(target string) error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	delete(b.binds, target)
+
+	if err := os.Remove(target); err != nil && !os.IsNotExist(err) {
+		return err
+	}
+
+	return nil
+}
+
+func (b *fakeBinder) setFail(fail bool) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	b.fail = fail
+}
+
+func (b *fakeBinder) bound() map[string]string {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	return maps.Clone(b.binds)
 }
 
 func newInlineDataVolumeDoc(name string, files map[string]string) *blockcfg.InlineDataVolumeConfigV1Alpha1 {
@@ -298,6 +367,253 @@ func (suite *InlineDataVolumeSuite) TestOtherMountsIgnored() {
 	suite.Assert().Empty(entries)
 }
 
+func (suite *InlineDataVolumeSuite) request(id string) *files.InlineDataVolumeMountRequest {
+	request := files.NewInlineDataVolumeMountRequest(files.NamespaceName, id)
+	request.TypedSpec().VolumeName = "app"
+	request.TypedSpec().Requester = "test"
+	suite.Create(request)
+
+	return request
+}
+
+func (suite *InlineDataVolumeSuite) hold(id string) {
+	ctest.AssertResource(suite, id, func(*files.InlineDataVolumeMountStatus, *assert.Assertions) {})
+
+	suite.Require().NoError(suite.State().AddFinalizer(suite.Ctx(), files.NewInlineDataVolumeMountStatus(files.NamespaceName, id).Metadata(), "test"))
+}
+
+func (suite *InlineDataVolumeSuite) unhold(id string) {
+	suite.Require().NoError(suite.State().RemoveFinalizer(suite.Ctx(), files.NewInlineDataVolumeMountStatus(files.NamespaceName, id).Metadata(), "test"))
+}
+
+func (suite *InlineDataVolumeSuite) release(request *files.InlineDataVolumeMountRequest) {
+	_, err := suite.State().Teardown(suite.Ctx(), request.Metadata())
+	suite.Require().NoError(err)
+
+	ctest.AssertResource(suite, request.Metadata().ID(), func(r *files.InlineDataVolumeMountRequest, asrt *assert.Assertions) {
+		asrt.True(r.Metadata().Finalizers().Empty())
+	})
+
+	suite.Destroy(request)
+}
+
+func (suite *InlineDataVolumeSuite) TestMounts() {
+	dir := suite.T().TempDir()
+
+	suite.setConfig(newInlineDataVolumeDoc("app", map[string]string{"a.conf": "v1"}))
+
+	one := suite.request("one.app")
+	two := suite.request("two.app")
+
+	ctest.AssertResource(suite, "one.app", func(r *files.InlineDataVolumeMountRequest, asrt *assert.Assertions) {
+		asrt.True(r.Metadata().Finalizers().Has(inlineDataVolumeControllerName))
+	})
+	ctest.AssertNoResource[*files.InlineDataVolumeMountStatus](suite, "one.app")
+
+	volumeMountStatus := suite.mount("i-app", dir)
+
+	targetOne, targetTwo := filepath.Join(suite.mountPoint, "one.app"), filepath.Join(suite.mountPoint, "two.app")
+
+	ctest.AssertResources(suite, []resource.ID{"one.app", "two.app"}, func(r *files.InlineDataVolumeMountStatus, asrt *assert.Assertions) {
+		asrt.Equal("app", r.TypedSpec().VolumeName)
+		asrt.Equal(filepath.Join(suite.mountPoint, r.Metadata().ID()), r.TypedSpec().Target)
+		asrt.NotZero(r.TypedSpec().Device)
+		asrt.NotEmpty(r.TypedSpec().ContentsHash)
+	})
+
+	suite.Assert().Equal(map[string]string{targetOne: dir, targetTwo: dir}, suite.binder.bound())
+
+	suite.setConfig(newInlineDataVolumeDoc("app", map[string]string{"a.conf": "v2"}))
+
+	ctest.AssertResource(suite, "app", func(r *files.InlineDataVolumeStatus, asrt *assert.Assertions) {
+		asrt.Equal(filesctrl.InlineDataVolumeContentsHash(testHashKey, []configconfig.InlineDataVolumeFile{
+			{Path: "a.conf", Mode: 0o644, Contents: "v2"},
+		}), r.TypedSpec().ContentsHash)
+	})
+
+	assertFile(suite.T(), targetOne, "a.conf", "v2", 0o644)
+	assertFile(suite.T(), targetTwo, "a.conf", "v2", 0o644)
+
+	suite.hold("one.app")
+
+	_, err := suite.State().Teardown(suite.Ctx(), one.Metadata())
+	suite.Require().NoError(err)
+
+	ctest.AssertResource(suite, "one.app", func(r *files.InlineDataVolumeMountStatus, asrt *assert.Assertions) {
+		asrt.Equal(resource.PhaseTearingDown, r.Metadata().Phase())
+	})
+
+	suite.Assert().Contains(suite.binder.bound(), targetOne)
+
+	suite.unhold("one.app")
+	suite.release(one)
+
+	ctest.AssertNoResource[*files.InlineDataVolumeMountStatus](suite, "one.app")
+	suite.Assert().Equal(map[string]string{targetTwo: dir}, suite.binder.bound())
+
+	// the volume is no longer configured: its binds are torn down, the held one is kept
+	suite.hold("two.app")
+	suite.setConfig()
+
+	ctest.AssertNoResource[*files.InlineDataVolumeStatus](suite, "app")
+	ctest.AssertResource(suite, "two.app", func(r *files.InlineDataVolumeMountStatus, asrt *assert.Assertions) {
+		asrt.Equal(resource.PhaseTearingDown, r.Metadata().Phase())
+	})
+
+	_, err = suite.State().Teardown(suite.Ctx(), volumeMountStatus.Metadata())
+	suite.Require().NoError(err)
+
+	suite.assertHeld("i-app", true)
+	suite.Assert().Equal(map[string]string{targetTwo: dir}, suite.binder.bound())
+
+	// the volume is released once the bind is, while the request still exists
+	suite.unhold("two.app")
+
+	ctest.AssertNoResource[*files.InlineDataVolumeMountStatus](suite, "two.app")
+	suite.assertHeld("i-app", false)
+	suite.Assert().Empty(suite.binder.bound())
+
+	ctest.AssertResource(suite, "two.app", func(r *files.InlineDataVolumeMountRequest, asrt *assert.Assertions) {
+		asrt.True(r.Metadata().Finalizers().Has(inlineDataVolumeControllerName))
+	})
+
+	suite.release(two)
+}
+
+func (suite *InlineDataVolumeSuite) TestVolumeUnmountTearsDownBinds() {
+	dir := suite.T().TempDir()
+
+	suite.setConfig(newInlineDataVolumeDoc("app", map[string]string{"a.conf": "v1"}))
+	suite.request("one.app")
+	volumeMountStatus := suite.mount("i-app", dir)
+
+	target := filepath.Join(suite.mountPoint, "one.app")
+
+	suite.hold("one.app")
+
+	// the volume is being unmounted while still configured
+	_, err := suite.State().Teardown(suite.Ctx(), volumeMountStatus.Metadata())
+	suite.Require().NoError(err)
+
+	ctest.AssertResource(suite, "one.app", func(r *files.InlineDataVolumeMountStatus, asrt *assert.Assertions) {
+		asrt.Equal(resource.PhaseTearingDown, r.Metadata().Phase())
+	})
+
+	suite.assertHeld("i-app", true)
+	suite.Assert().Equal(map[string]string{target: dir}, suite.binder.bound())
+
+	suite.unhold("one.app")
+
+	ctest.AssertNoResource[*files.InlineDataVolumeMountStatus](suite, "one.app")
+	suite.assertHeld("i-app", false)
+	suite.Assert().Empty(suite.binder.bound())
+
+	ctest.AssertResource(suite, "one.app", func(r *files.InlineDataVolumeMountRequest, asrt *assert.Assertions) {
+		asrt.True(r.Metadata().Finalizers().Has(inlineDataVolumeControllerName))
+	})
+
+	// the volume is mounted again: the request is bound again
+	suite.Destroy(volumeMountStatus)
+
+	newDir := suite.T().TempDir()
+	suite.mount("i-app", newDir)
+
+	ctest.AssertResource(suite, "one.app", func(r *files.InlineDataVolumeMountStatus, asrt *assert.Assertions) {
+		asrt.Equal(resource.PhaseRunning, r.Metadata().Phase())
+	})
+
+	suite.Assert().Equal(map[string]string{target: newDir}, suite.binder.bound())
+}
+
+func (suite *InlineDataVolumeSuite) TestUnboundRequestDoesNotHoldVolume() {
+	dir := suite.T().TempDir()
+
+	suite.binder.setFail(true)
+
+	suite.setConfig(newInlineDataVolumeDoc("app", map[string]string{"a.conf": "v1"}))
+	suite.request("one.app")
+	suite.mount("i-app", dir)
+
+	ctest.AssertResource(suite, "app", func(*files.InlineDataVolumeStatus, *assert.Assertions) {})
+	suite.assertHeld("i-app", true)
+	ctest.AssertNoResource[*files.InlineDataVolumeMountStatus](suite, "one.app")
+
+	suite.setConfig()
+
+	suite.assertHeld("i-app", false)
+}
+
+func (suite *InlineDataVolumeSuite) TestMountFailureDoesNotBlockRendering() {
+	dir := suite.T().TempDir()
+
+	suite.binder.setFail(true)
+
+	suite.setConfig(newInlineDataVolumeDoc("app", map[string]string{"a.conf": "v1"}))
+	suite.request("one.app")
+	suite.mount("i-app", dir)
+
+	ctest.AssertResource(suite, "app", func(*files.InlineDataVolumeStatus, *assert.Assertions) {})
+	ctest.AssertNoResource[*files.InlineDataVolumeMountStatus](suite, "one.app")
+
+	// the volume is still rendered while its bind fails
+	suite.setConfig(newInlineDataVolumeDoc("app", map[string]string{"a.conf": "v2"}))
+
+	ctest.AssertResource(suite, "app", func(r *files.InlineDataVolumeStatus, asrt *assert.Assertions) {
+		asrt.Equal(filesctrl.InlineDataVolumeContentsHash(testHashKey, []configconfig.InlineDataVolumeFile{
+			{Path: "a.conf", Mode: 0o644, Contents: "v2"},
+		}), r.TypedSpec().ContentsHash)
+	})
+
+	assertFile(suite.T(), dir, "a.conf", "v2", 0o644)
+
+	// retried on the next event
+	suite.binder.setFail(false)
+	suite.setConfig(newInlineDataVolumeDoc("app", map[string]string{"a.conf": "v3"}))
+
+	ctest.AssertResource(suite, "one.app", func(*files.InlineDataVolumeMountStatus, *assert.Assertions) {})
+}
+
+func (suite *InlineDataVolumeSuite) TestLeftoverTearingDownStatus() {
+	dir := suite.T().TempDir()
+
+	suite.setConfig(newInlineDataVolumeDoc("app", map[string]string{"a.conf": "v1"}))
+	one := suite.request("one.app")
+	suite.mount("i-app", dir)
+
+	suite.hold("one.app")
+
+	// request gone while status held: status left over in teardown
+	suite.Require().NoError(suite.State().RemoveFinalizer(suite.Ctx(), one.Metadata(), inlineDataVolumeControllerName))
+	suite.Destroy(one)
+
+	ctest.AssertResource(suite, "one.app", func(r *files.InlineDataVolumeMountStatus, asrt *assert.Assertions) {
+		asrt.Equal(resource.PhaseTearingDown, r.Metadata().Phase())
+	})
+
+	// a request with the same ID comes back
+	suite.request("one.app")
+	suite.unhold("one.app")
+
+	ctest.AssertResource(suite, "one.app", func(r *files.InlineDataVolumeMountStatus, asrt *assert.Assertions) {
+		asrt.Equal(resource.PhaseRunning, r.Metadata().Phase())
+		asrt.Equal(filepath.Join(suite.mountPoint, "one.app"), r.TypedSpec().Target)
+	})
+
+	suite.Assert().Equal(map[string]string{filepath.Join(suite.mountPoint, "one.app"): dir}, suite.binder.bound())
+}
+
+func (suite *InlineDataVolumeSuite) TestInvalidRequestID() {
+	dir := suite.T().TempDir()
+
+	suite.setConfig(newInlineDataVolumeDoc("app", map[string]string{"a.conf": "v1"}))
+	suite.request("..")
+	suite.request("ok.app")
+	suite.mount("i-app", dir)
+
+	ctest.AssertResource(suite, "ok.app", func(*files.InlineDataVolumeMountStatus, *assert.Assertions) {})
+	ctest.AssertNoResource[*files.InlineDataVolumeMountStatus](suite, "..")
+}
+
 func TestCheckTmpfs(t *testing.T) {
 	t.Parallel()
 
@@ -330,12 +646,24 @@ func TestCheckTmpfs(t *testing.T) {
 func TestInlineDataVolumeSuite(t *testing.T) {
 	t.Parallel()
 
-	suite.Run(t, &InlineDataVolumeSuite{
+	s := &InlineDataVolumeSuite{}
+
+	s.DefaultSuite = ctest.DefaultSuite{
 		Timeout: 10 * time.Second,
 		AfterSetup: func(suite *ctest.DefaultSuite) {
-			suite.Require().NoError(suite.Runtime().RegisterController(&filesctrl.InlineDataVolumeController{SkipFilesystemCheck: true, HashKey: testHashKey}))
+			s.binder = &fakeBinder{binds: map[string]string{}}
+			s.mountPoint = filepath.Join(suite.T().TempDir(), "inline-data-volumes")
+
+			suite.Require().NoError(suite.Runtime().RegisterController(&filesctrl.InlineDataVolumeController{
+				Binder:              s.binder,
+				MountPoint:          s.mountPoint,
+				SkipFilesystemCheck: true,
+				HashKey:             testHashKey,
+			}))
 		},
-	})
+	}
+
+	suite.Run(t, s)
 }
 
 func TestInlineDataVolumeRootPath(t *testing.T) {

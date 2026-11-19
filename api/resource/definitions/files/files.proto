@@ -17,6 +17,26 @@ message EtcFileStatusSpec {
   string spec_version = 1;
 }
 
+// InlineDataVolumeMountRequestSpec describes a read-only bind of an inline data volume.
+message InlineDataVolumeMountRequestSpec {
+  // VolumeName is the name of the InlineDataVolumeConfig document.
+  string volume_name = 1;
+  // Requester is the consumer of the bind.
+  string requester = 2;
+}
+
+// InlineDataVolumeMountStatusSpec describes a read-only bind of an inline data volume.
+message InlineDataVolumeMountStatusSpec {
+  // VolumeName is the name of the InlineDataVolumeConfig document.
+  string volume_name = 1;
+  // Target is the host path of the read-only bind.
+  string target = 2;
+  // ContentsHash is the hash of the most recently rendered files.
+  string contents_hash = 3;
+  // Device is the device number of the bound filesystem.
+  uint64 device = 4;
+}
+
 // InlineDataVolumeStatusSpec describes the rendered files of an inline data volume.
 message InlineDataVolumeStatusSpec {
   // VolumeID is the ID of the volume holding the files.

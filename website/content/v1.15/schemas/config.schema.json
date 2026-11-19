@@ -612,7 +612,7 @@
         "kind",
         "name"
       ],
-      "description": "InlineDataVolumeConfig is an inline data volume configuration document.\\nInline data volume is a set of files defined inline, similar to a Kubernetes ConfigMap.\\nThe files are kept in memory (`tmpfs`), which only Talos can write to.\\nThe name must not be taken by a user, existing or external volume.\\n\\nChanges to the files are applied in place:\\nthe files are replaced atomically as a whole, by swapping the `..data` symbolic link\\nto a directory holding the new set of files.\\nEach top-level entry of the volume is a symbolic link into `..data`.\\n"
+      "description": "InlineDataVolumeConfig is an inline data volume configuration document.\\nInline data volume is a set of files defined inline, similar to a Kubernetes ConfigMap.\\nThe files are kept in memory (`tmpfs`), which only Talos can write to.\\nContainers mount it read-only with a `volume` mount in `ContainerConfig`.\\nThe name must not be taken by a user, existing or external volume.\\n\\nChanges to the files are applied in place, without restarting containers:\\nthe files are replaced atomically as a whole, by swapping the `..data` symbolic link\\nto a directory holding the new set of files.\\nEach top-level entry of the volume is a symbolic link into `..data`.\\n"
     },
     "block.InlineDataVolumeFileV1Alpha1": {
       "properties": {
@@ -1836,9 +1836,9 @@
         "volume": {
           "$ref": "#/$defs/container.VolumeMount",
           "title": "volume",
-          "description": "Mount a user, existing or external volume by name.\n\nThe name is that of a UserVolumeConfig, ExistingVolumeConfig or\nExternalVolumeConfig document. Volume names are unique across those kinds, so the\nname resolves to one volume. The volume must be declared in the same configuration.\n\nThe volume is mounted from /var/mnt/\u0026lt;name\u0026gt; on the host. Declaring this mount also\nmakes the container wait for the volume to be mounted before it starts.\n",
-          "markdownDescription": "Mount a user, existing or external volume by name.\n\nThe name is that of a `UserVolumeConfig`, `ExistingVolumeConfig` or\n`ExternalVolumeConfig` document. Volume names are unique across those kinds, so the\nname resolves to one volume. The volume must be declared in the same configuration.\n\nThe volume is mounted from `/var/mnt/\u003cname\u003e` on the host. Declaring this mount also\nmakes the container wait for the volume to be mounted before it starts.",
-          "x-intellij-html-description": "\u003cp\u003eMount a user, existing or external volume by name.\u003c/p\u003e\n\n\u003cp\u003eThe name is that of a \u003ccode\u003eUserVolumeConfig\u003c/code\u003e, \u003ccode\u003eExistingVolumeConfig\u003c/code\u003e or\n\u003ccode\u003eExternalVolumeConfig\u003c/code\u003e document. Volume names are unique across those kinds, so the\nname resolves to one volume. The volume must be declared in the same configuration.\u003c/p\u003e\n\n\u003cp\u003eThe volume is mounted from \u003ccode\u003e/var/mnt/\u0026lt;name\u0026gt;\u003c/code\u003e on the host. Declaring this mount also\nmakes the container wait for the volume to be mounted before it starts.\u003c/p\u003e\n"
+          "description": "Mount a user, existing, external or inline data volume by name.\n\nThe name is that of a UserVolumeConfig, ExistingVolumeConfig, ExternalVolumeConfig\nor InlineDataVolumeConfig document. Volume names are unique across those kinds, so the\nname resolves to one volume. The volume must be declared in the same configuration.\n\nThe volume is mounted from /var/mnt/\u0026lt;name\u0026gt; on the host; an inline data volume is a read-only bind\nunder /run/inline-data-volumes, which picks up file updates live. The container waits for the\nvolume to be ready before it starts.\n",
+          "markdownDescription": "Mount a user, existing, external or inline data volume by name.\n\nThe name is that of a `UserVolumeConfig`, `ExistingVolumeConfig`, `ExternalVolumeConfig`\nor `InlineDataVolumeConfig` document. Volume names are unique across those kinds, so the\nname resolves to one volume. The volume must be declared in the same configuration.\n\nThe volume is mounted from `/var/mnt/\u003cname\u003e` on the host; an inline data volume is a read-only bind\nunder `/run/inline-data-volumes`, which picks up file updates live. The container waits for the\nvolume to be ready before it starts.",
+          "x-intellij-html-description": "\u003cp\u003eMount a user, existing, external or inline data volume by name.\u003c/p\u003e\n\n\u003cp\u003eThe name is that of a \u003ccode\u003eUserVolumeConfig\u003c/code\u003e, \u003ccode\u003eExistingVolumeConfig\u003c/code\u003e, \u003ccode\u003eExternalVolumeConfig\u003c/code\u003e\nor \u003ccode\u003eInlineDataVolumeConfig\u003c/code\u003e document. Volume names are unique across those kinds, so the\nname resolves to one volume. The volume must be declared in the same configuration.\u003c/p\u003e\n\n\u003cp\u003eThe volume is mounted from \u003ccode\u003e/var/mnt/\u0026lt;name\u0026gt;\u003c/code\u003e on the host; an inline data volume is a read-only bind\nunder \u003ccode\u003e/run/inline-data-volumes\u003c/code\u003e, which picks up file updates live. The container waits for the\nvolume to be ready before it starts.\u003c/p\u003e\n"
         },
         "tmpfs": {
           "$ref": "#/$defs/container.TmpfsMount",
@@ -2149,9 +2149,9 @@
         "name": {
           "type": "string",
           "title": "name",
-          "description": "Name of the volume to mount.\n\nThe name of a UserVolumeConfig, ExistingVolumeConfig or ExternalVolumeConfig document.\n",
-          "markdownDescription": "Name of the volume to mount.\n\nThe name of a `UserVolumeConfig`, `ExistingVolumeConfig` or `ExternalVolumeConfig` document.",
-          "x-intellij-html-description": "\u003cp\u003eName of the volume to mount.\u003c/p\u003e\n\n\u003cp\u003eThe name of a \u003ccode\u003eUserVolumeConfig\u003c/code\u003e, \u003ccode\u003eExistingVolumeConfig\u003c/code\u003e or \u003ccode\u003eExternalVolumeConfig\u003c/code\u003e document.\u003c/p\u003e\n"
+          "description": "Name of the volume to mount.\n\nThe name of a UserVolumeConfig, ExistingVolumeConfig, ExternalVolumeConfig or InlineDataVolumeConfig document.\n",
+          "markdownDescription": "Name of the volume to mount.\n\nThe name of a `UserVolumeConfig`, `ExistingVolumeConfig`, `ExternalVolumeConfig` or `InlineDataVolumeConfig` document.",
+          "x-intellij-html-description": "\u003cp\u003eName of the volume to mount.\u003c/p\u003e\n\n\u003cp\u003eThe name of a \u003ccode\u003eUserVolumeConfig\u003c/code\u003e, \u003ccode\u003eExistingVolumeConfig\u003c/code\u003e, \u003ccode\u003eExternalVolumeConfig\u003c/code\u003e or \u003ccode\u003eInlineDataVolumeConfig\u003c/code\u003e document.\u003c/p\u003e\n"
         },
         "destination": {
           "type": "string",
@@ -2172,9 +2172,9 @@
             "rshared"
           ],
           "title": "options",
-          "description": "Mount options. Volume mounts are writable by default (rw).\n\nA volume whose ExistingVolumeConfig or ExternalVolumeConfig declares it\nread-only must be mounted with ro.\n",
-          "markdownDescription": "Mount options. Volume mounts are writable by default (`rw`).\n\nA volume whose `ExistingVolumeConfig` or `ExternalVolumeConfig` declares it\nread-only must be mounted with `ro`.",
-          "x-intellij-html-description": "\u003cp\u003eMount options. Volume mounts are writable by default (\u003ccode\u003erw\u003c/code\u003e).\u003c/p\u003e\n\n\u003cp\u003eA volume whose \u003ccode\u003eExistingVolumeConfig\u003c/code\u003e or \u003ccode\u003eExternalVolumeConfig\u003c/code\u003e declares it\nread-only must be mounted with \u003ccode\u003ero\u003c/code\u003e.\u003c/p\u003e\n"
+          "description": "Mount options. Volume mounts are writable by default (rw).\n\nA volume whose ExistingVolumeConfig or ExternalVolumeConfig declares it\nread-only must be mounted with ro.\n\nAn inline data volume is always mounted ro, nosuid, nodev, noexec and rprivate,\nso ro may be omitted, and rw and rshared are rejected.\n",
+          "markdownDescription": "Mount options. Volume mounts are writable by default (`rw`).\n\nA volume whose `ExistingVolumeConfig` or `ExternalVolumeConfig` declares it\nread-only must be mounted with `ro`.\n\nAn inline data volume is always mounted `ro`, `nosuid`, `nodev`, `noexec` and `rprivate`,\nso `ro` may be omitted, and `rw` and `rshared` are rejected.",
+          "x-intellij-html-description": "\u003cp\u003eMount options. Volume mounts are writable by default (\u003ccode\u003erw\u003c/code\u003e).\u003c/p\u003e\n\n\u003cp\u003eA volume whose \u003ccode\u003eExistingVolumeConfig\u003c/code\u003e or \u003ccode\u003eExternalVolumeConfig\u003c/code\u003e declares it\nread-only must be mounted with \u003ccode\u003ero\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003eAn inline data volume is always mounted \u003ccode\u003ero\u003c/code\u003e, \u003ccode\u003enosuid\u003c/code\u003e, \u003ccode\u003enodev\u003c/code\u003e, \u003ccode\u003enoexec\u003c/code\u003e and \u003ccode\u003erprivate\u003c/code\u003e,\nso \u003ccode\u003ero\u003c/code\u003e may be omitted, and \u003ccode\u003erw\u003c/code\u003e and \u003ccode\u003ershared\u003c/code\u003e are rejected.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

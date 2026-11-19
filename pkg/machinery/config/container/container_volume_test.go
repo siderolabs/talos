@@ -76,12 +76,53 @@ func TestContainerVolumeMounts(t *testing.T) {
 			},
 		},
 		{
+			name: "inline data volume mounted ro",
+			docs: []config.Document{
+				newInlineDataVolumeDoc("data"),
+				newVolumeMountContainerDoc("data", "ro"),
+			},
+		},
+		{
+			name: "inline data volume mounted without options",
+			docs: []config.Document{
+				newInlineDataVolumeDoc("data"),
+				newVolumeMountContainerDoc("data"),
+			},
+		},
+		{
+			name: "inline data volume mounted rbind",
+			docs: []config.Document{
+				newInlineDataVolumeDoc("data"),
+				newVolumeMountContainerDoc("data", "rbind", "noatime"),
+			},
+		},
+		{
+			name: "inline data volume mounted rw",
+			docs: []config.Document{
+				newInlineDataVolumeDoc("data"),
+				newVolumeMountContainerDoc("data", "rw"),
+			},
+			expectedErrs: []string{
+				`container "app": mounts[0]: inline data volume "data" is always read-only, so it can't be mounted with the rw option`,
+			},
+		},
+		{
+			name: "inline data volume mounted rshared",
+			docs: []config.Document{
+				newInlineDataVolumeDoc("data"),
+				newVolumeMountContainerDoc("data", "ro", "rshared"),
+			},
+			expectedErrs: []string{
+				`container "app": mounts[0]: inline data volume "data" is always mounted rprivate, so it can't be mounted with the rshared option`,
+			},
+		},
+		{
 			name: "volume not configured",
 			docs: []config.Document{
 				newVolumeMountContainerDoc("nowhere"),
 			},
 			expectedErrs: []string{
-				`container "app": mounts[0]: no UserVolumeConfig, ExistingVolumeConfig or ExternalVolumeConfig declares volume "nowhere"`,
+				`container "app": mounts[0]: no UserVolumeConfig, ExistingVolumeConfig, ExternalVolumeConfig or InlineDataVolumeConfig declares volume "nowhere"`,
 			},
 		},
 		{
@@ -92,7 +133,7 @@ func TestContainerVolumeMounts(t *testing.T) {
 				newVolumeMountContainerDoc("u-data"),
 			},
 			expectedErrs: []string{
-				`container "app": mounts[0]: no UserVolumeConfig, ExistingVolumeConfig or ExternalVolumeConfig declares volume "u-data"`,
+				`container "app": mounts[0]: no UserVolumeConfig, ExistingVolumeConfig, ExternalVolumeConfig or InlineDataVolumeConfig declares volume "u-data"`,
 			},
 		},
 		{

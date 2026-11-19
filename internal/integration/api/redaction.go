@@ -92,7 +92,6 @@ func (suite *RedactionSuite) SetupTest() {
 
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 5*time.Minute)
 
-	// the per-role client certificates are minted by a control plane node
 	suite.node = suite.RandomDiscoveredNodeInternalIP(configmachine.TypeControlPlane)
 	suite.nodeCtx = client.WithNode(suite.ctx, suite.node)
 }
@@ -108,7 +107,16 @@ func (suite *RedactionSuite) TearDownTest() {
 func (suite *RedactionSuite) clientForRole(r role.Role) *client.Client {
 	suite.T().Helper()
 
-	resp, err := suite.Client.GenerateClientConfiguration(suite.nodeCtx, &machineapi.GenerateClientConfigurationRequest{
+	return newRoleClient(suite.ctx, &suite.APISuite, r)
+}
+
+// newRoleClient returns a client authenticated with only the given role, closed on test cleanup.
+func newRoleClient(ctx context.Context, suite *base.APISuite, r role.Role) *client.Client {
+	suite.T().Helper()
+
+	controlPlaneCtx := client.WithNode(ctx, suite.RandomDiscoveredNodeInternalIP(configmachine.TypeControlPlane))
+
+	resp, err := suite.Client.GenerateClientConfiguration(controlPlaneCtx, &machineapi.GenerateClientConfigurationRequest{
 		Roles:  role.MakeSet(r).Strings(),
 		CrtTtl: durationpb.New(time.Hour),
 	})
@@ -121,7 +129,7 @@ func (suite *RedactionSuite) clientForRole(r role.Role) *client.Client {
 	// the generated configuration carries no endpoints, so reuse the ones the suite is talking to
 	cfg.Contexts[cfg.Context].Endpoints = suite.Client.GetEndpoints()
 
-	cli, err := client.New(suite.ctx, client.WithConfig(cfg))
+	cli, err := client.New(ctx, client.WithConfig(cfg))
 	suite.Require().NoError(err)
 
 	suite.T().Cleanup(func() {

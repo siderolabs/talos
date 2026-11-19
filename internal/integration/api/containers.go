@@ -13,6 +13,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"maps"
 	"math/rand"
 	"path/filepath"
@@ -31,6 +32,7 @@ import (
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/hpack"
 
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/images"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
@@ -52,6 +54,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
 	crires "github.com/siderolabs/talos/pkg/machinery/resources/cri"
+	"github.com/siderolabs/talos/pkg/machinery/resources/files"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/role"
 )
@@ -470,19 +473,20 @@ func (suite *ContainersSuite) TestRestartPolicy() {
 
 // TestRestartBackoff verifies that the restart delay doubles for a container which keeps exiting.
 //
-// The container logs when it starts and when it exits, so the delays are measured on the node; the
-// exact doubling and the cap are covered by the unit tests.
+// The container logs when it starts and exits right away, so the time between two starts bounds the
+// restart delay from below. It doesn't log its exit: output written just before a quick exit isn't
+// guaranteed to reach the log. The exact doubling and the cap are covered by the unit tests.
 func (suite *ContainersSuite) TestRestartBackoff() {
 	ctx, name, _ := suite.setupContainer("restart-backoff")
 
-	doc := suite.shellContainer(name, "date +start=%s; trap 'date +exit=%s' EXIT; exit 1")
+	doc := suite.shellContainer(name, "date +start=%s; exit 1")
 	doc.LifecycleConfig = &containercfg.ContainerLifecycle{
 		RestartConfig: &containercfg.ContainerRestart{RestartDelay: new(time.Second), RestartMaxDelay: new(2 * time.Second)},
 	}
 
 	suite.applyContainers(ctx, doc)
 
-	var starts, exits []int64
+	var starts []int64
 
 	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
 		log, err := suite.readContainerLog(ctx, name)
@@ -490,15 +494,14 @@ func (suite *ContainersSuite) TestRestartBackoff() {
 			return
 		}
 
-		starts, exits = logTimes(log, "start="), logTimes(log, "exit=")
+		starts = logTimes(log, "start=")
 
 		assert.GreaterOrEqual(collect, len(starts), 4, "not restarted often enough yet:\n%s", log)
-		assert.GreaterOrEqual(collect, len(exits), 3, "exits not logged:\n%s", log)
 	}, containerStartTimeout, time.Second)
 
 	// doubled once, then held at the cap
 	for i, delay := range []int64{1, 2, 2} {
-		suite.Assert().GreaterOrEqual(starts[i+1]-exits[i], delay, "restart %d", i+1)
+		suite.Assert().GreaterOrEqual(starts[i+1]-starts[i], delay, "restart %d", i+1)
 	}
 }
 
@@ -2102,6 +2105,228 @@ func (suite *ContainersSuite) TestContainerUserVolumeMount() {
 		constants.UserVolumePrefix+volumeName)
 }
 
+func (suite *ContainersSuite) TestContainerInlineDataVolumeMount() {
+	ctx, name, node := suite.setupContainer("inlinedata")
+	otherCtx, otherName := suite.setupContainerOn("inlinedata2", node)
+
+	volumeName := fmt.Sprintf("idt-%04x", rand.Int31())
+	suite.ownVolume(name, volumeName)
+
+	const destination = "/etc/app"
+
+	inlineDataVolume := func(app string) *blockcfg.InlineDataVolumeConfigV1Alpha1 {
+		doc := blockcfg.NewInlineDataVolumeConfigV1Alpha1()
+		doc.MetaName = volumeName
+		doc.FilesConfig = map[string]blockcfg.InlineDataVolumeFileV1Alpha1{
+			"app.conf":        {FileContents: app},
+			"sub/nested.conf": {FileMode: new(blockcfg.InlineDataVolumeFileMode(0o600)), FileContents: "nested"},
+		}
+
+		return doc
+	}
+
+	readingContainer := func(containerName string) *containercfg.ContainerConfigV1Alpha1 {
+		doc := suite.shellContainer(containerName,
+			"touch "+destination+"/probe 2>/dev/null && echo WRITABLE || echo READONLY; "+
+				"trap 'exit 0' TERM; "+
+				"while true; do echo \"app=$(cat "+destination+"/app.conf) nested=$(cat "+destination+"/sub/nested.conf)\"; sleep 1 & wait; done")
+		doc.MountsConfig = []containercfg.ContainerMount{
+			{
+				VolumeMount: &containercfg.VolumeMount{
+					VolumeName:       volumeName,
+					MountDestination: destination,
+					MountOpts:        []string{"ro"},
+				},
+			},
+		}
+
+		return doc
+	}
+
+	suite.T().Logf("declaring inline data volume %q", volumeName)
+
+	suite.PatchMachineConfig(ctx, inlineDataVolume("v1"))
+
+	volumeID := constants.InlineDataVolumePrefix + volumeName
+	hash := suite.assertInlineDataVolumeRendered(ctx, volumeName, "")
+
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), volumeID,
+		func(status *block.MountStatus, asrt *assert.Assertions) {
+			asrt.True(status.TypedSpec().Spec.Detached, "the writable mount of the volume is attached")
+		})
+
+	suite.applyContainers(ctx, readingContainer(name), readingContainer(otherName))
+
+	mountID := configcontainer.InlineDataVolumeMountID(name, volumeName)
+	otherMountID := configcontainer.InlineDataVolumeMountID(otherName, volumeName)
+	target := filepath.Join(constants.InlineDataVolumeMountPoint, mountID)
+	otherTarget := filepath.Join(constants.InlineDataVolumeMountPoint, otherMountID)
+
+	suite.assertInlineDataVolumeBound(ctx, mountID, volumeName, target)
+	suite.assertInlineDataVolumeBound(ctx, otherMountID, volumeName, otherTarget)
+
+	for _, containerName := range []string{name, otherName} {
+		logs := suite.assertContainerLogged(ctx, containerName, "app=v1 nested=nested")
+		suite.Assert().Contains(logs, "READONLY", "inline data volume is writable in container %q", containerName)
+	}
+
+	mounts := suite.readNodeMountInfo(ctx)
+
+	bindMount, ok := findMount(mounts, target)
+	suite.Require().Truef(ok, "expected a mount at %s", target)
+
+	otherBindMount, ok := findMount(mounts, otherTarget)
+	suite.Require().Truef(ok, "expected a mount at %s", otherTarget)
+
+	for _, mount := range []mountInfo{bindMount, otherBindMount} {
+		suite.Assert().Equal("tmpfs", mount.fsType)
+		suite.Assert().NotEmpty(mount.superOpts["size"], "the tmpfs is unbounded")
+		suite.assertMountOptions(ctx, mount.mountPoint, "ro", "nosuid", "nodev", "noexec")
+	}
+
+	suite.Assert().Equal(bindMount.majorMinor, otherBindMount.majorMinor, "the binds are of different filesystems")
+
+	_, mounted := findMount(mounts, filepath.Join(constants.UserVolumeMountPoint, volumeName))
+	suite.Assert().False(mounted, "inline data volumes have no mount under %s", constants.UserVolumeMountPoint)
+
+	entries := suite.listInlineDataVolume(ctx, suite.Client, target)
+	dataDir := "..data-" + hash
+
+	// The files may be secret, so only admins see them, at the bind or anywhere else.
+	reader := newRoleClient(suite.ctx, &suite.APISuite, role.Reader)
+	suite.Assert().Empty(suite.listInlineDataVolume(ctx, reader, target), "an os:reader lists the files of %s", target)
+	suite.Assert().Equal([]string{"."}, slices.Collect(maps.Keys(suite.listInlineDataVolume(ctx, reader, constants.InlineDataVolumeMountPoint))),
+		"an os:reader lists the binds under %s", constants.InlineDataVolumeMountPoint)
+
+	suite.Assert().Equal(dataDir, entries["..data"].Link)
+	suite.Assert().Equal("..data/app.conf", entries["app.conf"].Link)
+	suite.Assert().Equal("..data/sub", entries["sub"].Link)
+
+	if suite.Assert().Contains(entries, dataDir+"/app.conf") && suite.Assert().Contains(entries, dataDir+"/sub/nested.conf") {
+		suite.Assert().Equal(fs.FileMode(0o644), fs.FileMode(entries[dataDir+"/app.conf"].Mode).Perm())
+		suite.Assert().Equal(fs.FileMode(0o600), fs.FileMode(entries[dataDir+"/sub/nested.conf"].Mode).Perm())
+	}
+
+	instanceID, _ := suite.assertContainerRunning(ctx, name, "with the inline data volume mounted")
+	otherInstanceID, _ := suite.assertContainerRunning(ctx, otherName, "with the inline data volume mounted")
+
+	suite.T().Logf("updating inline data volume %q", volumeName)
+
+	suite.PatchMachineConfig(ctx, inlineDataVolume("v2"))
+
+	updatedHash := suite.assertInlineDataVolumeRendered(ctx, volumeName, hash)
+	suite.Require().NotEqual(hash, updatedHash)
+
+	for _, containerName := range []string{name, otherName} {
+		suite.assertContainerLogged(ctx, containerName, "app=v2 nested=nested")
+	}
+
+	for _, bindTarget := range []string{target, otherTarget} {
+		entries = suite.listInlineDataVolume(ctx, suite.Client, bindTarget)
+		suite.Assert().Equal("..data-"+updatedHash, entries["..data"].Link)
+		suite.Assert().NotContains(entries, dataDir, "the previous set of files is left behind")
+	}
+
+	updatedInstanceID, _ := suite.assertContainerRunning(ctx, name, "after the inline data volume update")
+	suite.Assert().Equal(instanceID, updatedInstanceID, "the container was restarted by the inline data volume update")
+
+	updatedOtherInstanceID, _ := suite.assertContainerRunning(ctx, otherName, "after the inline data volume update")
+	suite.Assert().Equal(otherInstanceID, updatedOtherInstanceID, "the container was restarted by the inline data volume update")
+
+	suite.T().Logf("removing container config %q", otherName)
+
+	suite.RemoveMachineConfigDocumentsByName(otherCtx, containercfg.ContainerConfigKind, otherName)
+
+	rtestutils.AssertNoResource[*files.InlineDataVolumeMountStatus](ctx, suite.T(), suite.Client.State(), otherMountID)
+
+	suite.Eventually(func() bool {
+		_, mounted := findMount(suite.readNodeMountInfo(ctx), otherTarget)
+
+		return !mounted
+	}, time.Minute, time.Second, "expected %s to be unmounted", otherTarget)
+
+	suite.assertInlineDataVolumeBound(ctx, mountID, volumeName, target)
+	suite.assertContainerLogged(ctx, name, "app=v2 nested=nested")
+
+	suite.T().Logf("removing container config %q", name)
+
+	suite.RemoveMachineConfigDocumentsByName(ctx, containercfg.ContainerConfigKind, name)
+
+	rtestutils.AssertNoResource[*containers.ContainerMountStatus](ctx, suite.T(), suite.Client.State(), name)
+	rtestutils.AssertNoResource[*files.InlineDataVolumeMountStatus](ctx, suite.T(), suite.Client.State(), mountID)
+
+	suite.T().Logf("removing inline data volume %q", volumeName)
+
+	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.InlineDataVolumeConfigKind, volumeName)
+
+	rtestutils.AssertNoResource[*files.InlineDataVolumeStatus](ctx, suite.T(), suite.Client.State(), volumeName)
+	rtestutils.AssertNoResource[*block.MountStatus](ctx, suite.T(), suite.Client.State(), volumeID)
+}
+
+// assertInlineDataVolumeRendered waits for the volume files to be rendered (with a hash other than previousHash, if set)
+// and returns their hash.
+func (suite *ContainersSuite) assertInlineDataVolumeRendered(ctx context.Context, volumeName, previousHash string) string {
+	var hash string
+
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), volumeName,
+		func(status *files.InlineDataVolumeStatus, asrt *assert.Assertions) {
+			asrt.Equal(constants.InlineDataVolumePrefix+volumeName, status.TypedSpec().VolumeID)
+			asrt.Equal(2, status.TypedSpec().Files)
+			asrt.NotEmpty(status.TypedSpec().ContentsHash)
+
+			if previousHash != "" {
+				asrt.NotEqual(previousHash, status.TypedSpec().ContentsHash, "the inline data volume is not re-rendered")
+			}
+
+			hash = status.TypedSpec().ContentsHash
+		})
+
+	return hash
+}
+
+// assertInlineDataVolumeBound waits for the read-only bind of the inline data volume at target.
+func (suite *ContainersSuite) assertInlineDataVolumeBound(ctx context.Context, mountID, volumeName, target string) {
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), mountID,
+		func(status *files.InlineDataVolumeMountStatus, asrt *assert.Assertions) {
+			asrt.Equal(volumeName, status.TypedSpec().VolumeName)
+			asrt.Equal(target, status.TypedSpec().Target)
+		})
+}
+
+// listInlineDataVolume lists the bind of an inline data volume at root, keyed by the path relative to it.
+func (suite *ContainersSuite) listInlineDataVolume(ctx context.Context, cli *client.Client, root string) map[string]*machine.FileInfo {
+	stream, err := cli.LS(ctx, &machine.ListRequest{
+		Root:           root,
+		Recurse:        true,
+		RecursionDepth: 4,
+	})
+	suite.Require().NoError(err)
+
+	entries := map[string]*machine.FileInfo{}
+
+	suite.Require().NoError(helpers.ReadGRPCStream(stream, func(info *machine.FileInfo, _ string, _ bool) error {
+		suite.Require().Empty(info.Error, "listing %s", info.Name)
+
+		entries[info.RelativeName] = info
+
+		return nil
+	}))
+
+	return entries
+}
+
+func (suite *ContainersSuite) readNodeMountInfo(ctx context.Context) []mountInfo {
+	r, err := suite.Client.Read(ctx, "/proc/self/mountinfo")
+	suite.Require().NoError(err)
+
+	defer r.Close() //nolint:errcheck
+
+	mounts, err := parseMountInfo(r)
+	suite.Require().NoError(err)
+
+	return mounts
+}
+
 // TestUserVolumeMountWritableByDefault verifies that a user volume mounted without options is
 // writable, both as requested of the block subsystem and as the container finds it.
 func (suite *ContainersSuite) TestUserVolumeMountWritableByDefault() {
@@ -2715,7 +2940,7 @@ func (suite *ContainersSuite) setupContainerOn(purpose, node string) (context.Co
 					switch doc.Kind() {
 					case containercfg.ContainerConfigKind:
 						return named.Name() != name
-					case blockcfg.UserVolumeConfigKind, blockcfg.ExistingVolumeConfigKind, blockcfg.ExternalVolumeConfigKind:
+					case blockcfg.UserVolumeConfigKind, blockcfg.ExistingVolumeConfigKind, blockcfg.ExternalVolumeConfigKind, blockcfg.InlineDataVolumeConfigKind:
 						// Matched by name across the volume kinds, as a test may swap one kind for another.
 						return !slices.Contains(volumes, named.Name())
 					case cricfg.SeccompProfileConfigKind:
@@ -2733,9 +2958,17 @@ func (suite *ContainersSuite) setupContainerOn(purpose, node string) (context.Co
 
 		for _, volume := range volumes {
 			// Every volume kind, as a test may swap one kind for another under the same name.
-			for _, prefix := range []string{constants.UserVolumePrefix, constants.ExistingVolumePrefix, constants.ExternalVolumePrefix} {
-				rtestutils.AssertNoResource[*block.MountStatus](waitCtx, suite.T(), suite.Client.State(), prefix+volume)
+			for _, volumeID := range []string{
+				constants.UserVolumePrefix + volume,
+				constants.ExistingVolumePrefix + volume,
+				constants.ExternalVolumePrefix + volume,
+				constants.InlineDataVolumePrefix + volume,
+			} {
+				rtestutils.AssertNoResource[*block.MountStatus](waitCtx, suite.T(), suite.Client.State(), volumeID)
 			}
+
+			rtestutils.AssertNoResource[*files.InlineDataVolumeMountStatus](waitCtx, suite.T(), suite.Client.State(),
+				configcontainer.InlineDataVolumeMountID(name, volume))
 		}
 	})
 
@@ -2790,13 +3023,7 @@ func (suite *ContainersSuite) setupUserVolume(ctx context.Context, node, owner, 
 // assertMountOptions checks that the mount at mountPoint on the node carries each of the per-mount
 // options, as the kernel reports them.
 func (suite *ContainersSuite) assertMountOptions(ctx context.Context, mountPoint string, options ...string) {
-	r, err := suite.Client.Read(ctx, "/proc/self/mountinfo")
-	suite.Require().NoError(err)
-
-	defer r.Close() //nolint:errcheck
-
-	mounts, err := parseMountInfo(r)
-	suite.Require().NoError(err)
+	mounts := suite.readNodeMountInfo(ctx)
 
 	idx := slices.IndexFunc(mounts, func(m mountInfo) bool { return m.mountPoint == mountPoint })
 	suite.Require().NotEqual(-1, idx, "nothing is mounted at %q", mountPoint)

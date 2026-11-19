@@ -414,8 +414,8 @@ func (ContainerMount) Doc() *encoder.Doc {
 				Name:        "volume",
 				Type:        "VolumeMount",
 				Note:        "",
-				Description: "Mount a user, existing or external volume by name.\n\nThe name is that of a `UserVolumeConfig`, `ExistingVolumeConfig` or\n`ExternalVolumeConfig` document. Volume names are unique across those kinds, so the\nname resolves to one volume. The volume must be declared in the same configuration.\n\nThe volume is mounted from `/var/mnt/<name>` on the host. Declaring this mount also\nmakes the container wait for the volume to be mounted before it starts.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Mount a user, existing or external volume by name." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "Mount a user, existing, external or inline data volume by name.\n\nThe name is that of a `UserVolumeConfig`, `ExistingVolumeConfig`, `ExternalVolumeConfig`\nor `InlineDataVolumeConfig` document. Volume names are unique across those kinds, so the\nname resolves to one volume. The volume must be declared in the same configuration.\n\nThe volume is mounted from `/var/mnt/<name>` on the host; an inline data volume is a read-only bind\nunder `/run/inline-data-volumes`, which picks up file updates live. The container waits for the\nvolume to be ready before it starts.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Mount a user, existing, external or inline data volume by name." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{},
 			{
@@ -454,7 +454,7 @@ func (VolumeMount) Doc() *encoder.Doc {
 				Name:        "name",
 				Type:        "string",
 				Note:        "",
-				Description: "Name of the volume to mount.\n\nThe name of a `UserVolumeConfig`, `ExistingVolumeConfig` or `ExternalVolumeConfig` document.",
+				Description: "Name of the volume to mount.\n\nThe name of a `UserVolumeConfig`, `ExistingVolumeConfig`, `ExternalVolumeConfig` or `InlineDataVolumeConfig` document.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the volume to mount." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
@@ -468,7 +468,7 @@ func (VolumeMount) Doc() *encoder.Doc {
 				Name:        "options",
 				Type:        "[]string",
 				Note:        "",
-				Description: "Mount options. Volume mounts are writable by default (`rw`).\n\nA volume whose `ExistingVolumeConfig` or `ExternalVolumeConfig` declares it\nread-only must be mounted with `ro`.",
+				Description: "Mount options. Volume mounts are writable by default (`rw`).\n\nA volume whose `ExistingVolumeConfig` or `ExternalVolumeConfig` declares it\nread-only must be mounted with `ro`.\n\nAn inline data volume is always mounted `ro`, `nosuid`, `nodev`, `noexec` and `rprivate`,\nso `ro` may be omitted, and `rw` and `rshared` are rejected.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Mount options. Volume mounts are writable by default (`rw`)." /* encoder.LineComment */, "" /* encoder.FootComment */},
 				Values: []string{
 					"ro",

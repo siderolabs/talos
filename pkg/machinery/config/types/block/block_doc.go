@@ -940,7 +940,7 @@ func (InlineDataVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "InlineDataVolumeConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "InlineDataVolumeConfig is an inline data volume configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "InlineDataVolumeConfig is an inline data volume configuration document.\nInline data volume is a set of files defined inline, similar to a Kubernetes ConfigMap.\nThe files are kept in memory (`tmpfs`), which only Talos can write to.\nThe name must not be taken by a user, existing or external volume.\n\nChanges to the files are applied in place:\nthe files are replaced atomically as a whole, by swapping the `..data` symbolic link\nto a directory holding the new set of files.\nEach top-level entry of the volume is a symbolic link into `..data`.\n",
+		Description: "InlineDataVolumeConfig is an inline data volume configuration document.\nInline data volume is a set of files defined inline, similar to a Kubernetes ConfigMap.\nThe files are kept in memory (`tmpfs`), which only Talos can write to.\nContainers mount it read-only with a `volume` mount in `ContainerConfig`.\nThe name must not be taken by a user, existing or external volume.\n\nChanges to the files are applied in place, without restarting containers:\nthe files are replaced atomically as a whole, by swapping the `..data` symbolic link\nto a directory holding the new set of files.\nEach top-level entry of the volume is a symbolic link into `..data`.\n",
 		Fields: []encoder.Doc{
 			{
 				Type:   "Meta",

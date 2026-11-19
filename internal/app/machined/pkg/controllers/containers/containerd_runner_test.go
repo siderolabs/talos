@@ -148,6 +148,68 @@ func TestMountsResolvedToOCI(t *testing.T) {
 			},
 		},
 		{
+			name: "inline data volume",
+			mounts: []containers.ResolvedMountSpec{
+				{
+					Kind:        containers.MountKindVolume,
+					Source:      "/run/inline-data-volumes/web.config",
+					Destination: "/etc/app",
+					Options:     []string{"ro", "rw", "nodev"},
+					VolumeID:    "i-config",
+					VolumeName:  "config",
+				},
+			},
+			expected: []specs.Mount{
+				{
+					Type:        "bind",
+					Source:      "/run/inline-data-volumes/web.config",
+					Destination: "/etc/app",
+					Options:     []string{"rbind", "ro", "nodev", "nosuid", "noexec", "rprivate"},
+				},
+			},
+		},
+		{
+			name: "inline data volume without options",
+			mounts: []containers.ResolvedMountSpec{
+				{
+					Kind:        containers.MountKindVolume,
+					Source:      "/run/inline-data-volumes/web.config",
+					Destination: "/etc/app",
+					VolumeID:    "i-config",
+					VolumeName:  "config",
+				},
+			},
+			expected: []specs.Mount{
+				{
+					Type:        "bind",
+					Source:      "/run/inline-data-volumes/web.config",
+					Destination: "/etc/app",
+					Options:     []string{"rbind", "ro", "nosuid", "nodev", "noexec", "rprivate"},
+				},
+			},
+		},
+		{
+			name: "inline data volume asking for shared propagation",
+			mounts: []containers.ResolvedMountSpec{
+				{
+					Kind:        containers.MountKindVolume,
+					Source:      "/run/inline-data-volumes/web.config",
+					Destination: "/etc/app",
+					Options:     []string{"ro", "rshared", "rbind", "rw"},
+					VolumeID:    "i-config",
+					VolumeName:  "config",
+				},
+			},
+			expected: []specs.Mount{
+				{
+					Type:        "bind",
+					Source:      "/run/inline-data-volumes/web.config",
+					Destination: "/etc/app",
+					Options:     []string{"rbind", "ro", "nosuid", "nodev", "noexec", "rprivate"},
+				},
+			},
+		},
+		{
 			name: "all kinds keep their declared order",
 			mounts: []containers.ResolvedMountSpec{
 				{Kind: containers.MountKindVolume, Source: "/var/mnt/data", Destination: "/mnt/data"},
@@ -216,6 +278,19 @@ func TestMountsRequestSharedPropagation(t *testing.T) {
 				{Kind: containers.MountKindHostPath, Source: "/var/log", Destination: "/host-log", Options: []string{"rbind", "rshared"}},
 			},
 			expected: true,
+		},
+		{
+			name: "inline data volume asking for rshared is ignored",
+			mounts: []containers.ResolvedMountSpec{
+				{
+					Kind:        containers.MountKindVolume,
+					Source:      "/run/inline-data-volumes/web.config",
+					Destination: "/etc/app",
+					Options:     []string{"ro", "rshared"},
+					VolumeID:    "i-config",
+					VolumeName:  "config",
+				},
+			},
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {

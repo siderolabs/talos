@@ -62,7 +62,7 @@ type ContainerMountConfig interface {
 
 // ContainerVolumeMountConfig mounts a volume by name.
 type ContainerVolumeMountConfig interface {
-	// Name of the UserVolumeConfig, ExistingVolumeConfig or ExternalVolumeConfig document.
+	// Name of the UserVolumeConfig, ExistingVolumeConfig, ExternalVolumeConfig or InlineDataVolumeConfig document.
 	//
 	// Volume names are unique across those kinds, so the name resolves to one volume.
 	Name() string
@@ -70,6 +70,8 @@ type ContainerVolumeMountConfig interface {
 	Destination() string
 	// MountOptions with the writable default already applied.
 	MountOptions() []string
+	// Writable reports whether the mount explicitly asks for rw, which MountOptions drops as the default.
+	Writable() bool
 }
 
 // ContainerTmpfsMountConfig mounts a tmpfs.

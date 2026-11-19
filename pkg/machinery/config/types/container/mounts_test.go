@@ -312,6 +312,27 @@ func TestVolumeMountValidate(t *testing.T) {
 	}
 }
 
+func TestVolumeMountWritable(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		options  []string
+		writable bool
+	}{
+		{options: nil, writable: false},
+		{options: []string{"ro"}, writable: false},
+		{options: []string{"noatime"}, writable: false},
+		{options: []string{"rw"}, writable: true},
+		{options: []string{"noatime", "rw"}, writable: true},
+	} {
+		mount := container.VolumeMount{VolumeName: "data", MountDestination: "/data", MountOpts: test.options}
+
+		assert.Equal(t, test.writable, mount.Writable(), "options %v", test.options)
+		// the writable default drops rw from the options, Writable still sees it
+		assert.NotContains(t, mount.MountOptions(), "rw")
+	}
+}
+
 func TestTmpfsMountValidate(t *testing.T) {
 	t.Parallel()
 

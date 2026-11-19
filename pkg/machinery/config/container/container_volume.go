@@ -16,11 +16,12 @@ import (
 
 // validateContainerVolumeMounts checks the volumes mounted into containers.
 //
-// A volume mount names a UserVolumeConfig, ExistingVolumeConfig or ExternalVolumeConfig, and is
-// resolved against the rest of the configuration, so a name nothing declares would leave the
-// container waiting for its volume forever. A mount request is read-only only while every requester
-// asks for it, so a writable mount of a volume declared read-only would remount the volume against
-// what the user declared; such a mount has to say `ro`.
+// A volume mount names a UserVolumeConfig, ExistingVolumeConfig, ExternalVolumeConfig or
+// InlineDataVolumeConfig, and is resolved against the rest of the configuration, so a name nothing
+// declares would leave the container waiting for its volume forever. A mount request is read-only
+// only while every requester asks for it, so a writable mount of a volume declared read-only would
+// remount the volume against what the user declared; such a mount has to say `ro`. An inline data
+// volume is always read-only, so `ro` is implied for it.
 func validateContainerVolumeMounts(container *Container) error {
 	configs := container.ContainerConfigs()
 
@@ -48,9 +49,11 @@ func validateContainerVolumeMounts(container *Container) error {
 			switch {
 			case !resolved:
 				errs = multierror.Append(errs, fmt.Errorf(
-					"container %q: mounts[%d]: no UserVolumeConfig, ExistingVolumeConfig or ExternalVolumeConfig declares volume %q",
+					"container %q: mounts[%d]: no UserVolumeConfig, ExistingVolumeConfig, ExternalVolumeConfig or InlineDataVolumeConfig declares volume %q",
 					containerConfig.Name(), i, volumeMount.Name(),
 				))
+			case backing.InlineData:
+				errs = multierror.Append(errs, validateInlineDataVolumeMount(containerConfig.Name(), i, volumeMount))
 			case backing.ReadOnly && !slices.Contains(volumeMount.MountOptions(), "ro"):
 				errs = multierror.Append(errs, fmt.Errorf(
 					"container %q: mounts[%d]: volume %q is configured read-only, so it must be mounted with the ro option",
@@ -58,6 +61,30 @@ func validateContainerVolumeMounts(container *Container) error {
 				))
 			}
 		}
+	}
+
+	return errs.ErrorOrNil()
+}
+
+// validateInlineDataVolumeMount rejects the options an inline data volume mount can't honor.
+//
+// The mount is always ro and rprivate, so `ro` may be left out, but asking for `rw` or `rshared`
+// would be silently ignored.
+func validateInlineDataVolumeMount(containerName string, i int, volumeMount config.ContainerVolumeMountConfig) error {
+	var errs *multierror.Error
+
+	if volumeMount.Writable() {
+		errs = multierror.Append(errs, fmt.Errorf(
+			"container %q: mounts[%d]: inline data volume %q is always read-only, so it can't be mounted with the rw option",
+			containerName, i, volumeMount.Name(),
+		))
+	}
+
+	if slices.Contains(volumeMount.MountOptions(), "rshared") {
+		errs = multierror.Append(errs, fmt.Errorf(
+			"container %q: mounts[%d]: inline data volume %q is always mounted rprivate, so it can't be mounted with the rshared option",
+			containerName, i, volumeMount.Name(),
+		))
 	}
 
 	return errs.ErrorOrNil()

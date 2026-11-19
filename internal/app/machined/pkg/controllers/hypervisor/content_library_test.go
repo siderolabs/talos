@@ -361,6 +361,22 @@ func (suite *ContentLibrarySuite) TestReadOnlyExistingBackingVolume() {
 		contentLibraryControllerName+"/"+testLibrary+"/"+constants.ExistingVolumePrefix+readOnlyVolumeName)
 }
 
+func (suite *ContentLibrarySuite) TestTextBackingVolume() {
+	const inlineDataVolumeName = "inline-images"
+
+	inlineDataVolume := blockcfg.NewInlineDataVolumeConfigV1Alpha1()
+	inlineDataVolume.MetaName = inlineDataVolumeName
+	inlineDataVolume.FilesConfig = map[string]blockcfg.InlineDataVolumeFileV1Alpha1{"a.conf": {FileContents: "a"}}
+
+	suite.applyConfig(inlineDataVolume, newDocBackedBy(inlineDataVolumeName))
+
+	suite.assertNotReady(fmt.Sprintf("backing volume %q is configured read-only", inlineDataVolumeName))
+
+	requests, err := safe.StateListAll[*block.VolumeMountRequest](suite.Ctx(), suite.State())
+	suite.Require().NoError(err)
+	suite.Assert().Zero(requests.Len(), "no mount may be requested for an inline data volume")
+}
+
 // TestRequestsMount covers the mount being asked for on the library's behalf.
 func (suite *ContentLibrarySuite) TestRequestsMount() {
 	suite.applyLibrary(newDoc())

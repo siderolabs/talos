@@ -106,6 +106,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	crires "github.com/siderolabs/talos/pkg/machinery/resources/cri"
 	etcdresource "github.com/siderolabs/talos/pkg/machinery/resources/etcd"
+	filesres "github.com/siderolabs/talos/pkg/machinery/resources/files"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
@@ -912,6 +913,48 @@ func (s *Server) Copy(req *machine.CopyRequest, obj machine.MachineService_CopyS
 	return <-errCh
 }
 
+// hiddenDevices returns the device numbers of filesystems whose files are hidden from the caller.
+//
+// Files of inline data volumes (which may be secret) are visible to admins only: List and DiskUsage
+// are allowed for operators and readers, and the volumes are reachable at their host binds and
+// through /proc/<pid>/root of the containers using them, so they are filtered by device, not by path.
+func (s *Server) hiddenDevices(ctx context.Context) (map[uint64]struct{}, error) {
+	if authz.GetRoles(ctx).Includes(role.Admin) {
+		return nil, nil
+	}
+
+	statuses, err := safe.StateListAll[*filesres.InlineDataVolumeStatus](ctx, s.Controller.Runtime().State().V1Alpha2().Resources())
+	if err != nil {
+		return nil, fmt.Errorf("failed to list inline data volume statuses: %w", err)
+	}
+
+	hidden := map[uint64]struct{}{}
+
+	for volumeStatus := range statuses.All() {
+		if device := volumeStatus.TypedSpec().Device; device != 0 {
+			hidden[device] = struct{}{}
+		}
+	}
+
+	return hidden, nil
+}
+
+// isHidden reports whether the walked file is on a filesystem hidden from the caller.
+func isHidden(fi archiver.FileItem, hidden map[uint64]struct{}) bool {
+	if len(hidden) == 0 || fi.Error != nil || fi.FileInfo == nil {
+		return false
+	}
+
+	stat, ok := fi.FileInfo.Sys().(*syscall.Stat_t)
+	if !ok {
+		return false
+	}
+
+	_, found := hidden[stat.Dev]
+
+	return found
+}
+
 // List implements the machine.MachineServer interface.
 //
 //nolint:gocyclo,cyclop
@@ -961,12 +1004,21 @@ func (s *Server) List(req *machine.ListRequest, obj machine.MachineService_ListS
 		opts = append(opts, archiver.WithFileTypes(types...))
 	}
 
+	hidden, err := s.hiddenDevices(obj.Context())
+	if err != nil {
+		return err
+	}
+
 	files, err := archiver.Walker(obj.Context(), req.Root, opts...)
 	if err != nil {
 		return err
 	}
 
 	for fi := range files {
+		if isHidden(fi, hidden) {
+			continue
+		}
+
 		xattrs := []*machine.Xattr{}
 
 		if req.ReportXattrs {
@@ -1029,6 +1081,11 @@ func (s *Server) List(req *machine.ListRequest, obj machine.MachineService_ListS
 func (s *Server) DiskUsage(req *machine.DiskUsageRequest, obj machine.MachineService_DiskUsageServer) error { //nolint:gocyclo
 	if req == nil {
 		req = new(machine.DiskUsageRequest)
+	}
+
+	hidden, err := s.hiddenDevices(obj.Context())
+	if err != nil {
+		return err
 	}
 
 	for _, path := range req.Paths {
@@ -1126,6 +1183,10 @@ func (s *Server) DiskUsage(req *machine.DiskUsageRequest, obj machine.MachineSer
 		}
 
 		for fi := range files {
+			if isHidden(fi, hidden) {
+				continue
+			}
+
 			if fi.Error != nil {
 				err = obj.Send(
 					&machine.DiskUsageInfo{

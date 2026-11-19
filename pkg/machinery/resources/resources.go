@@ -133,6 +133,8 @@ func All() []meta.ResourceWithRD {
 		&etcd.ServiceSpec{},
 		&files.EtcFileSpec{},
 		&files.EtcFileStatus{},
+		&files.InlineDataVolumeMountRequest{},
+		&files.InlineDataVolumeMountStatus{},
 		&files.InlineDataVolumeStatus{},
 		&hardware.BMCDevice{},
 		&hardware.CPUCore{},
