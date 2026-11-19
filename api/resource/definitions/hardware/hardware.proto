@@ -6,6 +6,7 @@ option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/defi
 option java_package = "dev.talos.api.resource.definitions.hardware";
 
 import "common/common.proto";
+import "resource/definitions/enums/enums.proto";
 
 // BMCDeviceSpec describes a BMC as reported over the local IPMI interface.
 //
@@ -174,6 +175,13 @@ message PCIDriverRebindConfigSpec {
 message PCIDriverRebindStatusSpec {
   string pciid = 1;
   string target_driver = 2;
+  // Driver is the driver the device was last observed bound to, empty when it has none.
+  string driver = 3;
+  // Phase is where the device stands in its rebind, including whether the controller took it from
+  // its driver.
+  talos.resource.definitions.enums.HardwarePCIDriverRebindPhase phase = 4;
+  // Reason explains why the device is not bound to its target driver, or not handed back yet.
+  string reason = 5;
 }
 
 // ProcessorSpec represents a single processor.
