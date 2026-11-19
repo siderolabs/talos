@@ -32,7 +32,7 @@ environment:
     - NGINX_PORT=8080
 # Filesystems to mount into the container.
 mounts:
-    - # Mount a user, existing or external volume by name.
+    - # Mount a user, existing, external or inline data volume by name.
       volume:
         name: web-content # Name of the volume to mount.
         destination: /usr/share/nginx/html # Absolute path inside the container's mount namespace.
@@ -152,7 +152,7 @@ typed so that Talos can reason about what a container is allowed to reach.
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`volume` |<a href="#ContainerConfig.mounts..volume">VolumeMount</a> |Mount a user, existing or external volume by name.<br><br>The name is that of a `UserVolumeConfig`, `ExistingVolumeConfig` or<br>`ExternalVolumeConfig` document. Volume names are unique across those kinds, so the<br>name resolves to one volume. The volume must be declared in the same configuration.<br><br>The volume is mounted from `/var/mnt/<name>` on the host. Declaring this mount also<br>makes the container wait for the volume to be mounted before it starts.  | |
+|`volume` |<a href="#ContainerConfig.mounts..volume">VolumeMount</a> |Mount a user, existing, external or inline data volume by name.<br><br>The name is that of a `UserVolumeConfig`, `ExistingVolumeConfig`, `ExternalVolumeConfig`<br>or `InlineDataVolumeConfig` document. Volume names are unique across those kinds, so the<br>name resolves to one volume. The volume must be declared in the same configuration.<br><br>The volume is mounted from `/var/mnt/<name>` on the host, except for an inline data volume:<br>the container gets a read-only bind of its files under `/run/inline-data-volumes`, which shows<br>the updates of the files without restarting the container. Declaring this mount also makes<br>the container wait for the volume to be mounted (and the files of an inline data volume to be<br>written) before it starts.  | |
 |`tmpfs` |<a href="#ContainerConfig.mounts..tmpfs">TmpfsMount</a> |Mount a tmpfs for scratch space.  | |
 |`hostPath` |<a href="#ContainerConfig.mounts..hostPath">HostPathMount</a> |Bind-mount a path from the host.<br><br>The source must already exist; Talos will not create it. This is the widest of the<br>three sources and the only one that can reach arbitrary host state.  | |
 
@@ -168,9 +168,9 @@ VolumeMount mounts a volume by name.
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`name` |string |Name of the volume to mount.<br><br>The name of a `UserVolumeConfig`, `ExistingVolumeConfig` or `ExternalVolumeConfig` document.  | |
+|`name` |string |Name of the volume to mount.<br><br>The name of a `UserVolumeConfig`, `ExistingVolumeConfig`, `ExternalVolumeConfig` or `InlineDataVolumeConfig` document.  | |
 |`destination` |string |Absolute path inside the container's mount namespace.  | |
-|`options` |[]string |Mount options. Volume mounts are writable by default (`rw`).<br><br>A volume whose `ExistingVolumeConfig` or `ExternalVolumeConfig` declares it<br>read-only must be mounted with `ro`.  |`ro`<br />`rw`<br />`noexec`<br />`nosuid`<br />`nodev`<br />`noatime`<br />`rbind`<br />`rshared`<br /> |
+|`options` |[]string |Mount options. Volume mounts are writable by default (`rw`).<br><br>A volume whose `ExistingVolumeConfig` or `ExternalVolumeConfig` declares it<br>read-only must be mounted with `ro`, as must an inline data volume (`InlineDataVolumeConfig`),<br>which is always read-only, `nosuid`, `nodev` and `noexec` for containers.  |`ro`<br />`rw`<br />`noexec`<br />`nosuid`<br />`nodev`<br />`noatime`<br />`rbind`<br />`rshared`<br /> |
 
 
 

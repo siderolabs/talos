@@ -42,7 +42,14 @@ The content of a `tmpfs` volume is lost when the volume is unmounted (e.g. on re
 A new `InlineDataVolumeConfig` document defines a set of files inline (similar to a Kubernetes ConfigMap).
 Files may be nested in subdirectories, and each file may set its own `mode`.
 The files are kept in memory (`tmpfs`), which only Talos can write to.
-Changes to the files are applied in place: the whole set of files is replaced atomically, by swapping the `..data` symbolic link.
+
+An inline data volume can be mounted read-only (`ro`) into Talos containers with a `volume` mount in `ContainerConfig`, just like a user volume.
+Every container mounting the volume gets a read-only bind of the same files, under `/run/inline-data-volumes` on the host.
+Changes to the files are applied without restarting the containers, and show up in all of them at once:
+the whole set of files is replaced atomically, by swapping the `..data` symbolic link.
+Applications should watch for the changes and re-read the files.
+
+A container with the `privileged` profile or the `CAP_SYS_ADMIN` capability can remount its bind writable, and change the files every other container sees.
 
 The name of an inline data volume must not be taken by a user, existing or external volume.
 """

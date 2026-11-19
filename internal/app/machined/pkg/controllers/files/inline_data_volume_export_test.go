@@ -6,3 +6,6 @@ package files
 
 // CheckTmpfs exports checkTmpfs for tests.
 var CheckTmpfs = checkTmpfs
+
+// MountBinder exports mountBinder for tests.
+type MountBinder = mountBinder

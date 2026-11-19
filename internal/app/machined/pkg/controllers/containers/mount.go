@@ -20,6 +20,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
+	"github.com/siderolabs/talos/pkg/machinery/resources/files"
 )
 
 // containerLabel carries the owning container on the mount requests this controller creates.
@@ -81,10 +82,20 @@ func (ctrl *MountController) Inputs() []controller.Input {
 			Kind:      controller.InputStrong,
 		},
 		{
+			Namespace: files.NamespaceName,
+			Type:      files.InlineDataVolumeMountStatusType,
+			Kind:      controller.InputStrong,
+		},
+		{
 			// InputDestroyReady is what lets this controller tear down its own mount requests: it
 			// wakes us when one is tearing down with no finalizers left.
 			Namespace: block.NamespaceName,
 			Type:      block.VolumeMountRequestType,
+			Kind:      controller.InputDestroyReady,
+		},
+		{
+			Namespace: files.NamespaceName,
+			Type:      files.InlineDataVolumeMountRequestType,
 			Kind:      controller.InputDestroyReady,
 		},
 	}
@@ -100,6 +111,10 @@ func (ctrl *MountController) Outputs() []controller.Output {
 		{
 			// Shared: many controllers write mount requests.
 			Type: block.VolumeMountRequestType,
+			Kind: controller.OutputShared,
+		},
+		{
+			Type: files.InlineDataVolumeMountRequestType,
 			Kind: controller.OutputShared,
 		},
 	}
@@ -320,7 +335,7 @@ func (ctrl *MountController) reconcileContainer(
 
 		volumeName := containerMountSpec.VolumeName
 
-		// Names are unique across user, existing and external volumes, so a name resolves to at most
+		// Names are unique across user, existing, external and inline data volumes, so a name resolves to at most
 		// one volume ID. Validation rejects a name nothing declares; one reaches here only while the
 		// machine config is missing or validation was bypassed, and the container is held back until
 		// the volume is declared.
@@ -338,15 +353,37 @@ func (ctrl *MountController) reconcileContainer(
 
 			reasons = append(
 				reasons,
-				fmt.Sprintf("no UserVolumeConfig, ExistingVolumeConfig or ExternalVolumeConfig named %q is configured", volumeName),
+				fmt.Sprintf("no UserVolumeConfig, ExistingVolumeConfig, ExternalVolumeConfig or InlineDataVolumeConfig named %q is configured", volumeName),
 			)
 
 			continue
 		}
 
+		if backing.InlineData {
+			resolvedMount, inlineDataReason, inlineDataErr := ctrl.reconcileInlineDataMount(
+				ctx, runtime, logger, containerSpecID, containerMountSpec, backing, isLive, wanted,
+			)
+			if inlineDataErr != nil {
+				return nil, false, "", inlineDataErr
+			}
+
+			if inlineDataReason != "" {
+				ready = false
+
+				reasons = append(reasons, inlineDataReason)
+
+				continue
+			}
+
+			resolvedMounts = append(resolvedMounts, resolvedMount)
+
+			continue
+		}
+
 		volumeID := backing.ID
+
 		requestID := ctrl.mountRequestID(containerSpecID, volumeID)
-		wanted[requestID] = struct{}{}
+		wanted[requestKey(block.NewVolumeMountRequest(block.NamespaceName, requestID).Metadata())] = struct{}{}
 
 		// Writable unless the options say otherwise; the writable default is already applied by
 		// ConfigController.
@@ -416,7 +453,7 @@ func (ctrl *MountController) reconcileContainer(
 				continue
 			}
 
-			if err = ctrl.releaseFinalizer(ctx, runtime, logger, requestID); err != nil {
+			if err = ctrl.releaseFinalizer(ctx, runtime, logger, volumeMountStatus.Metadata()); err != nil {
 				return nil, false, "", err
 			}
 
@@ -470,19 +507,19 @@ func (ctrl *MountController) releaseUnwanted(
 	wanted map[string]struct{},
 	live map[string]struct{},
 ) error {
-	ownedVolumeMountRequests, err := ctrl.ownedRequests(ctx, runtime)
+	owned, err := ctrl.ownedRequests(ctx, runtime)
 	if err != nil {
 		return err
 	}
 
-	for _, volumeMountRequest := range ownedVolumeMountRequests {
-		requestID := volumeMountRequest.Metadata().ID()
+	for _, request := range owned {
+		requestID := request.Metadata().ID()
 
-		if _, stillWanted := wanted[requestID]; stillWanted {
+		if _, stillWanted := wanted[requestKey(request.Metadata())]; stillWanted {
 			continue
 		}
 
-		containerSpecID, _ := volumeMountRequest.Metadata().Labels().Get(containerLabel)
+		containerSpecID, _ := request.Metadata().Labels().Get(containerLabel)
 
 		// The spec may no longer list the mount while the task still has the path open, so the hold
 		// outlives the request for as long as anything is running.
@@ -495,7 +532,7 @@ func (ctrl *MountController) releaseUnwanted(
 			continue
 		}
 
-		if err := ctrl.release(ctx, runtime, logger, requestID); err != nil {
+		if err := ctrl.release(ctx, runtime, logger, request.Metadata()); err != nil {
 			return err
 		}
 	}
@@ -505,13 +542,13 @@ func (ctrl *MountController) releaseUnwanted(
 
 // releaseAll releases every mount this controller holds, reporting how many are still held.
 func (ctrl *MountController) releaseAll(ctx context.Context, runtime controller.Runtime, logger *zap.Logger) (int, error) {
-	ownedVolumeMountRequests, err := ctrl.ownedRequests(ctx, runtime)
+	owned, err := ctrl.ownedRequests(ctx, runtime)
 	if err != nil {
 		return 0, err
 	}
 
-	for _, volumeMountRequest := range ownedVolumeMountRequests {
-		if err := ctrl.release(ctx, runtime, logger, volumeMountRequest.Metadata().ID()); err != nil {
+	for _, request := range owned {
+		if err := ctrl.release(ctx, runtime, logger, request.Metadata()); err != nil {
 			return 0, err
 		}
 	}
@@ -526,36 +563,63 @@ func (ctrl *MountController) releaseAll(ctx context.Context, runtime controller.
 	return len(remaining), nil
 }
 
+// requestKey identifies a mount request across the request types in the wanted set.
+func requestKey(md *resource.Metadata) string {
+	return md.Type() + "/" + md.ID()
+}
+
 // ownedRequests returns the mount requests created by this controller.
-func (ctrl *MountController) ownedRequests(ctx context.Context, reader controller.Reader) ([]*block.VolumeMountRequest, error) {
+func (ctrl *MountController) ownedRequests(ctx context.Context, reader controller.Reader) ([]resource.Resource, error) {
 	volumeMountRequests, err := safe.ReaderListAll[*block.VolumeMountRequest](ctx, reader)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list mount requests: %w", err)
 	}
 
-	var ownedVolumeMountRequests []*block.VolumeMountRequest
+	var owned []resource.Resource
 
 	for volumeMountRequest := range volumeMountRequests.All() {
 		if volumeMountRequest.TypedSpec().Requester == ctrl.Name() {
-			ownedVolumeMountRequests = append(ownedVolumeMountRequests, volumeMountRequest)
+			owned = append(owned, volumeMountRequest)
 		}
 	}
 
-	return ownedVolumeMountRequests, nil
+	inlineDataVolumeMountRequests, err := safe.ReaderListAll[*files.InlineDataVolumeMountRequest](ctx, reader)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list inline data volume mount requests: %w", err)
+	}
+
+	for inlineDataVolumeMountRequest := range inlineDataVolumeMountRequests.All() {
+		if inlineDataVolumeMountRequest.TypedSpec().Requester == ctrl.Name() {
+			owned = append(owned, inlineDataVolumeMountRequest)
+		}
+	}
+
+	return owned, nil
+}
+
+// statusOf returns the metadata of the mount status of a mount request.
+func statusOf(requestMD *resource.Metadata) *resource.Metadata {
+	if requestMD.Type() == files.InlineDataVolumeMountRequestType {
+		return files.NewInlineDataVolumeMountStatus(files.NamespaceName, requestMD.ID()).Metadata()
+	}
+
+	return block.NewVolumeMountStatus(block.NamespaceName, requestMD.ID()).Metadata()
 }
 
 // release gives back one mount: the finalizer first, then the request itself.
-func (ctrl *MountController) release(ctx context.Context, runtime controller.Runtime, logger *zap.Logger, requestID string) error {
-	if err := ctrl.releaseFinalizer(ctx, runtime, logger, requestID); err != nil {
+func (ctrl *MountController) release(ctx context.Context, runtime controller.Runtime, logger *zap.Logger, requestMD *resource.Metadata) error {
+	if err := ctrl.releaseFinalizer(ctx, runtime, logger, statusOf(requestMD)); err != nil {
 		return err
 	}
 
-	return ctrl.destroyRequest(ctx, runtime, logger, requestID)
+	return ctrl.destroyRequest(ctx, runtime, logger, requestMD)
 }
 
 // releaseFinalizer drops this controller's hold on the mount status, if it holds one.
-func (ctrl *MountController) releaseFinalizer(ctx context.Context, runtime controller.Runtime, logger *zap.Logger, requestID string) error {
-	volumeMountStatus, err := safe.ReaderGetByID[*block.VolumeMountStatus](ctx, runtime, requestID)
+func (ctrl *MountController) releaseFinalizer(ctx context.Context, runtime controller.Runtime, logger *zap.Logger, statusMD *resource.Metadata) error {
+	requestID := statusMD.ID()
+
+	mountStatus, err := runtime.Get(ctx, statusMD)
 	if err != nil {
 		if state.IsNotFoundError(err) {
 			return nil
@@ -564,11 +628,11 @@ func (ctrl *MountController) releaseFinalizer(ctx context.Context, runtime contr
 		return fmt.Errorf("failed to get mount status %q: %w", requestID, err)
 	}
 
-	if !volumeMountStatus.Metadata().Finalizers().Has(ctrl.Name()) {
+	if !mountStatus.Metadata().Finalizers().Has(ctrl.Name()) {
 		return nil
 	}
 
-	if err := runtime.RemoveFinalizer(ctx, volumeMountStatus.Metadata(), ctrl.Name()); err != nil {
+	if err := runtime.RemoveFinalizer(ctx, mountStatus.Metadata(), ctrl.Name()); err != nil {
 		return fmt.Errorf("failed to remove finalizer on %q: %w", requestID, err)
 	}
 
@@ -578,8 +642,8 @@ func (ctrl *MountController) releaseFinalizer(ctx context.Context, runtime contr
 }
 
 // destroyRequest tears down the mount request and destroys it once nothing holds it.
-func (ctrl *MountController) destroyRequest(ctx context.Context, runtime controller.Runtime, logger *zap.Logger, requestID string) error {
-	requestMD := block.NewVolumeMountRequest(block.NamespaceName, requestID).Metadata()
+func (ctrl *MountController) destroyRequest(ctx context.Context, runtime controller.Runtime, logger *zap.Logger, requestMD *resource.Metadata) error {
+	requestID := requestMD.ID()
 
 	okToDestroy, err := runtime.Teardown(ctx, requestMD)
 	if err != nil {

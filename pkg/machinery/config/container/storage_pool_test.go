@@ -87,6 +87,7 @@ func TestStoragePoolReferences(t *testing.T) {
 		{filename: "storagepool-wrong-prefix.yaml", err: `volume.name "e-vm-data" must reference`},
 		{filename: "storagepool-readonly-existing.yaml", err: "is read-only"},
 		{filename: "storagepool-readonly-external.yaml", err: "is read-only"},
+		{filename: "storagepool-inline-data.yaml", err: "is read-only"},
 		{filename: "storagepool-shared-backing.yaml", err: "reference the same backing volume"},
 		{filename: "storagepool-independent.yaml"},
 	} {

@@ -25,6 +25,8 @@ func TestRegisterResource(t *testing.T) {
 	for _, resource := range []meta.ResourceWithRD{
 		&files.EtcFileSpec{},
 		&files.EtcFileStatus{},
+		&files.InlineDataVolumeMountRequest{},
+		&files.InlineDataVolumeMountStatus{},
 		&files.InlineDataVolumeStatus{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, resource))

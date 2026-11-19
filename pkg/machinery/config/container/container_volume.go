@@ -48,7 +48,7 @@ func validateContainerVolumeMounts(container *Container) error {
 			switch {
 			case !resolved:
 				errs = multierror.Append(errs, fmt.Errorf(
-					"container %q: mounts[%d]: no UserVolumeConfig, ExistingVolumeConfig or ExternalVolumeConfig declares volume %q",
+					"container %q: mounts[%d]: no UserVolumeConfig, ExistingVolumeConfig, ExternalVolumeConfig or InlineDataVolumeConfig declares volume %q",
 					containerConfig.Name(), i, volumeMount.Name(),
 				))
 			case backing.ReadOnly && !slices.Contains(volumeMount.MountOptions(), "ro"):

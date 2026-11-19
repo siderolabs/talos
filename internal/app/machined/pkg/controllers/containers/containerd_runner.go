@@ -446,11 +446,18 @@ func MountsResolvedToOCI(mounts []containersres.ResolvedMountSpec) []specs.Mount
 		// here, MountController has resolved its source to that path, so the two kinds are the same
 		// operation and differ only in who decided the source.
 		case containersres.MountKindHostPath, containersres.MountKindVolume:
+			options := mount.Options
+
+			// The bind of an inline data volume is always read-only and hardened, whatever the declared options.
+			if isInlineDataVolumeMount(mount) {
+				options = inlineDataVolumeOptions(options)
+			}
+
 			out = append(out, specs.Mount{
 				Type:        "bind",
 				Source:      mount.Source,
 				Destination: mount.Destination,
-				Options:     append([]string{"rbind"}, mount.Options...),
+				Options:     append([]string{"rbind"}, options...),
 			})
 		}
 	}

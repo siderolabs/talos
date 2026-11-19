@@ -58,6 +58,28 @@ func TestResolveBackingVolume(t *testing.T) {
 	}
 }
 
+func TestResolveBackingInlineDataVolume(t *testing.T) {
+	t.Parallel()
+
+	cfg, err := configloader.NewFromBytes([]byte("apiVersion: v1alpha1\nkind: InlineDataVolumeConfig\nname: images\nfiles:\n  a.conf:\n    contents: a\n"))
+	require.NoError(t, err)
+
+	volume, found := config.ResolveBackingVolume(cfg, "images")
+	require.True(t, found)
+
+	assert.Equal(t, config.BackingVolume{ID: "i-images", ReadOnly: true, Secure: true, InlineData: true}, volume)
+
+	_, found = config.ResolveBackingVolume(cfg, "i-images")
+	assert.False(t, found)
+}
+
+func TestInlineDataVolumeMountID(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "web.images", config.InlineDataVolumeMountID("web", "images"))
+	assert.NotEqual(t, config.InlineDataVolumeMountID("a-b", "c"), config.InlineDataVolumeMountID("a", "b-c"))
+}
+
 func TestEmptyVolumeMountSecureDefault(t *testing.T) {
 	t.Parallel()
 

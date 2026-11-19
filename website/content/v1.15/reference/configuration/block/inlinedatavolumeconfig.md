@@ -3,12 +3,17 @@ description: |
     InlineDataVolumeConfig is an inline data volume configuration document.
     Inline data volume is a set of files defined inline, similar to a Kubernetes ConfigMap.
     The files are kept in memory (`tmpfs`), which only Talos can write to.
+    It can be mounted into Talos containers with a `volume` mount in `ContainerConfig`, which must set the `ro` option:
+    every container mounting the volume gets a read-only view of the same files.
     The name must not be taken by a user, existing or external volume.
 
-    Changes to the files are applied in place:
+    Changes to the files are applied in place, without restarting the containers which mount the volume:
     the files are replaced atomically as a whole, by swapping the `..data` symbolic link
     to a directory holding the new set of files.
     Each top-level entry of the volume is a symbolic link into `..data`.
+
+    A container with the `privileged` profile or the `CAP_SYS_ADMIN` capability can remount its view writable,
+    and change the files every other container mounting the volume sees.
 title: InlineDataVolumeConfig
 ---
 

@@ -95,7 +95,7 @@ func (suite *StoragePoolSpecSuite) TestLiteralNameAndInvalidReferences() {
 }
 
 func (suite *StoragePoolSpecSuite) TestUnusableBackingVolumes() {
-	names := []string{"raw", "swap", "readonly-existing", "readonly-external", "unknown"}
+	names := []string{"raw", "swap", "readonly-existing", "readonly-external", "inline-data", "unknown"}
 	initial := make([]configcfg.Document, 0, 2*len(names))
 	updatedDocs := make([]configcfg.Document, 0, 2*len(names))
 
@@ -125,7 +125,10 @@ func (suite *StoragePoolSpecSuite) TestUnusableBackingVolumes() {
 	external := blockcfg.NewExternalVolumeConfigV1Alpha1()
 	external.MetaName = "readonly-external"
 	external.MountSpec.MountReadOnly = new(true)
-	updatedDocs = append(updatedDocs, raw, swap, existing, external)
+	inlineData := blockcfg.NewInlineDataVolumeConfigV1Alpha1()
+	inlineData.MetaName = "inline-data"
+	inlineData.FilesConfig = map[string]blockcfg.InlineDataVolumeFileV1Alpha1{"a.conf": {FileContents: "a"}}
+	updatedDocs = append(updatedDocs, raw, swap, existing, external, inlineData)
 	ctr, err := container.New(updatedDocs...)
 	suite.Require().NoError(err)
 

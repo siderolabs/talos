@@ -17,6 +17,7 @@ import (
 
 // BackingVolume is a filesystem volume resolved from its literal document name.
 type BackingVolume struct {
+	// ID of the volume.
 	ID       string
 	ReadOnly bool
 	// Secure is the volume's own mount.secure setting, which the volume's mount request turns into
@@ -26,9 +27,16 @@ type BackingVolume struct {
 	// its current requesters ask for, so a requester asking for less weakens the mount whenever it
 	// is the only one left, such as while it still holds the volume after its config is removed.
 	Secure bool
+	// InlineData is set for an inline data volume.
+	InlineData bool
 }
 
-// ResolveBackingVolume resolves a user, existing, or external volume by document name.
+// InlineDataVolumeMountID returns the ID of the read-only bind of an inline data volume for a container.
+func InlineDataVolumeMountID(containerName, volumeName string) string {
+	return containerName + "." + volumeName
+}
+
+// ResolveBackingVolume resolves a user, existing, external, or inline data volume by document name.
 func ResolveBackingVolume(cfg Config, name string) (BackingVolume, bool) {
 	for _, volume := range cfg.UserVolumeConfigs() {
 		if volume.Name() == name {
@@ -52,6 +60,17 @@ func ResolveBackingVolume(cfg Config, name string) (BackingVolume, bool) {
 				ID:       constants.ExternalVolumePrefix + name,
 				ReadOnly: volume.Mount().ReadOnly(),
 				Secure:   volume.Mount().Secure(),
+			}, true
+		}
+	}
+
+	for _, volume := range cfg.InlineDataVolumeConfigs() {
+		if volume.Name() == name {
+			return BackingVolume{
+				ID:         constants.InlineDataVolumePrefix + name,
+				ReadOnly:   true,
+				Secure:     true,
+				InlineData: true,
 			}, true
 		}
 	}

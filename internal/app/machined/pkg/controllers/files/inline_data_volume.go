@@ -30,9 +30,15 @@ import (
 
 // InlineDataVolumeController renders the files of inline data volumes.
 type InlineDataVolumeController struct {
+	// Binder makes the read-only binds, defaults to bind mounts.
+	Binder InlineDataVolumeBinder
+	// MountPoint is the directory of the binds, defaults to constants.InlineDataVolumeMountPoint.
+	MountPoint string
 	// SkipFilesystemCheck disables the check that the volume is a tmpfs, for tests.
 	SkipFilesystemCheck bool
 }
+
+const defaultInlineDataVolumeMountPoint = constants.InlineDataVolumeMountPoint
 
 // Name implements controller.Controller interface.
 func (ctrl *InlineDataVolumeController) Name() string {
@@ -53,6 +59,17 @@ func (ctrl *InlineDataVolumeController) Inputs() []controller.Input {
 			Type:      block.VolumeMountStatusType,
 			Kind:      controller.InputStrong,
 		},
+		{
+			Namespace: files.NamespaceName,
+			Type:      files.InlineDataVolumeMountRequestType,
+			Kind:      controller.InputStrong,
+		},
+		{
+			// the consumers remove their finalizers from the statuses
+			Namespace: files.NamespaceName,
+			Type:      files.InlineDataVolumeMountStatusType,
+			Kind:      controller.InputDestroyReady,
+		},
 	}
 }
 
@@ -61,6 +78,10 @@ func (ctrl *InlineDataVolumeController) Outputs() []controller.Output {
 	return []controller.Output{
 		{
 			Type: files.InlineDataVolumeStatusType,
+			Kind: controller.OutputExclusive,
+		},
+		{
+			Type: files.InlineDataVolumeMountStatusType,
 			Kind: controller.OutputExclusive,
 		},
 	}
@@ -103,7 +124,17 @@ func (ctrl *InlineDataVolumeController) reconcile(ctx context.Context, r control
 
 	r.StartTrackingOutputs()
 
-	released, errs := ctrl.renderVolumes(ctx, r, logger, inlineDataVolumeConfigs, volumeMountStatuses)
+	rendered, released, errs := ctrl.renderVolumes(ctx, r, logger, inlineDataVolumeConfigs, volumeMountStatuses)
+
+	inUse, err := ctrl.reconcileMounts(ctx, r, logger, rendered)
+	if err != nil {
+		errs = errors.Join(errs, err)
+	}
+
+	// binds pin the filesystem: a new mount of the volume would not show up in them
+	for name := range inUse {
+		delete(released, name)
+	}
 
 	if err = ctrl.releaseVolumes(ctx, r, logger, released); err != nil {
 		errs = errors.Join(errs, err)
@@ -133,16 +164,15 @@ func configuredInlineDataVolumes(ctx context.Context, r controller.Reader) (map[
 	return inlineDataVolumeConfigs, nil
 }
 
-// renderVolumes renders the files of every configured inline data volume which is mounted.
-//
-// Returns the mounts of the volumes which are no longer configured or being unmounted, by name.
+// renderVolumes returns the rendered volumes and the mounts to release, by name.
 func (ctrl *InlineDataVolumeController) renderVolumes(
 	ctx context.Context, r controller.Runtime, logger *zap.Logger,
 	inlineDataVolumeConfigs map[string]configconfig.InlineDataVolumeConfig,
 	volumeMountStatuses safe.List[*block.VolumeMountStatus],
-) (map[string]*block.VolumeMountStatus, error) {
+) (map[string]inlineDataVolume, map[string]*block.VolumeMountStatus, error) {
 	var errs error
 
+	rendered := map[string]inlineDataVolume{}
 	released := map[string]*block.VolumeMountStatus{}
 
 	for volumeMountStatus := range volumeMountStatuses.All() {
@@ -159,12 +189,17 @@ func (ctrl *InlineDataVolumeController) renderVolumes(
 			continue
 		}
 
-		if _, err := ctrl.renderVolume(ctx, r, logger, volumeMountStatus, inlineDataVolumeConfig); err != nil {
+		volume, err := ctrl.renderVolume(ctx, r, logger, volumeMountStatus, inlineDataVolumeConfig)
+		if err != nil {
 			errs = errors.Join(errs, fmt.Errorf("failed to render inline data volume %q: %w", name, err))
+
+			continue
 		}
+
+		rendered[name] = volume
 	}
 
-	return released, errs
+	return rendered, released, errs
 }
 
 func inlineDataVolumeName(volumeMountStatus *block.VolumeMountStatus) (string, bool) {
@@ -287,7 +322,7 @@ func (ctrl *InlineDataVolumeController) checkRoot(root *os.Root) (uint64, error)
 	return stat.Dev, nil
 }
 
-// releaseVolumes releases the mounts of the inline data volumes which are no longer configured or being unmounted.
+// releaseVolumes removes the finalizer from the mounts of released volumes.
 func (ctrl *InlineDataVolumeController) releaseVolumes(
 	ctx context.Context, r controller.Runtime, logger *zap.Logger, released map[string]*block.VolumeMountStatus,
 ) error {

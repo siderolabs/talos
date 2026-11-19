@@ -528,6 +528,8 @@ description: Talos gRPC API reference.
 - [resource/definitions/files/files.proto](#resource/definitions/files/files.proto)
     - [EtcFileSpecSpec](#talos.resource.definitions.files.EtcFileSpecSpec)
     - [EtcFileStatusSpec](#talos.resource.definitions.files.EtcFileStatusSpec)
+    - [InlineDataVolumeMountRequestSpec](#talos.resource.definitions.files.InlineDataVolumeMountRequestSpec)
+    - [InlineDataVolumeMountStatusSpec](#talos.resource.definitions.files.InlineDataVolumeMountStatusSpec)
     - [InlineDataVolumeStatusSpec](#talos.resource.definitions.files.InlineDataVolumeStatusSpec)
   
 - [resource/definitions/hardware/hardware.proto](#resource/definitions/hardware/hardware.proto)
@@ -9249,6 +9251,40 @@ EtcFileStatusSpec describes status of rendered secrets.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | spec_version | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.files.InlineDataVolumeMountRequestSpec"></a>
+
+### InlineDataVolumeMountRequestSpec
+InlineDataVolumeMountRequestSpec describes a read-only bind of an inline data volume.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| volume_name | [string](#string) |  | VolumeName is the name of the InlineDataVolumeConfig document. |
+| requester | [string](#string) |  | Requester is the consumer of the bind. |
+
+
+
+
+
+
+<a name="talos.resource.definitions.files.InlineDataVolumeMountStatusSpec"></a>
+
+### InlineDataVolumeMountStatusSpec
+InlineDataVolumeMountStatusSpec describes a read-only bind of an inline data volume.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| volume_name | [string](#string) |  | VolumeName is the name of the InlineDataVolumeConfig document. |
+| target | [string](#string) |  | Target is the host path of the read-only bind. |
+| contents_hash | [string](#string) |  | ContentsHash is the hash of the files rendered when the bind was made ready. |
+| device | [uint64](#uint64) |  | Device is the device number of the filesystem the bind is of. |
 
 
 
