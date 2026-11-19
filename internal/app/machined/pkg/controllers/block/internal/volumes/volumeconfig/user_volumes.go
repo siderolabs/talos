@@ -32,6 +32,7 @@ var UserVolumeTransformers = []volumeConfigTransformer{
 	ExistingVolumeTransformer,
 	ExternalVolumeTransformer,
 	SwapVolumeTransformer,
+	InlineDataVolumeTransformer,
 }
 
 // UserVolumeTransformer is the transformer for user volume configs.

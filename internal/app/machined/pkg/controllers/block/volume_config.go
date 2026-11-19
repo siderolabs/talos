@@ -253,6 +253,7 @@ func (ctrl *VolumeConfigController) getExistingVolumes(ctx context.Context, r co
 		state.WithLabelQuery(resource.LabelExists(block.ExistingVolumeLabel)),
 		state.WithLabelQuery(resource.LabelExists(block.ExternalVolumeLabel)),
 		state.WithLabelQuery(resource.LabelExists(block.SwapVolumeLabel)),
+		state.WithLabelQuery(resource.LabelExists(block.InlineDataVolumeLabel)),
 	}
 
 	volumeConfigs, err := safe.ReaderListAll[*block.VolumeConfig](ctx, r, labelQuery...)

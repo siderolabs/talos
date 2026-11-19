@@ -5,6 +5,7 @@
 package config
 
 import (
+	"io/fs"
 	"time"
 
 	"github.com/siderolabs/gen/optional"
@@ -201,6 +202,24 @@ type UserVolumeConfig interface {
 	Mount() UserVolumeMountConfig
 	VolumeTrimConfigProvider
 	VolumeScrubConfigProvider
+}
+
+// InlineDataVolumeConfig defines the interface to access inline data volume configuration.
+type InlineDataVolumeConfig interface {
+	NamedDocument
+	InlineDataVolumeConfigSignal()
+	// Files returns the files of the volume, sorted by path.
+	Files() []InlineDataVolumeFile
+}
+
+// InlineDataVolumeFile is a single file of an inline data volume.
+type InlineDataVolumeFile struct {
+	// Path is the path of the file relative to the volume root.
+	Path string
+	// Mode is the file's permissions.
+	Mode fs.FileMode
+	// Contents are the file's contents.
+	Contents string
 }
 
 // RawVolumeConfig defines the interface to access raw volume configuration.

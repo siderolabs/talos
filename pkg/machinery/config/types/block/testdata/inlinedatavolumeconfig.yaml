@@ -1,0 +1,12 @@
+apiVersion: v1alpha1
+kind: InlineDataVolumeConfig
+name: app-config
+files:
+    app.yaml:
+        contents: |
+            listen: :8080
+    conf.d/extra.ini:
+        mode: 0o600
+        contents: |
+            [section]
+            key=value

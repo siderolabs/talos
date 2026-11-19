@@ -128,6 +128,79 @@ func (x *EtcFileStatusSpec) GetSpecVersion() string {
 	return ""
 }
 
+// InlineDataVolumeStatusSpec describes the rendered files of an inline data volume.
+type InlineDataVolumeStatusSpec struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// VolumeID is the ID of the volume holding the files.
+	VolumeId string `protobuf:"bytes,1,opt,name=volume_id,json=volumeId,proto3" json:"volume_id,omitempty"`
+	// ContentsHash is the hash of the rendered files.
+	ContentsHash string `protobuf:"bytes,2,opt,name=contents_hash,json=contentsHash,proto3" json:"contents_hash,omitempty"`
+	// Files is the number of rendered files.
+	Files int64 `protobuf:"varint,3,opt,name=files,proto3" json:"files,omitempty"`
+	// Device is the device number of the filesystem holding the files.
+	Device        uint64 `protobuf:"varint,4,opt,name=device,proto3" json:"device,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *InlineDataVolumeStatusSpec) Reset() {
+	*x = InlineDataVolumeStatusSpec{}
+	mi := &file_resource_definitions_files_files_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InlineDataVolumeStatusSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InlineDataVolumeStatusSpec) ProtoMessage() {}
+
+func (x *InlineDataVolumeStatusSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_files_files_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InlineDataVolumeStatusSpec.ProtoReflect.Descriptor instead.
+func (*InlineDataVolumeStatusSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_files_files_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *InlineDataVolumeStatusSpec) GetVolumeId() string {
+	if x != nil {
+		return x.VolumeId
+	}
+	return ""
+}
+
+func (x *InlineDataVolumeStatusSpec) GetContentsHash() string {
+	if x != nil {
+		return x.ContentsHash
+	}
+	return ""
+}
+
+func (x *InlineDataVolumeStatusSpec) GetFiles() int64 {
+	if x != nil {
+		return x.Files
+	}
+	return 0
+}
+
+func (x *InlineDataVolumeStatusSpec) GetDevice() uint64 {
+	if x != nil {
+		return x.Device
+	}
+	return 0
+}
+
 var File_resource_definitions_files_files_proto protoreflect.FileDescriptor
 
 const file_resource_definitions_files_files_proto_rawDesc = "" +
@@ -138,7 +211,12 @@ const file_resource_definitions_files_files_proto_rawDesc = "" +
 	"\x04mode\x18\x02 \x01(\rR\x04mode\x12#\n" +
 	"\rselinux_label\x18\x03 \x01(\tR\fselinuxLabel\"6\n" +
 	"\x11EtcFileStatusSpec\x12!\n" +
-	"\fspec_version\x18\x01 \x01(\tR\vspecVersionBt\n" +
+	"\fspec_version\x18\x01 \x01(\tR\vspecVersion\"\x8c\x01\n" +
+	"\x1aInlineDataVolumeStatusSpec\x12\x1b\n" +
+	"\tvolume_id\x18\x01 \x01(\tR\bvolumeId\x12#\n" +
+	"\rcontents_hash\x18\x02 \x01(\tR\fcontentsHash\x12\x14\n" +
+	"\x05files\x18\x03 \x01(\x03R\x05files\x12\x16\n" +
+	"\x06device\x18\x04 \x01(\x04R\x06deviceBt\n" +
 	"(dev.talos.api.resource.definitions.filesZHgithub.com/siderolabs/talos/pkg/machinery/api/resource/definitions/filesb\x06proto3"
 
 var (
@@ -153,10 +231,11 @@ func file_resource_definitions_files_files_proto_rawDescGZIP() []byte {
 	return file_resource_definitions_files_files_proto_rawDescData
 }
 
-var file_resource_definitions_files_files_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_resource_definitions_files_files_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_resource_definitions_files_files_proto_goTypes = []any{
-	(*EtcFileSpecSpec)(nil),   // 0: talos.resource.definitions.files.EtcFileSpecSpec
-	(*EtcFileStatusSpec)(nil), // 1: talos.resource.definitions.files.EtcFileStatusSpec
+	(*EtcFileSpecSpec)(nil),            // 0: talos.resource.definitions.files.EtcFileSpecSpec
+	(*EtcFileStatusSpec)(nil),          // 1: talos.resource.definitions.files.EtcFileStatusSpec
+	(*InlineDataVolumeStatusSpec)(nil), // 2: talos.resource.definitions.files.InlineDataVolumeStatusSpec
 }
 var file_resource_definitions_files_files_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -177,7 +256,7 @@ func file_resource_definitions_files_files_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_resource_definitions_files_files_proto_rawDesc), len(file_resource_definitions_files_files_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

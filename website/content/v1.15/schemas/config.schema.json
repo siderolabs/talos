@@ -332,7 +332,7 @@
         "apiVersion",
         "kind"
       ],
-      "description": "ExistingVolumeConfig is an existing volume configuration document.\\nExisting volumes allow to mount partitions (or whole disks) that were created\\noutside of Talos. Volume will be mounted under `/var/mnt/\u003cname\u003e`.\\nThe name must not be taken by a user or external volume.\\n"
+      "description": "ExistingVolumeConfig is an existing volume configuration document.\\nExisting volumes allow to mount partitions (or whole disks) that were created\\noutside of Talos. Volume will be mounted under `/var/mnt/\u003cname\u003e`.\\nThe name must not be taken by a user, external or inline data volume.\\n"
     },
     "block.ExternalMountSpec": {
       "properties": {
@@ -427,7 +427,7 @@
         "apiVersion",
         "kind"
       ],
-      "description": "ExternalVolumeConfig is an external disk mount configuration document.\\nExternal volumes allow to mount volumes that were created outside of Talos,\\nover the network or API. Volume will be mounted under `/var/mnt/\u003cname\u003e`.\\nThe name must not be taken by a user or existing volume.\\n"
+      "description": "ExternalVolumeConfig is an external disk mount configuration document.\\nExternal volumes allow to mount volumes that were created outside of Talos,\\nover the network or API. Volume will be mounted under `/var/mnt/\u003cname\u003e`.\\nThe name must not be taken by a user, existing or inline data volume.\\n"
     },
     "block.FilesystemScrubConfigV1Alpha1": {
       "properties": {
@@ -556,6 +556,77 @@
         "kind"
       ],
       "description": "FilesystemTrimConfig is a filesystem trim (fstrim) configuration document.\\nFilesystem trim (the equivalent of the `fstrim` command) periodically discards unused blocks\\nof mounted filesystems which support trimming.\\n\\nWhen this document is present, Talos builds a stable per-node, per-volume schedule and trims\\neligible volumes at the configured interval. If the document is absent, no automatic trimming\\nis performed (unless enabled explicitly on a per-volume basis).\\n"
+    },
+    "block.InlineDataVolumeConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "InlineDataVolumeConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the volume.\n\nName might be between 1 and 34 characters long and can only contain:\nlowercase and uppercase ASCII letters, digits, and hyphens.\n",
+          "markdownDescription": "Name of the volume.\n\nName might be between 1 and 34 characters long and can only contain:\nlowercase and uppercase ASCII letters, digits, and hyphens.",
+          "x-intellij-html-description": "\u003cp\u003eName of the volume.\u003c/p\u003e\n\n\u003cp\u003eName might be between 1 and 34 characters long and can only contain:\nlowercase and uppercase ASCII letters, digits, and hyphens.\u003c/p\u003e\n"
+        },
+        "files": {
+          "patternProperties": {
+            ".*": {
+              "$ref": "#/$defs/block.InlineDataVolumeFileV1Alpha1"
+            }
+          },
+          "type": "object",
+          "title": "files",
+          "description": "Files of the volume, keyed by the path relative to the volume root.\n\nPaths may contain subdirectories, which are created automatically.\nPath components must not start with ...\nThere may be at most 256 files, and their total size, each rounded up to 4 KiB, must not exceed 1 MiB.\n",
+          "markdownDescription": "Files of the volume, keyed by the path relative to the volume root.\n\nPaths may contain subdirectories, which are created automatically.\nPath components must not start with `..`.\nThere may be at most 256 files, and their total size, each rounded up to 4 KiB, must not exceed 1 MiB.",
+          "x-intellij-html-description": "\u003cp\u003eFiles of the volume, keyed by the path relative to the volume root.\u003c/p\u003e\n\n\u003cp\u003ePaths may contain subdirectories, which are created automatically.\nPath components must not start with \u003ccode\u003e..\u003c/code\u003e.\nThere may be at most 256 files, and their total size, each rounded up to 4 KiB, must not exceed 1 MiB.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "files",
+        "kind",
+        "name"
+      ],
+      "description": "InlineDataVolumeConfig is an inline data volume configuration document.\\nInline data volume is a set of files defined inline, similar to a Kubernetes ConfigMap.\\nThe files are kept in memory (`tmpfs`), which only Talos can write to.\\nThe name must not be taken by a user, existing or external volume.\\n\\nChanges to the files are applied in place:\\nthe files are replaced atomically as a whole, by swapping the `..data` symbolic link\\nto a directory holding the new set of files.\\nEach top-level entry of the volume is a symbolic link into `..data`.\\n"
+    },
+    "block.InlineDataVolumeFileV1Alpha1": {
+      "properties": {
+        "mode": {
+          "type": "integer",
+          "title": "mode",
+          "description": "The file’s permissions in octal.\n\nDefaults to 0o644.\n",
+          "markdownDescription": "The file's permissions in octal.\n\nDefaults to `0o644`.",
+          "x-intellij-html-description": "\u003cp\u003eThe file\u0026rsquo;s permissions in octal.\u003c/p\u003e\n\n\u003cp\u003eDefaults to \u003ccode\u003e0o644\u003c/code\u003e.\u003c/p\u003e\n"
+        },
+        "contents": {
+          "type": "string",
+          "title": "contents",
+          "description": "The contents of the file.\n",
+          "markdownDescription": "The contents of the file.",
+          "x-intellij-html-description": "\u003cp\u003eThe contents of the file.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "InlineDataVolumeFileV1Alpha1 describes a single file of an inline data volume."
     },
     "block.MountSpec": {
       "properties": {
@@ -1046,7 +1117,7 @@
         "apiVersion",
         "kind"
       ],
-      "description": "UserVolumeConfig is a user volume configuration document.\\nUser volume is automatically allocated as a partition on the specified disk\\nand mounted under `/var/mnt/\u003cname\u003e`.\\nThe partition label is automatically generated as `u-\u003cname\u003e`.\\nThe name must not be taken by an existing or external volume.\\nA `tmpfs` user volume is backed by memory, its size is set with `provisioning.maxSize`\\n(in bytes, or in percents of the memory), and its content is lost on unmount.\\n"
+      "description": "UserVolumeConfig is a user volume configuration document.\\nUser volume is automatically allocated as a partition on the specified disk\\nand mounted under `/var/mnt/\u003cname\u003e`.\\nThe partition label is automatically generated as `u-\u003cname\u003e`.\\nThe name must not be taken by an existing, external or inline data volume.\\nA `tmpfs` user volume is backed by memory, its size is set with `provisioning.maxSize`\\n(in bytes, or in percents of the memory), and its content is lost on unmount.\\n"
     },
     "block.VirtiofsMountSpec": {
       "properties": {
@@ -10195,6 +10266,9 @@
     },
     {
       "$ref": "#/$defs/block.FilesystemScrubConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/block.InlineDataVolumeConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/block.RawVolumeConfigV1Alpha1"

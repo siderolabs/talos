@@ -1590,6 +1590,21 @@ const (
 	// SwapVolumePrefix is the prefix for the swap volumes.
 	SwapVolumePrefix = "s-"
 
+	// InlineDataVolumePrefix is the prefix for the inline data volumes.
+	InlineDataVolumePrefix = "i-"
+
+	// InlineDataVolumeMountPoint is the host directory for inline data volumes.
+	InlineDataVolumeMountPoint = "/run/inline-data-volumes"
+
+	// InlineDataVolumeMaxContentsSize is the maximum total size of the file contents of an inline data volume.
+	InlineDataVolumeMaxContentsSize = 1024 * 1024
+
+	// InlineDataVolumeMaxFiles is the maximum number of files of an inline data volume.
+	InlineDataVolumeMaxFiles = 256
+
+	// InlineDataVolumePageSize is the allocation unit of a file in an inline data volume.
+	InlineDataVolumePageSize = 4096
+
 	// ContainerServicePIDPrefix distinguishes container PIDs from Talos service PIDs in the ServicePID
 	// namespace, parallel to the "ext-" prefix extension services use, so an AllowedServices glob can
 	// target containers without risking a collision with an unrelated service name.

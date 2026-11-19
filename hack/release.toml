@@ -36,6 +36,17 @@ A size above 50% of the memory is reported as a warning, as tmpfs memory is not 
 The content of a `tmpfs` volume is lost when the volume is unmounted (e.g. on reboot, or when the volume is removed from the configuration).
 """
 
+    [notes.inline_data_volumes]
+        title = "Inline Data Volumes"
+        description = """\
+A new `InlineDataVolumeConfig` document defines a set of files inline (similar to a Kubernetes ConfigMap).
+Files may be nested in subdirectories, and each file may set its own `mode`.
+The files are kept in memory (`tmpfs`), which only Talos can write to.
+Changes to the files are applied in place: the whole set of files is replaced atomically, by swapping the `..data` symbolic link.
+
+The name of an inline data volume must not be taken by a user, existing or external volume.
+"""
+
     [notes.kubeprism_readiness_check]
         title = "KubePrism Readiness Check"
         description = """\
