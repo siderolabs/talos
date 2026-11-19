@@ -140,7 +140,7 @@ func (suite *LogsSuite) TestAlpineSerialHistory() {
 // TestAlpineSerialHistoryRotation forces actual virtlogd rollover with guest output.
 func (suite *LogsSuite) TestAlpineSerialHistoryRotation() {
 	if testing.Short() {
-		suite.T().Skip("skipping bounded 12 MiB virtlogd rotation workload in short mode")
+		suite.T().Skip("skipping bounded ~8.5 MiB virtlogd rotation workload in short mode")
 	}
 
 	node, doc, gateway, guestIP := suite.prepareAlpineGuest()
@@ -172,18 +172,22 @@ func (suite *LogsSuite) TestAlpineSerialHistoryRotation() {
 	follower := suite.followVMLogs(ctx, doc.Name(), []string{probe, fresh})
 	suite.synchronizeVMFollower(console, probe, follower.seen[0])
 
-	// Twelve MiB exceeds the pinned virtlogd default of 2 MiB and three
-	// backups. Newline-delimited 1 KiB records keep both tail scans and guest
-	// memory bounded. Do not change daemon settings or rename files ourselves.
+	// About 8.5 MiB exceeds the pinned virtlogd default of 2 MiB and three
+	// backups (8 MiB across four files), so without pruning a fifth file would
+	// exist; finding exactly four proves pruning. Newline-delimited 1 KiB
+	// records keep both tail scans and guest memory bounded. Do not change
+	// daemon settings or rename files ourselves.
 	release := make(chan struct{})
 	endpoint, _, requested := suite.startAlpineHTTPServer(gateway, guestIP, release)
 	ready := serialNonce("ROTATION_COMMAND_READY")
-	// Re-emit old after 9 MiB so it remains in a backup at the end. Its
-	// absence from the initial RPC read then proves active-file-only semantics,
-	// rather than merely proving that retention discarded the first marker.
-	flood := "awk 'BEGIN { for (i=0;i<9216;i++) printf \"%01023d\\n\", 0 }'; " +
+	// Re-emit old after 6 MiB so it remains in a backup at the end: the
+	// 2.5 MiB that follows is more than one 2 MiB file, pushing old out of the
+	// active file but not past the three backups. Its absence from the initial
+	// RPC read then proves active-file-only semantics, rather than merely
+	// proving that retention discarded the first marker.
+	flood := "awk 'BEGIN { for (i=0;i<6144;i++) printf \"%01023d\\n\", 0 }'; " +
 		strings.TrimSuffix(serialPrintf(old), "\n") + "; " +
-		"awk 'BEGIN { for (i=0;i<3072;i++) printf \"%01023d\\n\", 0 }'; " +
+		"awk 'BEGIN { for (i=0;i<2560;i++) printf \"%01023d\\n\", 0 }'; " +
 		strings.TrimSuffix(serialPrintf(fresh), "\n")
 	start = console.mark()
 	suite.Require().NoError(console.send("stty -echo; (wget -T 40 -qO- '" + endpoint + "' >/dev/null && { " + flood + "; }) >/dev/ttyS0 & " + serialPrintf(ready)))
