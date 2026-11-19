@@ -11,6 +11,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 )
@@ -18,13 +19,29 @@ import (
 // ErrNotReady marks a profile that has not been published or is being removed.
 var ErrNotReady = errors.New("profile not ready")
 
-// Validate checks a published profile, including the identity of builtin profiles.
-func Validate(name string, spec hypervisor.VirtualMachineProfileSpecSpec) error {
+// Profiles returns the stable builtin catalog of the architecture in name order, empty if the
+// architecture is unsupported. Each call returns fresh resources so callers cannot modify the catalog.
+//
+// The catalog is selected at runtime rather than by build constraints, so every architecture's
+// catalog is tested on any build host.
+func Profiles(arch string) []*hypervisor.VirtualMachineProfileSpec {
+	switch arch {
+	case constants.ArchAmd64:
+		return amd64Profiles()
+	case constants.ArchArm64:
+		return arm64Profiles()
+	default:
+		return nil
+	}
+}
+
+// Validate checks a published profile for the architecture, including the identity of builtin profiles.
+func Validate(arch, name string, spec hypervisor.VirtualMachineProfileSpecSpec) error {
 	if !spec.Builtin {
-		return ValidateCustom(name, spec)
+		return ValidateCustom(arch, name, spec)
 	}
 
-	for _, builtin := range Profiles() {
+	for _, builtin := range Profiles(arch) {
 		if builtin.Metadata().ID() != name {
 			continue
 		}
@@ -58,9 +75,9 @@ func sameTimers(a, b hypervisor.VirtualMachineProfileTimersSpec) bool {
 		a.PITTickPolicy == b.PITTickPolicy
 }
 
-// ValidateCustom checks a custom profile before publishing or rendering it.
+// ValidateCustom checks a custom profile for the architecture before publishing or rendering it.
 // It deliberately does not probe host capabilities or promise migration compatibility.
-func ValidateCustom(name string, spec hypervisor.VirtualMachineProfileSpecSpec) error {
+func ValidateCustom(arch, name string, spec hypervisor.VirtualMachineProfileSpecSpec) error {
 	var errs error
 
 	if err := hypervisorhelpers.ValidateName(name); err != nil {
@@ -75,7 +92,7 @@ func ValidateCustom(name string, spec hypervisor.VirtualMachineProfileSpecSpec) 
 		errs = errors.Join(errs, errors.New("custom profiles cannot be builtin"))
 	}
 
-	if !validMachine(spec.Machine) {
+	if !hypervisorhelpers.ValidVirtualMachineProfileMachine(arch, spec.Machine) {
 		errs = errors.Join(errs, fmt.Errorf("machine %q is unsupported on this architecture", spec.Machine))
 	}
 
@@ -94,6 +111,18 @@ func ValidateCustom(name string, spec hypervisor.VirtualMachineProfileSpecSpec) 
 			spec.CPU.Fallback,
 			features,
 		),
-		hypervisorhelpers.ValidateVirtualMachineProfileTimers(spec.Timers.RTCTickPolicy, spec.Timers.PITTickPolicy),
+		validateTimers(arch, spec.Timers),
 	)
+}
+
+// validateTimers checks the timer tick policies and that the platform has the requested timers.
+func validateTimers(arch string, timers hypervisor.VirtualMachineProfileTimersSpec) error {
+	err := hypervisorhelpers.ValidateVirtualMachineProfileTimers(timers.RTCTickPolicy, timers.PITTickPolicy)
+
+	// The tick policies always carry a resolved default, so only an enabled HPET is an explicit request.
+	if timers.HPET && arch != constants.ArchAmd64 {
+		err = errors.Join(err, errors.New("the HPET is an x86 timer, unsupported on this architecture"))
+	}
+
+	return err
 }

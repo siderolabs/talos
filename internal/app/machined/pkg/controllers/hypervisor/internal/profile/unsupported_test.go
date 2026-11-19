@@ -2,8 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//go:build !amd64
-
 package profile_test
 
 import (
@@ -17,8 +15,8 @@ import (
 )
 
 func TestUnsupportedArchitecture(t *testing.T) {
-	require.Empty(t, profile.Profiles())
-	require.Error(t, profile.ValidateCustom("cluster", hypervisor.VirtualMachineProfileSpecSpec{
+	require.Empty(t, profile.Profiles("riscv64"))
+	require.Error(t, profile.ValidateCustom("riscv64", "cluster", hypervisor.VirtualMachineProfileSpecSpec{
 		Machine: "q35",
 		CPU: hypervisor.VirtualMachineProfileCPUSpec{
 			Mode: hypervisorhelpers.VirtualMachineProfileCPUModeHostModel,

@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"runtime"
 	"slices"
 	"strings"
 
@@ -19,6 +20,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/merge"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/storagehelpers"
 )
@@ -135,8 +137,10 @@ type VirtualMachineDisk struct {
 	//
 	//     `virtio` for anything modern; `sata` for guests without virtio drivers at install time.
 	//
-	//     Optional; defaults to `virtio` on a `disk` and to `sata` on a `cdrom`. A `cdrom` cannot
-	//     be attached to `virtio`, which presents no ejectable media.
+	//     Optional; defaults to `virtio` on a `disk`. A `cdrom` defaults to `sata` on
+	//     amd64 and `scsi` on arm64, where the bundled UEFI firmware supports virtio-scsi
+	//     but not SATA.
+	//     A `cdrom` cannot be attached to `virtio`, which presents no ejectable media.
 	//   values:
 	//     - virtio
 	//     - scsi
@@ -263,14 +267,18 @@ func (d *VirtualMachineDisk) Format() hypervisorhelpers.VirtualMachineDiskFormat
 
 // Bus implements config.VirtualMachineDiskConfig interface.
 //
-// A cdrom defaults to SATA rather than virtio: virtio-blk presents no ejectable media, so
-// libvirt rejects the combination with "does not support ejectable media".
+// A cdrom defaults to a firmware-readable bus: SATA on amd64, virtio-scsi on arm64.
+// virtio-blk presents no ejectable media, so libvirt rejects it for CD-ROMs.
 func (d *VirtualMachineDisk) Bus() hypervisorhelpers.VirtualMachineDiskBus {
 	if d.DiskBus != hypervisorhelpers.VirtualMachineDiskBusUnknown {
 		return d.DiskBus
 	}
 
 	if d.Type() == hypervisorhelpers.VirtualMachineDiskTypeCDROM {
+		if runtime.GOARCH == constants.ArchArm64 {
+			return hypervisorhelpers.VirtualMachineDiskBusSCSI
+		}
+
 		return hypervisorhelpers.VirtualMachineDiskBusSATA
 	}
 

@@ -1,6 +1,6 @@
 ---
 description: |
-    VirtualMachineProfileConfig declares a named amd64 guest ABI.
+    VirtualMachineProfileConfig declares a named guest ABI.
     Profiles bundle the guest machine type, CPU model and platform timers. Use a versioned machine
     type and a CPU baseline tested on every host for migration. Aliases drift as QEMU
     changes. A named CPU model is not a migration guarantee across arbitrary hosts.
@@ -21,7 +21,7 @@ title: VirtualMachineProfileConfig
 apiVersion: v1alpha1
 kind: VirtualMachineProfileConfig
 name: rack-a-compat # Profile name. Builtin names and the compat- prefix are reserved.
-machine: pc-q35-9.2 # q35 or i440fx machine family, preferably a versioned type.
+machine: pc-q35-9.2 # q35 or i440fx machine family on amd64, virt on arm64, preferably a versioned type.
 # Guest CPU model and feature policy.
 cpu:
     mode: custom # host-model, host-passthrough or custom.
@@ -36,9 +36,9 @@ cpu:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`name` |string |Profile name. Builtin names and the compat- prefix are reserved.  | |
-|`machine` |string |q35 or i440fx machine family, preferably a versioned type.  | |
+|`machine` |string |q35 or i440fx machine family on amd64, virt on arm64, preferably a versioned type.  | |
 |`cpu` |<a href="#VirtualMachineProfileConfig.cpu">VirtualMachineProfileCPU</a> |Guest CPU model and feature policy.  | |
-|`timers` |<a href="#VirtualMachineProfileConfig.timers">VirtualMachineProfileTimers</a> |Platform timers presented to the guest.<br><br>Optional; omitting it hides the HPET, the RTC catches up on missed ticks and the PIT delays them.  | |
+|`timers` |<a href="#VirtualMachineProfileConfig.timers">VirtualMachineProfileTimers</a> |Platform timers presented to the guest.<br><br>Optional; omitting it hides the HPET, the RTC catches up on missed ticks and the PIT delays them.<br>These are x86 timers: arm64 guests get none of them, and enabling the HPET is rejected there.  | |
 
 
 

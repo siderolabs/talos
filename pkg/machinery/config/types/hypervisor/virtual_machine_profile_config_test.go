@@ -414,7 +414,7 @@ func TestVirtualMachineProfileValidation(t *testing.T) {
 		},
 		{
 			name: "mine", mode: hypervisorhelpers.VirtualMachineProfileCPUModeHostModel,
-			machine: "virt", want: "machine",
+			machine: "microvm", want: "machine",
 		},
 		{
 			name: "mine", mode: hypervisorhelpers.VirtualMachineProfileCPUModeHostPassthrough,

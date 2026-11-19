@@ -125,22 +125,32 @@ LIBVIRT_VERSION ?= v12.9.0
 LIBVIRT_SHA256 ?= dcf579d8a949f4cbf56820529d48f200382a48ea12855ffded7c16a189353cd7
 # renovate: datasource=docker depName=alpine
 ALPINE_VERSION ?= 3.24.4
-# Update the checksum with the image; mirrors of identical bytes can reuse it.
-ALPINE_ISO_SHA256 ?= 157d353f8e54252cad2d9812a0d56bb7fa2231fc154a110e1d180d7480ef8b4f
+# Update the checksums with the image; mirrors of identical bytes can reuse them.
+ALPINE_AMD64_ISO_SHA256 ?= 157d353f8e54252cad2d9812a0d56bb7fa2231fc154a110e1d180d7480ef8b4f
+ALPINE_ARM64_ISO_SHA256 ?= cf88d8ba67389d20d9ed307366b52e487c15d7d3ee3233b62b95f709daa1d430
 # renovate: datasource=github-tags extractVersion=^v(?<version>.*)$ depName=openwrt/openwrt
 OPENWRT_VERSION ?= 25.12.6
-# SHA-256 of OPENWRT_DISK_URL (the .img.gz); update with OPENWRT_VERSION.
-OPENWRT_DISK_GZ_SHA256 ?= f8538784d0288b4133a99ac2a68443e4922ffde6343e80df56a5882364b9d499
+# SHA-256 of the OPENWRT_*_DISK_URL archives (.img.gz); update with OPENWRT_VERSION.
+OPENWRT_AMD64_DISK_GZ_SHA256 ?= f8538784d0288b4133a99ac2a68443e4922ffde6343e80df56a5882364b9d499
+OPENWRT_ARM64_DISK_GZ_SHA256 ?= 77a3802b583a6964ccb868c80f83a6ea0eb5847d3835350b5f0bcbf6f141d1d3
 
 KUBECTL_URL ?= https://dl.k8s.io/release/$(KUBECTL_VERSION)/bin/$(OPERATING_SYSTEM)/amd64/kubectl
 KUBESTR_URL ?= https://github.com/kastenhq/kubestr/releases/download/$(KUBESTR_VERSION)/kubestr_$(subst v,,$(KUBESTR_VERSION))_Linux_amd64.tar.gz
 HELM_URL ?= https://get.helm.sh/helm-$(HELM_VERSION)-linux-amd64.tar.gz
 CILIUM_CLI_URL ?= https://github.com/cilium/cilium-cli/releases/download/$(CILIUM_CLI_VERSION)/cilium-$(OPERATING_SYSTEM)-amd64.tar.gz
-ALPINE_ISO ?= _out/alpine-virt-x86_64.iso
-ALPINE_ISO_URL ?= https://dl-cdn.alpinelinux.org/alpine/v3.24/releases/x86_64/alpine-virt-$(ALPINE_VERSION)-x86_64.iso
-OPENWRT_DISK_GZ ?= _out/openwrt-x86-64-generic-ext4-combined.img.gz
-OPENWRT_DISK ?= _out/openwrt-x86-64-generic-ext4-combined.img
-OPENWRT_DISK_URL ?= https://downloads.openwrt.org/releases/$(OPENWRT_VERSION)/targets/x86/64/openwrt-$(OPENWRT_VERSION)-x86-64-generic-ext4-combined.img.gz
+ALPINE_ISO_URL_PREFIX ?= https://dl-cdn.alpinelinux.org/alpine/v$(word 1,$(subst ., ,$(ALPINE_VERSION))).$(word 2,$(subst ., ,$(ALPINE_VERSION)))/releases
+ALPINE_AMD64_ISO ?= _out/alpine-virt-x86_64.iso
+ALPINE_AMD64_ISO_URL ?= $(ALPINE_ISO_URL_PREFIX)/x86_64/alpine-virt-$(ALPINE_VERSION)-x86_64.iso
+ALPINE_ARM64_ISO ?= _out/alpine-virt-aarch64.iso
+ALPINE_ARM64_ISO_URL ?= $(ALPINE_ISO_URL_PREFIX)/aarch64/alpine-virt-$(ALPINE_VERSION)-aarch64.iso
+OPENWRT_URL_PREFIX ?= https://downloads.openwrt.org/releases/$(OPENWRT_VERSION)/targets
+OPENWRT_AMD64_DISK_GZ ?= _out/openwrt-x86-64-generic-ext4-combined.img.gz
+OPENWRT_AMD64_DISK ?= _out/openwrt-x86-64-generic-ext4-combined.img
+OPENWRT_AMD64_DISK_URL ?= $(OPENWRT_URL_PREFIX)/x86/64/openwrt-$(OPENWRT_VERSION)-x86-64-generic-ext4-combined.img.gz
+# arm64 has no BIOS image; the EFI one boots under the UEFI firmware arm64 guests get.
+OPENWRT_ARM64_DISK_GZ ?= _out/openwrt-armsr-armv8-generic-ext4-combined-efi.img.gz
+OPENWRT_ARM64_DISK ?= _out/openwrt-armsr-armv8-generic-ext4-combined-efi.img
+OPENWRT_ARM64_DISK_URL ?= $(OPENWRT_URL_PREFIX)/armsr/armv8/openwrt-$(OPENWRT_VERSION)-armsr-armv8-generic-ext4-combined-efi.img.gz
 
 TESTPKGS ?= github.com/siderolabs/talos/...
 UNITTEST_PARALLELISM ?= 8
@@ -648,19 +658,28 @@ define download-verified-fixture
 endef
 
 .PHONY: download-alpine-iso
-download-alpine-iso: ## Downloads and verifies the configured Alpine ISO.
-	$(call download-verified-fixture,ALPINE_ISO,ALPINE_ISO_URL,ALPINE_ISO_SHA256,268435456)
+download-alpine-iso: ## Downloads and verifies the amd64 and arm64 Alpine ISOs.
+	$(call download-verified-fixture,ALPINE_AMD64_ISO,ALPINE_AMD64_ISO_URL,ALPINE_AMD64_ISO_SHA256,268435456)
+	$(call download-verified-fixture,ALPINE_ARM64_ISO,ALPINE_ARM64_ISO_URL,ALPINE_ARM64_ISO_SHA256,268435456)
 
-.PHONY: download-openwrt-disk
-download-openwrt-disk: ## Downloads and unpacks the writable-image guest fixture.
-	$(call download-verified-fixture,OPENWRT_DISK_GZ,OPENWRT_DISK_URL,OPENWRT_DISK_GZ_SHA256,67108864)
+# Unpacks a downloaded .gz fixture: $(1) names the archive variable, $(2) the destination one.
+# gunzip exits 2 on the trailing padding OpenWrt images carry, which is only a warning.
+define unpack-gz-fixture
 	@set -eu; \
-		dest="$(OPENWRT_DISK)"; \
+		dest="$($(2))"; \
 		trap 'rm -f "$${dest}.tmp"' 0; \
-		rc=0; gunzip -c "$(OPENWRT_DISK_GZ)" > "$${dest}.tmp" || rc=$$?; \
+		rc=0; gunzip -c "$($(1))" > "$${dest}.tmp" || rc=$$?; \
 		if [ "$$rc" -ne 0 ] && [ "$$rc" -ne 2 ]; then echo "gunzip failed with status $$rc" >&2; exit 1; fi; \
 		chmod 0444 "$${dest}.tmp"; \
 		mv -f "$${dest}.tmp" "$$dest"
+endef
+
+.PHONY: download-openwrt-disk
+download-openwrt-disk: ## Downloads and unpacks the amd64 and arm64 writable-image guest disks.
+	$(call download-verified-fixture,OPENWRT_AMD64_DISK_GZ,OPENWRT_AMD64_DISK_URL,OPENWRT_AMD64_DISK_GZ_SHA256,67108864)
+	$(call unpack-gz-fixture,OPENWRT_AMD64_DISK_GZ,OPENWRT_AMD64_DISK)
+	$(call download-verified-fixture,OPENWRT_ARM64_DISK_GZ,OPENWRT_ARM64_DISK_URL,OPENWRT_ARM64_DISK_GZ_SHA256,67108864)
+	$(call unpack-gz-fixture,OPENWRT_ARM64_DISK_GZ,OPENWRT_ARM64_DISK)
 
 $(ARTIFACTS)/kubectl: | $(ARTIFACTS)
 	@curl --fail -L -o $(ARTIFACTS)/kubectl "$(KUBECTL_URL)"

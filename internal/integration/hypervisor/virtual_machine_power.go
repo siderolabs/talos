@@ -44,7 +44,7 @@ func (suite *LibvirtSuite) prepareDisklessVM() (string, context.Context, string)
 	doc := hypervisorcfg.NewVirtualMachineConfigV1Alpha1()
 	doc.MetaName = name
 	doc.PowerStateConfig = hypervisorhelpers.PowerStateRunning
-	doc.FirmwareConfig.FirmwareType = hypervisorhelpers.VirtualMachineFirmwareTypeBIOS
+	doc.FirmwareConfig.FirmwareType = suite.guestArch(node).firmware
 	doc.CPUConfig.CPUCount = 1
 	doc.MemoryConfig.MemorySize = meta.MustByteSize("256MiB")
 

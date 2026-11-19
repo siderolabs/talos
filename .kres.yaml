@@ -471,7 +471,7 @@ spec:
             QEMU_EXTRA_DISKS: 1
             QEMU_EXTRA_DISKS_ON_CONTROLPLANES: true
             WITH_SKIP_ETCD_K8S: true
-            EXTRA_TEST_ARGS: -talos.extensions.libvirt -talos.hypervisor.disk-image=$(OPENWRT_DISK)
+            EXTRA_TEST_ARGS: -talos.extensions.libvirt -talos.hypervisor.disk-image=$(OPENWRT_AMD64_DISK)
             TEST_MODE: skip-etcd-k8s
             WITH_CONFIG_PATCH: "@_out/installer-extensions-patch.yaml:@hack/test/patches/extensions-libvirt.yaml:@hack/test/patches/content-library.yaml"
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -1633,7 +1633,7 @@ spec:
             QEMU_EXTRA_DISKS: 1
             QEMU_EXTRA_DISKS_ON_CONTROLPLANES: true
             WITH_SKIP_ETCD_K8S: true
-            EXTRA_TEST_ARGS: -talos.extensions.libvirt -talos.hypervisor.talos-iso=_out/metal-amd64.iso -talos.hypervisor.alpine-iso=$(ALPINE_ISO) -talos.hypervisor.disk-image=$(OPENWRT_DISK)
+            EXTRA_TEST_ARGS: -talos.extensions.libvirt -talos.hypervisor.talos-iso=_out/metal-amd64.iso -talos.hypervisor.alpine-iso=$(ALPINE_AMD64_ISO) -talos.hypervisor.disk-image=$(OPENWRT_AMD64_DISK)
             TEST_MODE: skip-etcd-k8s
             WITH_CONFIG_PATCH: "@_out/installer-extensions-patch.yaml:@hack/test/patches/extensions-libvirt.yaml:@hack/test/patches/content-library.yaml"
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -2656,11 +2656,14 @@ spec:
             TF_SCRIPT_DIR: _out/contrib
             TF_E2E_TEST_TYPE: aws
             TF_E2E_ACTION: apply
+        - name: download Alpine ISO
+          command: download-alpine-iso
+        - name: download writable guest disk
+          command: download-openwrt-disk
         - name: e2e-hypervisor
           command: e2e-aws
           environment:
-            # Fixtures without an arm64 build (Alpine ISO, CirrOS disk) are left out; their tests skip.
-            EXTRA_TEST_ARGS: -talos.extensions.libvirt -talos.hypervisor.talos-iso=_out/metal-arm64.iso
+            EXTRA_TEST_ARGS: -talos.extensions.libvirt -talos.hypervisor.talos-iso=_out/metal-amd64.iso -talos.hypervisor.alpine-iso=$(ALPINE_ARM64_ISO) -talos.hypervisor.disk-image=$(OPENWRT_ARM64_DISK)
             INTEGRATION_TEST_RUN: TestIntegration/hypervisor.
             E2E_AWS_CONFIG_PATCH: "@hack/test/patches/content-library.yaml"
             SKIP_KUBERNETES_INTEGRATION_TEST: true

@@ -52,7 +52,7 @@ func (suite *DomainSuite) TestDomainDefinition() {
 	doc := hypervisorcfg.NewVirtualMachineConfigV1Alpha1()
 	doc.MetaName = name
 	doc.PowerStateConfig = hypervisorhelpers.PowerStateStopped
-	doc.FirmwareConfig.FirmwareType = hypervisorhelpers.VirtualMachineFirmwareTypeBIOS
+	doc.FirmwareConfig.FirmwareType = suite.guestArch(node).firmware
 	doc.CPUConfig.CPUCount = 1
 	doc.MemoryConfig.MemorySize = meta.MustByteSize("128MiB")
 
@@ -106,7 +106,7 @@ func (suite *DomainSuite) TestConsoleAttach() {
 	doc := hypervisorcfg.NewVirtualMachineConfigV1Alpha1()
 	doc.MetaName = name
 	doc.PowerStateConfig = hypervisorhelpers.PowerStateRunning
-	doc.FirmwareConfig.FirmwareType = hypervisorhelpers.VirtualMachineFirmwareTypeBIOS
+	doc.FirmwareConfig.FirmwareType = suite.guestArch(node).firmware
 	doc.CPUConfig.CPUCount = 1
 	doc.MemoryConfig.MemorySize = meta.MustByteSize("128MiB")
 	doc.ConsoleConfig.SerialConfig.SerialEnabled = new(true)
@@ -169,7 +169,7 @@ func (suite *DomainSuite) TestVNCAttach() {
 	doc := hypervisorcfg.NewVirtualMachineConfigV1Alpha1()
 	doc.MetaName = name
 	doc.PowerStateConfig = hypervisorhelpers.PowerStateRunning
-	doc.FirmwareConfig.FirmwareType = hypervisorhelpers.VirtualMachineFirmwareTypeBIOS
+	doc.FirmwareConfig.FirmwareType = suite.guestArch(node).firmware
 	doc.CPUConfig.CPUCount = 1
 	doc.MemoryConfig.MemorySize = meta.MustByteSize("128MiB")
 	doc.ConsoleConfig.VNCConfig.VNCEnabled = new(true)

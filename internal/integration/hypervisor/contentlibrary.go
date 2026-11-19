@@ -68,8 +68,8 @@ func (suite *ContentLibrarySuite) provisionLibrary() (context.Context, string, s
 		suite.T().Skip("skipping test in short mode.")
 	}
 
-	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
-		suite.T().Skip("skipping test for non-qemu provisioner")
+	if !suite.Capabilities().SupportsVolumes {
+		suite.T().Skip("cluster doesn't support volumes")
 	}
 
 	node := suite.RandomDiscoveredNodeInternalIP()

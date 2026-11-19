@@ -1729,7 +1729,9 @@ func (suite *VirtualMachineSpecSuite) TestAllocatesDistinctTargetDevices() {
 	doc.DisksConfig = []hypervisorcfg.VirtualMachineDisk{
 		cdrom("install", hypervisorhelpers.VirtualMachineDiskBusSATA),
 		cdrom("rescue", hypervisorhelpers.VirtualMachineDiskBusSCSI),
+		cdrom("boot", hypervisorhelpers.VirtualMachineDiskBusUnknown),
 	}
+	doc.DisksConfig[2].DiskBootOrder = 1
 
 	cfg, err := container.New(doc)
 	suite.Require().NoError(err)
@@ -1737,15 +1739,50 @@ func (suite *VirtualMachineSpecSuite) TestAllocatesDistinctTargetDevices() {
 	poolPath := suite.T().TempDir()
 	suite.publishCDROMCopy(doc.Name(), "install", poolPath)
 	suite.publishCDROMCopy(doc.Name(), "rescue", poolPath)
+	suite.publishCDROMCopy(doc.Name(), "boot", poolPath)
 
 	ctest.AssertResource(suite, doc.Name(), func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
 		asrt.Contains(res.TypedSpec().DomainXML, `<target dev="sda" bus="sata"></target>`)
 		asrt.Contains(res.TypedSpec().DomainXML, `<target dev="sdb" bus="scsi"></target>`)
+
+		if runtime.GOARCH == constants.ArchArm64 {
+			asrt.Contains(res.TypedSpec().DomainXML, `<controller type="scsi" model="virtio-scsi"></controller>`)
+		}
+
+		var rendered libvirtxml.Domain
+		if !asrt.NoError(rendered.Unmarshal(res.TypedSpec().DomainXML)) {
+			return
+		}
+
+		asrt.Len(rendered.Devices.Disks, 3)
+
+		if len(rendered.Devices.Disks) == 3 {
+			bus := "sata"
+			if runtime.GOARCH == constants.ArchArm64 {
+				bus = "scsi"
+			}
+
+			asrt.Equal(bus, rendered.Devices.Disks[2].Target.Bus)
+			asrt.Equal(uint(1), rendered.Devices.Disks[2].Boot.Order)
+		}
 	})
 }
 
 // libvirt has no nvme disk bus, so the domain is refused rather than rendered unusably.
 func (suite *VirtualMachineSpecSuite) TestRejectsNVMeBus() {
+	suite.testRejectsNVMeBus(false)
+}
+
+func (suite *VirtualMachineSpecSuite) TestRejectsNVMeBusBeforeWaitingForSeed() {
+	suite.testRejectsNVMeBus(true)
+}
+
+func (suite *VirtualMachineSpecSuite) testRejectsNVMeBus(withPendingSeed bool) {
+	name := "nvme-cdrom"
+	if withPendingSeed {
+		name += "-pending-seed"
+	}
+
 	path := suite.T().TempDir()
 	writeLibraryImage(suite.T(), path, "talos.iso", "iso")
 
@@ -1757,7 +1794,7 @@ func (suite *VirtualMachineSpecSuite) TestRejectsNVMeBus() {
 	}
 	suite.Create(library)
 
-	doc := newVirtualMachine("nvme-cdrom")
+	doc := newVirtualMachine(name)
 	doc.DisksConfig = []hypervisorcfg.VirtualMachineDisk{
 		{
 			DiskName:   "install",
@@ -1772,6 +1809,12 @@ func (suite *VirtualMachineSpecSuite) TestRejectsNVMeBus() {
 				},
 			},
 		},
+	}
+
+	if withPendingSeed {
+		doc.GuestConfig.CloudInitConfig = &hypervisorcfg.VirtualMachineCloudInit{
+			PoolConfig: "missing-pool",
+		}
 	}
 
 	cfg, err := container.New(doc)
@@ -2355,6 +2398,55 @@ func TestVirtualMachineCloudInitDomainSuite(t *testing.T) {
 	})
 }
 
+func (s *VirtualMachineCloudInitDomainSuite) TestSeedReusesSCSIController() {
+	readyCloudInitDomain(&s.DefaultSuite, true)
+	vm, err := safe.StateGetByID[*hypervisor.VirtualMachineSpec](s.Ctx(), s.State(), "guest")
+	s.Require().NoError(err)
+
+	ctest.UpdateWithConflicts(s, vm, func(current *hypervisor.VirtualMachineSpec) error {
+		current.TypedSpec().Disks[0].Bus = hypervisorhelpers.VirtualMachineDiskBusSCSI.String()
+
+		return nil
+	})
+
+	ctest.AssertResource(s, "guest", func(res *hypervisor.VirtualMachineDomainSpec, a *assert.Assertions) {
+		var domain libvirtxml.Domain
+
+		a.NoError(domain.Unmarshal(res.TypedSpec().DomainXML))
+		a.NotNil(domain.Devices)
+
+		if domain.Devices == nil {
+			return
+		}
+
+		a.Len(domain.Devices.Disks, 2)
+
+		if len(domain.Devices.Disks) != 2 {
+			return
+		}
+
+		a.Equal("scsi", domain.Devices.Disks[0].Target.Bus)
+		a.Equal("sda", domain.Devices.Disks[0].Target.Dev)
+		a.Equal("sdb", domain.Devices.Disks[1].Target.Dev)
+
+		var models []string
+
+		for _, controller := range domain.Devices.Controllers {
+			if controller.Type == "scsi" {
+				models = append(models, controller.Model)
+			}
+		}
+
+		var expected []string
+
+		if runtime.GOARCH == constants.ArchArm64 {
+			expected = []string{"virtio-scsi"}
+		}
+
+		a.Equal(expected, models)
+	})
+}
+
 func (s *VirtualMachineCloudInitDomainSuite) TestSeedIsAttachedOnlyWhenReady() {
 	s.seedObservationOutage(false)
 }
@@ -2424,6 +2516,11 @@ func readyCloudInitDomain(s *ctest.DefaultSuite, withDisk bool) (
 	vm.TypedSpec().Memory.Size = 512 << 20
 	vm.TypedSpec().PowerState = "running"
 	vm.TypedSpec().Firmware.Type = "bios"
+
+	if runtime.GOARCH == constants.ArchArm64 {
+		vm.TypedSpec().Firmware.Type = "uefi"
+	}
+
 	vm.TypedSpec().CloudInit = &hypervisor.VirtualMachineCloudInitSpec{Pool: "pool-a", MetaData: "instance-id: guest\n", UserData: "secret"}
 
 	if withDisk {
@@ -2492,8 +2589,39 @@ func readyCloudInitDomain(s *ctest.DefaultSuite, withDisk bool) (
 	})
 
 	ctest.AssertResource(s, "guest", func(domain *hypervisor.VirtualMachineDomainSpec, a *assert.Assertions) {
+		bus := "sata"
+		if runtime.GOARCH == constants.ArchArm64 {
+			bus = "scsi"
+		}
+
 		a.Contains(domain.TypedSpec().DomainXML, `device="cdrom"`)
-		a.Contains(domain.TypedSpec().DomainXML, `bus="sata"`)
+
+		var rendered libvirtxml.Domain
+
+		if !a.NoError(rendered.Unmarshal(domain.TypedSpec().DomainXML)) || !a.NotNil(rendered.Devices) || !a.NotEmpty(rendered.Devices.Disks) {
+			return
+		}
+
+		seed := rendered.Devices.Disks[len(rendered.Devices.Disks)-1]
+		a.Equal(bus, seed.Target.Bus)
+		a.Nil(seed.Boot, "the seed must not change the guest boot order")
+
+		var scsiControllers int
+
+		for _, controller := range rendered.Devices.Controllers {
+			if controller.Type == "scsi" {
+				a.Equal("virtio-scsi", controller.Model)
+
+				scsiControllers++
+			}
+		}
+
+		if runtime.GOARCH == constants.ArchArm64 {
+			a.Equal(1, scsiControllers, "the seed needs its controller even without a SCSI data disk")
+		} else {
+			a.Zero(scsiControllers, "amd64 keeps its existing controller selection")
+		}
+
 		a.Contains(domain.TypedSpec().DomainXML, `<readonly></readonly>`)
 		a.Contains(domain.TypedSpec().DomainXML, path)
 		a.Equal(id, domain.TypedSpec().CloudInit)

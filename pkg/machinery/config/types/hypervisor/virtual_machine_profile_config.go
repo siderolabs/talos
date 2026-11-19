@@ -15,6 +15,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/validation"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 )
 
@@ -39,7 +40,7 @@ var (
 	_ config.Validator                             = &VirtualMachineProfileConfigV1Alpha1{}
 )
 
-// VirtualMachineProfileConfigV1Alpha1 declares a named amd64 guest ABI.
+// VirtualMachineProfileConfigV1Alpha1 declares a named guest ABI.
 //
 //	description: |
 //	  Profiles bundle the guest machine type, CPU model and platform timers. Use a versioned machine
@@ -55,7 +56,7 @@ type VirtualMachineProfileConfigV1Alpha1 struct {
 	// description: Profile name. Builtin names and the compat- prefix are reserved.
 	// schemaRequired: true
 	MetaName string `yaml:"name"`
-	// description: q35 or i440fx machine family, preferably a versioned type.
+	// description: q35 or i440fx machine family on amd64, virt on arm64, preferably a versioned type.
 	// schemaRequired: true
 	MachineConfig string `yaml:"machine"`
 	// description: Guest CPU model and feature policy.
@@ -65,6 +66,7 @@ type VirtualMachineProfileConfigV1Alpha1 struct {
 	//   Platform timers presented to the guest.
 	//
 	//   Optional; omitting it hides the HPET, the RTC catches up on missed ticks and the PIT delays them.
+	//   These are x86 timers: arm64 guests get none of them, and enabling the HPET is rejected there.
 	TimersConfig VirtualMachineProfileTimers `yaml:"timers,omitempty"`
 }
 
@@ -294,8 +296,11 @@ func (c *VirtualMachineProfileConfigV1Alpha1) Validate(validation.RuntimeMode, .
 		errs = errors.Join(errs, fmt.Errorf("profile name %q is reserved", c.MetaName))
 	}
 
-	if !hypervisorhelpers.ValidVirtualMachineProfileMachine(c.MachineConfig) {
-		errs = errors.Join(errs, fmt.Errorf("machine %q must be q35, pc, pc-q35-* or pc-i440fx-*", c.MachineConfig))
+	// The document carries no architecture: accept every supported family, the controller
+	// checks the one matching the node.
+	if !hypervisorhelpers.ValidVirtualMachineProfileMachine(constants.ArchAmd64, c.MachineConfig) &&
+		!hypervisorhelpers.ValidVirtualMachineProfileMachine(constants.ArchArm64, c.MachineConfig) {
+		errs = errors.Join(errs, fmt.Errorf("machine %q must be q35, pc, pc-q35-*, pc-i440fx-* (amd64) or virt, virt-* (arm64)", c.MachineConfig))
 	}
 
 	if err := hypervisorhelpers.ValidateVirtualMachineProfileCPU(c.CPUConfig.ModeConfig, c.CPUConfig.ModelConfig, c.CPUConfig.FallbackConfig, func() []hypervisorhelpers.VirtualMachineProfileFeature {
