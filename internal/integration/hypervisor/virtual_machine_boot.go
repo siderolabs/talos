@@ -98,7 +98,7 @@ func (suite *BootSuite) TestBootsAndServesItsAPI() {
 	doc := hypervisorcfg.NewVirtualMachineConfigV1Alpha1()
 	doc.MetaName = name
 	doc.PowerStateConfig = hypervisorhelpers.PowerStateRunning
-	doc.FirmwareConfig.FirmwareType = hypervisorhelpers.VirtualMachineFirmwareTypeBIOS
+	doc.FirmwareConfig.FirmwareType = suite.guestArch(node).firmware
 	doc.CPUConfig.CPUCount = guestCPUCount
 	doc.MemoryConfig.MemorySize = meta.MustByteSize(guestMemory)
 	doc.DisksConfig = []hypervisorcfg.VirtualMachineDisk{

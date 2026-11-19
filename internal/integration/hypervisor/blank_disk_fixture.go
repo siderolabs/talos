@@ -137,7 +137,7 @@ func (f *blankDiskFixture) document(size string, powerState hypervisorhelpers.Po
 	doc := hypervisorcfg.NewVirtualMachineConfigV1Alpha1()
 	doc.MetaName = f.vmName
 	doc.PowerStateConfig = powerState
-	doc.FirmwareConfig.FirmwareType = hypervisorhelpers.VirtualMachineFirmwareTypeBIOS
+	doc.FirmwareConfig.FirmwareType = f.suite.guestArch(f.node).firmware
 	doc.CPUConfig.CPUCount = 1
 	doc.MemoryConfig.MemorySize = meta.MustByteSize("128MiB")
 	doc.DisksConfig = []hypervisorcfg.VirtualMachineDisk{

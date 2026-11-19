@@ -26,7 +26,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	hypervisorcfg "github.com/siderolabs/talos/pkg/machinery/config/types/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
-	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 )
@@ -53,9 +52,6 @@ func (suite *ImageSuite) TestWritableImageFromContentLibrary() {
 	node := suite.RandomDiscoveredNodeInternalIP()
 
 	nodeCtx := client.WithNode(ctx, node)
-	if suite.ReadMachineArch(nodeCtx) != constants.ArchAmd64 {
-		suite.T().Skip("stock OpenWrt fixture is amd64")
-	}
 
 	image, err := os.Open(suite.HypervisorDiskImagePath)
 	suite.Require().NoError(err)

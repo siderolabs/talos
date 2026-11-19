@@ -7,7 +7,10 @@ package hypervisorhelpers
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
+
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // VirtualMachineProfileFeature is a named CPU flag and its libvirt policy.
@@ -16,13 +19,25 @@ type VirtualMachineProfileFeature struct {
 	Policy VirtualMachineProfileCPUFeaturePolicy
 }
 
-// ValidVirtualMachineProfileMachine checks the amd64 QEMU machine families.
-func ValidVirtualMachineProfileMachine(machine string) bool {
-	if machine == "q35" || machine == "pc" {
+// ValidVirtualMachineProfileMachine checks the QEMU machine families of the given GOARCH:
+// q35 and i440fx on amd64, virt on arm64.
+func ValidVirtualMachineProfileMachine(arch, machine string) bool {
+	var aliases, prefixes []string
+
+	switch arch {
+	case constants.ArchAmd64:
+		aliases, prefixes = []string{"q35", "pc"}, []string{"pc-q35-", "pc-i440fx-"}
+	case constants.ArchArm64:
+		aliases, prefixes = []string{"virt"}, []string{"virt-"}
+	default:
+		return false
+	}
+
+	if slices.Contains(aliases, machine) {
 		return true
 	}
 
-	for _, prefix := range []string{"pc-q35-", "pc-i440fx-"} {
+	for _, prefix := range prefixes {
 		if suffix, ok := strings.CutPrefix(machine, prefix); ok && suffix != "" && !strings.ContainsAny(suffix, " /\\\t\n\r<>&\"'") {
 			return true
 		}

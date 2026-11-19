@@ -68,16 +68,8 @@ func (suite *LibvirtSuite) requireAlpineGuestNode() (string, context.Context) {
 		suite.T().Skip("skipping as -talos.hypervisor.alpine-iso is not set")
 	}
 
-	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
-		suite.T().Skip("skipping as the cluster is not provisioned by qemu")
-	}
-
 	node := suite.RandomDiscoveredNodeInternalIP()
 	nodeCtx := client.WithNode(suite.ctx, node)
-
-	if arch := suite.ReadMachineArch(nodeCtx); arch != constants.ArchAmd64 {
-		suite.T().Skipf("Alpine virt ISO is x86_64-only, node architecture is %q", arch)
-	}
 
 	suite.AssertServicesRunning(suite.ctx, node, map[string]string{"ext-virtqemud": "Running"})
 
@@ -178,7 +170,7 @@ func (suite *LibvirtSuite) prepareAlpineGuestOnNode(
 	}
 
 	doc.PowerStateConfig = hypervisorhelpers.PowerStateRunning
-	doc.FirmwareConfig.FirmwareType = hypervisorhelpers.VirtualMachineFirmwareTypeBIOS
+	doc.FirmwareConfig.FirmwareType = suite.guestArch(node).firmware
 	doc.CPUConfig.CPUCount = 1
 	doc.MemoryConfig.MemorySize = meta.MustByteSize(strconv.FormatUint(memoryBytes, 10))
 	doc.ConsoleConfig.SerialConfig.SerialEnabled = new(true)

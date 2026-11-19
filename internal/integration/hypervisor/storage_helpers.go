@@ -51,10 +51,6 @@ func (suite *LibvirtSuite) requireContentLibrary() {
 	if !suite.Capabilities().SupportsVolumes {
 		suite.T().Skip("cluster doesn't support volumes")
 	}
-
-	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
-		suite.T().Skip("skipping test for non-qemu provisioner")
-	}
 }
 
 // digestOfISO hashes the ISO in one streaming pass, so a large image never lands in memory.

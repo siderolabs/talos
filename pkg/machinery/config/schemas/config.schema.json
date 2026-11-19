@@ -3223,9 +3223,9 @@
             "sata"
           ],
           "title": "bus",
-          "description": "Controller the disk is attached to.\n\nvirtio for anything modern; sata for guests without virtio drivers at install time.\n\nOptional; defaults to virtio on a disk and to sata on a cdrom. A cdrom cannot\nbe attached to virtio, which presents no ejectable media.\n",
-          "markdownDescription": "Controller the disk is attached to.\n\n`virtio` for anything modern; `sata` for guests without virtio drivers at install time.\n\nOptional; defaults to `virtio` on a `disk` and to `sata` on a `cdrom`. A `cdrom` cannot\nbe attached to `virtio`, which presents no ejectable media.",
-          "x-intellij-html-description": "\u003cp\u003eController the disk is attached to.\u003c/p\u003e\n\n\u003cp\u003e\u003ccode\u003evirtio\u003c/code\u003e for anything modern; \u003ccode\u003esata\u003c/code\u003e for guests without virtio drivers at install time.\u003c/p\u003e\n\n\u003cp\u003eOptional; defaults to \u003ccode\u003evirtio\u003c/code\u003e on a \u003ccode\u003edisk\u003c/code\u003e and to \u003ccode\u003esata\u003c/code\u003e on a \u003ccode\u003ecdrom\u003c/code\u003e. A \u003ccode\u003ecdrom\u003c/code\u003e cannot\nbe attached to \u003ccode\u003evirtio\u003c/code\u003e, which presents no ejectable media.\u003c/p\u003e\n"
+          "description": "Controller the disk is attached to.\n\nvirtio for anything modern; sata for guests without virtio drivers at install time.\n\nOptional; defaults to virtio on a disk. A cdrom defaults to sata on\namd64 and scsi on arm64, where the bundled UEFI firmware supports virtio-scsi\nbut not SATA.\nA cdrom cannot be attached to virtio, which presents no ejectable media.\n",
+          "markdownDescription": "Controller the disk is attached to.\n\n`virtio` for anything modern; `sata` for guests without virtio drivers at install time.\n\nOptional; defaults to `virtio` on a `disk`. A `cdrom` defaults to `sata` on\namd64 and `scsi` on arm64, where the bundled UEFI firmware supports virtio-scsi\nbut not SATA.\nA `cdrom` cannot be attached to `virtio`, which presents no ejectable media.",
+          "x-intellij-html-description": "\u003cp\u003eController the disk is attached to.\u003c/p\u003e\n\n\u003cp\u003e\u003ccode\u003evirtio\u003c/code\u003e for anything modern; \u003ccode\u003esata\u003c/code\u003e for guests without virtio drivers at install time.\u003c/p\u003e\n\n\u003cp\u003eOptional; defaults to \u003ccode\u003evirtio\u003c/code\u003e on a \u003ccode\u003edisk\u003c/code\u003e. A \u003ccode\u003ecdrom\u003c/code\u003e defaults to \u003ccode\u003esata\u003c/code\u003e on\namd64 and \u003ccode\u003escsi\u003c/code\u003e on arm64, where the bundled UEFI firmware supports virtio-scsi\nbut not SATA.\nA \u003ccode\u003ecdrom\u003c/code\u003e cannot be attached to \u003ccode\u003evirtio\u003c/code\u003e, which presents no ejectable media.\u003c/p\u003e\n"
         },
         "type": {
           "enum": [
@@ -3613,9 +3613,9 @@
         "machine": {
           "type": "string",
           "title": "machine",
-          "description": "q35 or i440fx machine family, preferably a versioned type.\n",
-          "markdownDescription": "q35 or i440fx machine family, preferably a versioned type.",
-          "x-intellij-html-description": "\u003cp\u003eq35 or i440fx machine family, preferably a versioned type.\u003c/p\u003e\n"
+          "description": "q35 or i440fx machine family on amd64, virt on arm64, preferably a versioned type.\n",
+          "markdownDescription": "q35 or i440fx machine family on amd64, virt on arm64, preferably a versioned type.",
+          "x-intellij-html-description": "\u003cp\u003eq35 or i440fx machine family on amd64, virt on arm64, preferably a versioned type.\u003c/p\u003e\n"
         },
         "cpu": {
           "$ref": "#/$defs/hypervisor.VirtualMachineProfileCPU",
@@ -3627,9 +3627,9 @@
         "timers": {
           "$ref": "#/$defs/hypervisor.VirtualMachineProfileTimers",
           "title": "timers",
-          "description": "Platform timers presented to the guest.\n\nOptional; omitting it hides the HPET, the RTC catches up on missed ticks and the PIT delays them.\n",
-          "markdownDescription": "Platform timers presented to the guest.\n\nOptional; omitting it hides the HPET, the RTC catches up on missed ticks and the PIT delays them.",
-          "x-intellij-html-description": "\u003cp\u003ePlatform timers presented to the guest.\u003c/p\u003e\n\n\u003cp\u003eOptional; omitting it hides the HPET, the RTC catches up on missed ticks and the PIT delays them.\u003c/p\u003e\n"
+          "description": "Platform timers presented to the guest.\n\nOptional; omitting it hides the HPET, the RTC catches up on missed ticks and the PIT delays them.\nThese are x86 timers: arm64 guests get none of them, and enabling the HPET is rejected there.\n",
+          "markdownDescription": "Platform timers presented to the guest.\n\nOptional; omitting it hides the HPET, the RTC catches up on missed ticks and the PIT delays them.\nThese are x86 timers: arm64 guests get none of them, and enabling the HPET is rejected there.",
+          "x-intellij-html-description": "\u003cp\u003ePlatform timers presented to the guest.\u003c/p\u003e\n\n\u003cp\u003eOptional; omitting it hides the HPET, the RTC catches up on missed ticks and the PIT delays them.\nThese are x86 timers: arm64 guests get none of them, and enabling the HPET is rejected there.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -3641,7 +3641,7 @@
         "machine",
         "name"
       ],
-      "description": "VirtualMachineProfileConfig declares a named amd64 guest ABI.\\nProfiles bundle the guest machine type, CPU model and platform timers. Use a versioned machine\\ntype and a CPU baseline tested on every host for migration. Aliases drift as QEMU\\nchanges. A named CPU model is not a migration guarantee across arbitrary hosts.\\n"
+      "description": "VirtualMachineProfileConfig declares a named guest ABI.\\nProfiles bundle the guest machine type, CPU model and platform timers. Use a versioned machine\\ntype and a CPU baseline tested on every host for migration. Aliases drift as QEMU\\nchanges. A named CPU model is not a migration guarantee across arbitrary hosts.\\n"
     },
     "hypervisor.VirtualMachineProfileHPET": {
       "properties": {

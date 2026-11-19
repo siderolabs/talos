@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	goruntime "runtime"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -78,7 +79,7 @@ func (ctrl *VirtualMachineProfileSpecController) reconcile(ctx context.Context, 
 
 	var errs error
 
-	for _, builtin := range vmprofile.Profiles() {
+	for _, builtin := range vmprofile.Profiles(goruntime.GOARCH) {
 		if err := safe.WriterModify(ctx, runtime,
 			builtin,
 			func(res *hypervisor.VirtualMachineProfileSpec) error {
@@ -139,5 +140,5 @@ func projectVirtualMachineProfile(profile configcfg.VirtualMachineProfileConfig)
 		})
 	}
 
-	return result, vmprofile.ValidateCustom(profile.Name(), result)
+	return result, vmprofile.ValidateCustom(goruntime.GOARCH, profile.Name(), result)
 }
