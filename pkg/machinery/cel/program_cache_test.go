@@ -55,6 +55,17 @@ func evalAllocs(t *testing.T, eval func() error) uint64 {
 	return after.Mallocs - before.Mallocs
 }
 
+// cachedAllocs returns the average number of allocations of a call which hits the program cache.
+//
+// We have found that measuring from a single call can cause issues in CI if we are unlucky.
+func cachedAllocs(t *testing.T, eval func() error) uint64 {
+	t.Helper()
+
+	return uint64(testing.AllocsPerRun(100, func() {
+		require.NoError(t, eval())
+	}))
+}
+
 // evalBool returns a function which evaluates the expression and checks the result.
 func evalBool(t *testing.T, expr cel.Expression, env *celgo.Env, x int, expected bool) func() error {
 	t.Helper()
@@ -81,7 +92,7 @@ func TestProgramCacheParsed(t *testing.T) {
 	expr := cel.MustExpression(cel.ParseBooleanExpression("x > 10", env))
 
 	compiled := evalAllocs(t, evalBool(t, expr, env, 5, false))
-	cached := evalAllocs(t, evalBool(t, expr, env, 15, true))
+	cached := cachedAllocs(t, evalBool(t, expr, env, 15, true))
 
 	// the program is cached
 	assert.Greater(t, compiled, compileAllocsFactor*cached)
@@ -117,7 +128,7 @@ func TestProgramCacheText(t *testing.T) {
 	}
 
 	compiled := evalAllocs(t, evalDouble)
-	cached := evalAllocs(t, evalDouble)
+	cached := cachedAllocs(t, evalDouble)
 
 	// the program is cached
 	assert.Greater(t, compiled, compileAllocsFactor*cached)
