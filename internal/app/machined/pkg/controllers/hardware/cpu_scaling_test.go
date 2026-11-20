@@ -421,7 +421,13 @@ func (suite *CPUScalingSuite) TestDroppedFieldRestored() {
 		return nil
 	})
 
-	assert.Equal(suite.T(), "powersave", readPolicyAttr(suite.T(), suite.root, "policy0", "scaling_governor"))
+	suite.AssertWithin(3*time.Second, 10*time.Millisecond, func() error {
+		if got := readPolicyAttr(suite.T(), suite.root, "policy0", "scaling_governor"); got != "powersave" {
+			return retry.ExpectedErrorf("scaling_governor is %q", got)
+		}
+
+		return nil
+	})
 }
 
 // TestUnsupportedValueSkipped covers a governor the driver does not offer.
