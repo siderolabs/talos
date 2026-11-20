@@ -128,19 +128,93 @@ func (c *Client) GetMemberState(ctx context.Context, memberID uint64) (MemberSta
 		return MemberStateAbsent, fmt.Errorf("error getting etcd member list: %w", err)
 	}
 
-	for _, member := range list.Members {
+	return memberState(list.Members, memberID), nil
+}
+
+// memberState looks up the member in the list of members.
+func memberState(members []*etcdserverpb.Member, memberID uint64) MemberState {
+	for _, member := range members {
 		if member.ID != memberID {
 			continue
 		}
 
 		if member.IsLearner {
-			return MemberStateLearner, nil
+			return MemberStateLearner
 		}
 
-		return MemberStateVoting, nil
+		return MemberStateVoting
 	}
 
-	return MemberStateAbsent, nil
+	return MemberStateAbsent
+}
+
+// memberStateLocalTimeout bounds a single member list call against a single endpoint.
+const memberStateLocalTimeout = 3 * time.Second
+
+// GetMemberState looks up the member in the etcd cluster.
+//
+// The answer normally comes from the quorum of the cluster. If the cluster has no quorum, the members are asked
+// for their own (possibly stale) view of the cluster, and only the voting state is trusted, as a voting member never
+// goes back to being a learner. This lets the member which was promoted, but didn't record it locally, start:
+// the cluster might not have the quorum without it.
+func GetMemberState(ctx context.Context, clientSpec *etcdresource.ClientSpecSpec, memberID uint64) (MemberState, error) {
+	quorumCtx := ctx
+
+	if deadline, ok := ctx.Deadline(); ok {
+		// leave some time for the fallback
+		var cancel context.CancelFunc
+
+		quorumCtx, cancel = context.WithTimeout(ctx, time.Until(deadline)/2)
+		defer cancel()
+	}
+
+	state, err := getMemberStateQuorum(quorumCtx, clientSpec, memberID)
+	if err == nil {
+		return state, nil
+	}
+
+	for _, endpoint := range clientSpec.ClusterEndpoints {
+		if ctx.Err() != nil {
+			break
+		}
+
+		if isVotingMemberLocal(ctx, clientSpec, endpoint, memberID) {
+			return MemberStateVoting, nil
+		}
+	}
+
+	return MemberStateAbsent, err
+}
+
+func getMemberStateQuorum(ctx context.Context, clientSpec *etcdresource.ClientSpecSpec, memberID uint64) (MemberState, error) {
+	client, err := NewClusterClientFromSpec(ctx, clientSpec)
+	if err != nil {
+		return MemberStateAbsent, err
+	}
+
+	defer client.Close() //nolint:errcheck
+
+	return client.GetMemberState(ctx, memberID)
+}
+
+// isVotingMemberLocal checks if the etcd member behind the endpoint sees the member as a voting one, without going through the quorum.
+func isVotingMemberLocal(ctx context.Context, clientSpec *etcdresource.ClientSpecSpec, endpoint string, memberID uint64) bool {
+	ctx, cancel := context.WithTimeout(ctx, memberStateLocalTimeout)
+	defer cancel()
+
+	client, err := NewClientFromSpec(ctx, clientSpec, []string{endpoint})
+	if err != nil {
+		return false
+	}
+
+	defer client.Close() //nolint:errcheck
+
+	list, err := client.MemberList(ctx, clientv3.WithSerializable())
+	if err != nil {
+		return false
+	}
+
+	return memberState(list.Members, memberID) == MemberStateVoting
 }
 
 // RemoveMemberIfExists removes the member from the etcd cluster, ignoring the member which is already gone.

@@ -18,7 +18,14 @@ import (
 )
 
 // leaveWithdrawTimeout bounds the time it takes to withdraw the failed leave request.
-const leaveWithdrawTimeout = 5 * time.Second
+//
+// The request can't be withdrawn while the removal of the member is in flight, so the timeout
+// should be bigger than the time the etcd membership controller gives to the removal.
+const leaveWithdrawTimeout = 30 * time.Second
+
+// LeaveCommittedFinalizer is set by the etcd membership controller on the leave request once the member
+// is removed from the etcd cluster: this is the point of no return, the request can't be withdrawn after it.
+const LeaveCommittedFinalizer = "etcd.MembershipController"
 
 // Errors returned when the etcd membership request can't be accepted.
 var (
@@ -49,6 +56,12 @@ func RequestBootstrap(ctx context.Context, st state.State, spec etcd.BootstrapRe
 	case etcd.MembershipPhasePreparing:
 		return ErrNotReady
 	case etcd.MembershipPhaseJoining:
+		if status.TypedSpec().MemberID != "" {
+			// the machine is still cleaning up after the interrupted learner: the member is not removed from the cluster yet,
+			// and the etcd data is still there
+			return ErrAlreadyMember
+		}
+
 		// the machine is not a member of the etcd cluster, so it can bootstrap one
 	case etcd.MembershipPhaseLearner, etcd.MembershipPhaseMember:
 		return ErrAlreadyMember
@@ -154,16 +167,45 @@ func RequestLeave(ctx context.Context, st state.State) error {
 
 // withdrawLeaveRequest removes the leave request, so that it is not acted upon anymore.
 //
-// The request which is past the point of no return (the member is removed from the cluster) is held by the finalizer
-// of the etcd membership controller, so it can't be withdrawn.
+// If the etcd membership controller is removing the member from the cluster at the moment, the request is withdrawn
+// only once the removal fails. The request which is past the point of no return (the member is removed from the cluster)
+// can't be withdrawn.
 func withdrawLeaveRequest(ctx context.Context, st state.State) error {
 	// the context of the request is most probably done by now
 	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), leaveWithdrawTimeout)
 	defer cancel()
 
-	if err := st.Destroy(ctx, etcd.NewLeaveRequest().Metadata()); err != nil && !state.IsNotFoundError(err) {
-		return err
-	}
+	md := etcd.NewLeaveRequest().Metadata()
 
-	return nil
+	for {
+		if _, err := st.Teardown(ctx, md); err != nil {
+			if state.IsNotFoundError(err) {
+				return nil
+			}
+
+			return err
+		}
+
+		request, err := st.WatchFor(ctx, md, state.WithCondition(func(r resource.Resource) (bool, error) {
+			return r.Metadata().Finalizers().Empty() || r.Metadata().Finalizers().Has(LeaveCommittedFinalizer), nil
+		}))
+		if err != nil {
+			return err
+		}
+
+		if !request.Metadata().Finalizers().Empty() {
+			return errors.New("the member is removed from the etcd cluster already")
+		}
+
+		err = st.Destroy(ctx, md)
+
+		switch {
+		case err == nil, state.IsNotFoundError(err):
+			return nil
+		case state.IsConflictError(err):
+			// the request got held in the meantime, wait for it to be released
+		default:
+			return err
+		}
+	}
 }

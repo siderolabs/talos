@@ -40,6 +40,12 @@ const (
 	// The learner which didn't start (e.g. the etcd image can't be pulled) is removed from the cluster,
 	// as it takes the place of a learner which could have joined the cluster instead.
 	membershipLearnerStartTimeout = 15 * time.Minute
+
+	// leaveRemovingFinalizer is set on the leave request while the member is (about to be) removed from the etcd cluster.
+	//
+	// It keeps the request from being withdrawn while the outcome of the removal is not known:
+	// it is released if the request is withdrawn, and the member was not removed.
+	leaveRemovingFinalizer = "etcd.MembershipController/removing"
 )
 
 // MembershipCluster is the interface to the etcd cluster used by the MembershipController.
@@ -362,6 +368,15 @@ func (ctrl *MembershipController) reconcile(ctx context.Context, r controller.Ru
 		return 0, fmt.Errorf("error getting etcd leave request: %w", err)
 	}
 
+	if leaveRequest != nil && ctrl.leaveWithdrawn(leaveRequest) {
+		// the request was withdrawn before the member was removed from the cluster, so let go of it
+		if err = ctrl.releaseLeaveRequest(ctx, r, leaveRequest); err != nil {
+			return 0, err
+		}
+
+		leaveRequest = nil
+	}
+
 	switch {
 	case leaveRequest != nil:
 		return ctrl.reconcileLeave(ctx, r, logger, st, leaveRequest)
@@ -645,19 +660,12 @@ func (ctrl *MembershipController) reconcileLaunch(ctx context.Context, r control
 	switch {
 	case bootstrapRequest != nil && bootstrapRequest.TypedSpec().RecoverFromSnapshot:
 		// bootstrap the cluster from the snapshot
-		if err = etcdcli.RestoreSnapshot(logger, etcdcli.RestoreSnapshotOptions{
-			SnapshotPath:  ctrl.SnapshotPath,
-			DataDir:       st.dataDir.Path(),
-			Name:          st.spec.Name,
-			PeerURLs:      peerURLs,
-			SkipHashCheck: bootstrapRequest.TypedSpec().RecoverSkipHashCheck,
-		}); err != nil {
-			logger.Error("failed to recover etcd from the snapshot, the bootstrap should be requested once again", zap.Error(err))
-
-			// make sure a partially restored data is not picked up as the etcd data
-			if wipeErr := st.dataDir.Wipe(); wipeErr != nil {
-				return 0, fmt.Errorf("error wiping etcd data directory: %w", wipeErr)
-			}
+		//
+		// the snapshot is restored only to the empty data directory: whatever is there was not put there by Talos,
+		// and it should not be lost if the recovery fails
+		restoreErr := ctrl.restoreSnapshot(logger, st, peerURLs, bootstrapRequest.TypedSpec().RecoverSkipHashCheck)
+		if restoreErr != nil {
+			logger.Error("failed to recover etcd from the snapshot, the bootstrap should be requested once again", zap.Error(restoreErr))
 
 			// the recovery is not retried, as it is not going to succeed with the same snapshot:
 			// the request is done with, and the machine goes back to waiting to join the cluster (or to be bootstrapped)
@@ -665,7 +673,7 @@ func (ctrl *MembershipController) reconcileLaunch(ctx context.Context, r control
 				return 0, err
 			}
 
-			ctrl.recoveryError = fmt.Sprintf("failed to recover etcd from the snapshot: %s", err)
+			ctrl.recoveryError = fmt.Sprintf("failed to recover etcd from the snapshot: %s", restoreErr)
 
 			return membershipJoinRetryInterval, ctrl.updateStatus(ctx, r, etcd.MembershipStatusSpec{
 				Phase: etcd.MembershipPhaseJoining,
@@ -710,6 +718,36 @@ func (ctrl *MembershipController) reconcileLaunch(ctx context.Context, r control
 	}
 
 	return ctrl.join(ctx, r, logger, st, peerURLs)
+}
+
+// restoreSnapshot populates the (empty) etcd data directory from the snapshot.
+func (ctrl *MembershipController) restoreSnapshot(logger *zap.Logger, st membershipState, peerURLs []string, skipHashCheck bool) error {
+	empty, err := st.dataDir.IsEmpty()
+	if err != nil {
+		return fmt.Errorf("error checking etcd data directory: %w", err)
+	}
+
+	if !empty {
+		return errors.New("etcd data directory is not empty")
+	}
+
+	if err = etcdcli.RestoreSnapshot(logger, etcdcli.RestoreSnapshotOptions{
+		SnapshotPath:  ctrl.SnapshotPath,
+		DataDir:       st.dataDir.Path(),
+		Name:          st.spec.Name,
+		PeerURLs:      peerURLs,
+		SkipHashCheck: skipHashCheck,
+	}); err != nil {
+		// make sure a partially restored data is not picked up as the etcd data:
+		// the data directory was empty, so only what was restored is removed
+		if wipeErr := st.dataDir.Wipe(); wipeErr != nil {
+			return errors.Join(err, fmt.Errorf("error wiping etcd data directory: %w", wipeErr))
+		}
+
+		return err
+	}
+
+	return nil
 }
 
 func (ctrl *MembershipController) launchAsMember(ctx context.Context, r controller.Runtime, launchSpec etcd.LaunchSpecSpec) error {
@@ -767,7 +805,7 @@ func (ctrl *MembershipController) resolveLearnerMarker(ctx context.Context, logg
 
 // join attempts to join the existing etcd cluster as a learner.
 func (ctrl *MembershipController) join(ctx context.Context, r controller.Runtime, logger *zap.Logger, st membershipState, peerURLs []string) (time.Duration, error) {
-	if st.status.Phase != etcd.MembershipPhaseJoining {
+	if st.status.Phase != etcd.MembershipPhaseJoining || st.status.MemberID != "" {
 		// report the phase before the (potentially slow) attempt to join the cluster,
 		// so that the bootstrap request is accepted as soon as possible
 		if err := ctrl.updateStatus(ctx, r, etcd.MembershipStatusSpec{
@@ -914,9 +952,8 @@ func (ctrl *MembershipController) reconcileLearner(ctx context.Context, r contro
 	// the member is a voting member now, so its data is not disposable anymore
 	//
 	// the promotion and the removal of the marker are not atomic: if the machine goes down in between, the marker
-	// is resolved against the etcd cluster on the next boot, which requires the cluster to have the quorum without
-	// this member; if it doesn't, etcd is not started, and the way out is to remove this member from the cluster
-	// (on another machine), and let it join back
+	// is resolved against the etcd cluster on the next boot; if the cluster has no quorum without this member,
+	// it is enough for any other member to report this one as a voting member
 	if err = st.dataDir.RemoveLearnerMarker(); err != nil {
 		return 0, fmt.Errorf("error removing etcd learner marker: %w", err)
 	}
@@ -945,7 +982,7 @@ func (ctrl *MembershipController) reconcileLeave(ctx context.Context, r controll
 		return 0, nil
 	}
 
-	committed := leaveRequest != nil && leaveRequest.Metadata().Finalizers().Has(ctrl.Name())
+	committed := leaveRequest != nil && leaveRequest.Metadata().Finalizers().Has(etcdcli.LeaveCommittedFinalizer)
 
 	if committed {
 		ctrl.leaveMemberRemoved = true
@@ -966,6 +1003,21 @@ func (ctrl *MembershipController) reconcileLeave(ctx context.Context, r controll
 		}
 
 		if memberID != 0 {
+			if leaveRequest != nil {
+				// mark the request before the member is removed, so that the request can't be withdrawn
+				// while the removal is in flight: whoever withdraws the request waits for its outcome
+				var held bool
+
+				if held, err = ctrl.holdLeaveRequest(ctx, r, leaveRequest); err != nil {
+					return 0, err
+				}
+
+				if !held {
+					// the request was withdrawn, the controller is woken up
+					return membershipLeaveRetryInterval, nil
+				}
+			}
+
 			removeCtx, cancel := context.WithTimeout(ctx, membershipClusterOpTimeout)
 			defer cancel()
 
@@ -990,8 +1042,8 @@ func (ctrl *MembershipController) reconcileLeave(ctx context.Context, r controll
 	}
 
 	if leaveRequest != nil && !committed {
-		// if the request was withdrawn while the member was being removed, the machine still leaves the cluster
-		if err := r.AddFinalizer(ctx, leaveRequest.Metadata(), ctrl.Name()); err != nil && !state.IsNotFoundError(err) {
+		// the point of no return: the request can't be withdrawn anymore
+		if err := r.AddFinalizer(ctx, leaveRequest.Metadata(), etcdcli.LeaveCommittedFinalizer); err != nil && !state.IsNotFoundError(err) {
 			return 0, fmt.Errorf("error adding finalizer to etcd leave request: %w", err)
 		}
 	}
@@ -1035,6 +1087,60 @@ func (ctrl *MembershipController) reconcileLeave(ctx context.Context, r controll
 	return retryAfter, ctrl.updateStatus(ctx, r, etcd.MembershipStatusSpec{
 		Phase: etcd.MembershipPhaseLeft,
 	})
+}
+
+// leaveWithdrawn checks if the leave request was withdrawn before the point of no return.
+func (ctrl *MembershipController) leaveWithdrawn(leaveRequest *etcd.LeaveRequest) bool {
+	return leaveRequest.Metadata().Phase() == resource.PhaseTearingDown &&
+		!leaveRequest.Metadata().Finalizers().Has(etcdcli.LeaveCommittedFinalizer) &&
+		!ctrl.leaveMemberRemoved
+}
+
+// holdLeaveRequest marks the leave request as the one with the removal of the member in flight.
+//
+// It returns false if the request was withdrawn in the meantime.
+func (ctrl *MembershipController) holdLeaveRequest(ctx context.Context, r controller.Runtime, leaveRequest *etcd.LeaveRequest) (bool, error) {
+	if leaveRequest.Metadata().Finalizers().Has(leaveRemovingFinalizer) {
+		// the request is checked for being withdrawn before each reconcile
+		return true, nil
+	}
+
+	if err := r.AddFinalizer(ctx, leaveRequest.Metadata(), leaveRemovingFinalizer); err != nil {
+		if state.IsNotFoundError(err) {
+			return false, nil
+		}
+
+		return false, fmt.Errorf("error adding finalizer to etcd leave request: %w", err)
+	}
+
+	// the request might have been withdrawn right before it was marked
+	current, err := safe.ReaderGetByID[*etcd.LeaveRequest](ctx, r, etcd.LeaveRequestID)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return false, nil
+		}
+
+		return false, fmt.Errorf("error getting etcd leave request: %w", err)
+	}
+
+	if ctrl.leaveWithdrawn(current) {
+		return false, ctrl.releaseLeaveRequest(ctx, r, current)
+	}
+
+	return true, nil
+}
+
+// releaseLeaveRequest lets go of the leave request which was withdrawn.
+func (ctrl *MembershipController) releaseLeaveRequest(ctx context.Context, r controller.Runtime, leaveRequest *etcd.LeaveRequest) error {
+	if !leaveRequest.Metadata().Finalizers().Has(leaveRemovingFinalizer) {
+		return nil
+	}
+
+	if err := r.RemoveFinalizer(ctx, leaveRequest.Metadata(), leaveRemovingFinalizer); err != nil && !state.IsNotFoundError(err) {
+		return fmt.Errorf("error removing finalizer from etcd leave request: %w", err)
+	}
+
+	return nil
 }
 
 // leavingMemberID figures out the ID of the etcd member to remove from the cluster.
@@ -1116,18 +1222,8 @@ func (c etcdCluster) JoinAsLearner(ctx context.Context, clientSpec *etcd.ClientS
 	return result, err
 }
 
-func (c etcdCluster) GetMemberState(ctx context.Context, clientSpec *etcd.ClientSpecSpec, memberID uint64) (etcdcli.MemberState, error) {
-	var result etcdcli.MemberState
-
-	err := c.withClient(ctx, clientSpec, func(client *etcdcli.Client) error {
-		var err error
-
-		result, err = client.GetMemberState(ctx, memberID)
-
-		return err
-	})
-
-	return result, err
+func (etcdCluster) GetMemberState(ctx context.Context, clientSpec *etcd.ClientSpecSpec, memberID uint64) (etcdcli.MemberState, error) {
+	return etcdcli.GetMemberState(ctx, clientSpec, memberID)
 }
 
 func (c etcdCluster) RemoveMember(ctx context.Context, clientSpec *etcd.ClientSpecSpec, memberID uint64) error {

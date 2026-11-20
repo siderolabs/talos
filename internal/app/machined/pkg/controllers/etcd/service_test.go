@@ -20,6 +20,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	etcdctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/etcd"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
 	"github.com/siderolabs/talos/pkg/machinery/resources/etcd"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
@@ -30,6 +31,7 @@ type fakeServiceManager struct {
 
 	loaded  bool
 	running bool
+	failed  bool
 
 	ops []string
 }
@@ -43,6 +45,29 @@ func (m *fakeServiceManager) IsRunning(string) (system.Service, bool, error) {
 	}
 
 	return nil, m.running, nil
+}
+
+func (m *fakeServiceManager) GetState(string) (events.ServiceState, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	switch {
+	case m.failed:
+		return events.StateFailed, nil
+	case m.running:
+		return events.StateRunning, nil
+	default:
+		return events.StateFinished, nil
+	}
+}
+
+// fail simulates the service failing before it is running.
+func (m *fakeServiceManager) fail() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	m.running = false
+	m.failed = true
 }
 
 func (m *fakeServiceManager) Load(...system.Service) []string {
@@ -70,6 +95,7 @@ func (m *fakeServiceManager) Start(...string) error {
 	defer m.mu.Unlock()
 
 	m.running = true
+	m.failed = false
 	m.ops = append(m.ops, "start")
 
 	return nil
@@ -93,7 +119,8 @@ func TestServiceSuite(t *testing.T) {
 			s.services = &fakeServiceManager{}
 
 			suite.Require().NoError(suite.Runtime().RegisterController(&etcdctrl.ServiceController{
-				V1Alpha1Services: s.services,
+				V1Alpha1Services:    s.services,
+				FailedCheckInterval: 100 * time.Millisecond,
 			}))
 		},
 	}
@@ -181,6 +208,29 @@ func (suite *ServiceSuite) TestStartStop() {
 
 	ctest.AssertResource(suite, etcd.ServiceSpecID, func(*etcd.ServiceSpec, *assert.Assertions) {})
 	suite.assertOperations("load", "start", "stop", "start")
+}
+
+func (suite *ServiceSuite) TestStartFailed() {
+	suite.createSpec()
+	launch := suite.createLaunchSpec()
+
+	ctest.AssertResource(suite, etcd.ServiceSpecID, func(*etcd.ServiceSpec, *assert.Assertions) {})
+	suite.assertOperations("load", "start")
+
+	// the service fails before etcd is running (e.g. the image can't be pulled): it is started once again
+	suite.services.fail()
+
+	suite.assertOperations("load", "start", "start")
+
+	// the service which was stopped is not started back
+	suite.Destroy(launch)
+
+	ctest.AssertNoResource[*etcd.ServiceSpec](suite, etcd.ServiceSpecID)
+	suite.assertOperations("load", "start", "start", "stop")
+
+	time.Sleep(300 * time.Millisecond)
+
+	suite.assertOperations("load", "start", "start", "stop")
 }
 
 func (suite *ServiceSuite) TestRestartOnChange() {

@@ -51,6 +51,26 @@ func (d *DataDir) HasMemberData() (bool, error) {
 	return true, nil
 }
 
+// IsEmpty checks if the etcd data directory has no contents (the learner marker aside).
+func (d *DataDir) IsEmpty() (bool, error) {
+	entries, err := os.ReadDir(d.path)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return true, nil
+		}
+
+		return false, err
+	}
+
+	for _, entry := range entries {
+		if entry.Name() != LearnerMarkerFilename {
+			return false, nil
+		}
+	}
+
+	return true, nil
+}
+
 // LearnerMarker returns the member ID stored in the learner marker.
 //
 // If the marker doesn't exist, the second return value is false.

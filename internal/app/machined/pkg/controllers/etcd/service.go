@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -16,6 +17,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
 	etcdcli "github.com/siderolabs/talos/internal/pkg/etcd"
 	"github.com/siderolabs/talos/pkg/machinery/resources/etcd"
@@ -25,6 +27,7 @@ import (
 // ServiceManager is the interface to the v1alpha1 services subsystems.
 type ServiceManager interface {
 	IsRunning(id string) (system.Service, bool, error)
+	GetState(id string) (events.ServiceState, error)
 	Load(services ...system.Service) []string
 	Stop(ctx context.Context, serviceIDs ...string) (err error)
 	Start(serviceIDs ...string) error
@@ -42,9 +45,19 @@ type ServiceManager interface {
 //
 // The only exception is etcd running as a learner: it is never restarted, as the learner might not survive
 // a restart while it is catching up with the cluster; the restart is deferred until the learner is promoted.
+//
+// If the etcd service fails before etcd is running (e.g. the etcd image can't be pulled), the service is started again.
 type ServiceController struct {
 	V1Alpha1Services ServiceManager
+	// FailedCheckInterval is the interval to check for the failed etcd service, defaults to one minute.
+	FailedCheckInterval time.Duration
 }
+
+// serviceFailedCheckInterval is how often the etcd service is checked for a failure.
+//
+// The failure of the service doesn't wake up the controller, as the service which has never been running
+// is not reflected in the resources.
+const serviceFailedCheckInterval = time.Minute
 
 // Name implements controller.Controller interface.
 func (ctrl *ServiceController) Name() string {
@@ -101,11 +114,19 @@ func (ctrl *ServiceController) Outputs() []controller.Output {
 //
 //nolint:gocyclo,cyclop
 func (ctrl *ServiceController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+	if ctrl.FailedCheckInterval == 0 {
+		ctrl.FailedCheckInterval = serviceFailedCheckInterval
+	}
+
+	ticker := time.NewTicker(ctrl.FailedCheckInterval)
+	defer ticker.Stop()
+
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
 		case <-r.EventCh():
+		case <-ticker.C:
 		}
 
 		current, err := safe.ReaderGetByID[*etcd.ServiceSpec](ctx, r, etcd.ServiceSpecID)
@@ -143,9 +164,15 @@ func (ctrl *ServiceController) Run(ctx context.Context, r controller.Runtime, lo
 			}
 		case current.TypedSpec().Image == desired.Image && slices.Equal(current.TypedSpec().Args, desired.Args):
 			// etcd is running with the up-to-date spec
+			if err = ctrl.startIfFailed(logger); err != nil {
+				return err
+			}
 		case current.TypedSpec().Image == desired.Image && slices.Equal(etcdcli.RestartArgs(spec, current.TypedSpec().Args), etcdcli.RestartArgs(spec, desired.Args)):
 			// only the advertised URLs have changed, which is not worth restarting etcd for: the peer URLs of a running member
 			// are updated by the AdvertisedPeerController, and the service spec is kept as is, as it reflects what etcd is running with
+			if err = ctrl.startIfFailed(logger); err != nil {
+				return err
+			}
 		default:
 			// etcd spec has changed, etcd should be restarted
 			var canRestart bool
@@ -233,6 +260,24 @@ func (ctrl *ServiceController) start() error {
 	}
 
 	return nil
+}
+
+// startIfFailed starts the etcd service once again if it has failed.
+//
+// The service fails only before etcd is running (e.g. the etcd image can't be pulled), as etcd itself is restarted forever.
+// The service which was stopped (e.g. as the services it depends on are stopped) is not started.
+func (ctrl *ServiceController) startIfFailed(logger *zap.Logger) error {
+	if _, running, err := ctrl.V1Alpha1Services.IsRunning(etcdServiceID); err != nil || running {
+		return nil //nolint:nilerr
+	}
+
+	if state, err := ctrl.V1Alpha1Services.GetState(etcdServiceID); err != nil || state != events.StateFailed {
+		return nil //nolint:nilerr
+	}
+
+	logger.Info("etcd service has failed, starting it once again")
+
+	return ctrl.start()
 }
 
 // canRestart checks if it safe to restart etcd on this machine.

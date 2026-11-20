@@ -43,6 +43,10 @@ type fakeCluster struct {
 	promoteErr error
 	removeErr  error
 
+	// if set, the removal of the member signals that it has started, and blocks until it is released
+	removeStarted chan struct{}
+	removeRelease chan struct{}
+
 	memberStates map[uint64]etcdcli.MemberState
 
 	joins    int
@@ -81,7 +85,25 @@ func (c *fakeCluster) GetMemberState(_ context.Context, _ *etcd.ClientSpecSpec, 
 	return c.memberStates[memberID], nil
 }
 
-func (c *fakeCluster) RemoveMember(_ context.Context, _ *etcd.ClientSpecSpec, memberID uint64) error {
+func (c *fakeCluster) RemoveMember(ctx context.Context, _ *etcd.ClientSpecSpec, memberID uint64) error {
+	c.mu.Lock()
+	started, release := c.removeStarted, c.removeRelease
+	c.mu.Unlock()
+
+	if started != nil {
+		select {
+		case started <- struct{}{}:
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+
+		select {
+		case <-release:
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
+
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -322,6 +344,7 @@ func (suite *MembershipSuite) TestBootstrapRecoverFailed() {
 	ctest.AssertResource(suite, etcd.MembershipStatusID, func(status *etcd.MembershipStatus, asrt *assert.Assertions) {
 		asrt.Equal(etcd.MembershipPhaseJoining, status.TypedSpec().Phase)
 		asrt.Contains(status.TypedSpec().Error, "failed to recover etcd from the snapshot")
+		asrt.Contains(status.TypedSpec().Error, "missing.snapshot")
 		asrt.Contains(status.TypedSpec().Error, "no cluster")
 	})
 	ctest.AssertNoResource[*etcd.LaunchSpec](suite, etcd.LaunchSpecID)
@@ -333,6 +356,32 @@ func (suite *MembershipSuite) TestBootstrapRecoverFailed() {
 
 	suite.assertLaunch("new", "node1=https://10.0.0.1:2380")
 	suite.assertStatus(etcd.MembershipPhaseMember, "")
+}
+
+func (suite *MembershipSuite) TestBootstrapRecoverNotEmpty() {
+	suite.cluster.joinErr = errors.New("no cluster")
+
+	// the data directory has something which is not the etcd data, e.g. a copy of the data saved before the recovery
+	suite.Require().NoError(os.MkdirAll(filepath.Join(suite.dataDir, "member.old", "wal"), 0o700))
+
+	suite.createInputs()
+
+	suite.assertStatus(etcd.MembershipPhaseJoining, "")
+
+	request := etcd.NewBootstrapRequest()
+	request.TypedSpec().RecoverFromSnapshot = true
+	suite.Create(request)
+
+	suite.assertBootstrapRequestConsumed()
+
+	ctest.AssertResource(suite, etcd.MembershipStatusID, func(status *etcd.MembershipStatus, asrt *assert.Assertions) {
+		asrt.Equal(etcd.MembershipPhaseJoining, status.TypedSpec().Phase)
+		asrt.Contains(status.TypedSpec().Error, "etcd data directory is not empty")
+	})
+	ctest.AssertNoResource[*etcd.LaunchSpec](suite, etcd.LaunchSpecID)
+
+	// the failed recovery doesn't touch the data it didn't create
+	suite.assertDataDir("member.old")
 }
 
 func (suite *MembershipSuite) TestBootstrapIsOneShot() {
@@ -683,13 +732,76 @@ func (suite *MembershipSuite) TestLeaveWithdrawn() {
 	})
 
 	// the request is withdrawn, as the member was not removed
-	suite.Require().NoError(suite.State().Destroy(suite.Ctx(), request.Metadata()))
+	suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), request.Metadata()))
 
 	suite.assertStatus(etcd.MembershipPhaseMember, testMemberIDString)
 
 	// the cluster is back, but the machine stays in the cluster
 	suite.cluster.set(func(c *fakeCluster) { c.removeErr = nil })
 
+	suite.assertLaunch("existing", "")
+	suite.assertDataDir("member")
+
+	suite.cluster.set(func(c *fakeCluster) { suite.Empty(c.removed) })
+}
+
+// startLeaveWithRemovalInFlight requests the member to leave the cluster, and returns once the removal of the member is in flight.
+func (suite *MembershipSuite) startLeaveWithRemovalInFlight() *etcd.LeaveRequest {
+	suite.cluster.removeStarted = make(chan struct{})
+	suite.cluster.removeRelease = make(chan struct{})
+
+	suite.createMemberData()
+	suite.createInputs()
+
+	member := etcd.NewMember(etcd.NamespaceName, etcd.LocalMemberID)
+	member.TypedSpec().MemberID = testMemberIDString
+	suite.Create(member)
+
+	suite.assertStatus(etcd.MembershipPhaseMember, testMemberIDString)
+
+	request := etcd.NewLeaveRequest()
+	suite.Create(request)
+
+	select {
+	case <-suite.cluster.removeStarted:
+	case <-suite.Ctx().Done():
+		suite.Require().FailNow("the member was not removed")
+	}
+
+	// the request can't be withdrawn while the outcome of the removal is not known
+	_, err := suite.State().Teardown(suite.Ctx(), request.Metadata())
+	suite.Require().NoError(err)
+	suite.Require().Error(suite.State().Destroy(suite.Ctx(), request.Metadata()))
+
+	return request
+}
+
+func (suite *MembershipSuite) TestLeaveWithdrawnRemovalInFlight() {
+	request := suite.startLeaveWithRemovalInFlight()
+
+	// the removal succeeds: the request was withdrawn, but there is no way back
+	close(suite.cluster.removeRelease)
+
+	ctest.AssertResource(suite, etcd.LeaveRequestID, func(request *etcd.LeaveRequest, asrt *assert.Assertions) {
+		asrt.True(request.Metadata().Finalizers().Has(etcdcli.LeaveCommittedFinalizer))
+	})
+	suite.Require().Error(suite.State().Destroy(suite.Ctx(), request.Metadata()))
+
+	suite.assertStatus(etcd.MembershipPhaseLeft, "")
+	suite.assertDataDir()
+}
+
+func (suite *MembershipSuite) TestLeaveWithdrawnRemovalInFlightFailed() {
+	suite.cluster.removeErr = errors.New("no quorum")
+
+	request := suite.startLeaveWithRemovalInFlight()
+
+	// the removal fails, so the request is released
+	close(suite.cluster.removeRelease)
+
+	suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), request.Metadata()))
+
+	suite.assertStatus(etcd.MembershipPhaseMember, testMemberIDString)
 	suite.assertLaunch("existing", "")
 	suite.assertDataDir("member")
 
@@ -714,7 +826,7 @@ func (suite *MembershipSuite) TestLeaveWithdrawnLearner() {
 		asrt.Equal("no quorum", status.TypedSpec().Error)
 	})
 
-	suite.Require().NoError(suite.State().Destroy(suite.Ctx(), request.Metadata()))
+	suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), request.Metadata()))
 
 	// the machine is still a learner (and not a voting member), so it gets promoted
 	suite.assertStatus(etcd.MembershipPhaseLearner, testLearnerIDString)

@@ -79,6 +79,11 @@ func (ctrl *SpecController) Run(ctx context.Context, r controller.Runtime, _ *za
 		etcdConfig, err := safe.ReaderGet[*etcd.Config](ctx, r, resource.NewMetadata(etcd.NamespaceName, etcd.ConfigType, etcd.ConfigID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
+				// etcd is not configured (anymore), so etcd should not be running
+				if err = r.Destroy(ctx, etcd.NewSpec(etcd.NamespaceName, etcd.SpecID).Metadata()); err != nil && !state.IsNotFoundError(err) {
+					return fmt.Errorf("error destroying etcd spec: %w", err)
+				}
+
 				continue
 			}
 

@@ -213,6 +213,9 @@ func (suite *SpecSuite) TestReconcile() {
 			})
 
 			suite.Require().NoError(suite.State().Destroy(suite.Ctx(), etcdConfig.Metadata()))
+
+			// etcd is not configured anymore
+			ctest.AssertNoResource[*etcd.Spec](suite, etcd.SpecID)
 		})
 	}
 }

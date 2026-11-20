@@ -79,6 +79,57 @@ func TestRequestLeaveCommitted(t *testing.T) {
 	assert.True(t, request.Metadata().Finalizers().Has(testController))
 }
 
+func TestRequestLeaveRemovalInFlight(t *testing.T) {
+	t.Parallel()
+
+	const removing = "etcd.MembershipController/removing"
+
+	st := newRequestState(t, etcd.MembershipPhaseMember)
+
+	ctx, cancel := context.WithTimeout(t.Context(), 100*time.Millisecond)
+	defer cancel()
+
+	// the controller is removing the member from the cluster when the request is withdrawn, and the removal fails
+	go func() {
+		request, err := st.WatchFor(t.Context(), etcd.NewLeaveRequest().Metadata(), state.WithEventTypes(state.Created))
+		if err != nil {
+			return
+		}
+
+		st.AddFinalizer(t.Context(), request.Metadata(), removing) //nolint:errcheck
+
+		if _, err = st.WatchFor(t.Context(), request.Metadata(), state.WithPhases(resource.PhaseTearingDown)); err != nil {
+			return
+		}
+
+		time.Sleep(100 * time.Millisecond)
+
+		st.RemoveFinalizer(t.Context(), request.Metadata(), removing) //nolint:errcheck
+	}()
+
+	err := etcdcli.RequestLeave(ctx, st)
+	require.ErrorIs(t, err, context.DeadlineExceeded)
+	assert.NotContains(t, err.Error(), "still in effect")
+
+	_, err = safe.StateGetByID[*etcd.LeaveRequest](t.Context(), st, etcd.LeaveRequestID)
+	assert.True(t, state.IsNotFoundError(err), "unexpected error: %v", err)
+}
+
+func TestRequestBootstrapLearnerCleanup(t *testing.T) {
+	t.Parallel()
+
+	st := newRequestState(t, etcd.MembershipPhaseJoining)
+
+	_, err := safe.StateUpdateWithConflicts(t.Context(), st, etcd.NewMembershipStatus().Metadata(), func(status *etcd.MembershipStatus) error {
+		status.TypedSpec().MemberID = "0000000000000001"
+
+		return nil
+	})
+	require.NoError(t, err)
+
+	require.ErrorIs(t, etcdcli.RequestBootstrap(t.Context(), st, etcd.BootstrapRequestSpec{}), etcdcli.ErrAlreadyMember)
+}
+
 func TestRequestBootstrapReplace(t *testing.T) {
 	t.Parallel()
 
