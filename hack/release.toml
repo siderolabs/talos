@@ -20,6 +20,7 @@ preface = """
         description = """\
 Linux: 6.18.65
 etcd: 3.7.4
+Flannel CNI: 0.28.11
 
 Talos is built with Go 1.26.11.
 """
