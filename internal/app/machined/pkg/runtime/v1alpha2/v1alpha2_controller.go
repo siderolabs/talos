@@ -182,6 +182,9 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 	virtClient := libvirt.New()
 
 	for _, c := range []controller.Controller{
+		&block.DeviceMapperCloseController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+		},
 		&block.DevicesController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
