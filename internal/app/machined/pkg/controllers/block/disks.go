@@ -22,11 +22,19 @@ import (
 	"github.com/siderolabs/go-cmd/pkg/cmd"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/sysblock"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
+// deviceMapperKindMultipath is the device-mapper kind of a multipath device (see DeviceMapperKind).
+const deviceMapperKindMultipath = "mpath"
+
 // DisksController provides a detailed view of blockdevices of type 'disk'.
-type DisksController struct{}
+type DisksController struct {
+	// NativeMultipath is set when Talos assembles multipath devices itself (see MultipathController):
+	// the disks which are going to be paths of a multipath device are never disks of their own then.
+	NativeMultipath bool
+}
 
 // Name implements controller.Controller interface.
 func (ctrl *DisksController) Name() string {
@@ -87,6 +95,8 @@ func (ctrl *DisksController) Run(ctx context.Context, r controller.Runtime, logg
 		touchedDisks := map[string]struct{}{}
 		presentDevices := map[string]struct{}{}
 
+		multipathPaths := sysblock.MultipathPaths(blockdevices.All(), ctrl.NativeMultipath)
+
 		for device := range blockdevices.All() {
 			if device.TypedSpec().Type != block.DeviceTypeDisk {
 				continue
@@ -98,6 +108,17 @@ func (ctrl *DisksController) Run(ctx context.Context, r controller.Runtime, logg
 				// ignore ram disks (/dev/ramX), major number is 1
 				// ref: https://www.kernel.org/doc/Documentation/admin-guide/devices.txt
 				// ref: https://github.com/util-linux/util-linux/blob/c0207d354ee47fb56acfa64b03b5b559bb301280/misc-utils/lsblk.c#L2697-L2699
+				continue
+			}
+
+			if multipath, ok := multipathPaths[device.Metadata().ID()]; ok {
+				// a path of a multipath device is not a disk of its own, but a way to reach the
+				// multipath device, so it is hidden; forget it, so that it is probed again once it
+				// is no longer a path
+				logger.Debug("hiding multipath path", zap.String("device", device.Metadata().ID()), zap.String("multipath", multipath))
+
+				delete(lastObservedGenerations, device.Metadata().ID())
+
 				continue
 			}
 
@@ -216,6 +237,12 @@ func (ctrl *DisksController) analyzeBlockDevice(
 	props, err := bd.GetProperties()
 	if err != nil {
 		logger.Debug("failed to get properties", zap.Error(err))
+
+		props = &blkdev.DeviceProperties{}
+	}
+
+	if props.DeviceMapperKind == deviceMapperKindMultipath {
+		inheritPathProperties(ctx, logger, props, device.TypedSpec().Secondaries)
 	}
 
 	secondaryDisks := xslices.Map(device.TypedSpec().Secondaries, func(devID string) string {
@@ -281,6 +308,45 @@ func (ctrl *DisksController) analyzeBlockDevice(
 
 		return nil
 	})
+}
+
+// inheritPathProperties fills in the properties a multipath device doesn't have from its paths.
+//
+// The paths of a multipath device are hidden, so the identity of the underlying disk (its model,
+// serial number and WWID) would be lost otherwise, and a disk selector which used to match a path
+// would no longer match anything. All paths lead to the same disk, so the first one which carries a
+// property is as good as any.
+func inheritPathProperties(ctx context.Context, logger *zap.Logger, props *blkdev.DeviceProperties, paths []string) {
+	for _, path := range paths {
+		if props.Model != "" && props.Serial != "" && props.WWID != "" {
+			return
+		}
+
+		pathProps, err := func() (*blkdev.DeviceProperties, error) {
+			bd, err := blkdev.NewFromPath(filepath.Join("/dev", path))
+			if err != nil {
+				return nil, err
+			}
+
+			defer bd.Close() //nolint:errcheck
+
+			return bd.GetProperties()
+		}()
+		if err != nil {
+			logger.Debug("failed to get properties of multipath path", zap.String("path", path), zap.Error(err))
+
+			continue
+		}
+
+		if props.Serial == "" && pathProps.Serial == "" {
+			// the paths of a SAN disk are most often SCSI devices, which only report the serial via VPD
+			pathProps.Serial = serialFromUdevdHelpers(ctx, path, pathProps.Transport)
+		}
+
+		props.Model = cmp.Or(props.Model, pathProps.Model)
+		props.Serial = cmp.Or(props.Serial, pathProps.Serial)
+		props.WWID = cmp.Or(props.WWID, pathProps.WWID)
+	}
 }
 
 func serialFromUdevdHelpers(ctx context.Context, id, transport string) string {
