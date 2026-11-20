@@ -371,7 +371,7 @@ runc: 1.5.3
 CoreDNS: 1.15.0
 systemd-udevd: 262
 etcd: 3.7.4
-Flannel CNI: 0.28.10
+Flannel CNI: 0.28.11
 Kube-network-policies: 1.1.3
 CNI plugins: 1.10.0
 
