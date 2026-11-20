@@ -448,6 +448,51 @@ func (suite *LVMPhysicalVolumeSpecSuite) TestVolumeIDEmptyForUnmanagedDevice() {
 	})
 }
 
+func (suite *LVMPhysicalVolumeSpecSuite) TestParentsUseOpenedDevices() {
+	createVolumeStatus(&suite.DefaultSuite, "r-lvm-a", block.VolumePhaseReady, block.EncryptionProviderLUKS2, "/dev/vda5", "/dev/dm-0")
+	createVolumeStatus(&suite.DefaultSuite, "r-lvm-b", block.VolumePhaseReady, block.EncryptionProviderNone, "/dev/vda6", "/dev/vda6")
+
+	applyMachineConfigDocs(&suite.DefaultSuite,
+		newEncryptedRawVolumeDoc("lvm-a"),
+		newEncryptedRawVolumeDoc("lvm-b"),
+		newParentsVGDoc("vg-pool", "lvm-a", "lvm-b"),
+	)
+
+	ctest.AssertResource(suite, "dm-0", func(pv *storageres.LVMPhysicalVolumeSpec, asrt *assert.Assertions) {
+		asrt.Equal("/dev/dm-0", pv.TypedSpec().Device)
+		asrt.Equal("vg-pool", pv.TypedSpec().VGName)
+	})
+
+	ctest.AssertResource(suite, "vda6", func(pv *storageres.LVMPhysicalVolumeSpec, asrt *assert.Assertions) {
+		asrt.Equal("/dev/vda6", pv.TypedSpec().Device)
+	})
+
+	ctest.AssertNoResource[*storageres.LVMPhysicalVolumeSpec](suite, "vda5")
+}
+
+func (suite *LVMPhysicalVolumeSpecSuite) TestParentsWaitForAllReady() {
+	createVolumeStatus(&suite.DefaultSuite, "r-lvm-a", block.VolumePhaseReady, block.EncryptionProviderLUKS2, "/dev/vda5", "/dev/dm-0")
+	createVolumeStatus(&suite.DefaultSuite, "r-lvm-b", block.VolumePhaseProvisioned, block.EncryptionProviderLUKS2, "/dev/vda6", "")
+
+	applyMachineConfigDocs(&suite.DefaultSuite,
+		newEncryptedRawVolumeDoc("lvm-a"),
+		newEncryptedRawVolumeDoc("lvm-b"),
+		newParentsVGDoc("vg-pool", "lvm-a", "lvm-b"),
+	)
+
+	time.Sleep(250 * time.Millisecond)
+
+	ctest.AssertNoResource[*storageres.LVMPhysicalVolumeSpec](suite, "dm-0")
+}
+
+func (suite *LVMPhysicalVolumeSpecSuite) TestParentsUndeclaredVolume() {
+	applyMachineConfigDocs(&suite.DefaultSuite, newParentsVGDoc("vg-pool", "missing"))
+
+	ctest.AssertResource(suite, "vg-pool", func(e *storageres.LVMValidationError, asrt *assert.Assertions) {
+		asrt.Contains(e.TypedSpec().Message, `parent volume "r-missing" is not declared`)
+	})
+}
+
 func TestLVMPhysicalVolumeSpecSuite(t *testing.T) {
 	t.Parallel()
 

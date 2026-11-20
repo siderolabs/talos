@@ -41,6 +41,20 @@ func TestLVMVolumeGroupConfigMarshalUnmarshal(t *testing.T) {
 				return c
 			},
 		},
+		{
+			name:     "parents",
+			filename: "lvmvolumegroupconfig_parents.yaml",
+			cfg: func(*testing.T) *storagecfg.LVMVolumeGroupConfigV1Alpha1 {
+				c := storagecfg.NewLVMVolumeGroupConfigV1Alpha1()
+				c.MetaName = "vg-pool"
+				c.ProvisioningSpec.Parents = []storagecfg.LVMVolumeGroupParent{
+					{RawVolume: "lvm-a"},
+					{RawVolume: "lvm-b"},
+				}
+
+				return c
+			},
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
@@ -133,7 +147,52 @@ func TestLVMVolumeGroupConfigValidate(t *testing.T) {
 				return c
 			},
 
-			expectedErrors: "provisioning.volumeSelector.match is required",
+			expectedErrors: "either provisioning.volumeSelector.match or provisioning.parents is required",
+		},
+		{
+			name: "selector and parents",
+
+			cfg: func(t *testing.T) *storagecfg.LVMVolumeGroupConfigV1Alpha1 {
+				c := storagecfg.NewLVMVolumeGroupConfigV1Alpha1()
+				c.MetaName = "vg-pool"
+				c.ProvisioningSpec.Parents = []storagecfg.LVMVolumeGroupParent{{RawVolume: "lvm"}}
+
+				require.NoError(t, c.ProvisioningSpec.VolumeSelector.Match.UnmarshalText([]byte(`disk.transport == "nvme"`)))
+
+				return c
+			},
+
+			expectedErrors: "provisioning.volumeSelector and provisioning.parents are mutually exclusive",
+		},
+		{
+			name: "invalid parents",
+
+			cfg: func(*testing.T) *storagecfg.LVMVolumeGroupConfigV1Alpha1 {
+				c := storagecfg.NewLVMVolumeGroupConfigV1Alpha1()
+				c.MetaName = "vg-pool"
+				c.ProvisioningSpec.Parents = []storagecfg.LVMVolumeGroupParent{
+					{RawVolume: "lvm"},
+					{},
+					{RawVolume: "lvm"},
+				}
+
+				return c
+			},
+
+			expectedErrors: "provisioning.parents[1].rawVolume is required\nprovisioning.parents[2]: duplicate raw volume \"lvm\"",
+		},
+		{
+			name: "valid parents",
+
+			cfg: func(*testing.T) *storagecfg.LVMVolumeGroupConfigV1Alpha1 {
+				c := storagecfg.NewLVMVolumeGroupConfigV1Alpha1()
+				c.MetaName = "vg-pool"
+				c.ProvisioningSpec.Parents = []storagecfg.LVMVolumeGroupParent{{RawVolume: "lvm-a"}, {RawVolume: "lvm-b"}}
+
+				assert.Equal(t, []string{"r-lvm-a", "r-lvm-b"}, c.ParentVolumeIDs())
+
+				return c
+			},
 		},
 		{
 			name: "valid",
