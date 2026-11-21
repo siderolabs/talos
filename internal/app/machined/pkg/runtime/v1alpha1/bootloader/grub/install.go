@@ -130,7 +130,7 @@ func (c *Config) generateGrubImage(ctx context.Context, opts options.InstallOpti
 		"all_video",
 	}
 
-	const grubPrefix = "(hd0,gpt3)/grub" // EFI, BIOS, BOOT
+	const grubPrefix = "(,gpt3)/grub" // EFI, BIOS, BOOT
 
 	// in amd64 mode only, install GRUB BIOS mode
 	if opts.Arch == constants.ArchAmd64 {
