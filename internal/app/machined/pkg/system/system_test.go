@@ -6,6 +6,7 @@ package system_test
 
 import (
 	"context"
+	"errors"
 	"log"
 	"sync"
 	"testing"
@@ -128,6 +129,47 @@ func (suite *SystemServicesSuite) TestStopDuringCondition() {
 	suite.Require().NoError(system.Services(nil).Stop(context.Background(), "stopcond"))
 
 	suite.Assert().Equal(events.StateFinished.String(), serviceState("stopcond"))
+}
+
+// TestStartAfterStopFailed verifies that stopping a service which has already failed
+// doesn't stop the service when it is started the next time (regression test).
+func (suite *SystemServicesSuite) TestStartAfterStopFailed() {
+	svc := &MockService{name: "stopfailed", preError: errors.New("pre failed")}
+
+	system.Services(newRuntime(suite.T())).LoadAndStart(svc)
+
+	waitForState := func(expected events.ServiceState) {
+		suite.Require().NoError(retry.Constant(time.Minute, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
+			if state := serviceState("stopfailed"); state != expected.String() {
+				return retry.ExpectedErrorf("service should be %s, got %q", expected, state)
+			}
+
+			return nil
+		}))
+	}
+
+	waitForState(events.StateFailed)
+
+	// the service is not running, so there is nothing to stop
+	suite.Require().NoError(system.Services(nil).Stop(context.Background(), "stopfailed"))
+
+	state, err := system.Services(nil).GetState("stopfailed")
+	suite.Require().NoError(err)
+	suite.Assert().Equal(events.StateFailed, state)
+
+	// the failure is fixed, and the service is started again
+	svc.preError = nil
+
+	suite.Require().NoError(system.Services(nil).Start("stopfailed"))
+
+	waitForState(events.StateRunning)
+
+	// the service keeps running
+	time.Sleep(100 * time.Millisecond)
+
+	suite.Assert().Equal(events.StateRunning.String(), serviceState("stopfailed"))
+
+	suite.Require().NoError(system.Services(nil).Stop(context.Background(), "stopfailed"))
 }
 
 func TestSystemServicesSuite(t *testing.T) {

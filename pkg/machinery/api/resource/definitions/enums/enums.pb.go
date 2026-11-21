@@ -5710,6 +5710,76 @@ func (CriImageCacheCopyStatus) EnumDescriptor() ([]byte, []int) {
 	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{84}
 }
 
+// EtcdMembershipPhase describes the phase of the etcd cluster membership of this machine.
+type EtcdMembershipPhase int32
+
+const (
+	// MembershipPhasePreparing means that the prerequisites (etcd spec, PKI, etcd data volume) are not ready yet.
+	EtcdMembershipPhase_MEMBERSHIP_PHASE_PREPARING EtcdMembershipPhase = 0
+	// MembershipPhaseJoining means that the etcd data is empty, and the machine is either trying to join
+	// an existing etcd cluster, or it is waiting for the bootstrap request.
+	EtcdMembershipPhase_MEMBERSHIP_PHASE_JOINING EtcdMembershipPhase = 1
+	// MembershipPhaseLearner means that the machine joined the etcd cluster as a learner,
+	// and it is not promoted to a voting member yet.
+	//
+	// The etcd data of a learner is disposable: if etcd is interrupted in this phase, the data is wiped,
+	// and the machine joins the cluster from scratch.
+	EtcdMembershipPhase_MEMBERSHIP_PHASE_LEARNER EtcdMembershipPhase = 2
+	// MembershipPhaseMember means that the machine is a (voting) member of the etcd cluster.
+	EtcdMembershipPhase_MEMBERSHIP_PHASE_MEMBER EtcdMembershipPhase = 3
+	// MembershipPhaseLeaving means that the machine is in the process of leaving the etcd cluster.
+	EtcdMembershipPhase_MEMBERSHIP_PHASE_LEAVING EtcdMembershipPhase = 4
+	// MembershipPhaseLeft means that the machine left the etcd cluster, and the etcd data was wiped.
+	EtcdMembershipPhase_MEMBERSHIP_PHASE_LEFT EtcdMembershipPhase = 5
+)
+
+// Enum value maps for EtcdMembershipPhase.
+var (
+	EtcdMembershipPhase_name = map[int32]string{
+		0: "MEMBERSHIP_PHASE_PREPARING",
+		1: "MEMBERSHIP_PHASE_JOINING",
+		2: "MEMBERSHIP_PHASE_LEARNER",
+		3: "MEMBERSHIP_PHASE_MEMBER",
+		4: "MEMBERSHIP_PHASE_LEAVING",
+		5: "MEMBERSHIP_PHASE_LEFT",
+	}
+	EtcdMembershipPhase_value = map[string]int32{
+		"MEMBERSHIP_PHASE_PREPARING": 0,
+		"MEMBERSHIP_PHASE_JOINING":   1,
+		"MEMBERSHIP_PHASE_LEARNER":   2,
+		"MEMBERSHIP_PHASE_MEMBER":    3,
+		"MEMBERSHIP_PHASE_LEAVING":   4,
+		"MEMBERSHIP_PHASE_LEFT":      5,
+	}
+)
+
+func (x EtcdMembershipPhase) Enum() *EtcdMembershipPhase {
+	p := new(EtcdMembershipPhase)
+	*p = x
+	return p
+}
+
+func (x EtcdMembershipPhase) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (EtcdMembershipPhase) Descriptor() protoreflect.EnumDescriptor {
+	return file_resource_definitions_enums_enums_proto_enumTypes[85].Descriptor()
+}
+
+func (EtcdMembershipPhase) Type() protoreflect.EnumType {
+	return &file_resource_definitions_enums_enums_proto_enumTypes[85]
+}
+
+func (x EtcdMembershipPhase) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use EtcdMembershipPhase.Descriptor instead.
+func (EtcdMembershipPhase) EnumDescriptor() ([]byte, []int) {
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{85}
+}
+
 // HypervisorVirtualMachineDiskPhase describes observed disk attachability, not COSI metadata lifecycle.
 type HypervisorVirtualMachineDiskPhase int32
 
@@ -5747,11 +5817,11 @@ func (x HypervisorVirtualMachineDiskPhase) String() string {
 }
 
 func (HypervisorVirtualMachineDiskPhase) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[85].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[86].Descriptor()
 }
 
 func (HypervisorVirtualMachineDiskPhase) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[85]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[86]
 }
 
 func (x HypervisorVirtualMachineDiskPhase) Number() protoreflect.EnumNumber {
@@ -5760,7 +5830,7 @@ func (x HypervisorVirtualMachineDiskPhase) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use HypervisorVirtualMachineDiskPhase.Descriptor instead.
 func (HypervisorVirtualMachineDiskPhase) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{85}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{86}
 }
 
 // HypervisorContentLibraryPhase describes observed library availability, not COSI metadata lifecycle.
@@ -5797,11 +5867,11 @@ func (x HypervisorContentLibraryPhase) String() string {
 }
 
 func (HypervisorContentLibraryPhase) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[86].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[87].Descriptor()
 }
 
 func (HypervisorContentLibraryPhase) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[86]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[87]
 }
 
 func (x HypervisorContentLibraryPhase) Number() protoreflect.EnumNumber {
@@ -5810,7 +5880,7 @@ func (x HypervisorContentLibraryPhase) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use HypervisorContentLibraryPhase.Descriptor instead.
 func (HypervisorContentLibraryPhase) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{86}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{87}
 }
 
 // HypervisorCloudInitPhase describes observed seed availability, not COSI metadata lifecycle.
@@ -5847,11 +5917,11 @@ func (x HypervisorCloudInitPhase) String() string {
 }
 
 func (HypervisorCloudInitPhase) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[87].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[88].Descriptor()
 }
 
 func (HypervisorCloudInitPhase) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[87]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[88]
 }
 
 func (x HypervisorCloudInitPhase) Number() protoreflect.EnumNumber {
@@ -5860,7 +5930,7 @@ func (x HypervisorCloudInitPhase) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use HypervisorCloudInitPhase.Descriptor instead.
 func (HypervisorCloudInitPhase) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{87}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{88}
 }
 
 // KubespanPeerState is KubeSpan peer current state.
@@ -5897,11 +5967,11 @@ func (x KubespanPeerState) String() string {
 }
 
 func (KubespanPeerState) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[88].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[89].Descriptor()
 }
 
 func (KubespanPeerState) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[88]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[89]
 }
 
 func (x KubespanPeerState) Number() protoreflect.EnumNumber {
@@ -5910,7 +5980,7 @@ func (x KubespanPeerState) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use KubespanPeerState.Descriptor instead.
 func (KubespanPeerState) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{88}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{89}
 }
 
 var File_resource_definitions_enums_enums_proto protoreflect.FileDescriptor
@@ -6768,7 +6838,14 @@ const file_resource_definitions_enums_enums_proto_rawDesc = "" +
 	"\x1fIMAGE_CACHE_COPY_STATUS_UNKNOWN\x10\x00\x12#\n" +
 	"\x1fIMAGE_CACHE_COPY_STATUS_SKIPPED\x10\x01\x12#\n" +
 	"\x1fIMAGE_CACHE_COPY_STATUS_PENDING\x10\x02\x12!\n" +
-	"\x1dIMAGE_CACHE_COPY_STATUS_READY\x10\x03*\xd3\x01\n" +
+	"\x1dIMAGE_CACHE_COPY_STATUS_READY\x10\x03*\xc7\x01\n" +
+	"\x13EtcdMembershipPhase\x12\x1e\n" +
+	"\x1aMEMBERSHIP_PHASE_PREPARING\x10\x00\x12\x1c\n" +
+	"\x18MEMBERSHIP_PHASE_JOINING\x10\x01\x12\x1c\n" +
+	"\x18MEMBERSHIP_PHASE_LEARNER\x10\x02\x12\x1b\n" +
+	"\x17MEMBERSHIP_PHASE_MEMBER\x10\x03\x12\x1c\n" +
+	"\x18MEMBERSHIP_PHASE_LEAVING\x10\x04\x12\x19\n" +
+	"\x15MEMBERSHIP_PHASE_LEFT\x10\x05*\xd3\x01\n" +
 	"!HypervisorVirtualMachineDiskPhase\x12&\n" +
 	"\"VIRTUAL_MACHINE_DISK_PHASE_UNKNOWN\x10\x00\x12(\n" +
 	"$VIRTUAL_MACHINE_DISK_PHASE_NOT_READY\x10\x01\x12$\n" +
@@ -6800,7 +6877,7 @@ func file_resource_definitions_enums_enums_proto_rawDescGZIP() []byte {
 	return file_resource_definitions_enums_enums_proto_rawDescData
 }
 
-var file_resource_definitions_enums_enums_proto_enumTypes = make([]protoimpl.EnumInfo, 89)
+var file_resource_definitions_enums_enums_proto_enumTypes = make([]protoimpl.EnumInfo, 90)
 var file_resource_definitions_enums_enums_proto_goTypes = []any{
 	(RuntimeKernelModuleState)(0),                               // 0: talos.resource.definitions.enums.RuntimeKernelModuleState
 	(RuntimeKernelModuleType)(0),                                // 1: talos.resource.definitions.enums.RuntimeKernelModuleType
@@ -6887,10 +6964,11 @@ var file_resource_definitions_enums_enums_proto_goTypes = []any{
 	(ContainersContainerRestartPolicy)(0),                       // 82: talos.resource.definitions.enums.ContainersContainerRestartPolicy
 	(CriImageCacheStatus)(0),                                    // 83: talos.resource.definitions.enums.CriImageCacheStatus
 	(CriImageCacheCopyStatus)(0),                                // 84: talos.resource.definitions.enums.CriImageCacheCopyStatus
-	(HypervisorVirtualMachineDiskPhase)(0),                      // 85: talos.resource.definitions.enums.HypervisorVirtualMachineDiskPhase
-	(HypervisorContentLibraryPhase)(0),                          // 86: talos.resource.definitions.enums.HypervisorContentLibraryPhase
-	(HypervisorCloudInitPhase)(0),                               // 87: talos.resource.definitions.enums.HypervisorCloudInitPhase
-	(KubespanPeerState)(0),                                      // 88: talos.resource.definitions.enums.KubespanPeerState
+	(EtcdMembershipPhase)(0),                                    // 85: talos.resource.definitions.enums.EtcdMembershipPhase
+	(HypervisorVirtualMachineDiskPhase)(0),                      // 86: talos.resource.definitions.enums.HypervisorVirtualMachineDiskPhase
+	(HypervisorContentLibraryPhase)(0),                          // 87: talos.resource.definitions.enums.HypervisorContentLibraryPhase
+	(HypervisorCloudInitPhase)(0),                               // 88: talos.resource.definitions.enums.HypervisorCloudInitPhase
+	(KubespanPeerState)(0),                                      // 89: talos.resource.definitions.enums.KubespanPeerState
 }
 var file_resource_definitions_enums_enums_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -6910,7 +6988,7 @@ func file_resource_definitions_enums_enums_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_resource_definitions_enums_enums_proto_rawDesc), len(file_resource_definitions_enums_enums_proto_rawDesc)),
-			NumEnums:      89,
+			NumEnums:      90,
 			NumMessages:   0,
 			NumExtensions: 0,
 			NumServices:   0,

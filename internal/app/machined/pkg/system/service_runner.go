@@ -404,6 +404,14 @@ func (svcrunner *ServiceRunner) Shutdown() {
 	}
 }
 
+// clearShutdown drops the shutdown request which was not picked up, as the service runner was not running.
+func (svcrunner *ServiceRunner) clearShutdown() {
+	select {
+	case <-svcrunner.stopCh:
+	default:
+	}
+}
+
 // AsProto returns protobuf struct with the state of the service runner.
 func (svcrunner *ServiceRunner) AsProto() *machineapi.ServiceInfo {
 	svcrunner.mu.Lock()

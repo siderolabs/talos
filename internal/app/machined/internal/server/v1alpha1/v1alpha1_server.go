@@ -107,6 +107,7 @@ import (
 	etcdresource "github.com/siderolabs/talos/pkg/machinery/resources/etcd"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	timeresource "github.com/siderolabs/talos/pkg/machinery/resources/time"
 	"github.com/siderolabs/talos/pkg/machinery/role"
 	"github.com/siderolabs/talos/pkg/machinery/version"
@@ -128,8 +129,6 @@ type Server struct {
 	machine.UnimplementedMachineServiceServer
 
 	Controller runtime.Controller
-	// breaking the import loop cycle between services/ package and v1alpha1_server.go
-	EtcdBootstrapper func(context.Context, runtime.Runtime, *machine.BootstrapRequest) error
 
 	// ShutdownCtx signals that the server is shutting down.
 	ShutdownCtx context.Context //nolint:containedctx
@@ -434,6 +433,8 @@ func (s *Server) Rollback(ctx context.Context, in *machine.RollbackRequest) (*ma
 }
 
 // Bootstrap implements the machine.MachineServer interface.
+//
+//nolint:gocyclo
 func (s *Server) Bootstrap(ctx context.Context, in *machine.BootstrapRequest) (reply *machine.BootstrapResponse, err error) {
 	log.Printf("bootstrap request received")
 
@@ -461,12 +462,28 @@ func (s *Server) Bootstrap(ctx context.Context, in *machine.BootstrapRequest) (r
 		return nil, status.Error(codes.FailedPrecondition, "time is not in sync yet")
 	}
 
-	if entries, _ := os.ReadDir(constants.EtcdDataPath); len(entries) > 0 { //nolint:errcheck
-		return nil, status.Error(codes.AlreadyExists, "etcd data directory is not empty")
+	resources := s.Controller.Runtime().State().V1Alpha2().Resources()
+
+	// Reject bootstrap if an unattended install is in progress.
+	if installStatus, err := safe.ReaderGetByID[*runtimeres.UnattendedInstallStatus](
+		ctx, resources, runtimeres.UnattendedInstallStatusID,
+	); err == nil && installStatus.TypedSpec().Phase != runtimeres.UnattendedInstallPhaseInstalled {
+		return nil, status.Errorf(codes.FailedPrecondition, "bootstrap is not allowed during unattended install (phase: %s)", installStatus.TypedSpec().Phase)
 	}
 
-	if err := s.EtcdBootstrapper(ctx, s.Controller.Runtime(), in); err != nil {
-		return nil, err
+	// the bootstrap is performed by the etcd membership controller
+	if err := etcd.RequestBootstrap(ctx, resources, etcdresource.BootstrapRequestSpec{
+		RecoverFromSnapshot:  in.RecoverEtcd,
+		RecoverSkipHashCheck: in.RecoverSkipHashCheck,
+	}); err != nil {
+		switch {
+		case errors.Is(err, etcd.ErrNotReady), errors.Is(err, etcd.ErrLeft):
+			return nil, status.Error(codes.FailedPrecondition, err.Error())
+		case errors.Is(err, etcd.ErrAlreadyMember):
+			return nil, status.Error(codes.AlreadyExists, err.Error())
+		default:
+			return nil, err
+		}
 	}
 
 	reply = &machine.BootstrapResponse{
@@ -2031,17 +2048,9 @@ func (s *Server) EtcdLeaveCluster(ctx context.Context, in *machine.EtcdLeaveClus
 		return nil, err
 	}
 
-	client, err := etcd.NewClientFromControlPlaneIPs(ctx, s.Controller.Runtime().State().V1Alpha2().Resources())
-	if err != nil {
-		return nil, fmt.Errorf("failed to create etcd client: %w", err)
-	}
-
-	defer client.Close() //nolint:errcheck
-
-	ctx = clientv3.WithRequireLeader(ctx)
-
-	if err = client.LeaveCluster(ctx, s.Controller.Runtime().State().V1Alpha2().Resources()); err != nil {
-		return nil, fmt.Errorf("failed to leave cluster: %w", err)
+	// leaving the cluster is performed by the etcd membership controller
+	if err := etcd.RequestLeave(ctx, s.Controller.Runtime().State().V1Alpha2().Resources()); err != nil {
+		return nil, err
 	}
 
 	return &machine.EtcdLeaveClusterResponse{
