@@ -42,6 +42,10 @@ type K8sAPIServerCAConfig interface {
 	//
 	// If the IssuingCA is not nil, the returned list will include the issuing CA as the first element.
 	AcceptedCAs() []*x509.PEMEncodedCertificate
+	// RootCABundle returns the CA bundle published to the pods (kube-root-ca.crt ConfigMap).
+	//
+	// If nil, the issuing CA certificate is published.
+	RootCABundle() *x509.PEMEncodedCertificate
 }
 
 // K8sAggregatorCAConfig defines kube-apiserver aggregator CA configuration.

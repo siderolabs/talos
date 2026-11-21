@@ -63,6 +63,13 @@ func (s apiServerCAConfigShim) AcceptedCAs() []*x509.PEMEncodedCertificate {
 	return acceptedCAs
 }
 
+// RootCABundle implements the config.K8sAPIServerCAConfig interface.
+//
+// Not supported by the legacy .cluster.ca field, use KubeAPIServerCAConfig instead.
+func (s apiServerCAConfigShim) RootCABundle() *x509.PEMEncodedCertificate {
+	return nil
+}
+
 // K8sAggregatorCAConfig implements the config.K8sAggregatorCAConfig interface.
 func (c *Config) K8sAggregatorCAConfig() config.K8sAggregatorCAConfig {
 	clusterConfig := c.ClusterConfig
