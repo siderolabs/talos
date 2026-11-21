@@ -27,6 +27,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/uki"
 	"github.com/siderolabs/talos/pkg/imager/utils"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 )
 
 // Install validates the grub configuration and writes it to the disk.
@@ -130,7 +131,20 @@ func (c *Config) generateGrubImage(ctx context.Context, opts options.InstallOpti
 		"all_video",
 	}
 
-	const grubPrefix = "(hd0,gpt3)/grub" // EFI, BIOS, BOOT
+	// The partition layout is EFI, BIOS, BOOT, so GRUB config lives on the 3rd partition.
+	//
+	// The drive part of the prefix is intentionally left empty: GRUB fills it in at runtime
+	// with the disk it was loaded from (see grub-core/kern/main.c, grub_set_prefix_and_root),
+	// so the image boots even if it's not the first disk (e.g. eMMC + SD card on SBCs).
+	// This matches the prefix `grub-install` generates for the boot directory on the install disk.
+	//
+	// Do not change it back to `(hd0,gpt3)`, which always reads GRUB config from the first disk.
+	grubPrefix := "(,gpt3)/grub"
+
+	if !quirks.New(opts.Version).UseGRUBBootDiskPrefix() {
+		// older Talos versions keep the prefix their images were originally built with
+		grubPrefix = "(hd0,gpt3)/grub"
+	}
 
 	// in amd64 mode only, install GRUB BIOS mode
 	if opts.Arch == constants.ArchAmd64 {

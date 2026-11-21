@@ -415,3 +415,35 @@ func TestSupportsBootPartitionKernelArg(t *testing.T) {
 		})
 	}
 }
+
+func TestUseGRUBBootDiskPrefix(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		version string
+
+		expected bool
+	}{
+		{
+			version:  "1.15.0",
+			expected: true,
+		},
+		{
+			version:  "1.15.0-alpha.0",
+			expected: true,
+		},
+		{
+			expected: true,
+		},
+		{
+			version:  "1.14.3",
+			expected: false,
+		},
+	} {
+		t.Run(test.version, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.expected, quirks.New(test.version).UseGRUBBootDiskPrefix())
+		})
+	}
+}

@@ -404,3 +404,23 @@ func (q Quirks) SupportsBootPartitionKernelArg() bool {
 
 	return q.v.GTE(minVersionBootPartitionKernelArg)
 }
+
+var minVersionGRUBBootDiskPrefix = semver.MustParse("1.15.0")
+
+// UseGRUBBootDiskPrefix returns true if the GRUB core image built for the disk image should
+// locate the BOOT partition on the disk GRUB was loaded from, instead of the first disk (hd0).
+//
+// The prefix `(,gpt3)/grub` leaves the drive empty, and GRUB fills it in at runtime with the
+// boot device reported by the firmware (EFI loaded image device path, BIOS boot drive).
+// This is the same prefix `grub-install` generates when the boot directory is on the
+// install disk, so it matches what Talos installs to disk.
+//
+// Older Talos versions keep the `(hd0,gpt3)/grub` prefix the images were built with.
+func (q Quirks) UseGRUBBootDiskPrefix() bool {
+	// if the version doesn't parse, we assume it's latest Talos
+	if q.v == nil {
+		return true
+	}
+
+	return q.v.GTE(minVersionGRUBBootDiskPrefix)
+}
