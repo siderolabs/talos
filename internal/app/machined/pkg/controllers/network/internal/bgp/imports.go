@@ -134,8 +134,7 @@ func (instance *Instance) listImportCandidates(selectors []netip.Prefix) (map[ne
 
 func (instance *Instance) reconcileImported(desired map[netip.Prefix]desiredImportedPath) error {
 	for prefix, current := range instance.imported {
-		path, exists := desired[prefix]
-		if exists && path.fingerprint == current.fingerprint {
+		if _, exists := desired[prefix]; exists {
 			continue
 		}
 
@@ -146,8 +145,10 @@ func (instance *Instance) reconcileImported(desired map[netip.Prefix]desiredImpo
 		delete(instance.imported, prefix)
 	}
 
+	// a changed path is added over the current one: GoBGP keys local paths by prefix, so AddPath replaces
+	// it in place under a new UUID, while deleting it first would send a withdrawal to the peers
 	for prefix, imported := range desired {
-		if _, exists := instance.imported[prefix]; exists {
+		if current, exists := instance.imported[prefix]; exists && current.fingerprint == imported.fingerprint {
 			continue
 		}
 
