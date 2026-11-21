@@ -8,7 +8,9 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
+	"github.com/cenkalti/backoff/v7"
 	containerdapi "github.com/containerd/containerd/v2/client"
 	"github.com/containerd/containerd/v2/pkg/namespaces"
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -31,6 +33,9 @@ import (
 // criServiceID is the Talos service running the CRI containerd instance.
 const criServiceID = "cri"
 
+// pullRetryMaxInterval caps the backoff between pull attempts.
+const pullRetryMaxInterval = time.Minute
+
 // Puller pulls an image into the taloscontainers namespace.
 //
 // This is the seam that keeps the controller testable: the default implementation talks to
@@ -52,16 +57,19 @@ type PullResult struct {
 
 // ImageController owns pulling images for declared containers.
 //
-// The pull is the one side effect this controller owns. It runs in a goroutine per container
-// because a pull retries with backoff for up to image.PullTimeout (20 minutes); doing it inline
-// would stall every other container and stop the controller reacting to events. Unlike the runtime
-// controller's goroutine this is bounded work rather than process supervision.
+// The pull is the one side effect this controller owns. Each attempt runs in a goroutine per
+// container, so a slow pull doesn't stall the others; the controller retries failed attempts with
+// backoff. Unlike the runtime controller's goroutine this is bounded work rather than process
+// supervision.
 type ImageController struct {
 	// State provides access to the COSI state, needed to resolve registry configuration.
 	State state.State
 
 	// PullerProvider is overridable for testing.
 	PullerProvider func() (Puller, error)
+
+	// pullTimeout and retryInterval set the retry policy; overridable for testing.
+	pullTimeout, retryInterval time.Duration
 
 	// pulls tracks the in-flight pulls, keyed by container ID.
 	pulls map[string]*pullState
@@ -111,36 +119,182 @@ func (ctrl *ImageController) Outputs() []controller.Output {
 	}
 }
 
-// pullState tracks one in-flight pull.
-type pullState struct {
-	imageRef string
+// imagePullStatus is the state of a pull.
+//
+// The transitions are:
+//
+//	pending      -> pulling       step, on the controller goroutine
+//	pulling      -> succeeded     the attempt returned an image
+//	pulling      -> waitingRetry  the attempt failed, and is worth retrying
+//	pulling      -> failed        the attempt failed, and is not retried
+//	waitingRetry -> pending       the backoff has passed
+//
+// Succeeded and failed are final: the pull stays that way until its reference changes or its
+// container is removed, at which point the pull is stopped and dropped.
+type imagePullStatus uint8
 
+const (
+	// An attempt is due, and starts on the next step.
+	imagePullStatusPending imagePullStatus = iota
+	// An attempt is running.
+	imagePullStatusPulling
+	// The last attempt failed, and the backoff timer is running.
+	imagePullStatusWaitingRetry
+	// The image has been pulled successfully.
+	imagePullStatusSucceeded
+	// The pull has failed for good.
+	imagePullStatusFailed
+)
+
+// pullState tracks one image ref pull, perhaps across multiple attempts.
+type pullState struct {
+	imageRef        string
+	containerSpecID string
+	deadline        time.Time
+
+	puller   Puller
+	logger   *zap.Logger
+	notifyCh chan struct{}
+
+	ctx    context.Context //nolint:containedctx
 	cancel context.CancelFunc
 	wg     sync.WaitGroup
-
 	mu     sync.Mutex
+
+	status imagePullStatus
 	result PullResult
-	err    error
-	done   bool
+	// err is the last attempt's error, kept while the pull is retried.
+	err error
+
+	// retryBackoff yields the wait before the next attempt; not thread-safe, used with the state locked.
+	retryBackoff *backoff.ExponentialBackOff
+	retryTimer   *time.Timer
+	notFound     uint
 }
 
-func (state *pullState) snapshot() (result PullResult, err error, done bool) {
+// step starts an attempt if one is due, and returns the state of the pull.
+//
+// It is called from the controller goroutine only, so that an attempt is never started while stop
+// waits for the running one.
+func (state *pullState) step() (status imagePullStatus, result PullResult, err error) {
 	state.mu.Lock()
 	defer state.mu.Unlock()
 
-	return state.result, state.err, state.done
+	if state.status == imagePullStatusPending {
+		state.status = imagePullStatusPulling
+		state.wg.Go(state.run)
+	}
+
+	return state.status, state.result, state.err
 }
 
-func (state *pullState) finish(result PullResult, err error) {
+// run performs one pull attempt, and moves the pull on to its next state.
+func (state *pullState) run() {
+	// Runs after the state is unlocked.
+	defer state.notify()
+
+	logger := state.logger.With(zap.String("container", state.containerSpecID), zap.String("image", state.imageRef))
+
+	logger.Info("pulling container image")
+
+	ctx, cancel := context.WithDeadline(state.ctx, state.deadline)
+	defer cancel()
+
+	var result PullResult
+
+	// A panic in a pull must not take down machined.
+	err := panicsafe.RunErr(func() error {
+		var pullErr error
+
+		result, pullErr = state.puller.Pull(ctx, state.logger, state.imageRef)
+
+		return pullErr
+	})
+
 	state.mu.Lock()
 	defer state.mu.Unlock()
 
-	state.result, state.err, state.done = result, err, true
+	state.result, state.err = result, err
+	if err == nil {
+		state.status = imagePullStatusSucceeded
+
+		logger.Info("image pulled", zap.String("digest", result.Digest), zap.String("user", result.User))
+
+		return
+	}
+
+	retryAfter, retry := state.nextRetry(err)
+	if !retry {
+		state.status = imagePullStatusFailed
+
+		if panicsafe.IsPanic(err) {
+			logger.Error("image pull panicked", zap.Error(err))
+		} else {
+			logger.Error("image pull failed", zap.Error(err))
+		}
+
+		return
+	}
+
+	state.status = imagePullStatusWaitingRetry
+	state.retryTimer = time.AfterFunc(retryAfter, func() {
+		state.mu.Lock()
+
+		if state.status == imagePullStatusWaitingRetry {
+			state.status = imagePullStatusPending
+		}
+
+		state.mu.Unlock()
+
+		state.notify()
+	})
+
+	logger.Warn("image pull failed, retrying", zap.Duration("retryAfter", retryAfter), zap.Error(err))
 }
 
+// nextRetry tells whether a failed attempt is retried, and how long to wait before the next one.
+//
+// It is called with the state locked.
+func (state *pullState) nextRetry(err error) (retryAfter time.Duration, retry bool) {
+	// Not retried: an abandoned pull, a panic, or a terminal error.
+	if state.ctx.Err() != nil || panicsafe.IsPanic(err) || image.IsTerminal(err) {
+		return 0, false
+	}
+
+	if image.IsNotFound(err) {
+		state.notFound++
+
+		if state.notFound > image.DefaultPullOptions().MaxNotFoundRetries {
+			return 0, false
+		}
+	}
+
+	retryAfter = state.retryBackoff.NextBackOff()
+
+	// Also covers an attempt cut short by the deadline.
+	if time.Now().Add(retryAfter).After(state.deadline) {
+		return 0, false
+	}
+
+	return retryAfter, true
+}
+
+// notify wakes the controller.
+func (state *pullState) notify() {
+	channel.SendWithContext(state.ctx, state.notifyCh, struct{}{})
+}
+
+// stop cancels the pull and waits for a running attempt to return.
 func (state *pullState) stop() {
 	state.cancel()
 	state.wg.Wait()
+
+	state.mu.Lock()
+	defer state.mu.Unlock()
+
+	if state.retryTimer != nil {
+		state.retryTimer.Stop()
+	}
 }
 
 // Run implements controller.Controller interface.
@@ -149,6 +303,14 @@ func (state *pullState) stop() {
 func (ctrl *ImageController) Run(ctx context.Context, runtime controller.Runtime, logger *zap.Logger) error {
 	if ctrl.PullerProvider == nil {
 		ctrl.PullerProvider = ctrl.defaultPullerProvider
+	}
+
+	if ctrl.pullTimeout == 0 {
+		ctrl.pullTimeout = image.PullTimeout
+	}
+
+	if ctrl.retryInterval == 0 {
+		ctrl.retryInterval = image.PullRetryInterval
 	}
 
 	ctrl.pulls = map[string]*pullState{}
@@ -166,9 +328,10 @@ func (ctrl *ImageController) Run(ctx context.Context, runtime controller.Runtime
 	}()
 
 	defer func() {
+		// Cancel all first, so they wind down in parallel.
 		for _, pull := range ctrl.pulls {
 			pull.cancel()
-			defer pull.wg.Wait()
+			defer pull.stop()
 		}
 	}()
 
@@ -274,23 +437,32 @@ func (ctrl *ImageController) reconcileContainer(
 			return ctrl.writeStatus(ctx, runtime, containerSpecID, imageRef, containers.ContainerImagePhasePending, "", "")
 		}
 
-		pull = ctrl.startPull(ctx, logger, puller, containerSpecID, imageRef, notifyCh)
+		pull = ctrl.instantiatePull(ctx, logger, puller, containerSpecID, imageRef, notifyCh)
 		ctrl.pulls[containerSpecID] = pull
 	}
 
-	result, pullErr, done := pull.snapshot()
+	status, result, pullErr := pull.step()
 
-	switch {
-	case !done:
+	// The last attempt's error: reported while retrying, and once the pull has failed.
+	errText := ""
+
+	if pullErr != nil {
+		errText = pullErr.Error()
+	}
+
+	switch status {
+	case imagePullStatusPending, imagePullStatusPulling, imagePullStatusWaitingRetry:
 		logger.Debug(
 			"image pull in progress",
 			zap.String("container", containerSpecID),
 			zap.String("image", imageRef),
 		)
 
-		return ctrl.writeStatus(ctx, runtime, containerSpecID, imageRef, containers.ContainerImagePhasePulling, "", "")
-	case pullErr != nil:
-		return ctrl.writeStatus(ctx, runtime, containerSpecID, imageRef, containers.ContainerImagePhaseFailed, "", pullErr.Error())
+		return ctrl.writeStatus(ctx, runtime, containerSpecID, imageRef, containers.ContainerImagePhasePulling, "", errText)
+	case imagePullStatusFailed:
+		return ctrl.writeStatus(ctx, runtime, containerSpecID, imageRef, containers.ContainerImagePhaseFailed, "", errText)
+	case imagePullStatusSucceeded:
+		fallthrough
 	default:
 		// The image is on the node, but a USER it names rather than numbers would otherwise run as
 		// root. It is rejected here, before an instance exists, and re-checked on every reconcile so
@@ -372,61 +544,36 @@ func (ctrl *ImageController) writeStatus(
 	return nil
 }
 
-// startPull launches the pull for one container.
-//
-// Transient failures are retried inside the pull itself, for up to image.PullTimeout. Once it does
-// give up — or fails terminally, as a denied signature does — the failure is recorded and not
-// retried here: the instance controller never opens the gate, the container stays visible as
-// failed, and the operator sees the error. A changed reference starts a fresh pull.
-func (ctrl *ImageController) startPull(
+// instantiatePull creates a new pull state machine.
+func (ctrl *ImageController) instantiatePull(
 	ctx context.Context,
 	logger *zap.Logger,
 	puller Puller,
 	containerSpecID, imageRef string,
 	notifyCh chan struct{},
 ) *pullState {
-	pull := &pullState{imageRef: imageRef}
-
 	pullCtx, cancel := context.WithCancel(ctx)
-	pull.cancel = cancel
 
-	pull.wg.Go(func() {
-		defer channel.SendWithContext(pullCtx, notifyCh, struct{}{})
+	// Exponential, with jitter, capped so that a long outage is still probed regularly.
+	retryBackoff := backoff.NewExponentialBackOff()
+	retryBackoff.InitialInterval = ctrl.retryInterval
+	retryBackoff.Multiplier = 2
+	retryBackoff.MaxInterval = max(pullRetryMaxInterval, ctrl.retryInterval)
+	retryBackoff.Reset()
 
-		logger.Info("pulling container image", zap.String("container", containerSpecID), zap.String("image", imageRef))
-
-		var result PullResult
-
-		// A panic in a pull must not take down machined.
-		err := panicsafe.RunErr(func() error {
-			var pullErr error
-
-			result, pullErr = puller.Pull(pullCtx, logger, imageRef)
-
-			return pullErr
-		})
-
-		pull.finish(result, err)
-
-		switch {
-		case panicsafe.IsPanic(err):
-			logger.Error("image pull panicked", zap.String("container", containerSpecID), zap.Error(err))
-		case err != nil:
-			logger.Error(
-				"image pull failed",
-				zap.String("container", containerSpecID),
-				zap.String("image", imageRef),
-				zap.Error(err),
-			)
-		default:
-			logger.Info(
-				"image pulled",
-				zap.String("container", containerSpecID),
-				zap.String("digest", result.Digest),
-				zap.String("user", result.User),
-			)
-		}
-	})
+	pull := &pullState{
+		imageRef:        imageRef,
+		containerSpecID: containerSpecID,
+		deadline:        time.Now().Add(ctrl.pullTimeout),
+		retryBackoff:    retryBackoff,
+		puller:          puller,
+		logger:          logger,
+		notifyCh:        notifyCh,
+		ctx:             pullCtx,
+		cancel:          cancel,
+		err:             nil,
+		status:          imagePullStatusPending,
+	}
 
 	return pull
 }
@@ -456,15 +603,10 @@ func (p *containerdPuller) Pull(ctx context.Context, logger *zap.Logger, imageRe
 	// own system images.
 	ctx = namespaces.WithNamespace(ctx, constants.TalosContainersContainerdNamespace)
 
-	// Retries live inside the pull: a registry that is briefly unreachable, or a mirror that comes
-	// up mid-retry, resolves without anything upstream having to re-trigger. A denied signature is
-	// terminal and comes straight back.
+	// A single attempt: the controller handles retries.
 	logWriter := &zapio.Writer{Log: logger, Level: zapcore.DebugLevel}
 
-	ctx, cancel := context.WithTimeout(ctx, image.PullTimeout)
-	defer cancel()
-
-	img, err := image.PullWithRetriesAndTimeout(
+	img, err := image.Pull(
 		ctx, p.registryBuilder, p.state, p.client, imageRef,
 		// IfNotPresent semantics: an image already on the node is not re-fetched, which also keeps a
 		// crash-looping container from hammering the registry on every restart.

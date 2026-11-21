@@ -4,6 +4,13 @@
 
 package containers
 
+import "time"
+
+// SetPullRetryPolicy overrides the pull timeout and the first retry backoff.
+func (ctrl *ImageController) SetPullRetryPolicy(timeout, interval time.Duration) {
+	ctrl.pullTimeout, ctrl.retryInterval = timeout, interval
+}
+
 // Exported for tests.
 var (
 	AllocateSELinuxLevels = allocateSELinuxLevels

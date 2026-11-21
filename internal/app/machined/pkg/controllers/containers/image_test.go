@@ -28,6 +28,7 @@ type fakePuller struct {
 	mu       sync.Mutex
 	results  map[string]fakePullResult
 	blocked  map[string]chan struct{}
+	failures map[string][]error
 	attempts map[string]int
 	closed   bool
 }
@@ -42,8 +43,17 @@ func newFakePuller() *fakePuller {
 	return &fakePuller{
 		results:  map[string]fakePullResult{},
 		blocked:  map[string]chan struct{}{},
+		failures: map[string][]error{},
 		attempts: map[string]int{},
 	}
+}
+
+// failAttempts makes the next attempts on ref fail with errs, one each, before blocking or the result apply.
+func (p *fakePuller) failAttempts(ref string, errs ...error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	p.failures[ref] = append(p.failures[ref], errs...)
 }
 
 func (p *fakePuller) setResult(ref, digest string, err error) {
@@ -94,7 +104,17 @@ func (p *fakePuller) Pull(ctx context.Context, logger *zap.Logger, ref string) (
 	p.attempts[ref]++
 	blocked := p.blocked[ref]
 	result := p.results[ref]
+
+	var failure error
+
+	if failures := p.failures[ref]; len(failures) > 0 {
+		failure, p.failures[ref] = failures[0], failures[1:]
+	}
 	p.mu.Unlock()
+
+	if failure != nil {
+		return containersctrl.PullResult{}, failure
+	}
 
 	if blocked != nil {
 		select {
@@ -139,9 +159,14 @@ func TestImageSuite(t *testing.T) {
 		puller:  puller,
 		Timeout: 15 * time.Second,
 		AfterSetup: func(suite *ctest.DefaultSuite) {
-			suite.Require().NoError(suite.Runtime().RegisterController(&containersctrl.ImageController{
+			ctrl := &containersctrl.ImageController{
 				PullerProvider: func() (containersctrl.Puller, error) { return puller, nil },
-			}))
+			}
+
+			// Retry every few milliseconds, giving up after about a second.
+			ctrl.SetPullRetryPolicy(2*time.Second, 10*time.Millisecond)
+
+			suite.Require().NoError(suite.Runtime().RegisterController(ctrl))
 		},
 	})
 }
@@ -210,16 +235,45 @@ func (suite *ImageSuite) TestReportsPullingWhileBlocked() {
 func (suite *ImageSuite) TestReportsFailure() {
 	const ref = "docker.io/library/broken:1.0"
 
-	suite.puller.setResult(ref, "", errors.New("signature verification denied"))
+	// Not a terminal error, so this fails only once the pull times out.
+	suite.puller.setResult(ref, "", errors.New("registry unavailable"))
 	suite.criUp()
 	suite.createSpecWithImage("broken", ref)
 
 	ctest.AssertResource(suite, "broken", func(status *containers.ContainerImageStatus, asrt *assert.Assertions) {
 		asrt.Equal(containers.ContainerImagePhaseFailed, status.TypedSpec().Phase)
-		asrt.Contains(status.TypedSpec().Error, "signature verification denied")
+		asrt.Contains(status.TypedSpec().Error, "registry unavailable")
 		// A failed pull leaves no digest, so the instance gate stays shut.
 		asrt.Empty(status.TypedSpec().Digest)
 	})
+
+	suite.Assert().Greater(suite.puller.attemptCount(ref), 1)
+}
+
+func (suite *ImageSuite) TestReportsAttemptErrorWhileRetrying() {
+	const ref = "docker.io/library/flaky:1.0"
+
+	// Two failed attempts, then a third which blocks until released.
+	suite.puller.failAttempts(ref, errors.New("registry unavailable"), errors.New("connection reset"))
+	suite.puller.block(ref)
+	suite.puller.setResult(ref, "sha256:flaky", nil)
+	suite.criUp()
+	suite.createSpecWithImage("flaky", ref)
+
+	ctest.AssertResource(suite, "flaky", func(status *containers.ContainerImageStatus, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerImagePhasePulling, status.TypedSpec().Phase)
+		asrt.Equal("connection reset", status.TypedSpec().Error)
+	})
+
+	suite.puller.release(ref)
+
+	ctest.AssertResource(suite, "flaky", func(status *containers.ContainerImageStatus, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerImagePhaseReady, status.TypedSpec().Phase)
+		asrt.Equal("sha256:flaky", status.TypedSpec().Digest)
+		asrt.Empty(status.TypedSpec().Error)
+	})
+
+	suite.Assert().Equal(3, suite.puller.attemptCount(ref))
 }
 
 func (suite *ImageSuite) TestDoesNotRepullUnchangedReference() {

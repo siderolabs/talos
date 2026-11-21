@@ -37,6 +37,20 @@ type (
 	imageTerminalErrorTag               struct{}
 )
 
+// IsTerminal reports whether a failed pull is known to fail again, e.g. a denied signature.
+//
+// Any other error, including unknown ones, is worth retrying.
+func IsTerminal(err error) bool {
+	return xerrors.TagIs[imageSignatureVerificationFailedTag](err) || xerrors.TagIs[imageTerminalErrorTag](err)
+}
+
+// IsNotFound reports whether a pull failed because the image was not found.
+//
+// It is worth retrying, but only a limited number of times.
+func IsNotFound(err error) bool {
+	return xerrors.TagIs[imageNotFoundTag](err)
+}
+
 // Pull performs a single attempt to pull an image from a registry.
 //
 // If configured, the pull is skipped if the image is already present and unpacked in the containerd client.
@@ -88,7 +102,7 @@ func PullWithRetriesAndTimeout(
 		return nil, fmt.Errorf("failed to parse image reference %q: %w", ref, err)
 	}
 
-	notFoundErrors := 0
+	var notFoundErrors uint = 0
 
 	err = retry.Exponential(
 		PullTimeout,
@@ -98,25 +112,23 @@ func PullWithRetriesAndTimeout(
 			ctx,
 			func(ctx context.Context) error {
 				img, err = pullInternal(ctx, registryBuilder, resources, client, namedRef, opts)
-				if err != nil {
-					switch {
-					case xerrors.TagIs[imageNotFoundTag](err):
-						notFoundErrors++
-						if notFoundErrors > opts.MaxNotFoundRetries {
-							return err
-						}
+				if err == nil {
+					return nil
+				}
 
-						return retry.ExpectedError(err)
-					case xerrors.TagIs[imageSignatureVerificationFailedTag](err):
-						return err // image verification failure is terminal
-					case xerrors.TagIs[imageTerminalErrorTag](err):
-						return err // other terminal error, no need to retry
-					default:
-						return retry.ExpectedError(err)
+				if IsTerminal(err) {
+					return err
+				}
+
+				if IsNotFound(err) {
+					notFoundErrors++
+
+					if notFoundErrors > opts.MaxNotFoundRetries {
+						return err
 					}
 				}
 
-				return nil
+				return retry.ExpectedError(err)
 			},
 		)
 
