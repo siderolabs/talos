@@ -345,6 +345,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			EtcRoot: etcRoot,
 		},
 		&files.EtcFileConfigController{},
+		&files.InlineDataVolumeController{},
 		&files.IQNController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},

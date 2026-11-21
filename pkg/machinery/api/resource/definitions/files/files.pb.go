@@ -128,6 +128,207 @@ func (x *EtcFileStatusSpec) GetSpecVersion() string {
 	return ""
 }
 
+// InlineDataVolumeMountRequestSpec describes a read-only bind of an inline data volume.
+type InlineDataVolumeMountRequestSpec struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// VolumeName is the name of the InlineDataVolumeConfig document.
+	VolumeName string `protobuf:"bytes,1,opt,name=volume_name,json=volumeName,proto3" json:"volume_name,omitempty"`
+	// Requester is the consumer of the bind.
+	Requester     string `protobuf:"bytes,2,opt,name=requester,proto3" json:"requester,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *InlineDataVolumeMountRequestSpec) Reset() {
+	*x = InlineDataVolumeMountRequestSpec{}
+	mi := &file_resource_definitions_files_files_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InlineDataVolumeMountRequestSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InlineDataVolumeMountRequestSpec) ProtoMessage() {}
+
+func (x *InlineDataVolumeMountRequestSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_files_files_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InlineDataVolumeMountRequestSpec.ProtoReflect.Descriptor instead.
+func (*InlineDataVolumeMountRequestSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_files_files_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *InlineDataVolumeMountRequestSpec) GetVolumeName() string {
+	if x != nil {
+		return x.VolumeName
+	}
+	return ""
+}
+
+func (x *InlineDataVolumeMountRequestSpec) GetRequester() string {
+	if x != nil {
+		return x.Requester
+	}
+	return ""
+}
+
+// InlineDataVolumeMountStatusSpec describes a read-only bind of an inline data volume.
+type InlineDataVolumeMountStatusSpec struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// VolumeName is the name of the InlineDataVolumeConfig document.
+	VolumeName string `protobuf:"bytes,1,opt,name=volume_name,json=volumeName,proto3" json:"volume_name,omitempty"`
+	// Target is the host path of the read-only bind.
+	Target string `protobuf:"bytes,2,opt,name=target,proto3" json:"target,omitempty"`
+	// ContentsHash is the hash of the files rendered when the bind was made ready.
+	ContentsHash string `protobuf:"bytes,3,opt,name=contents_hash,json=contentsHash,proto3" json:"contents_hash,omitempty"`
+	// Device is the device number of the filesystem the bind is of.
+	Device        uint64 `protobuf:"varint,4,opt,name=device,proto3" json:"device,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *InlineDataVolumeMountStatusSpec) Reset() {
+	*x = InlineDataVolumeMountStatusSpec{}
+	mi := &file_resource_definitions_files_files_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InlineDataVolumeMountStatusSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InlineDataVolumeMountStatusSpec) ProtoMessage() {}
+
+func (x *InlineDataVolumeMountStatusSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_files_files_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InlineDataVolumeMountStatusSpec.ProtoReflect.Descriptor instead.
+func (*InlineDataVolumeMountStatusSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_files_files_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *InlineDataVolumeMountStatusSpec) GetVolumeName() string {
+	if x != nil {
+		return x.VolumeName
+	}
+	return ""
+}
+
+func (x *InlineDataVolumeMountStatusSpec) GetTarget() string {
+	if x != nil {
+		return x.Target
+	}
+	return ""
+}
+
+func (x *InlineDataVolumeMountStatusSpec) GetContentsHash() string {
+	if x != nil {
+		return x.ContentsHash
+	}
+	return ""
+}
+
+func (x *InlineDataVolumeMountStatusSpec) GetDevice() uint64 {
+	if x != nil {
+		return x.Device
+	}
+	return 0
+}
+
+// InlineDataVolumeStatusSpec describes the rendered files of an inline data volume.
+type InlineDataVolumeStatusSpec struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// VolumeID is the ID of the volume holding the files.
+	VolumeId string `protobuf:"bytes,1,opt,name=volume_id,json=volumeId,proto3" json:"volume_id,omitempty"`
+	// ContentsHash is the hash of the rendered files.
+	ContentsHash string `protobuf:"bytes,2,opt,name=contents_hash,json=contentsHash,proto3" json:"contents_hash,omitempty"`
+	// Files is the number of rendered files.
+	Files int64 `protobuf:"varint,3,opt,name=files,proto3" json:"files,omitempty"`
+	// Device is the device number of the filesystem holding the files.
+	Device        uint64 `protobuf:"varint,4,opt,name=device,proto3" json:"device,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *InlineDataVolumeStatusSpec) Reset() {
+	*x = InlineDataVolumeStatusSpec{}
+	mi := &file_resource_definitions_files_files_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InlineDataVolumeStatusSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InlineDataVolumeStatusSpec) ProtoMessage() {}
+
+func (x *InlineDataVolumeStatusSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_files_files_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InlineDataVolumeStatusSpec.ProtoReflect.Descriptor instead.
+func (*InlineDataVolumeStatusSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_files_files_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *InlineDataVolumeStatusSpec) GetVolumeId() string {
+	if x != nil {
+		return x.VolumeId
+	}
+	return ""
+}
+
+func (x *InlineDataVolumeStatusSpec) GetContentsHash() string {
+	if x != nil {
+		return x.ContentsHash
+	}
+	return ""
+}
+
+func (x *InlineDataVolumeStatusSpec) GetFiles() int64 {
+	if x != nil {
+		return x.Files
+	}
+	return 0
+}
+
+func (x *InlineDataVolumeStatusSpec) GetDevice() uint64 {
+	if x != nil {
+		return x.Device
+	}
+	return 0
+}
+
 var File_resource_definitions_files_files_proto protoreflect.FileDescriptor
 
 const file_resource_definitions_files_files_proto_rawDesc = "" +
@@ -138,7 +339,22 @@ const file_resource_definitions_files_files_proto_rawDesc = "" +
 	"\x04mode\x18\x02 \x01(\rR\x04mode\x12#\n" +
 	"\rselinux_label\x18\x03 \x01(\tR\fselinuxLabel\"6\n" +
 	"\x11EtcFileStatusSpec\x12!\n" +
-	"\fspec_version\x18\x01 \x01(\tR\vspecVersionBt\n" +
+	"\fspec_version\x18\x01 \x01(\tR\vspecVersion\"a\n" +
+	" InlineDataVolumeMountRequestSpec\x12\x1f\n" +
+	"\vvolume_name\x18\x01 \x01(\tR\n" +
+	"volumeName\x12\x1c\n" +
+	"\trequester\x18\x02 \x01(\tR\trequester\"\x97\x01\n" +
+	"\x1fInlineDataVolumeMountStatusSpec\x12\x1f\n" +
+	"\vvolume_name\x18\x01 \x01(\tR\n" +
+	"volumeName\x12\x16\n" +
+	"\x06target\x18\x02 \x01(\tR\x06target\x12#\n" +
+	"\rcontents_hash\x18\x03 \x01(\tR\fcontentsHash\x12\x16\n" +
+	"\x06device\x18\x04 \x01(\x04R\x06device\"\x8c\x01\n" +
+	"\x1aInlineDataVolumeStatusSpec\x12\x1b\n" +
+	"\tvolume_id\x18\x01 \x01(\tR\bvolumeId\x12#\n" +
+	"\rcontents_hash\x18\x02 \x01(\tR\fcontentsHash\x12\x14\n" +
+	"\x05files\x18\x03 \x01(\x03R\x05files\x12\x16\n" +
+	"\x06device\x18\x04 \x01(\x04R\x06deviceBt\n" +
 	"(dev.talos.api.resource.definitions.filesZHgithub.com/siderolabs/talos/pkg/machinery/api/resource/definitions/filesb\x06proto3"
 
 var (
@@ -153,10 +369,13 @@ func file_resource_definitions_files_files_proto_rawDescGZIP() []byte {
 	return file_resource_definitions_files_files_proto_rawDescData
 }
 
-var file_resource_definitions_files_files_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_resource_definitions_files_files_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_resource_definitions_files_files_proto_goTypes = []any{
-	(*EtcFileSpecSpec)(nil),   // 0: talos.resource.definitions.files.EtcFileSpecSpec
-	(*EtcFileStatusSpec)(nil), // 1: talos.resource.definitions.files.EtcFileStatusSpec
+	(*EtcFileSpecSpec)(nil),                  // 0: talos.resource.definitions.files.EtcFileSpecSpec
+	(*EtcFileStatusSpec)(nil),                // 1: talos.resource.definitions.files.EtcFileStatusSpec
+	(*InlineDataVolumeMountRequestSpec)(nil), // 2: talos.resource.definitions.files.InlineDataVolumeMountRequestSpec
+	(*InlineDataVolumeMountStatusSpec)(nil),  // 3: talos.resource.definitions.files.InlineDataVolumeMountStatusSpec
+	(*InlineDataVolumeStatusSpec)(nil),       // 4: talos.resource.definitions.files.InlineDataVolumeStatusSpec
 }
 var file_resource_definitions_files_files_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -177,7 +396,7 @@ func file_resource_definitions_files_files_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_resource_definitions_files_files_proto_rawDesc), len(file_resource_definitions_files_files_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

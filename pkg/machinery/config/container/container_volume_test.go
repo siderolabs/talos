@@ -76,12 +76,29 @@ func TestContainerVolumeMounts(t *testing.T) {
 			},
 		},
 		{
+			name: "inline data volume mounted ro",
+			docs: []config.Document{
+				newInlineDataVolumeDoc("data"),
+				newVolumeMountContainerDoc("data", "ro"),
+			},
+		},
+		{
+			name: "inline data volume mounted writable",
+			docs: []config.Document{
+				newInlineDataVolumeDoc("data"),
+				newVolumeMountContainerDoc("data"),
+			},
+			expectedErrs: []string{
+				`container "app": mounts[0]: volume "data" is configured read-only, so it must be mounted with the ro option`,
+			},
+		},
+		{
 			name: "volume not configured",
 			docs: []config.Document{
 				newVolumeMountContainerDoc("nowhere"),
 			},
 			expectedErrs: []string{
-				`container "app": mounts[0]: no UserVolumeConfig, ExistingVolumeConfig or ExternalVolumeConfig declares volume "nowhere"`,
+				`container "app": mounts[0]: no UserVolumeConfig, ExistingVolumeConfig, ExternalVolumeConfig or InlineDataVolumeConfig declares volume "nowhere"`,
 			},
 		},
 		{
@@ -92,7 +109,7 @@ func TestContainerVolumeMounts(t *testing.T) {
 				newVolumeMountContainerDoc("u-data"),
 			},
 			expectedErrs: []string{
-				`container "app": mounts[0]: no UserVolumeConfig, ExistingVolumeConfig or ExternalVolumeConfig declares volume "u-data"`,
+				`container "app": mounts[0]: no UserVolumeConfig, ExistingVolumeConfig, ExternalVolumeConfig or InlineDataVolumeConfig declares volume "u-data"`,
 			},
 		},
 		{

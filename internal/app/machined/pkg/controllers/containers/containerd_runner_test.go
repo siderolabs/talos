@@ -148,6 +148,27 @@ func TestMountsResolvedToOCI(t *testing.T) {
 			},
 		},
 		{
+			name: "inline data volume",
+			mounts: []containers.ResolvedMountSpec{
+				{
+					Kind:        containers.MountKindVolume,
+					Source:      "/run/inline-data-volumes/web.config",
+					Destination: "/etc/app",
+					Options:     []string{"ro", "rw", "nodev"},
+					VolumeID:    "i-config",
+					VolumeName:  "config",
+				},
+			},
+			expected: []specs.Mount{
+				{
+					Type:        "bind",
+					Source:      "/run/inline-data-volumes/web.config",
+					Destination: "/etc/app",
+					Options:     []string{"rbind", "ro", "nodev", "nosuid", "noexec"},
+				},
+			},
+		},
+		{
 			name: "all kinds keep their declared order",
 			mounts: []containers.ResolvedMountSpec{
 				{Kind: containers.MountKindVolume, Source: "/var/mnt/data", Destination: "/mnt/data"},

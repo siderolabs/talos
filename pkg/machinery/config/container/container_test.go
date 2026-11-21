@@ -157,6 +157,21 @@ func TestNewConflict(t *testing.T) {
 
 	_, err = container.New(xv1, uv2)
 	require.NoError(t, err)
+
+	tv1 := block.NewInlineDataVolumeConfigV1Alpha1()
+	tv1.MetaName = "my-user-volume-1"
+
+	_, err = container.New(uv1, tv1)
+	assert.EqualError(t, err, "conflicting documents: UserVolumeConfig/my-user-volume-1 and InlineDataVolumeConfig/my-user-volume-1")
+
+	_, err = container.New(ev1, tv1)
+	assert.EqualError(t, err, "conflicting documents: ExistingVolumeConfig/my-user-volume-1 and InlineDataVolumeConfig/my-user-volume-1")
+
+	_, err = container.New(tv1, xv1)
+	assert.EqualError(t, err, "conflicting documents: InlineDataVolumeConfig/my-user-volume-1 and ExternalVolumeConfig/my-user-volume-1")
+
+	_, err = container.New(tv1, uv2)
+	require.NoError(t, err)
 }
 
 func TestCRICustomizationConfigs(t *testing.T) {

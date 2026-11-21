@@ -1,0 +1,12 @@
+apiVersion: v1alpha1
+kind: StoragePoolConfig
+name: vm-images
+volume:
+  name: vm-data
+---
+apiVersion: v1alpha1
+kind: InlineDataVolumeConfig
+name: vm-data
+files:
+  a.conf:
+    contents: a

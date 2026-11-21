@@ -72,7 +72,7 @@ type NFSTransport = block.NFSTransport
 //	description: |
 //	  External volumes allow to mount volumes that were created outside of Talos,
 //	  over the network or API. Volume will be mounted under `/var/mnt/<name>`.
-//	  The name must not be taken by a user or existing volume.
+//	  The name must not be taken by a user, existing or inline data volume.
 //	examples:
 //	  - value: exampleExternalVolumeConfigV1Alpha1Virtiofs()
 //	  - value: exampleExternalVolumeConfigV1Alpha1NFS()

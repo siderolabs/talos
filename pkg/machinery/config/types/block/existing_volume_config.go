@@ -48,7 +48,7 @@ var (
 //	description: |
 //	  Existing volumes allow to mount partitions (or whole disks) that were created
 //	  outside of Talos. Volume will be mounted under `/var/mnt/<name>`.
-//	  The name must not be taken by a user or external volume.
+//	  The name must not be taken by a user, external or inline data volume.
 //	examples:
 //	  - value: exampleExistingVolumeConfigV1Alpha1()
 //	alias: ExistingVolumeConfig
