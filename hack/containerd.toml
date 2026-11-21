@@ -26,3 +26,7 @@ disabled_plugins = [
 [debug]
 level = "info"
 format = "json"
+
+# The shim sockets live on the system containerd state tmpfs, which the sandbox namespace detaches.
+[plugins."io.containerd.shim.v1.manager"]
+socket_dir = "/system/run/containerd/s"

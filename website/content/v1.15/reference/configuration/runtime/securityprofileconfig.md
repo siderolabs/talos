@@ -26,6 +26,13 @@ description: |
     The categories only take effect when SELinux is enabled. Container runtimes which do not support SELinux
     labels (e.g. gVisor, youki, Spin) fail to start pods when the categories are enabled.
 
+    With `systemContainerdIsolation: true`, the sandbox namespace loses the system containerd directories
+    `/system/run/containerd` with its socket and the sockets of its shims, and `/system/var` with the images
+    and snapshots of the system containers, so pods can not create or change containers of the system containerd
+    through a `hostPath` mount. Tools which talk to the system containerd from a pod (e.g. `ctr`) stop working.
+    It requires `workloadIsolation: true` and takes effect after a reboot: until then, running pods keep the
+    directories.
+
     By default, Ctrl-Alt-Delete reboots the machine. With `ignoreCtrlAltDelete: true`, Ctrl-Alt-Delete
     is logged and ignored. Ctrl-Alt-Delete still reboots the machine until a configuration with this
     option is applied. The option has no effect in container mode.
@@ -55,6 +62,7 @@ selinuxCategories: true # Label workloads with SELinux MCS categories, split bet
 |`workloadIsolation` |bool |Enable workload isolation (run the container plane inside the sandbox namespace).  | |
 |`ignoreCtrlAltDelete` |bool |Ignore Ctrl-Alt-Delete instead of rebooting the machine.  | |
 |`selinuxCategories` |bool |Label workloads with SELinux MCS categories, split between the CRI, Talos containers and Talos itself.  | |
+|`systemContainerdIsolation` |bool |Hide the system containerd socket from the sandbox namespace.  | |
 
 
 

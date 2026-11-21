@@ -34,6 +34,8 @@ type LaunchConfig struct {
 	Env                 []string
 	DroppedCapabilities []string
 	SelinuxLabel        string
+	// DetachedMounts are detached from the sandbox namespace before the launch.
+	DetachedMounts []string
 	// Stdin is the file to use as the service's stdin.  When nil, /dev/null is used.
 	Stdin  *os.File
 	Stdout *os.File
