@@ -2,8 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//go:build amd64
-
 package profile
 
 import (
@@ -11,10 +9,9 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 )
 
-// Profiles returns the stable builtin catalog in name order.
+// amd64Profiles is the amd64 builtin catalog in name order.
 // Builtin profiles use the default timers, so changing a default changes every builtin guest's ABI.
-// Each call returns fresh resources so callers cannot modify the catalog.
-func Profiles() []*hypervisor.VirtualMachineProfileSpec {
+func amd64Profiles() []*hypervisor.VirtualMachineProfileSpec {
 	host := hypervisor.NewVirtualMachineProfileSpec(hypervisor.NamespaceName, "host")
 	*host.TypedSpec() = hypervisor.VirtualMachineProfileSpecSpec{
 		Builtin: true,
@@ -54,8 +51,4 @@ func Profiles() []*hypervisor.VirtualMachineProfileSpec {
 		legacy,
 		passthrough,
 	}
-}
-
-func validMachine(machine string) bool {
-	return hypervisorhelpers.ValidVirtualMachineProfileMachine(machine)
 }

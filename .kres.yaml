@@ -93,6 +93,9 @@ spec:
     integration/embedded: "Run embedded integration tests"
     integration/extensions: "Run extensions integration tests"
     integration/gcp: "Run GCP integration tests"
+    integration/hypervisor: "Run hypervisor integration tests (all variants)"
+    integration/hypervisor-aws-arm64: "Run hypervisor integration tests on AWS ARM64 bare-metal instances"
+    integration/hypervisor-qemu: "Run hypervisor integration tests on a QEMU cluster"
     integration/image-cache: "Run image-cache integration tests"
     integration/image-factory: "Run image-factory integration tests"
     integration/images: "Run images integration tests"
@@ -468,7 +471,7 @@ spec:
             QEMU_EXTRA_DISKS: 1
             QEMU_EXTRA_DISKS_ON_CONTROLPLANES: true
             WITH_SKIP_ETCD_K8S: true
-            EXTRA_TEST_ARGS: -talos.extensions.libvirt -talos.hypervisor.disk-image=$(OPENWRT_DISK)
+            EXTRA_TEST_ARGS: -talos.extensions.libvirt -talos.hypervisor.disk-image=$(OPENWRT_AMD64_DISK)
             TEST_MODE: skip-etcd-k8s
             WITH_CONFIG_PATCH: "@_out/installer-extensions-patch.yaml:@hack/test/patches/extensions-libvirt.yaml:@hack/test/patches/content-library.yaml"
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -1562,7 +1565,7 @@ spec:
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
               - "/tmp/support-*.zip"
-    - name: integration-hypervisor
+    - name: integration-hypervisor-qemu
       buildxOptions:
         enabled: true
       depends:
@@ -1573,6 +1576,7 @@ spec:
         types: [completed]
       triggerLabels:
         - integration/hypervisor
+        - integration/hypervisor-qemu
         - integration/release-gate
       steps:
         - name: download-artifacts
@@ -1629,7 +1633,7 @@ spec:
             QEMU_EXTRA_DISKS: 1
             QEMU_EXTRA_DISKS_ON_CONTROLPLANES: true
             WITH_SKIP_ETCD_K8S: true
-            EXTRA_TEST_ARGS: -talos.extensions.libvirt -talos.hypervisor.talos-iso=_out/metal-amd64.iso -talos.hypervisor.alpine-iso=$(ALPINE_ISO) -talos.hypervisor.disk-image=$(OPENWRT_DISK)
+            EXTRA_TEST_ARGS: -talos.extensions.libvirt -talos.hypervisor.talos-iso=_out/metal-amd64.iso -talos.hypervisor.alpine-iso=$(ALPINE_AMD64_ISO) -talos.hypervisor.disk-image=$(OPENWRT_AMD64_DISK)
             TEST_MODE: skip-etcd-k8s
             WITH_CONFIG_PATCH: "@_out/installer-extensions-patch.yaml:@hack/test/patches/extensions-libvirt.yaml:@hack/test/patches/content-library.yaml"
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -1638,7 +1642,7 @@ spec:
             - always
           artifactStep:
             type: upload
-            artifactName: talos-logs-integration-hypervisor
+            artifactName: talos-logs-integration-hypervisor-qemu
             disableExecutableListGeneration: true
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
@@ -2332,6 +2336,8 @@ spec:
         - integration/aws-nvidia-nonfree-production
         - integration/aws-nvidia-nonfree-production-amd64
         - integration/aws-nvidia-nonfree-production-arm64
+        - integration/hypervisor
+        - integration/hypervisor-aws-arm64
         - integration/release-gate
       steps:
         - name: download-artifacts
@@ -2584,6 +2590,83 @@ spec:
           environment:
             EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
             INTEGRATION_TEST_RUN: TestIntegration/api.ExtensionsSuiteNVIDIA
+        - name: tf destroy
+          command: e2e-cloud-tf
+          conditions:
+            - always
+          environment:
+            TF_SCRIPT_DIR: _out/contrib
+            TF_E2E_TEST_TYPE: aws
+            TF_E2E_ACTION: destroy
+            TF_E2E_REFRESH_ON_DESTROY: false
+    - name: integration-hypervisor-aws-arm64
+      buildxOptions:
+        enabled: true
+      sops: true
+      depends:
+        - default
+        - integration-build-aws-image
+      runnerGroup: generic # we can use generic here since the tests run against a remote talos cluster
+      onWorkflowRun:
+        workflows: [integration-build-aws-image-triggered]
+        types: [completed]
+      triggerLabels:
+        - integration/hypervisor
+        - integration/hypervisor-aws-arm64
+      steps:
+        - name: download-artifacts
+          artifactStep:
+            type: download
+            artifactName: talos-aws-artifacts
+            artifactPath: _out
+        - name: ci-temp-release-tag
+        - name: checkout extensions
+          checkoutStep:
+            repository: siderolabs/extensions
+            ref: main
+            path: _out/extensions
+        - name: set variables
+          nonMakeStep: true
+          command: cat _out/talos-metadata >> "$GITHUB_ENV"
+        - name: build extensions
+          command: libvirtd extensions-metadata
+          arguments:
+            - -C
+            - _out/extensions
+          environment:
+            PLATFORM: linux/arm64
+            PUSH: true
+            REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-aws-prepare
+          environment:
+            EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
+            E2E_AWS_TARGET: hypervisor
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            TARGET_ARCH: arm64
+        - name: checkout contrib
+          checkoutStep:
+            repository: siderolabs/contrib
+            ref: main
+            path: _out/contrib
+        - name: setup tf
+          terraformStep: true
+        - name: tf apply
+          command: e2e-cloud-tf
+          environment:
+            TF_SCRIPT_DIR: _out/contrib
+            TF_E2E_TEST_TYPE: aws
+            TF_E2E_ACTION: apply
+        - name: download Alpine ISO
+          command: download-alpine-iso
+        - name: download writable guest disk
+          command: download-openwrt-disk
+        - name: e2e-hypervisor
+          command: e2e-aws
+          environment:
+            EXTRA_TEST_ARGS: -talos.extensions.libvirt -talos.hypervisor.talos-iso=_out/metal-amd64.iso -talos.hypervisor.alpine-iso=$(ALPINE_ARM64_ISO) -talos.hypervisor.disk-image=$(OPENWRT_ARM64_DISK)
+            INTEGRATION_TEST_RUN: TestIntegration/hypervisor.
+            E2E_AWS_CONFIG_PATCH: "@hack/test/patches/content-library.yaml"
+            SKIP_KUBERNETES_INTEGRATION_TEST: true
         - name: tf destroy
           command: e2e-cloud-tf
           conditions:

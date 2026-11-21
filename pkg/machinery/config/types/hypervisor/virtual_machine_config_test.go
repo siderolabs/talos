@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strings"
 	"testing"
@@ -22,6 +23,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 )
@@ -1344,6 +1346,11 @@ func TestVirtualMachineConfigVideo(t *testing.T) {
 func TestVirtualMachineDiskBusDefault(t *testing.T) {
 	t.Parallel()
 
+	cdromBus := hypervisorhelpers.VirtualMachineDiskBusSATA
+	if runtime.GOARCH == constants.ArchArm64 {
+		cdromBus = hypervisorhelpers.VirtualMachineDiskBusSCSI
+	}
+
 	for _, test := range []struct {
 		name string
 
@@ -1362,9 +1369,9 @@ func TestVirtualMachineDiskBusDefault(t *testing.T) {
 			expected: hypervisorhelpers.VirtualMachineDiskBusVirtio,
 		},
 		{
-			name:     "cdrom defaults to sata, not virtio",
+			name:     "cdrom defaults to a firmware-readable bus, not virtio-blk",
 			diskType: hypervisorhelpers.VirtualMachineDiskTypeCDROM,
-			expected: hypervisorhelpers.VirtualMachineDiskBusSATA,
+			expected: cdromBus,
 		},
 		{
 			name:     "an explicit bus is left alone on a cdrom",

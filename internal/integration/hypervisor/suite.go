@@ -57,6 +57,13 @@ func (suite *LibvirtSuite) TearDownTest() {
 	}
 }
 
+// hostRebootSupported reports whether tests may reboot the node: only QEMU nodes reboot within the
+// test timeouts. Cloud bare-metal hosts take far longer, and rebooting a single-node cluster also
+// takes down the API the tests talk to.
+func (suite *LibvirtSuite) hostRebootSupported() bool {
+	return suite.Cluster != nil && suite.Cluster.Provisioner() == base.ProvisionerQEMU
+}
+
 func (suite *LibvirtSuite) assertStoppedDomain(ctx context.Context, node, name string) {
 	suite.T().Helper()
 

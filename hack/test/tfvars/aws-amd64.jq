@@ -10,7 +10,7 @@
     "worker_groups": (if .worker_group == "nvidia" then [
         {
             "name": "nvidia-t4",
-            "ami_id": .nvidia_ami_id,
+            "ami_id": .extensions_ami_id,
             "instance_type": "g4dn.xlarge",
             "config_patch_files": [
                 "nvidia.yaml"

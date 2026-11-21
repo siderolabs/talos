@@ -2,8 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//go:build amd64
-
 package profile_test
 
 import (
@@ -15,12 +13,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor/internal/profile"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 )
 
-func TestProfiles(t *testing.T) {
-	builtins := profile.Profiles()
+func TestAMD64Profiles(t *testing.T) {
+	builtins := profile.Profiles(constants.ArchAmd64)
 	require.Len(t, builtins, 3)
 
 	for index, expected := range []struct {
@@ -61,7 +60,7 @@ func TestProfiles(t *testing.T) {
 			},
 			Timers: hypervisor.DefaultVirtualMachineProfileTimersSpec(),
 		}, *builtin.TypedSpec())
-		require.NoError(t, profile.Validate(expected.name, *builtin.TypedSpec()))
+		require.NoError(t, profile.Validate(constants.ArchAmd64, expected.name, *builtin.TypedSpec()))
 	}
 
 	builtins[0].TypedSpec().CPU.Features = []hypervisor.VirtualMachineProfileCPUFeatureSpec{
@@ -69,7 +68,7 @@ func TestProfiles(t *testing.T) {
 			Name: "changed",
 		},
 	}
-	fresh := profile.Profiles()
+	fresh := profile.Profiles(constants.ArchAmd64)
 	require.Equal(t, "host", fresh[0].Metadata().ID())
 	require.Equal(t, "q35", fresh[0].TypedSpec().Machine)
 	require.Empty(t, fresh[0].TypedSpec().CPU.Features)
@@ -108,14 +107,14 @@ var builtinContractMutations = map[string]func(*hypervisor.VirtualMachineProfile
 
 // Every hardware field of a builtin profile is part of its contract: changing any one of them,
 // on any builtin, must fail validation.
-func TestValidateBuiltinContract(t *testing.T) {
-	for _, builtin := range profile.Profiles() {
+func TestAMD64ValidateBuiltinContract(t *testing.T) {
+	for _, builtin := range profile.Profiles(constants.ArchAmd64) {
 		for field, mutate := range builtinContractMutations {
 			t.Run(builtin.Metadata().ID()+"/"+field, func(t *testing.T) {
 				changed := builtin.TypedSpec().DeepCopy()
 				mutate(&changed)
 				require.NotEqual(t, *builtin.TypedSpec(), changed, "mutation must change the spec")
-				require.Error(t, profile.Validate(builtin.Metadata().ID(), changed))
+				require.Error(t, profile.Validate(constants.ArchAmd64, builtin.Metadata().ID(), changed))
 			})
 		}
 	}
@@ -149,7 +148,7 @@ func TestBuiltinContractCoversAllFields(t *testing.T) {
 	require.ElementsMatch(t, fields, slices.Collect(maps.Keys(builtinContractMutations)))
 }
 
-func TestValidateCustom(t *testing.T) {
+func TestAMD64ValidateCustom(t *testing.T) {
 	valid := hypervisor.VirtualMachineProfileSpecSpec{
 		Machine: "pc-q35-9.2",
 		CPU: hypervisor.VirtualMachineProfileCPUSpec{
@@ -165,11 +164,11 @@ func TestValidateCustom(t *testing.T) {
 		},
 		Timers: hypervisor.DefaultVirtualMachineProfileTimersSpec(),
 	}
-	require.NoError(t, profile.ValidateCustom("cluster", valid))
+	require.NoError(t, profile.ValidateCustom(constants.ArchAmd64, "cluster", valid))
 
 	for _, name := range []string{"host", "legacy", "passthrough", "compat-v3", "", "bad name"} {
 		t.Run("reserved-or-invalid-name-"+name, func(t *testing.T) {
-			require.Error(t, profile.ValidateCustom(name, valid))
+			require.Error(t, profile.ValidateCustom(constants.ArchAmd64, name, valid))
 		})
 	}
 
@@ -236,7 +235,7 @@ func TestValidateCustom(t *testing.T) {
 			spec := valid
 			spec.CPU.Features = append([]hypervisor.VirtualMachineProfileCPUFeatureSpec(nil), valid.CPU.Features...)
 			test.mutate(&spec)
-			require.Error(t, profile.ValidateCustom("cluster", spec))
+			require.Error(t, profile.ValidateCustom(constants.ArchAmd64, "cluster", spec))
 		})
 	}
 }

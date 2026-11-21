@@ -314,8 +314,8 @@ func (VirtualMachineBallooning) Doc() *encoder.Doc {
 func (VirtualMachineProfileConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "VirtualMachineProfileConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineProfileConfig declares a named amd64 guest ABI." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "VirtualMachineProfileConfig declares a named amd64 guest ABI.\nProfiles bundle the guest machine type, CPU model and platform timers. Use a versioned machine\ntype and a CPU baseline tested on every host for migration. Aliases drift as QEMU\nchanges. A named CPU model is not a migration guarantee across arbitrary hosts.\n",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineProfileConfig declares a named guest ABI." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineProfileConfig declares a named guest ABI.\nProfiles bundle the guest machine type, CPU model and platform timers. Use a versioned machine\ntype and a CPU baseline tested on every host for migration. Aliases drift as QEMU\nchanges. A named CPU model is not a migration guarantee across arbitrary hosts.\n",
 		Fields: []encoder.Doc{
 			{
 				Type:   "Meta",
@@ -332,8 +332,8 @@ func (VirtualMachineProfileConfigV1Alpha1) Doc() *encoder.Doc {
 				Name:        "machine",
 				Type:        "string",
 				Note:        "",
-				Description: "q35 or i440fx machine family, preferably a versioned type.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "q35 or i440fx machine family, preferably a versioned type." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "q35 or i440fx machine family on amd64, virt on arm64, preferably a versioned type.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "q35 or i440fx machine family on amd64, virt on arm64, preferably a versioned type." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
 				Name:        "cpu",
@@ -346,7 +346,7 @@ func (VirtualMachineProfileConfigV1Alpha1) Doc() *encoder.Doc {
 				Name:        "timers",
 				Type:        "VirtualMachineProfileTimers",
 				Note:        "",
-				Description: "Platform timers presented to the guest.\n\nOptional; omitting it hides the HPET, the RTC catches up on missed ticks and the PIT delays them.",
+				Description: "Platform timers presented to the guest.\n\nOptional; omitting it hides the HPET, the RTC catches up on missed ticks and the PIT delays them.\nThese are x86 timers: arm64 guests get none of them, and enabling the HPET is rejected there.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Platform timers presented to the guest." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
@@ -678,7 +678,7 @@ func (VirtualMachineDisk) Doc() *encoder.Doc {
 				Name:        "bus",
 				Type:        "VirtualMachineDiskBus",
 				Note:        "",
-				Description: "Controller the disk is attached to.\n\n`virtio` for anything modern; `sata` for guests without virtio drivers at install time.\n\nOptional; defaults to `virtio` on a `disk` and to `sata` on a `cdrom`. A `cdrom` cannot\nbe attached to `virtio`, which presents no ejectable media.",
+				Description: "Controller the disk is attached to.\n\n`virtio` for anything modern; `sata` for guests without virtio drivers at install time.\n\nOptional; defaults to `virtio` on a `disk`. A `cdrom` defaults to `sata` on\namd64 and `scsi` on arm64, where the bundled UEFI firmware supports virtio-scsi\nbut not SATA.\nA `cdrom` cannot be attached to `virtio`, which presents no ejectable media.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Controller the disk is attached to." /* encoder.LineComment */, "" /* encoder.FootComment */},
 				Values: []string{
 					"virtio",

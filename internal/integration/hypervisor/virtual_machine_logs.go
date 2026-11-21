@@ -50,7 +50,7 @@ func (suite *LogsSuite) TestAlpineSerialHistory() {
 	endpoint, detachedMarker, requested := suite.startAlpineHTTPServer(gateway, guestIP, release)
 	ready := serialNonce("READY")
 	start = console.mark()
-	suite.Require().NoError(console.send("(wget -T 40 -qO- '" + endpoint + "' >/dev/ttyS0) & " + serialPrintf(ready)))
+	suite.Require().NoError(console.send("(wget -T 40 -qO- '" + endpoint + "' >/dev/" + suite.guestArch(node).serialTTY + ") & " + serialPrintf(ready)))
 	suite.Require().NoError(console.expectAfter(start, []byte(ready)))
 	suite.awaitSerialSignal(requested, "guest wget readiness")
 	suite.detachAlpineConsole(console)
@@ -190,7 +190,7 @@ func (suite *LogsSuite) TestAlpineSerialHistoryRotation() {
 		"awk 'BEGIN { for (i=0;i<2560;i++) printf \"%01023d\\n\", 0 }'; " +
 		strings.TrimSuffix(serialPrintf(fresh), "\n")
 	start = console.mark()
-	suite.Require().NoError(console.send("stty -echo; (wget -T 40 -qO- '" + endpoint + "' >/dev/null && { " + flood + "; }) >/dev/ttyS0 & " + serialPrintf(ready)))
+	suite.Require().NoError(console.send("stty -echo; (wget -T 40 -qO- '" + endpoint + "' >/dev/null && { " + flood + "; }) >/dev/" + suite.guestArch(node).serialTTY + " & " + serialPrintf(ready)))
 	suite.Require().NoError(console.expectAfter(start, []byte(ready)))
 	suite.awaitSerialSignal(requested, "rotation workload readiness")
 	suite.detachAlpineConsole(console)

@@ -64,7 +64,7 @@ func (suite *CDROMSuite) TestCDROMFromContentLibrary() {
 	doc := hypervisorcfg.NewVirtualMachineConfigV1Alpha1()
 	doc.MetaName = name
 	doc.PowerStateConfig = hypervisorhelpers.PowerStateRunning
-	doc.FirmwareConfig.FirmwareType = hypervisorhelpers.VirtualMachineFirmwareTypeBIOS
+	doc.FirmwareConfig.FirmwareType = suite.guestArch(node).firmware
 	doc.CPUConfig.CPUCount = 1
 	doc.MemoryConfig.MemorySize = meta.MustByteSize("128MiB")
 	installDisk := hypervisorcfg.VirtualMachineDisk{
@@ -158,7 +158,7 @@ func (suite *CDROMSuite) TestCDROMWaitsForItsImage() {
 	doc := hypervisorcfg.NewVirtualMachineConfigV1Alpha1()
 	doc.MetaName = name
 	doc.PowerStateConfig = hypervisorhelpers.PowerStateRunning
-	doc.FirmwareConfig.FirmwareType = hypervisorhelpers.VirtualMachineFirmwareTypeBIOS
+	doc.FirmwareConfig.FirmwareType = suite.guestArch(node).firmware
 	doc.CPUConfig.CPUCount = 1
 	doc.MemoryConfig.MemorySize = meta.MustByteSize("128MiB")
 	doc.DisksConfig = []hypervisorcfg.VirtualMachineDisk{
@@ -246,7 +246,7 @@ func (suite *CDROMSuite) TestCDROMFromTalosISO() {
 	doc := hypervisorcfg.NewVirtualMachineConfigV1Alpha1()
 	doc.MetaName = name
 	doc.PowerStateConfig = hypervisorhelpers.PowerStateRunning
-	doc.FirmwareConfig.FirmwareType = hypervisorhelpers.VirtualMachineFirmwareTypeBIOS
+	doc.FirmwareConfig.FirmwareType = suite.guestArch(node).firmware
 	doc.CPUConfig.CPUCount = 1
 	doc.MemoryConfig.MemorySize = meta.MustByteSize("512MiB")
 	doc.DisksConfig = []hypervisorcfg.VirtualMachineDisk{
@@ -335,7 +335,7 @@ func (suite *CDROMSuite) TestCDROMImageIsHeldWhileAttached() {
 	doc := hypervisorcfg.NewVirtualMachineConfigV1Alpha1()
 	doc.MetaName = name
 	doc.PowerStateConfig = hypervisorhelpers.PowerStateRunning
-	doc.FirmwareConfig.FirmwareType = hypervisorhelpers.VirtualMachineFirmwareTypeBIOS
+	doc.FirmwareConfig.FirmwareType = suite.guestArch(node).firmware
 	doc.CPUConfig.CPUCount = 1
 	doc.MemoryConfig.MemorySize = meta.MustByteSize("128MiB")
 	doc.DisksConfig = []hypervisorcfg.VirtualMachineDisk{installDisk}
@@ -500,7 +500,7 @@ func (suite *CDROMSuite) TestContentLibraryIsReleasedWithItsGuest() {
 	doc := hypervisorcfg.NewVirtualMachineConfigV1Alpha1()
 	doc.MetaName = name
 	doc.PowerStateConfig = hypervisorhelpers.PowerStateRunning
-	doc.FirmwareConfig.FirmwareType = hypervisorhelpers.VirtualMachineFirmwareTypeBIOS
+	doc.FirmwareConfig.FirmwareType = suite.guestArch(node).firmware
 	doc.CPUConfig.CPUCount = 1
 	doc.MemoryConfig.MemorySize = meta.MustByteSize("128MiB")
 	doc.DisksConfig = []hypervisorcfg.VirtualMachineDisk{installDisk}

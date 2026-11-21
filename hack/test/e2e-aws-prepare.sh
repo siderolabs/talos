@@ -22,6 +22,9 @@ function get_ami_id() {
 
 function cloud_image_upload_with_extensions() {
   case "${1}" in
+    hypervisor)
+      EXTENSIONS=$(jq -R < "${EXTENSIONS_METADATA_FILE}" | jq -rs 'map(select(. | contains("/libvirtd:"))) | .[] |= "--system-extension-image=" + . | join(" ")')
+      ;;
     nvidia-oss-lts)
       EXTENSIONS=$(jq -R < "${EXTENSIONS_METADATA_FILE}" | jq -rs 'map(select(. | (contains("nvidia-open-gpu-kernel-modules-lts") or contains("nvidia-container-toolkit-lts")) and (contains("nvidia-fabricmanager") or contains("nonfree-kmod-nvidia") | not))) | .[] |= "--system-extension-image=" + . | join(" ")')
       ;;
@@ -56,15 +59,20 @@ cloud_image_upload "talos-e2e"
 AMI_ID=$(get_ami_id)
 
 WORKER_GROUP=
-NVIDIA_AMI_ID=
+EXTENSIONS_AMI_ID=
 
 case "${E2E_AWS_TARGET:-default}" in
   default)
     ;;
+  hypervisor)
+    WORKER_GROUP="hypervisor"
+    cloud_image_upload_with_extensions "${E2E_AWS_TARGET}"
+    EXTENSIONS_AMI_ID=$(get_ami_id)
+    ;;
   *)
     WORKER_GROUP="nvidia"
     cloud_image_upload_with_extensions "${E2E_AWS_TARGET}"
-    NVIDIA_AMI_ID=$(get_ami_id)
+    EXTENSIONS_AMI_ID=$(get_ami_id)
     # cloud_image_upload_with_extensions "${E2E_AWS_TARGET}-fabricmanager"
     # NVIDIA_FM_AMI_ID=$(get_ami_id)
     ;;
@@ -79,18 +87,18 @@ AWS_JQ_TEMPLATE="aws-${ARCH}.jq"
 jq --null-input \
   --arg WORKER_GROUP "${WORKER_GROUP}" \
   --arg AMI_ID "${AMI_ID}" \
-  --arg NVIDIA_AMI_ID "${NVIDIA_AMI_ID}" \
+  --arg EXTENSIONS_AMI_ID "${EXTENSIONS_AMI_ID}" \
   --arg CLUSTER_NAME "${NAME_PREFIX}" \
   --arg TALOS_VERSION_CONTRACT "${TALOS_VERSION}" \
   --arg KUBERNETES_VERSION "${KUBERNETES_VERSION}" \
     '{
         worker_group: $WORKER_GROUP,
         ami_id: $AMI_ID,
-        nvidia_ami_id: $NVIDIA_AMI_ID,
+        extensions_ami_id: $EXTENSIONS_AMI_ID,
         cluster_name: $CLUSTER_NAME,
         talos_version_contract: $TALOS_VERSION_CONTRACT,
         kubernetes_version: $KUBERNETES_VERSION
     }' \
   | jq -f "hack/test/tfvars/${AWS_JQ_TEMPLATE}" > "${ARTIFACTS}/e2e-aws-generated/vars.json"
 
-cp hack/test/tfvars/*.yaml "${ARTIFACTS}/e2e-aws-generated"
+cp hack/test/tfvars/*.yaml hack/test/patches/extensions-libvirt.yaml "${ARTIFACTS}/e2e-aws-generated"
