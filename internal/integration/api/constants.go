@@ -14,7 +14,7 @@ const (
 	// so the FRRConfiguration CRD is rejected.
 	//
 	// renovate: datasource=helm versioning=helm depName=metallb registryUrl=https://metallb.github.io/metallb
-	MetalLBChartVersion = "0.16.1"
+	MetalLBChartVersion = "0.16.2"
 	// BGPBackendImage is the image used for local LoadBalancer service endpoints in BGP tests.
 	// renovate: datasource=docker versioning=docker depName=library/nginx
 	BGPBackendImage = "docker.io/library/nginx:1.29-alpine"

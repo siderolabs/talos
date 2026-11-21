@@ -8,7 +8,7 @@ replace github.com/mdlayher/ethtool => github.com/siderolabs/ethtool v0.6.1-side
 require (
 	cel.dev/cel-go v0.33.2
 	github.com/blang/semver/v4 v4.0.0
-	github.com/containerd/go-cni v1.1.14
+	github.com/containerd/go-cni v1.1.15
 	github.com/cosi-project/runtime v1.17.1
 	github.com/dustin/go-humanize v1.1.0
 	github.com/emicklei/dot v1.11.0
