@@ -210,6 +210,9 @@ func (instance *Instance) ReconcileOriginated(advertised []netip.Prefix) error {
 		}
 
 		instance.originated[prefix] = struct{}{}
+
+		// GoBGP keys local paths by prefix, so an imported path for it was just replaced along with its UUID
+		delete(instance.imported, prefix)
 	}
 
 	for prefix := range instance.originated {

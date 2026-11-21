@@ -16,6 +16,7 @@ import (
 	"github.com/osrg/gobgp/v4/pkg/apiutil"
 	bgppacket "github.com/osrg/gobgp/v4/pkg/packet/bgp"
 	gobgpsrv "github.com/osrg/gobgp/v4/pkg/server"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -151,6 +152,66 @@ func TestBGPRouteImportLifecycle(t *testing.T) {
 	require.Zero(t, desiredCount)
 	assert.Zero(t, target.ImportedCount())
 	assert.Nil(t, listBGPImportTestPath(t, targetServer, prefix))
+}
+
+func TestImportedPrefixBecomesOriginated(t *testing.T) {
+	ctx := t.Context()
+	sourceServer := startBGPImportTestServer(t, ctx, 4200000000, "192.0.2.1", -1, false)
+	targetServer := startBGPImportTestServer(t, ctx, 65001, "192.0.2.2", -1, false)
+
+	prefix := netip.MustParsePrefix("198.51.100.100/32")
+	other := netip.MustParsePrefix("198.51.100.101/32")
+
+	_, err := sourceServer.AddPath(apiutil.AddPathRequest{Paths: []*apiutil.Path{newBGPImportTestPath(t, prefix, 50), newBGPImportTestPath(t, other, 50)}})
+	require.NoError(t, err)
+
+	source := internalbgp.NewInstance()
+	internalbgp.SetInstanceServerForTest(source, sourceServer)
+
+	target := internalbgp.NewInstance()
+	internalbgp.SetInstanceServerForTest(target, targetServer)
+	target.SetOutputState(nil, []resourcenetwork.BGPImportRouteSpec{{
+		BGPInstance: "workload",
+		Prefixes:    []netip.Prefix{netip.MustParsePrefix("198.51.100.0/24")},
+	}}, 0, netip.Addr{}, 0, true)
+
+	instances := map[string]*internalbgp.Instance{"fabric": target, "workload": source}
+	desiredInstances := map[string]struct{}{"fabric": {}, "workload": {}}
+
+	_, _, err = internalbgp.ReconcileImportedPaths("fabric", target, instances, desiredInstances)
+	require.NoError(t, err)
+	require.True(t, internalbgp.InstanceImportedForTest(target, prefix))
+
+	// an address on an advertised link makes the target originate the imported prefix: the originated path
+	// replaces the imported one in GoBGP
+	require.NoError(t, target.ReconcileOriginated([]netip.Prefix{prefix}))
+
+	_, err = sourceServer.AddPath(apiutil.AddPathRequest{Paths: []*apiutil.Path{newBGPImportTestPath(t, other, 75)}})
+	require.NoError(t, err)
+
+	_, _, err = internalbgp.ReconcileImportedPaths("fabric", target, instances, desiredInstances)
+	require.NoError(t, err)
+	assert.False(t, internalbgp.InstanceImportedForTest(target, prefix))
+
+	originated, err := internalbgp.BuildOriginatedPath(prefix)
+	require.NoError(t, err)
+
+	path := listBGPImportTestPath(t, targetServer, prefix)
+	require.NotNil(t, path)
+
+	attrType := func(attr bgppacket.PathAttributeInterface) bgppacket.BGPAttrType { return attr.GetType() }
+	assert.Equal(t, xslices.Map(originated.Attrs, attrType), xslices.Map(path.Attrs, attrType),
+		"the target must hold the originated path, not the imported one")
+	assert.Equal(t, uint32(75), importedAttribute[*bgppacket.PathAttributeMultiExitDisc](t, listBGPImportTestPath(t, targetServer, other)).Value,
+		"the other imports must still be reconciled")
+
+	// once the target stops originating it, the prefix is imported again
+	require.NoError(t, target.ReconcileOriginated(nil))
+
+	_, _, err = internalbgp.ReconcileImportedPaths("fabric", target, instances, desiredInstances)
+	require.NoError(t, err)
+	assert.True(t, internalbgp.InstanceImportedForTest(target, prefix))
+	assert.Equal(t, uint32(50), importedAttribute[*bgppacket.PathAttributeMultiExitDisc](t, listBGPImportTestPath(t, targetServer, prefix)).Value)
 }
 
 func TestBGPImportFamilies(t *testing.T) {
