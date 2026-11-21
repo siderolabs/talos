@@ -53,6 +53,10 @@ func TestGenerateAssets(t *testing.T) {
 			expectedConf:   baseLoaderConf + "\nsecure-boot-enroll force\n",
 			expectKeysAuto: true,
 		},
+		{
+			name:         "zero_timeout",
+			expectedConf: "# systemd-boot configuration\n\ntimeout 0\n",
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -84,6 +88,11 @@ func TestGenerateAssets(t *testing.T) {
 				KeyExchangeKeyPath:   kekPath,
 				SignatureKeyPath:     dbPath,
 				Printf:               func(string, ...any) {},
+			}
+
+			if tc.name == "zero_timeout" {
+				timeout := uint(0)
+				opts.BootMenuTimeout = &timeout
 			}
 
 			require.NoError(t, sdboot.CopyAssets(&sdboot.Config{}, opts, ukiFileName))
