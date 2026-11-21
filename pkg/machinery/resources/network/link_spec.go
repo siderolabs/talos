@@ -138,6 +138,10 @@ func (spec *LinkSpecSpec) Merge(other *LinkSpecSpec) error {
 		spec.HardwareAddress = slices.Clone(other.HardwareAddress)
 	}
 
+	if other.Multicast != nil {
+		spec.Multicast = new(*other.Multicast)
+	}
+
 	// Wireguard config should be able to apply non-zero values in earlier config layers which may be zero values in later layers.
 	// Thus, we handle each Wireguard configuration value discretely.
 	if !other.Wireguard.IsZero() {

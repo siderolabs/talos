@@ -120,6 +120,10 @@ func (spec *AffiliateSpec) Merge(other *AffiliateSpec) {
 		spec.Nodename = other.Nodename
 	}
 
+	if other.OperatingSystem != "" {
+		spec.OperatingSystem = other.OperatingSystem
+	}
+
 	if other.MachineType != machine.TypeUnknown {
 		spec.MachineType = other.MachineType
 	}
