@@ -19,6 +19,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
+	"github.com/siderolabs/talos/pkg/machinery/version"
 	"github.com/siderolabs/talos/pkg/makefs"
 )
 
@@ -106,7 +107,7 @@ func Format(ctx context.Context, logger *zap.Logger, volumeContext ManagerContex
 			makefsOptions = append(makefsOptions, makefs.WithLabel(volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Label))
 		}
 
-		makefsOptions = append(makefsOptions, makefs.WithConfigFile(quirks.New("").XFSMkfsConfig()))
+		makefsOptions = append(makefsOptions, makefs.WithConfigFile(quirks.New(version.Tag).XFSMkfsConfig()))
 
 		// mkfs.xfs only scales the allocation group count (and the journal size) to the CPU count on
 		// non-rotational devices, so the minimum allocation group size is only relevant there.

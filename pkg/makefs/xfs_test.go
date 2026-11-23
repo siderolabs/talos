@@ -18,6 +18,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
+	"github.com/siderolabs/talos/pkg/machinery/version"
 	"github.com/siderolabs/talos/pkg/makefs"
 )
 
@@ -102,7 +104,14 @@ realtime =none                   extsz=4096   blocks=0, rtextents=0
 			require.NoError(t, os.WriteFile(tempFile, nil, 0o644))
 			require.NoError(t, os.Truncate(tempFile, test.size))
 
-			require.NoError(t, makefs.XFS(t.Context(), tempFile))
+			require.NoError(t,
+				makefs.XFS(
+					t.Context(),
+					tempFile,
+					makefs.WithPrintf(t.Logf),
+					makefs.WithConfigFile(quirks.New(version.Tag).XFSMkfsConfig()),
+				),
+			)
 
 			var stdout bytes.Buffer
 

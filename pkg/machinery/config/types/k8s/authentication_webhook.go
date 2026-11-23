@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/siderolabs/gen/optional"
-	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
@@ -107,7 +106,7 @@ func NewKubeAuthenticationWebhookConfigV1Alpha1() *KubeAuthenticationWebhookConf
 func exampleKubeAuthenticationWebhookConfigV1Alpha1() *KubeAuthenticationWebhookConfigV1Alpha1 {
 	cfg := NewKubeAuthenticationWebhookConfigV1Alpha1()
 	cfg.WebhookVersion = "v1beta1"
-	cfg.WebhookCacheTTL = pointer.To(5 * time.Minute)
+	cfg.WebhookCacheTTL = new(5 * time.Minute)
 	cfg.WebhookKubeconfig = `apiVersion: v1
 kind: Config
 clusters:

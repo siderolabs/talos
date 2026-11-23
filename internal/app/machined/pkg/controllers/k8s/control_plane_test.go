@@ -14,7 +14,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -978,7 +977,7 @@ current-context: webhook
 	authnWebhookCfg := k8scfg.NewKubeAuthenticationWebhookConfigV1Alpha1()
 	authnWebhookCfg.WebhookKubeconfig = kubeconfig
 	authnWebhookCfg.WebhookVersion = "v1"
-	authnWebhookCfg.WebhookCacheTTL = pointer.To(time.Minute)
+	authnWebhookCfg.WebhookCacheTTL = new(time.Minute)
 
 	u, err := url.Parse("https://foo:6443")
 	suite.Require().NoError(err)
@@ -1038,7 +1037,7 @@ current-context: webhook
 			assert.Equal(&k8s.AuthenticationTokenWebhookSpec{
 				Kubeconfig: kubeconfig,
 				Version:    "v1",
-				CacheTTL:   pointer.To(time.Minute),
+				CacheTTL:   new(time.Minute),
 			}, authenticationConfig.TypedSpec().TokenWebhook)
 		},
 	)

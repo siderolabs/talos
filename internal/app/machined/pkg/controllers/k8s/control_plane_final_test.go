@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -1175,7 +1174,7 @@ func (suite *ControlPlaneAPIServerFinalSuite) TestAuthenticationTokenWebhook() {
 	authenticationConfig.TypedSpec().TokenWebhook = &k8s.AuthenticationTokenWebhookSpec{
 		Kubeconfig: "kubeconfig",
 		Version:    "v1",
-		CacheTTL:   pointer.To(5 * time.Minute),
+		CacheTTL:   new(5 * time.Minute),
 	}
 	suite.Create(authenticationConfig)
 
@@ -1211,7 +1210,7 @@ func (suite *ControlPlaneAPIServerFinalSuite) TestAuthenticationTokenWebhook() {
 
 	// zero cache TTL disables caching in kube-apiserver, so it should be passed through
 	ctest.UpdateWithConflicts(suite, authenticationConfig, func(r *k8s.AuthenticationConfig) error {
-		r.TypedSpec().TokenWebhook.CacheTTL = pointer.To(time.Duration(0))
+		r.TypedSpec().TokenWebhook.CacheTTL = new(time.Duration(0))
 
 		return nil
 	})

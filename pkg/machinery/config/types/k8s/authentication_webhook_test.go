@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/siderolabs/gen/optional"
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -49,7 +48,7 @@ func TestKubeAuthenticationWebhookConfigMarshalStability(t *testing.T) {
 	cfg := k8s.NewKubeAuthenticationWebhookConfigV1Alpha1()
 	cfg.WebhookKubeconfig = testWebhookKubeconfig
 	cfg.WebhookVersion = "v1"
-	cfg.WebhookCacheTTL = pointer.To(5 * time.Minute)
+	cfg.WebhookCacheTTL = new(5 * time.Minute)
 
 	marshaled, err := encoder.NewEncoder(cfg, encoder.WithComments(encoder.CommentsDisabled)).Encode()
 	require.NoError(t, err)
@@ -75,7 +74,7 @@ func TestKubeAuthenticationWebhookConfigUnmarshal(t *testing.T) {
 		},
 		WebhookKubeconfig: testWebhookKubeconfig,
 		WebhookVersion:    "v1",
-		WebhookCacheTTL:   pointer.To(5 * time.Minute),
+		WebhookCacheTTL:   new(5 * time.Minute),
 	}, docs[0])
 
 	webhookCfg := provider.K8sAuthenticationWebhookConfig()
@@ -121,7 +120,7 @@ func TestKubeAuthenticationWebhookConfigValidate(t *testing.T) {
 				cfg := k8s.NewKubeAuthenticationWebhookConfigV1Alpha1()
 				cfg.WebhookKubeconfig = testWebhookKubeconfig
 				cfg.WebhookVersion = "v2"
-				cfg.WebhookCacheTTL = pointer.To(-time.Second)
+				cfg.WebhookCacheTTL = new(-time.Second)
 
 				return cfg
 			},
@@ -211,7 +210,7 @@ current-context: webhook
 				cfg := k8s.NewKubeAuthenticationWebhookConfigV1Alpha1()
 				cfg.WebhookKubeconfig = testWebhookKubeconfig
 				cfg.WebhookVersion = "v1beta1"
-				cfg.WebhookCacheTTL = pointer.To(time.Minute)
+				cfg.WebhookCacheTTL = new(time.Minute)
 
 				return cfg
 			},
