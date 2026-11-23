@@ -115,6 +115,8 @@ type Options struct {
 	DroppedCapabilities []string
 	// SelinuxLabel is the SELinux label to be assigned
 	SelinuxLabel string
+	// SkipSelinuxLabel leaves the SELinux label out of the OCI spec, for runtimes which do not support it.
+	SkipSelinuxLabel bool
 	// StdinFile is the path to the file to use as stdin.
 	StdinFile string
 	// StdoutFile is the path to the file to use as stdout.
@@ -260,6 +262,13 @@ func WithLogID(id string) Option {
 func WithHostNetworkFiles(enabled bool) Option {
 	return func(args *Options) {
 		args.HostNetworkFiles = enabled
+	}
+}
+
+// WithoutSelinuxLabel leaves the SELinux label out of the OCI spec, for runtimes which do not support it.
+func WithoutSelinuxLabel() Option {
+	return func(args *Options) {
+		args.SkipSelinuxLabel = true
 	}
 }
 

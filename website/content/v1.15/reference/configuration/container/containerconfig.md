@@ -100,6 +100,7 @@ image: docker.io/library/nginx:1.27
 |`entrypoint` |[]string |Overrides the image's ENTRYPOINT.<br><br>Unset means the image's own entrypoint is used.  | |
 |`args` |[]string |Overrides the image's CMD.  | |
 |`workingDir` |string |Overrides the image's WORKDIR.  | |
+|`runtime` |ContainerRuntime |OCI runtime the container runs under.<br><br>`runc` (the default) runs the container directly on the host kernel.<br>`runsc` runs it in a gVisor sandbox, with its own user-space kernel between the<br>container and the host. `runsc` requires the `gvisor` system extension, and is not<br>compatible with the privileged profile, machined access, devices, host networking or<br>health checks.  |`runc`<br />`runsc`<br /> |
 |`runAs` |<a href="#ContainerConfig.runAs">ContainerRunAs</a> |Overrides the image's USER uid and/or gid.<br><br>There are no user namespaces, so a container running as uid 0 is root on the host.  | |
 |`environment` |[]string |Environment variables, in `KEY=value` form, merged over the image's own ENV.<br><br>Values are stored in the machine configuration verbatim, so treat anything put here<br>as being as sensitive as the machine configuration itself.  | |
 |`mounts` |<a href="#ContainerConfig.mounts.">[]ContainerMount</a> |Filesystems to mount into the container.  | |

@@ -574,6 +574,8 @@ type ContainerInstanceSpecSpec struct {
 	StopTimeout *durationpb.Duration  `protobuf:"bytes,14,opt,name=stop_timeout,json=stopTimeout,proto3" json:"stop_timeout,omitempty"`
 	// ExecutionHash is the ContainerSpec execution hash the instance was created for.
 	ExecutionHash string `protobuf:"bytes,15,opt,name=execution_hash,json=executionHash,proto3" json:"execution_hash,omitempty"`
+	// Runtime is the OCI runtime the container runs under: runc or runsc.
+	Runtime       string `protobuf:"bytes,16,opt,name=runtime,proto3" json:"runtime,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -709,6 +711,13 @@ func (x *ContainerInstanceSpecSpec) GetStopTimeout() *durationpb.Duration {
 func (x *ContainerInstanceSpecSpec) GetExecutionHash() string {
 	if x != nil {
 		return x.ExecutionHash
+	}
+	return ""
+}
+
+func (x *ContainerInstanceSpecSpec) GetRuntime() string {
+	if x != nil {
+		return x.Runtime
 	}
 	return ""
 }
@@ -1541,7 +1550,9 @@ type ContainerSpecSpec struct {
 	Restart     *ContainerRestartSpec   `protobuf:"bytes,14,opt,name=restart,proto3" json:"restart,omitempty"`
 	// HealthCheck probes the running container. It is not part of the execution hash: changing it
 	// re-targets the probe of the running instance rather than replacing the instance.
-	HealthCheck   *ContainerHealthCheckSpec `protobuf:"bytes,15,opt,name=health_check,json=healthCheck,proto3" json:"health_check,omitempty"`
+	HealthCheck *ContainerHealthCheckSpec `protobuf:"bytes,15,opt,name=health_check,json=healthCheck,proto3" json:"health_check,omitempty"`
+	// Runtime is the OCI runtime the container runs under: runc or runsc.
+	Runtime       string `protobuf:"bytes,16,opt,name=runtime,proto3" json:"runtime,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1679,6 +1690,13 @@ func (x *ContainerSpecSpec) GetHealthCheck() *ContainerHealthCheckSpec {
 		return x.HealthCheck
 	}
 	return nil
+}
+
+func (x *ContainerSpecSpec) GetRuntime() string {
+	if x != nil {
+		return x.Runtime
+	}
+	return ""
 }
 
 // ContainerStatusSpec is the spec for ContainerStatus.
@@ -2019,7 +2037,7 @@ const file_resource_definitions_containers_containers_proto_rawDesc = "" +
 	"\x05phase\x18\x01 \x01(\x0e2?.talos.resource.definitions.enums.ContainersContainerImagePhaseR\x05phase\x12\x14\n" +
 	"\x05image\x18\x02 \x01(\tR\x05image\x12\x16\n" +
 	"\x06digest\x18\x03 \x01(\tR\x06digest\x12\x14\n" +
-	"\x05error\x18\x04 \x01(\tR\x05error\"\xd7\x06\n" +
+	"\x05error\x18\x04 \x01(\tR\x05error\"\xf1\x06\n" +
 	"\x19ContainerInstanceSpecSpec\x12!\n" +
 	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x1e\n" +
 	"\n" +
@@ -2041,7 +2059,8 @@ const file_resource_definitions_containers_containers_proto_rawDesc = "" +
 	"\tresources\x18\f \x01(\v2=.talos.resource.definitions.containers.ContainerResourcesSpecR\tresources\x12S\n" +
 	"\adevices\x18\r \x03(\v29.talos.resource.definitions.containers.ResolvedDeviceSpecR\adevices\x12<\n" +
 	"\fstop_timeout\x18\x0e \x01(\v2\x19.google.protobuf.DurationR\vstopTimeout\x12%\n" +
-	"\x0eexecution_hash\x18\x0f \x01(\tR\rexecutionHash\"\x91\x03\n" +
+	"\x0eexecution_hash\x18\x0f \x01(\tR\rexecutionHash\x12\x18\n" +
+	"\aruntime\x18\x10 \x01(\tR\aruntime\"\x91\x03\n" +
 	"\x1bContainerInstanceStatusSpec\x12!\n" +
 	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x1e\n" +
 	"\n" +
@@ -2109,7 +2128,7 @@ const file_resource_definitions_containers_containers_proto_rawDesc = "" +
 	"\x0ese_linux_level\x18\x06 \x01(\tR\fseLinuxLevel\x12:\n" +
 	"\x19seccomp_localhost_profile\x18\a \x01(\tR\x17seccompLocalhostProfile\x12I\n" +
 	"!seccomp_localhost_profile_content\x18\b \x01(\tR\x1eseccompLocalhostProfileContent\x12)\n" +
-	"\x11read_only_root_fs\x18\t \x01(\bR\x0ereadOnlyRootFs\"\xbb\b\n" +
+	"\x11read_only_root_fs\x18\t \x01(\bR\x0ereadOnlyRootFs\"\xd5\b\n" +
 	"\x11ContainerSpecSpec\x12O\n" +
 	"\x05image\x18\x01 \x01(\v29.talos.resource.definitions.containers.ContainerImageSpecR\x05image\x12\x1e\n" +
 	"\n" +
@@ -2130,7 +2149,8 @@ const file_resource_definitions_containers_containers_proto_rawDesc = "" +
 	"\adevices\x18\f \x03(\v2:.talos.resource.definitions.containers.ContainerDeviceSpecR\adevices\x12<\n" +
 	"\fstop_timeout\x18\r \x01(\v2\x19.google.protobuf.DurationR\vstopTimeout\x12U\n" +
 	"\arestart\x18\x0e \x01(\v2;.talos.resource.definitions.containers.ContainerRestartSpecR\arestart\x12b\n" +
-	"\fhealth_check\x18\x0f \x01(\v2?.talos.resource.definitions.containers.ContainerHealthCheckSpecR\vhealthCheck\"\xfd\x02\n" +
+	"\fhealth_check\x18\x0f \x01(\v2?.talos.resource.definitions.containers.ContainerHealthCheckSpecR\vhealthCheck\x12\x18\n" +
+	"\aruntime\x18\x10 \x01(\tR\aruntime\"\xfd\x02\n" +
 	"\x13ContainerStatusSpec\x12P\n" +
 	"\x05state\x18\x01 \x01(\x0e2:.talos.resource.definitions.enums.ContainersContainerStateR\x05state\x12S\n" +
 	"\x06health\x18\x02 \x01(\x0e2;.talos.resource.definitions.enums.ContainersContainerHealthR\x06health\x12\x14\n" +

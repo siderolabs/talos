@@ -82,10 +82,14 @@ func (suite *ConfigSuite) TestAssignsSELinuxLevels() {
 	privileged := newDoc("privileged", "nginx")
 	privileged.SecurityConfig = &containercfg.ContainerSecurity{SecurityProfile: "privileged"}
 
+	// gVisor does not support SELinux labels.
+	runsc := newDoc("runsc", "nginx")
+	runsc.ContainerRuntimeName = configcfg.ContainerRuntimeRunsc
+
 	securityProfile := runtimecfg.NewSecurityProfileConfigV1Alpha1()
 	securityProfile.SELinuxCategoriesEnabled = new(true)
 
-	cfg, err := container.New(newDoc("a", "nginx"), newDoc("b", "nginx"), privileged, securityProfile)
+	cfg, err := container.New(newDoc("a", "nginx"), newDoc("b", "nginx"), privileged, runsc, securityProfile)
 	suite.Require().NoError(err)
 
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), config.NewMachineConfig(cfg)))
@@ -100,8 +104,23 @@ func (suite *ConfigSuite) TestAssignsSELinuxLevels() {
 
 	suite.Assert().NotEqual(levels["a"], levels["b"])
 
-	ctest.AssertResource(suite, "privileged", func(spec *containers.ContainerSpec, asrt *assert.Assertions) {
+	ctest.AssertResources(suite, []string{"privileged", "runsc"}, func(spec *containers.ContainerSpec, asrt *assert.Assertions) {
 		asrt.Empty(spec.TypedSpec().Security.SELinuxLevel)
+	})
+}
+
+func (suite *ConfigSuite) TestResolvesRuntime() {
+	runsc := newDoc("runsc", "nginx")
+	runsc.ContainerRuntimeName = configcfg.ContainerRuntimeRunsc
+
+	suite.applyContainers(newDoc("runc", "nginx"), runsc)
+
+	ctest.AssertResource(suite, "runc", func(spec *containers.ContainerSpec, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerRuntimeRunc, spec.TypedSpec().Runtime)
+	})
+
+	ctest.AssertResource(suite, "runsc", func(spec *containers.ContainerSpec, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerRuntimeRunsc, spec.TypedSpec().Runtime)
 	})
 }
 

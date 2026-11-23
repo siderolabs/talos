@@ -1525,6 +1525,13 @@
           "markdownDescription": "Overrides the image's WORKDIR.",
           "x-intellij-html-description": "\u003cp\u003eOverrides the image\u0026rsquo;s WORKDIR.\u003c/p\u003e\n"
         },
+        "runtime": {
+          "type": "string",
+          "title": "runtime",
+          "description": "OCI runtime the container runs under.\n\nrunc (the default) runs the container directly on the host kernel.\nrunsc runs it in a gVisor sandbox, with its own user-space kernel between the\ncontainer and the host. runsc requires the gvisor system extension, and is not\ncompatible with the privileged profile, machined access, devices, host networking or\nhealth checks.\n",
+          "markdownDescription": "OCI runtime the container runs under.\n\n`runc` (the default) runs the container directly on the host kernel.\n`runsc` runs it in a gVisor sandbox, with its own user-space kernel between the\ncontainer and the host. `runsc` requires the `gvisor` system extension, and is not\ncompatible with the privileged profile, machined access, devices, host networking or\nhealth checks.",
+          "x-intellij-html-description": "\u003cp\u003eOCI runtime the container runs under.\u003c/p\u003e\n\n\u003cp\u003e\u003ccode\u003erunc\u003c/code\u003e (the default) runs the container directly on the host kernel.\n\u003ccode\u003erunsc\u003c/code\u003e runs it in a gVisor sandbox, with its own user-space kernel between the\ncontainer and the host. \u003ccode\u003erunsc\u003c/code\u003e requires the \u003ccode\u003egvisor\u003c/code\u003e system extension, and is not\ncompatible with the privileged profile, machined access, devices, host networking or\nhealth checks.\u003c/p\u003e\n"
+        },
         "runAs": {
           "$ref": "#/$defs/container.ContainerRunAs",
           "title": "runAs",

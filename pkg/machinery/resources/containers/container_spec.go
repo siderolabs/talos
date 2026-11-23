@@ -25,9 +25,11 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
 
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 	"github.com/siderolabs/talos/pkg/machinery/redactable"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	timeres "github.com/siderolabs/talos/pkg/machinery/resources/time"
 )
 
@@ -77,7 +79,18 @@ type ContainerSpecSpec struct {
 	// HealthCheck probes the running container. It is not part of the execution hash: changing it
 	// re-targets the probe of the running instance rather than replacing the instance.
 	HealthCheck ContainerHealthCheckSpec `yaml:"healthCheck,omitempty" protobuf:"15"`
+
+	// Runtime is the OCI runtime the container runs under: runc or runsc.
+	Runtime string `yaml:"runtime,omitempty" protobuf:"16"`
 }
+
+// Container runtimes, as carried in ContainerSpecSpec.Runtime and ContainerInstanceSpecSpec.Runtime.
+const (
+	// ContainerRuntimeRunc runs the container with runc. The default.
+	ContainerRuntimeRunc = "runc"
+	// ContainerRuntimeRunsc runs the container in a gVisor sandbox.
+	ContainerRuntimeRunsc = "runsc"
+)
 
 // ContainerRestartSpec describes how a container is restarted after it exits.
 //
@@ -152,7 +165,35 @@ func (containerSpec ContainerSpecSpec) Ready(ctx context.Context, r controller.R
 
 	waitingFor = append(waitingFor, unmet...)
 
+	runtimeUnmet, err := containerSpec.RuntimeReady(ctx, r)
+	if err != nil {
+		return nil, optional.None[time.Duration](), err
+	}
+
+	waitingFor = append(waitingFor, runtimeUnmet...)
+
 	return waitingFor, wakeUpAfter, nil
+}
+
+// RuntimeReady reports the extension the container's runtime is waiting for, if any.
+//
+// Apply-time validation already rejects a runtime whose extension is missing, but not while the machine
+// is booting: the container waits for it here instead of failing to start.
+func (containerSpec ContainerSpecSpec) RuntimeReady(ctx context.Context, r controller.Reader) ([]string, error) {
+	if containerSpec.Runtime != ContainerRuntimeRunsc {
+		return nil, nil
+	}
+
+	extensions, err := safe.ReaderListAll[*runtime.ExtensionStatus](ctx, r)
+	if err != nil {
+		return nil, err
+	}
+
+	if runtime.ExtensionInstalled(extensions, constants.ContainerRuntimeRunscExtension) {
+		return nil, nil
+	}
+
+	return []string{"extension: " + constants.ContainerRuntimeRunscExtension}, nil
 }
 
 // CurrentImageStatus returns the image status describing the reference the container spec asks for,
@@ -239,6 +280,7 @@ func (containerSpec ContainerSpecSpec) InstanceProcessEqual(instanceSpec Contain
 	return slices.Equal(containerSpec.Entrypoint, instanceSpec.Entrypoint) &&
 		slices.Equal(containerSpec.Args, instanceSpec.Args) &&
 		containerSpec.WorkingDir == instanceSpec.WorkingDir &&
+		containerSpec.Runtime == instanceSpec.Runtime &&
 		containerSpec.RunAs.Equal(instanceSpec.RunAs) &&
 		slices.Equal(containerSpec.Environment, instanceSpec.Environment) &&
 		containerSpec.StopTimeout == instanceSpec.StopTimeout

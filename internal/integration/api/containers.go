@@ -3473,6 +3473,106 @@ func (suite *ContainersSuite) TestWorkloadMemoryLimitEnforced() {
 		after.Hierarchical["oom_kill"]-before[constants.CgroupTalosContainersRoot].Hierarchical["oom_kill"])
 }
 
+// gvisorKernelRelease is the kernel release gVisor reports from uname: the release of the Linux ABI it
+// implements, rather than that of the host kernel the sandbox runs on.
+const gvisorKernelRelease = "4.4.0"
+
+// TestRuntimeRunsc verifies that a container with the runsc runtime runs in a gVisor sandbox.
+//
+// The gvisor extension is only installed in the extensions integration job, and there only on the
+// workers: elsewhere the test is skipped.
+func (suite *ContainersSuite) TestRuntimeRunsc() {
+	nodes := suite.nodesByExtension(constants.ContainerRuntimeRunscExtension, true)
+	if len(nodes) == 0 {
+		suite.T().Skipf("skipping as no node has the %s extension", constants.ContainerRuntimeRunscExtension)
+	}
+
+	ctx, name := suite.setupContainerOn("runsc", nodes[0])
+
+	// The sandbox's own kernel answers uname, so the release tells it apart from the host kernel.
+	doc := suite.shellContainer(name, "echo kernel=$(uname -r); "+parkCommand)
+	doc.ContainerRuntimeName = configcontainer.ContainerRuntimeRunsc
+
+	suite.applyContainers(ctx, doc)
+
+	suite.assertContainerRunning(ctx, name, "under runsc")
+
+	logs := suite.assertContainerLogged(ctx, name, "kernel=")
+	suite.Assert().Contains(logs, "kernel="+gvisorKernelRelease, "the container is not running in a gVisor sandbox")
+
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), name,
+		func(spec *containers.ContainerSpec, asrt *assert.Assertions) {
+			asrt.Equal(containers.ContainerRuntimeRunsc, spec.TypedSpec().Runtime)
+		})
+}
+
+// TestRuntimeRunscRequiresExtension verifies that a container with the runsc runtime is rejected when
+// the configuration is applied to a node without the gvisor extension.
+func (suite *ContainersSuite) TestRuntimeRunscRequiresExtension() {
+	nodes := suite.nodesByExtension(constants.ContainerRuntimeRunscExtension, false)
+	if len(nodes) == 0 {
+		suite.T().Skipf("skipping as every node has the %s extension", constants.ContainerRuntimeRunscExtension)
+	}
+
+	ctx, name := suite.setupContainerOn("runsc-rejected", nodes[0])
+
+	doc := suite.newContainer(name, containerPauseImage)
+	doc.ContainerRuntimeName = configcontainer.ContainerRuntimeRunsc
+
+	suite.Require().ErrorContains(suite.applyContainersError(ctx, doc),
+		fmt.Sprintf("requires the %q system extension", constants.ContainerRuntimeRunscExtension))
+
+	suite.assertNoInstance(ctx, name)
+}
+
+// nodesByExtension returns the nodes which have (or, with installed false, lack) the given extension.
+func (suite *ContainersSuite) nodesByExtension(extension string, installed bool) []string {
+	var nodes []string
+
+	for _, node := range suite.DiscoverNodeInternalIPs(suite.ctx) {
+		extensions, err := safe.StateListAll[*runtimeres.ExtensionStatus](client.WithNode(suite.ctx, node), suite.Client.State())
+		suite.Require().NoError(err)
+
+		if runtimeres.ExtensionInstalled(extensions, extension) == installed {
+			nodes = append(nodes, node)
+		}
+	}
+
+	return nodes
+}
+
+// applyContainersError applies the given container documents to the node, and returns the error
+// the apply fails with.
+func (suite *ContainersSuite) applyContainersError(ctx context.Context, docs ...*containercfg.ContainerConfigV1Alpha1) error {
+	cfg, err := suite.ReadConfigFromNode(ctx)
+	suite.Require().NoError(err)
+
+	patches := make([]configpatcher.Patch, 0, len(docs))
+
+	for _, doc := range docs {
+		marshaled, err := yaml.Marshal(doc)
+		suite.Require().NoError(err)
+
+		patch, err := configpatcher.LoadPatch(marshaled)
+		suite.Require().NoError(err)
+
+		patches = append(patches, patch)
+	}
+
+	patched, err := configpatcher.Apply(configpatcher.WithConfig(cfg), patches)
+	suite.Require().NoError(err)
+
+	patchedBytes, err := patched.Bytes()
+	suite.Require().NoError(err)
+
+	_, err = suite.Client.ApplyConfiguration(ctx, &machine.ApplyConfigurationRequest{
+		Data: patchedBytes,
+		Mode: machine.ApplyConfigurationRequest_AUTO,
+	})
+
+	return err
+}
+
 func init() {
 	allSuites = append(allSuites, new(ContainersSuite))
 }

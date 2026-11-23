@@ -46,9 +46,10 @@ func init() {
 
 // Check interfaces.
 var (
-	_ config.ContainerConfig = &ContainerConfigV1Alpha1{}
-	_ config.NamedDocument   = &ContainerConfigV1Alpha1{}
-	_ config.Validator       = &ContainerConfigV1Alpha1{}
+	_ config.ContainerConfig  = &ContainerConfigV1Alpha1{}
+	_ config.NamedDocument    = &ContainerConfigV1Alpha1{}
+	_ config.Validator        = &ContainerConfigV1Alpha1{}
+	_ config.RuntimeValidator = &ContainerConfigV1Alpha1{}
 )
 
 // ContainerConfigV1Alpha1 is a container configuration document.
@@ -97,6 +98,20 @@ type ContainerConfigV1Alpha1 struct {
 	//   description: |
 	//     Overrides the image's WORKDIR.
 	ContainerWorkingDir string `yaml:"workingDir,omitempty"`
+	//   description: |
+	//     OCI runtime the container runs under.
+	//
+	//     `runc` (the default) runs the container directly on the host kernel.
+	//     `runsc` runs it in a gVisor sandbox, with its own user-space kernel between the
+	//     container and the host. `runsc` requires the `gvisor` system extension, and is not
+	//     compatible with the privileged profile, machined access, devices, host networking or
+	//     health checks.
+	//   values:
+	//     - runc
+	//     - runsc
+	//   schema:
+	//     type: string
+	ContainerRuntimeName config.ContainerRuntime `yaml:"runtime,omitempty"`
 	//   description: |
 	//     Overrides the image's USER uid and/or gid.
 	//
@@ -238,6 +253,15 @@ func (c *ContainerConfigV1Alpha1) Args() []string { return c.ContainerArgs }
 // WorkingDir implements config.ContainerConfig interface.
 func (c *ContainerConfigV1Alpha1) WorkingDir() string { return c.ContainerWorkingDir }
 
+// Runtime implements config.ContainerConfig interface.
+func (c *ContainerConfigV1Alpha1) Runtime() config.ContainerRuntime {
+	if c.ContainerRuntimeName == "" {
+		return config.ContainerRuntimeRunc
+	}
+
+	return c.ContainerRuntimeName
+}
+
 // RunAs implements config.ContainerConfig interface.
 func (c *ContainerConfigV1Alpha1) RunAs() config.ContainerRunAsConfig {
 	if c.RunAsConfig == nil {
@@ -296,7 +320,7 @@ func (c *ContainerConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation
 		}
 	}
 
-	validationErrors = errors.Join(validationErrors, c.ValidateMounts(), c.ValidateDevices())
+	validationErrors = errors.Join(validationErrors, c.ValidateMounts(), c.ValidateDevices(), c.ValidateRuntime())
 
 	if c.SecurityConfig != nil {
 		validationErrors = errors.Join(validationErrors, c.SecurityConfig.Validate())

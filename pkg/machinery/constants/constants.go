@@ -617,6 +617,23 @@ const (
 	// history reads as a single continuous log.
 	TalosContainersLogPrefix = TalosContainersContainerdNamespace + "-"
 
+	// ContainerRuntimeRunscShim is the containerd runtime (shim) that runs containers in a gVisor sandbox.
+	//
+	// The shim binary (containerd-shim-runsc-v1) and runsc are provided by ContainerRuntimeRunscExtension.
+	ContainerRuntimeRunscShim = "io.containerd.runsc.v1"
+
+	// ContainerRuntimeRunscOptionsTypeURL is the type of the options the runsc shim reads its config from.
+	ContainerRuntimeRunscOptionsTypeURL = "io.containerd.runsc.v1.options"
+
+	// ContainerRuntimeRunscConfigPath is the runsc config the gvisor extension ships for its CRI runtime handler.
+	//
+	// Talos containers use it as well, so that the runtime is configured the same way for pods and for
+	// containers, and the gvisor-debug extension, which replaces it, applies to both.
+	ContainerRuntimeRunscConfigPath = EtcCRIConfdPath + "/runsc.toml"
+
+	// ContainerRuntimeRunscExtension is the name of the system extension that provides the runsc runtime.
+	ContainerRuntimeRunscExtension = "gvisor"
+
 	// ContainerDefaultStopTimeout is the default time between SIGTERM and SIGKILL when a container is stopped.
 	ContainerDefaultStopTimeout = 10 * time.Second
 

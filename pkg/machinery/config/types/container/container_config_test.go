@@ -593,6 +593,36 @@ mounts:
 			doc:         "name: nginx\nimage: nginx\nlifecycle:\n  restart:\n    delay: 10s\n    maxDelay: 5s",
 			expectedErr: "lifecycle.restart.maxDelay 5s must not be shorter than lifecycle.restart.delay 10s",
 		},
+		{
+			name:        "unknown runtime",
+			doc:         "name: nginx\nimage: nginx\nruntime: kata",
+			expectedErr: `unsupported runtime "kata", expected runc or runsc`,
+		},
+		{
+			name:        "runsc with the privileged profile",
+			doc:         "name: nginx\nimage: nginx\nruntime: runsc\nsecurity:\n  profile: privileged",
+			expectedErr: "runtime runsc is not compatible with the privileged security profile",
+		},
+		{
+			name:        "runsc with machined access",
+			doc:         "name: nginx\nimage: nginx\nruntime: runsc\nsecurity:\n  machinedAccess: true",
+			expectedErr: "runtime runsc is not compatible with security.machinedAccess",
+		},
+		{
+			name:        "runsc with devices",
+			doc:         "name: nginx\nimage: nginx\nruntime: runsc\ndevices:\n  - rawVolume:\n      name: osd-1\n      destination: /dev/osd-1",
+			expectedErr: "runtime runsc is not compatible with devices",
+		},
+		{
+			name:        "runsc with host networking",
+			doc:         "name: nginx\nimage: nginx\nruntime: runsc\nnetwork:\n  mode: host",
+			expectedErr: "runtime runsc is not compatible with the host network mode",
+		},
+		{
+			name:        "runsc with a health check",
+			doc:         "name: nginx\nimage: nginx\nruntime: runsc\nlifecycle:\n  healthCheck:\n    tcp:\n      port: 80",
+			expectedErr: "runtime runsc is not compatible with lifecycle.healthCheck",
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()

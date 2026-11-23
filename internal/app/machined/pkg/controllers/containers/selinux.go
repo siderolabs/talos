@@ -27,11 +27,13 @@ const (
 // container colliding with it comes or goes.
 //
 // Privileged containers get no categories, like privileged pods: they have the run of the host anyway.
+// Neither do runsc containers: gVisor does not support SELinux labels, and the sandbox isolates them instead.
 func allocateSELinuxLevels(containerConfigs []configcfg.ContainerConfig) map[string]string {
 	names := make([]string, 0, len(containerConfigs))
 
 	for _, containerConfig := range containerConfigs {
-		if containerConfig.Security().Profile() == configcfg.ContainerSecurityProfilePrivileged {
+		if containerConfig.Security().Profile() == configcfg.ContainerSecurityProfilePrivileged ||
+			containerConfig.Runtime() == configcfg.ContainerRuntimeRunsc {
 			continue
 		}
 

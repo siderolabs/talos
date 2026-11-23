@@ -168,6 +168,7 @@ func applyConfig(containerSpecSpec *containers.ContainerSpecSpec, containerConfi
 	containerSpecSpec.Entrypoint = containerConfig.Entrypoint()
 	containerSpecSpec.Args = containerConfig.Args()
 	containerSpecSpec.WorkingDir = containerConfig.WorkingDir()
+	containerSpecSpec.Runtime = string(containerConfig.Runtime())
 
 	runAs := containerConfig.RunAs()
 	containerSpecSpec.RunAs = containers.ContainerRunAsSpec{

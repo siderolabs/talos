@@ -110,6 +110,8 @@ message ContainerInstanceSpecSpec {
   google.protobuf.Duration stop_timeout = 14;
   // ExecutionHash is the ContainerSpec execution hash the instance was created for.
   string execution_hash = 15;
+  // Runtime is the OCI runtime the container runs under: runc or runsc.
+  string runtime = 16;
 }
 
 // ContainerInstanceStatusSpec is the spec for ContainerInstanceStatus.
@@ -274,6 +276,8 @@ message ContainerSpecSpec {
   // HealthCheck probes the running container. It is not part of the execution hash: changing it
   // re-targets the probe of the running instance rather than replacing the instance.
   ContainerHealthCheckSpec health_check = 15;
+  // Runtime is the OCI runtime the container runs under: runc or runsc.
+  string runtime = 16;
 }
 
 // ContainerStatusSpec is the spec for ContainerStatus.
