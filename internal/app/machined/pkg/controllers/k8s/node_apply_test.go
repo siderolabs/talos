@@ -509,6 +509,15 @@ func TestApplyCordoned(t *testing.T) {
 			expectedUnschedulable: true,
 			expectedAnnotations:   map[string]string{"foo": "bar"},
 		},
+		{
+			name:               "cordoned by talosctl drain - uncordon",
+			inputAnnotations:   map[string]string{constants.AnnotationClientCordonedKey: constants.AnnotationCordonedValue},
+			inputUnschedulable: true,
+			shouldCordon:       false,
+
+			expectedUnschedulable: true,
+			expectedAnnotations:   map[string]string{constants.AnnotationClientCordonedKey: constants.AnnotationCordonedValue},
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()

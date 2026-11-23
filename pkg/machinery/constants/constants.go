@@ -1178,6 +1178,12 @@ const (
 	// AnnotationCordonedValue is the annotation key for the nodes cordoned by Talos.
 	AnnotationCordonedValue = "true"
 
+	// AnnotationClientCordonedKey is the annotation key for the nodes cordoned by talosctl drain.
+	//
+	// It must differ from AnnotationCordonedKey: machined uncordons nodes carrying that one
+	// while the machine is running, which would undo the cordon in the middle of a client-side drain.
+	AnnotationClientCordonedKey = "talos.dev/client-cordoned"
+
 	// AnnotationStaticPodSecretsVersion is the annotation key for the static pod secret version.
 	AnnotationStaticPodSecretsVersion = "talos.dev/secrets-version"
 

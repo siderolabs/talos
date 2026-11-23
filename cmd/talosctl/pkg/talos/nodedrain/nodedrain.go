@@ -64,7 +64,7 @@ func CordonAndDrain(ctx context.Context, clientset kubernetes.Interface, nodeNam
 		Status:  reporter.StatusRunning,
 	})
 
-	if err := nodedrain.Cordon(ctx, clientset, nodeName, constants.AnnotationCordonedKey); err != nil {
+	if err := nodedrain.Cordon(ctx, clientset, nodeName, constants.AnnotationClientCordonedKey); err != nil {
 		report(reporter.Update{
 			Message: fmt.Sprintf("%s: error cordoning node: %v", nodeName, err),
 			Status:  reporter.StatusError,
@@ -95,7 +95,7 @@ func CordonAndDrain(ctx context.Context, clientset kubernetes.Interface, nodeNam
 
 	if err := nodedrain.Drain(ctx, clientset, nodeName, dopts); err != nil {
 		report(reporter.Update{
-			Message: fmt.Sprintf("%s: error cordoning node: %v", nodeName, err),
+			Message: fmt.Sprintf("%s: error draining node: %v", nodeName, err),
 			Status:  reporter.StatusError,
 		})
 
@@ -123,7 +123,7 @@ func Uncordon(ctx context.Context, clientset kubernetes.Interface, nodeName stri
 		Status:  reporter.StatusRunning,
 	})
 
-	if err := nodedrain.Uncordon(ctx, clientset, nodeName, constants.AnnotationCordonedKey); err != nil {
+	if err := nodedrain.Uncordon(ctx, clientset, nodeName, constants.AnnotationClientCordonedKey); err != nil {
 		report(reporter.Update{
 			Message: fmt.Sprintf("%s: error uncordoning node: %v", nodeName, err),
 			Status:  reporter.StatusError,
