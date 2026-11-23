@@ -4,13 +4,13 @@ go 1.27.0
 
 replace (
 	// forked to set O_CLOEXEC on device open and add SataDevice.CheckPowerMode (skip standby disks)
-	github.com/anatol/smart.go => github.com/majabojarska/smart.go v0.0.0-20260707122632-d93e71f8295c
+	github.com/anatol/smart.go => github.com/majabojarska/smart.go v0.0.0-20260723175002-53b369c3973c
 
 	// forked ethtool introduces missing APIs
 	github.com/mdlayher/ethtool => github.com/siderolabs/ethtool v0.6.1-sidero
 
 	// see https://github.com/mdlayher/kobject/pull/5
-	github.com/mdlayher/kobject => github.com/smira/kobject v0.0.0-20240304111826-49c8d4613389
+	github.com/mdlayher/kobject => github.com/smira/kobject 19ca17470d7d
 
 	// replace to disable assembly implementation (see https://github.com/beevik/nts/issues/1#issuecomment-4879122150)
 	github.com/secure-io/siv-go => github.com/smira/siv-go v0.0.0-20260706144621-2093d2730928
@@ -34,23 +34,23 @@ require (
 	github.com/anatol/smart.go v0.0.0-20260913233941-486c28b93357
 	github.com/aws/aws-sdk-go-v2/config v1.33.18
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.20.9
-	github.com/aws/aws-sdk-go-v2/service/acm v1.51.4
+	github.com/aws/aws-sdk-go-v2/service/acm v1.51.5
 	github.com/aws/aws-sdk-go-v2/service/kms v1.62.6
 	github.com/aws/smithy-go v1.28.9
 	github.com/beevik/ntp v1.6.0
 	github.com/beevik/nts v0.3.3
 	github.com/blang/semver/v4 v4.0.0
-	github.com/bougou/go-ipmi v0.9.2-0.20261109131707-d0ee8a526f5e
+	github.com/bougou/go-ipmi v0.9.2
 	github.com/cenkalti/backoff/v7 v7.0.3
 	github.com/containerd/cgroups/v3 v3.1.3
-	github.com/containerd/containerd/api v1.11.1
-	github.com/containerd/containerd/v2 v2.3.7
+	github.com/containerd/containerd/api v1.12.0
+	github.com/containerd/containerd/v2 v2.4.2
 	github.com/containerd/errdefs v1.0.0
-	github.com/containerd/log v0.1.0
+	github.com/containerd/log v0.2.0
 	github.com/containerd/platforms v1.0.0-rc.5
 	github.com/containerd/typeurl/v2 v2.3.0
 	github.com/containernetworking/cni v1.3.1
-	github.com/containernetworking/plugins v1.9.1
+	github.com/containernetworking/plugins v1.10.0
 	github.com/coreos/go-iptables v0.8.0
 	github.com/cosi-project/runtime v1.17.1
 	github.com/cyberphone/json-canonicalization v0.0.0-20261011152517-32a48195b9b2
@@ -69,14 +69,14 @@ require (
 	github.com/freddierice/go-losetup/v2 v2.0.1
 	github.com/fsnotify/fsnotify v1.10.1
 	github.com/g0rbe/go-chattr v1.0.1
-	github.com/gdamore/tcell/v2 v2.13.10
+	github.com/gdamore/tcell/v3 v3.6.0
 	github.com/gertd/go-pluralize v0.2.1
 	github.com/godbus/dbus/v5 v5.2.4
 	github.com/golang/mock v1.7.0-rc.1
 	github.com/google/cadvisor/lib v0.60.6
 	github.com/google/certificate-transparency-go v1.4.0
 	github.com/google/go-containerregistry v0.22.1
-	github.com/google/go-eventlog v0.0.3-0.20261001001437-1991f15bc4b0
+	github.com/google/go-eventlog 2d6b8d5e3474
 	github.com/google/go-tpm v0.9.8
 	github.com/google/nftables v0.3.0
 	github.com/google/uuid v1.6.0
@@ -108,8 +108,8 @@ require (
 	github.com/mdlayher/netx v0.0.0-20230430222610-7e21880baee8
 	github.com/mdp/qrterminal/v4 v4.0.0
 	github.com/miekg/dns v1.1.73
-	github.com/moby/moby/api v1.56.1
-	github.com/moby/moby/client v0.6.2
+	github.com/moby/moby/api v1.57.0
+	github.com/moby/moby/client v0.6.3
 	github.com/navidys/tvxwidgets v0.14.0
 	github.com/nberlee/go-netstat v0.1.2
 	github.com/opencontainers/go-digest v1.0.0
@@ -178,7 +178,7 @@ require (
 	go.yaml.in/yaml/v4 v4.0.0
 	go4.org/netipx v0.0.0-20260823151212-3075585bcbeb
 	golang.org/x/net v0.62.0
-	golang.org/x/oauth2 v0.37.0
+	golang.org/x/oauth2 v0.38.0
 	golang.org/x/sync v0.25.0
 	golang.org/x/sys v0.50.0
 	golang.org/x/term v0.48.0
@@ -188,19 +188,19 @@ require (
 	google.golang.org/grpc v1.85.0
 	google.golang.org/protobuf v1.36.12
 	gopkg.in/typ.v4 v4.4.0
-	k8s.io/api v0.38.0-alpha.2
-	k8s.io/apiextensions-apiserver v0.38.0-alpha.2
-	k8s.io/apimachinery v0.38.0-alpha.2
-	k8s.io/apiserver v0.38.0-alpha.2
-	k8s.io/client-go v0.38.0-alpha.2
-	k8s.io/component-base v0.38.0-alpha.2
-	k8s.io/cri-api v0.38.0-alpha.2
+	k8s.io/api v0.38.0-beta.0
+	k8s.io/apiextensions-apiserver v0.38.0-beta.0
+	k8s.io/apimachinery v0.38.0-beta.0
+	k8s.io/apiserver v0.38.0-beta.0
+	k8s.io/client-go v11.0.0+incompatible
+	k8s.io/component-base v0.38.0-beta.0
+	k8s.io/cri-api v0.38.0-beta.0
 	k8s.io/klog/v2 v2.140.0
-	k8s.io/kube-proxy v0.38.0-alpha.2
-	k8s.io/kube-scheduler v0.38.0-alpha.2
-	k8s.io/kubectl v0.38.0-alpha.2
-	k8s.io/kubelet v0.38.0-alpha.2
-	k8s.io/pod-security-admission v0.38.0-alpha.2
+	k8s.io/kube-proxy v0.38.0-beta.0
+	k8s.io/kube-scheduler v0.38.0-beta.0
+	k8s.io/kubectl v0.38.0-beta.0
+	k8s.io/kubelet v0.38.0-beta.0
+	k8s.io/pod-security-admission v0.38.0-beta.0
 	k8s.io/utils v0.0.0-20261023123148-ca04ba58ecab
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.78
 	libvirt.org/go/libvirtxml v1.12008.0
