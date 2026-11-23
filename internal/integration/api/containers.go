@@ -1186,17 +1186,9 @@ func (suite *ContainersSuite) TestResourceLimits() {
 // TestNetworkModes verifies that the network mode decides both the container's network namespace and
 // whether the host's network files are visible in it.
 func (suite *ContainersSuite) TestNetworkModes() {
-	// Interfaces are listed rather than counted, and routes are reported separately: a count says
-	// nothing about why it is wrong, and /proc/net/dev being unreadable would look the same as a
-	// namespace that was never created. END terminates the list so it can be matched as a whole.
-	//
-	// An empty namespace is not just lo: the kernel auto-creates a fallback tunnel device per
-	// namespace for every tunnel module that is loaded, so lo, tunl0, sit0 and ip6tnl0 all show up in
-	// one. What distinguishes it is that none of the host's own interfaces are there, and that it has
-	// no routes.
 	const describeNetwork = "echo IFACES=$(grep -o '^[^:]*:' /proc/net/dev | tr -d ' :' | tr '\n' ',')END; " +
 		"if [ \"$(wc -l < /proc/net/route)\" -le 1 ]; then echo NO-ROUTES; else echo HAS-ROUTES; fi; " +
-		"grep -q nameserver /etc/resolv.conf 2>/dev/null && echo RESOLVCONF || echo NO-RESOLVCONF"
+		"grep -q nameserver /etc/resolv.conf 2>/dev/null && echo RESOLV=present || echo RESOLV=absent"
 
 	suite.Run("none", func() {
 		ctx, name, _ := suite.setupContainer("net-none")
@@ -1206,7 +1198,7 @@ func (suite *ContainersSuite) TestNetworkModes() {
 		// No network stanza at all: none is the default.
 		suite.applyContainers(ctx, suite.shellContainer(name, describeNetwork))
 
-		logs := suite.assertContainerLogged(ctx, name, "IFACES=")
+		logs := suite.assertContainerLogged(ctx, name, "RESOLV=present", "RESOLV=absent")
 
 		for _, iface := range hostOnly {
 			suite.Assert().NotContains(logs, iface+",",
@@ -1215,7 +1207,7 @@ func (suite *ContainersSuite) TestNetworkModes() {
 
 		suite.Assert().Contains(logs, "NO-ROUTES",
 			"a container in network mode none should have no routes")
-		suite.Assert().Contains(logs, "NO-RESOLVCONF",
+		suite.Assert().Contains(logs, "RESOLV=absent",
 			"a container with its own network namespace should not see the host's resolv.conf")
 	})
 
@@ -1231,7 +1223,7 @@ func (suite *ContainersSuite) TestNetworkModes() {
 
 		suite.applyContainers(ctx, doc)
 
-		logs := suite.assertContainerLogged(ctx, name, "IFACES=")
+		logs := suite.assertContainerLogged(ctx, name, "RESOLV=present", "RESOLV=absent")
 
 		// Any one of them is proof that the namespace is shared, and only one is asserted because the
 		// host's list includes pod veth devices which come and go: requiring all of them would fail
@@ -1245,7 +1237,7 @@ func (suite *ContainersSuite) TestNetworkModes() {
 
 		suite.Assert().Contains(logs, "HAS-ROUTES",
 			"a container sharing the host network should see the host's routes")
-		suite.Assert().Contains(logs, "RESOLVCONF",
+		suite.Assert().Contains(logs, "RESOLV=present",
 			"a container sharing the host network should see the host's resolv.conf")
 	})
 }
