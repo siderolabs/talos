@@ -23,6 +23,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/dashboard/containerlogdata"
 	"github.com/siderolabs/talos/internal/pkg/dashboard/utils"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
+	"github.com/siderolabs/talos/pkg/machinery/redactable"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
 )
 
@@ -723,7 +724,7 @@ func (widget *ContainersGrid) stopWatch() {
 // A single event channel keeps the three kinds in step: the list joins them, so rendering on every
 // event from any of them is both correct and simpler than reconciling three separate streams.
 func (widget *ContainersGrid) runWatch(ctx context.Context) {
-	nodeCtx := utils.NodeContext(ctx, widget.selectedNode)
+	nodeCtx := redactable.WithMode(utils.NodeContext(ctx, widget.selectedNode), redactable.ModeAccept)
 
 	eventCh := make(chan state.Event)
 
