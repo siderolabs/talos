@@ -12,6 +12,7 @@ import (
 	"net"
 	"os"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
@@ -111,6 +112,7 @@ func (suite *BootSuite) TestCopySurvivesSourceDeletionAndHostReboot() {
 
 	guestMAC := doc.NetworkingConfig.InterfacesConfig[0].HardwareAddressConfig
 	beforeBootID := suite.guestBootID(guestIP, guestMAC)
+	stopsBefore := len(suite.qemuStopReasons(nodeCtx, name))
 
 	var copyPath string
 
@@ -161,6 +163,12 @@ func (suite *BootSuite) TestCopySurvivesSourceDeletionAndHostReboot() {
 		"ext-virtstoraged": "Running",
 	})
 
+	// The node stops virtual machines before the services they need, so the guest running before
+	// the reboot was asked to power off and did, rather than being killed with the daemon.
+	stops := suite.qemuStopReasons(nodeCtx, name)
+	suite.Require().Greater(len(stops), stopsBefore, "the guest must have stopped for the host reboot")
+	suite.Require().Equal("shutdown", stops[stopsBefore], "the guest must power itself off on the way down")
+
 	assertSourceAbsent()
 	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), diskStatusID(name, disk),
 		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
@@ -182,6 +190,22 @@ func (suite *BootSuite) TestCopySurvivesSourceDeletionAndHostReboot() {
 	suite.Require().NoError(err)
 	suite.assertStoppedDomain(nodeCtx, node, name)
 	suite.assertStopMode(nodeCtx, name, hypervisorhelpers.StopModeGraceful)
+}
+
+// qemuStopReasons lists how each run of the domain ended, oldest first, as libvirt records it in
+// the domain's QEMU log: shutdown when the guest powered itself off, destroyed when it was killed.
+func (suite *LibvirtSuite) qemuStopReasons(nodeCtx context.Context, name string) []string {
+	suite.T().Helper()
+
+	var reasons []string
+
+	for line := range strings.Lines(suite.ReadFile(nodeCtx, "/var/log/libvirt/qemu/"+name+".log")) {
+		if _, reason, found := strings.Cut(strings.TrimSpace(line), "shutting down, reason="); found {
+			reasons = append(reasons, reason)
+		}
+	}
+
+	return reasons
 }
 
 // guestBootID waits for the guest to serve its API and returns its kernel boot ID. The guest must

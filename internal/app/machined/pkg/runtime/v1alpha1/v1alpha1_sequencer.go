@@ -186,6 +186,9 @@ func (*Sequencer) Install(r runtime.Runtime) []runtime.Phase {
 				"denyNewServices",
 				DenyNewServices,
 			).Append(
+				"stopVirtualMachines",
+				TeardownVirtualMachineLifecycle,
+			).Append(
 				"stopContainers",
 				TeardownContainerLifecycle,
 			).Append(
@@ -459,6 +462,9 @@ func (*Sequencer) Upgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []ru
 		).AppendList(
 			preShutdownPhaselist(),
 		).Append(
+			"stopVirtualMachines",
+			TeardownVirtualMachineLifecycle,
+		).Append(
 			"stopContainers",
 			TeardownContainerLifecycle,
 		).Append(
@@ -520,6 +526,9 @@ func stopAllPhaselist(r runtime.Runtime, enableKexec bool) PhaseList {
 		phases = phases.Append(
 			"denyNewServices",
 			DenyNewServices,
+		).Append(
+			"stopVirtualMachines",
+			TeardownVirtualMachineLifecycle,
 		).Append(
 			"stopContainers",
 			TeardownContainerLifecycle,

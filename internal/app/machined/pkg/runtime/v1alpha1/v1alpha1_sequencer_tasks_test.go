@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -22,6 +23,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	blockres "github.com/siderolabs/talos/pkg/machinery/resources/block"
 	containersres "github.com/siderolabs/talos/pkg/machinery/resources/containers"
+	hypervisorres "github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 )
 
 func TestUnmountEphemeralPartitionWaitsForFinalizers(t *testing.T) {
@@ -115,6 +117,107 @@ func TestTeardownContainerLifecycleRecordsDeadline(t *testing.T) {
 
 			_, err = safe.StateGet[*containersres.ContainerLifecycle](ctx, resources, lifecycle.Metadata())
 			require.True(t, state.IsNotFoundError(err))
+		})
+	}
+}
+
+func TestTeardownVirtualMachineLifecycleRecordsDeadline(t *testing.T) {
+	t.Setenv("PLATFORM", "container")
+
+	ctx, cancel := context.WithTimeout(t.Context(), time.Hour)
+	t.Cleanup(cancel)
+
+	runtimeState, err := v1alpha1.NewState()
+	require.NoError(t, err)
+
+	resources := runtimeState.V1Alpha2().Resources()
+	lifecycle := hypervisorres.NewVirtualMachineLifecycle(hypervisorres.NamespaceName, hypervisorres.VirtualMachineLifecycleID)
+
+	require.NoError(t, resources.Create(ctx, lifecycle))
+	require.NoError(t, resources.AddFinalizer(ctx, lifecycle.Metadata(), "vm-controller"))
+
+	events := make(chan state.Event)
+	require.NoError(t, resources.Watch(ctx, lifecycle.Metadata(), events))
+
+	deadlineC := make(chan time.Time, 1)
+
+	go func() {
+		for {
+			var event state.Event
+
+			select {
+			case <-ctx.Done():
+				return
+			case event = <-events:
+			}
+
+			observed, ok := event.Resource.(*hypervisorres.VirtualMachineLifecycle)
+			if !ok || observed.Metadata().Phase() != resource.PhaseTearingDown {
+				continue
+			}
+
+			deadlineC <- observed.TypedSpec().ShutdownDeadline
+
+			resources.RemoveFinalizer(ctx, lifecycle.Metadata(), "vm-controller") //nolint:errcheck
+
+			return
+		}
+	}()
+
+	start := time.Now()
+
+	task, _ := v1alpha1.TeardownVirtualMachineLifecycle(runtime.SequenceReboot, nil)
+	require.NoError(t, task(ctx, log.New(io.Discard, "", 0), v1alpha1.NewRuntime(runtimeState, nil, nil)))
+
+	assert.WithinRange(t, <-deadlineC,
+		start.Add(constants.VirtualMachineShutdownTimeout-time.Second), time.Now().Add(constants.VirtualMachineShutdownTimeout))
+
+	_, err = safe.StateGet[*hypervisorres.VirtualMachineLifecycle](ctx, resources, lifecycle.Metadata())
+	require.True(t, state.IsNotFoundError(err))
+}
+
+// Guests still holding the barrier at the deadline do not fail the sequence, which would leave the
+// node up with them destroyed. A sequence which itself runs out of time still fails.
+func TestTeardownVirtualMachineLifecycleContinuesPastTheDeadline(t *testing.T) {
+	t.Setenv("PLATFORM", "container")
+
+	for _, test := range []struct {
+		name            string
+		sequenceTimeout time.Duration
+		wantErr         bool
+	}{
+		{name: "barrier deadline", sequenceTimeout: time.Hour},
+		{name: "sequence deadline", sequenceTimeout: time.Minute, wantErr: true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				ctx, cancel := context.WithTimeout(t.Context(), test.sequenceTimeout)
+				defer cancel()
+
+				runtimeState, err := v1alpha1.NewState()
+				require.NoError(t, err)
+
+				resources := runtimeState.V1Alpha2().Resources()
+				lifecycle := hypervisorres.NewVirtualMachineLifecycle(hypervisorres.NamespaceName, hypervisorres.VirtualMachineLifecycleID)
+
+				require.NoError(t, resources.Create(ctx, lifecycle))
+				require.NoError(t, resources.AddFinalizer(ctx, lifecycle.Metadata(), "vm-controller"))
+
+				task, _ := v1alpha1.TeardownVirtualMachineLifecycle(runtime.SequenceReboot, nil)
+				err = task(ctx, log.New(io.Discard, "", 0), v1alpha1.NewRuntime(runtimeState, nil, nil))
+
+				if test.wantErr {
+					require.ErrorIs(t, err, context.DeadlineExceeded)
+
+					return
+				}
+
+				require.NoError(t, err)
+
+				held, err := safe.StateGet[*hypervisorres.VirtualMachineLifecycle](t.Context(), resources, lifecycle.Metadata())
+				require.NoError(t, err)
+				assert.Equal(t, resource.PhaseTearingDown, held.Metadata().Phase())
+			})
 		})
 	}
 }

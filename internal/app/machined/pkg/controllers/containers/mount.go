@@ -16,6 +16,7 @@ import (
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/internal/lifecycle"
 	configcfg "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -151,12 +152,12 @@ func (ctrl *MountController) mountRequestID(containerSpecID, volumeID string) st
 
 //nolint:gocyclo
 func (ctrl *MountController) reconcile(ctx context.Context, runtime controller.Runtime, logger *zap.Logger) error {
-	containerLifecycle, err := readContainerLifecycle(ctx, runtime)
+	containerLifecycle, err := lifecycle.Read[containers.ContainerLifecycle](ctx, runtime, containers.ContainerLifecycleID)
 	if err != nil {
 		return err
 	}
 
-	if containerLifecycle == nil || containerLifecycle.Metadata().Phase() == resource.PhaseTearingDown {
+	if lifecycle.ShuttingDown(containerLifecycle) {
 		held, err := ctrl.releaseAll(ctx, runtime, logger)
 		if err != nil {
 			return err
@@ -167,7 +168,7 @@ func (ctrl *MountController) reconcile(ctx context.Context, runtime controller.R
 			return err
 		}
 
-		return reconcileLifecycle(ctx, runtime, logger, containerLifecycle, ctrl.Name(), held+heldDevices == 0)
+		return lifecycle.Reconcile(ctx, runtime, logger, containerLifecycle, ctrl.Name(), held+heldDevices == 0)
 	}
 
 	containerSpecs, err := safe.ReaderListAll[*containers.ContainerSpec](ctx, runtime)
@@ -247,7 +248,7 @@ func (ctrl *MountController) reconcile(ctx context.Context, runtime controller.R
 		return err
 	}
 
-	return reconcileLifecycle(ctx, runtime, logger, containerLifecycle, ctrl.Name(), len(wanted) == 0)
+	return lifecycle.Reconcile(ctx, runtime, logger, containerLifecycle, ctrl.Name(), len(wanted) == 0)
 }
 
 // joinReasons appends the device reasons to the mount reason.

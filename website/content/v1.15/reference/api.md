@@ -573,6 +573,7 @@ description: Talos gRPC API reference.
     - [VirtualMachineGuestInterfaceSpec](#talos.resource.definitions.hypervisor.VirtualMachineGuestInterfaceSpec)
     - [VirtualMachineGuestSpec](#talos.resource.definitions.hypervisor.VirtualMachineGuestSpec)
     - [VirtualMachineInterfaceSpec](#talos.resource.definitions.hypervisor.VirtualMachineInterfaceSpec)
+    - [VirtualMachineLifecycleSpec](#talos.resource.definitions.hypervisor.VirtualMachineLifecycleSpec)
     - [VirtualMachineMemoryBallooningSpec](#talos.resource.definitions.hypervisor.VirtualMachineMemoryBallooningSpec)
     - [VirtualMachineMemoryNUMASpec](#talos.resource.definitions.hypervisor.VirtualMachineMemoryNUMASpec)
     - [VirtualMachineMemorySpec](#talos.resource.definitions.hypervisor.VirtualMachineMemorySpec)
@@ -10093,6 +10094,21 @@ VirtualMachineInterfaceSpec describes a network interface attached to a host lin
 | hardware_addr | [string](#string) |  | HardwareAddr is the address presented to the guest.<br><br>Empty when it is to be derived from the virtual machine and interface names. |
 | trust_guest_rx_filters | [bool](#bool) |  | TrustGuestRxFilters applies the guest's receive filter updates to the host-side macvtap device, so IPv6 multicast (NDP, DHCPv6) can reach the guest. The guest can then also set the device's MAC to any address and turn on promiscuous or all-multicast mode, which propagates to the host link. |
 | attachment | [string](#string) |  | Attachment is how the interface is attached to the host link: macvtap or bridge. |
+
+
+
+
+
+
+<a name="talos.resource.definitions.hypervisor.VirtualMachineLifecycleSpec"></a>
+
+### VirtualMachineLifecycleSpec
+VirtualMachineLifecycleSpec is the spec for VirtualMachineLifecycle.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| shutdown_deadline | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  | ShutdownDeadline is set when the resource is torn down: all virtual machines have to be stopped by then. |
 
 
 

@@ -67,6 +67,7 @@ import (
 	containersres "github.com/siderolabs/talos/pkg/machinery/resources/containers"
 	crires "github.com/siderolabs/talos/pkg/machinery/resources/cri"
 	resourcefiles "github.com/siderolabs/talos/pkg/machinery/resources/files"
+	hypervisorres "github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	resourceruntime "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	resourcev1alpha1 "github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
@@ -1859,20 +1860,62 @@ func TeardownVolumeLifecycle(runtime.Sequence, any) (runtime.TaskExecutionFunc, 
 //
 // The deadline is recorded on the resource first, so that the containers are stopped within it.
 func TeardownContainerLifecycle(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	md := containersres.NewContainerLifecycle(containersres.NamespaceName, containersres.ContainerLifecycleID).Metadata()
-	teardown := teardownLifecycleResource(md, constants.ContainerShutdownTimeout)
+	return teardownLifecycleWithDeadline(
+		containersres.NewContainerLifecycle(containersres.NamespaceName, containersres.ContainerLifecycleID).Metadata(),
+		constants.ContainerShutdownTimeout,
+		func(lifecycle *containersres.ContainerLifecycle) *time.Time {
+			return &lifecycle.TypedSpec().ShutdownDeadline
+		},
+	), "teardownContainerLifecycle"
+}
+
+// TeardownVirtualMachineLifecycle tears down the virtual machine shutdown barrier resource.
+//
+// Like TeardownContainerLifecycle, this runs before stopServices: the guests are stopped through
+// virtqemud, which that phase stops.
+//
+// The deadline is recorded on the resource first, so that the virtual machines are stopped within it.
+// Missing it does not fail the sequence: by then the guests are being destroyed, and aborting would
+// leave the node up with its virtual machines gone.
+func TeardownVirtualMachineLifecycle(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
+	teardown := teardownLifecycleWithDeadline(
+		hypervisorres.NewVirtualMachineLifecycle(hypervisorres.NamespaceName, hypervisorres.VirtualMachineLifecycleID).Metadata(),
+		constants.VirtualMachineShutdownTimeout,
+		func(lifecycle *hypervisorres.VirtualMachineLifecycle) *time.Time {
+			return &lifecycle.TypedSpec().ShutdownDeadline
+		},
+	)
 
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		ctx, cancel := context.WithTimeout(ctx, constants.ContainerShutdownTimeout)
+		err := teardown(ctx, logger, r)
+		if errors.Is(err, context.DeadlineExceeded) && ctx.Err() == nil {
+			logger.Printf("virtual machines did not stop within %s, continuing: %s", constants.VirtualMachineShutdownTimeout, err)
+
+			return nil
+		}
+
+		return err
+	}, "teardownVirtualMachineLifecycle"
+}
+
+// teardownLifecycleWithDeadline records now+timeout as the shutdown deadline on a lifecycle resource,
+// then tears it down and waits for its finalizers within that timeout.
+func teardownLifecycleWithDeadline[T resource.Resource](
+	md *resource.Metadata, timeout time.Duration, shutdownDeadline func(T) *time.Time,
+) runtime.TaskExecutionFunc {
+	teardown := teardownLifecycleResource(md, timeout)
+
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		ctx, cancel := context.WithTimeout(ctx, timeout)
 		defer cancel()
 
 		deadline, _ := ctx.Deadline()
 
 		// a shutdown taking over keeps the deadline of the one which started tearing down
 		if _, err := safe.StateUpdateWithConflicts(ctx, r.State().V1Alpha2().Resources(), md,
-			func(lifecycle *containersres.ContainerLifecycle) error {
-				if lifecycle.TypedSpec().ShutdownDeadline.IsZero() {
-					lifecycle.TypedSpec().ShutdownDeadline = deadline
+			func(lifecycle T) error {
+				if recorded := shutdownDeadline(lifecycle); recorded.IsZero() {
+					*recorded = deadline
 				}
 
 				return nil
@@ -1883,7 +1926,7 @@ func TeardownContainerLifecycle(runtime.Sequence, any) (runtime.TaskExecutionFun
 		}
 
 		return teardown(ctx, logger, r)
-	}, "teardownContainerLifecycle"
+	}
 }
 
 func pauseOnFailure(callback func(runtime.Sequence, any) (runtime.TaskExecutionFunc, string),

@@ -42,6 +42,7 @@ func DefaultTasks() []Task {
 		SetupSystemDirectories,
 		InitVolumeLifecycle,
 		InitContainerLifecycle,
+		InitVirtualMachineLifecycle,
 		MountCgroups,
 		SetRLimit,
 		SetEnvironmentVariables,

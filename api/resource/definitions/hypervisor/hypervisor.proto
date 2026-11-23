@@ -6,6 +6,7 @@ option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/defi
 option java_package = "dev.talos.api.resource.definitions.hypervisor";
 
 import "common/common.proto";
+import "google/protobuf/timestamp.proto";
 import "resource/definitions/enums/enums.proto";
 
 // CloudInitSpecSpec carries opaque payload bytes (strings preserve verbatim content).
@@ -238,6 +239,12 @@ message VirtualMachineInterfaceSpec {
   bool trust_guest_rx_filters = 4;
   // Attachment is how the interface is attached to the host link: macvtap or bridge.
   string attachment = 5;
+}
+
+// VirtualMachineLifecycleSpec is the spec for VirtualMachineLifecycle.
+message VirtualMachineLifecycleSpec {
+  // ShutdownDeadline is set when the resource is torn down: all virtual machines have to be stopped by then.
+  google.protobuf.Timestamp shutdown_deadline = 1;
 }
 
 // VirtualMachineMemoryBallooningSpec describes the desired memory ballooning state.

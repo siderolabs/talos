@@ -24,6 +24,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
+	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 )
 
 // LogMode prints the current mode.
@@ -75,6 +76,15 @@ func InitVolumeLifecycle(ctx context.Context, log *zap.Logger, rt runtime.Runtim
 func InitContainerLifecycle(ctx context.Context, log *zap.Logger, rt runtime.Runtime, next NextTaskFunc) error {
 	if err := rt.State().V1Alpha2().Resources().Create(ctx, containers.NewContainerLifecycle(containers.NamespaceName, containers.ContainerLifecycleID)); err != nil {
 		return fmt.Errorf("initContainerLifecycle: %w", err)
+	}
+
+	return next()(ctx, log, rt, next)
+}
+
+// InitVirtualMachineLifecycle initializes the virtual machine shutdown barrier resource.
+func InitVirtualMachineLifecycle(ctx context.Context, log *zap.Logger, rt runtime.Runtime, next NextTaskFunc) error {
+	if err := rt.State().V1Alpha2().Resources().Create(ctx, hypervisor.NewVirtualMachineLifecycle(hypervisor.NamespaceName, hypervisor.VirtualMachineLifecycleID)); err != nil {
+		return fmt.Errorf("initVirtualMachineLifecycle: %w", err)
 	}
 
 	return next()(ctx, log, rt, next)

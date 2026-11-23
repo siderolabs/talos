@@ -327,6 +327,7 @@ func (s *VirtualMachineDomainSuite) SetupTest() {
 	s.Create(system)
 	s.Create(newReadyVirtqemudService())
 	s.Create(newVirtualMachineLogMount())
+	s.Create(hypervisor.NewVirtualMachineLifecycle(hypervisor.NamespaceName, hypervisor.VirtualMachineLifecycleID))
 }
 
 func newVirtualMachineLogMount() *block.VolumeMountStatus {
@@ -3599,6 +3600,265 @@ func (s *VirtualMachineDomainSuite) TestARefusedAskIsRetried() {
 	s.client.mu.Unlock()
 
 	s.assertAsked("retry", 1)
+}
+
+// tearDownLifecycle starts the node shutdown the way the sequencer does: the deadline is recorded
+// first, then the barrier is torn down.
+func (s *VirtualMachineDomainSuite) tearDownLifecycle(deadline time.Time) {
+	lifecycle := hypervisor.NewVirtualMachineLifecycle(hypervisor.NamespaceName, hypervisor.VirtualMachineLifecycleID)
+
+	ctest.UpdateWithConflicts(s, lifecycle, func(res *hypervisor.VirtualMachineLifecycle) error {
+		res.TypedSpec().ShutdownDeadline = deadline
+
+		return nil
+	})
+
+	_, err := s.State().Teardown(s.Ctx(), lifecycle.Metadata())
+	s.Require().NoError(err)
+}
+
+// assertLifecycleHeldFor asserts the barrier stays held for d.
+func (s *VirtualMachineDomainSuite) assertLifecycleHeldFor(d time.Duration) {
+	ctx, st := s.Ctx(), s.State()
+
+	s.Require().Never(func() bool {
+		lifecycle, err := safe.StateGetByID[*hypervisor.VirtualMachineLifecycle](ctx, st, hypervisor.VirtualMachineLifecycleID)
+
+		return err != nil || !lifecycle.Metadata().Finalizers().Has("hypervisor.VirtualMachineController")
+	}, d, 10*time.Millisecond, "shutdown barrier released early")
+}
+
+func (s *VirtualMachineDomainSuite) assertLifecycleHeld(held bool) {
+	ctx, st := s.Ctx(), s.State()
+
+	s.Require().Eventually(func() bool {
+		lifecycle, err := safe.StateGetByID[*hypervisor.VirtualMachineLifecycle](ctx, st, hypervisor.VirtualMachineLifecycleID)
+
+		return err == nil && lifecycle.Metadata().Finalizers().Has("hypervisor.VirtualMachineController") == held
+	}, 5*time.Second, 10*time.Millisecond, "shutdown barrier held: %v", held)
+}
+
+// On the way down a guest is asked to power off and keeps its disks until it has, and the barrier
+// is held until then. The spec still says running, yet nothing is started again, even once the
+// barrier is gone while virtqemud is still up.
+//
+// The spec carries no stop mode, as one rendered from a running VirtualMachineConfig does not.
+func (s *VirtualMachineDomainSuite) TestNodeShutdownPowersOffGuests() {
+	s.start()
+	s.assertLifecycleHeld(true)
+
+	disk := s.newDiskStatus(diskStatusVM + "/install@aaaaaaaaaaaa")
+
+	spec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, diskStatusVM)
+	spec.TypedSpec().DomainXML = `<domain><name>` + diskStatusVM + `</name></domain>`
+	spec.TypedSpec().PowerState = "running"
+	spec.TypedSpec().Disks = []string{disk.Metadata().ID()}
+	s.Create(spec)
+	s.assertDomain(diskStatusVM, spec.TypedSpec().DomainXML, true)
+	s.assertDiskHeld(disk.Metadata().ID(), true)
+
+	s.tearDownLifecycle(time.Now().Add(constants.VirtualMachineShutdownTimeout))
+
+	s.assertAsked(diskStatusVM, 1)
+	s.assertDomain(diskStatusVM, spec.TypedSpec().DomainXML, true)
+	s.assertDiskHeld(disk.Metadata().ID(), true)
+	s.assertLifecycleHeld(true)
+
+	s.powerOffGuest(diskStatusVM)
+
+	s.assertDiskHeld(disk.Metadata().ID(), false)
+	s.assertLifecycleHeld(false)
+
+	s.Destroy(hypervisor.NewVirtualMachineLifecycle(hypervisor.NamespaceName, hypervisor.VirtualMachineLifecycleID))
+	s.awaitReconcile()
+
+	s.client.mu.Lock()
+	defer s.client.mu.Unlock()
+
+	s.Require().Equal(1, s.client.starts[diskStatusVM])
+	s.Require().NotContains(s.client.domains, diskStatusVM)
+}
+
+// A guest still powering itself off as the shutdown deadline draws near is destroyed, so that the
+// barrier is released within the deadline.
+func (s *VirtualMachineDomainSuite) TestNodeShutdownDestroysGuestsAtTheDeadline() {
+	s.start()
+
+	s.startGracefully("refusing")
+
+	// The guest is destroyed 30s ahead of the deadline.
+	s.tearDownLifecycle(time.Now().Add(30*time.Second + 2*time.Second))
+
+	client := s.client
+
+	s.Require().Eventually(func() bool {
+		return client.shutdownCount("refusing") == 1
+	}, 5*time.Second, 10*time.Millisecond)
+
+	s.assertDomain("refusing", "", false)
+	s.assertLifecycleHeld(false)
+}
+
+// A stop mode describes an operator's stop request, not the host going down: even a guest whose
+// spec asks for forced stops is asked to power off first.
+func (s *VirtualMachineDomainSuite) TestNodeShutdownAsksGuestsWhateverTheirStopMode() {
+	s.start()
+
+	spec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, "forced")
+	spec.TypedSpec().DomainXML = `<domain><name>forced</name></domain>`
+	spec.TypedSpec().PowerState = "running"
+	spec.TypedSpec().StopMode = hypervisorhelpers.StopModeForced.String()
+	s.Create(spec)
+	s.assertDomain("forced", spec.TypedSpec().DomainXML, true)
+
+	s.tearDownLifecycle(time.Now().Add(constants.VirtualMachineShutdownTimeout))
+
+	s.assertAsked("forced", 1)
+	s.assertDomain("forced", spec.TypedSpec().DomainXML, true)
+	s.assertLifecycleHeld(true)
+
+	s.powerOffGuest("forced")
+
+	s.assertLifecycleHeld(false)
+}
+
+// A paused guest cannot be asked to power off, so it is destroyed without waiting for the deadline.
+func (s *VirtualMachineDomainSuite) TestNodeShutdownDestroysPausedGuests() {
+	s.start()
+
+	s.startGracefully("paused")
+
+	s.client.mu.Lock()
+	s.client.shutdownErr = libvirtdomain.ErrDomainNotRunning
+	s.client.mu.Unlock()
+
+	s.tearDownLifecycle(time.Now().Add(constants.VirtualMachineShutdownTimeout))
+
+	s.assertDomain("paused", "", false)
+	s.assertLifecycleHeld(false)
+}
+
+// A guest libvirt fails to ask is still running, so it is destroyed at the deadline rather than
+// failing the pass and leaving nothing to destroy it.
+func (s *VirtualMachineDomainSuite) TestNodeShutdownDestroysGuestsWhichCouldNotBeAsked() {
+	s.start()
+
+	s.startGracefully("unasked")
+
+	s.client.mu.Lock()
+	s.client.shutdownErr = errors.New("connection reset")
+	s.client.mu.Unlock()
+
+	s.tearDownLifecycle(time.Now().Add(30*time.Second + 2*time.Second))
+
+	s.assertLifecycleHeldFor(time.Second)
+	s.assertDomain("unasked", "", false)
+	s.assertLifecycleHeld(false)
+}
+
+// A guest libvirt failed to ask on the way down is asked again an interval later, rather than
+// waiting to be destroyed at the deadline.
+func (s *VirtualMachineDomainSuite) TestNodeShutdownAsksAgainAfterAFailedAsk() {
+	s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.VirtualMachineController{
+		Open:                      s.client.open,
+		GracefulStopRetryInterval: 100 * time.Millisecond,
+	}))
+
+	spec := s.startGracefully("reset")
+
+	s.client.mu.Lock()
+	s.client.shutdownErr = errors.New("connection reset")
+	s.client.mu.Unlock()
+
+	s.tearDownLifecycle(time.Now().Add(constants.VirtualMachineShutdownTimeout))
+
+	select {
+	case <-s.client.attemptedShutdown:
+	case <-time.After(5 * time.Second):
+		s.Require().Fail("no shutdown was attempted")
+	}
+
+	s.client.mu.Lock()
+	s.client.shutdownErr = nil
+	s.client.mu.Unlock()
+
+	client := s.client
+
+	s.Require().Eventually(func() bool {
+		return client.shutdownCount("reset") >= 1
+	}, 5*time.Second, 10*time.Millisecond, "guest was not asked again")
+	s.assertDomain("reset", spec.TypedSpec().DomainXML, true)
+	s.assertLifecycleHeld(true)
+}
+
+// A spec failing every pass does not keep the barrier from being held, so the other guests are
+// still asked to power off on the way down rather than destroyed unasked.
+func (s *VirtualMachineDomainSuite) TestNodeShutdownAsksGuestsWhileAnotherSpecFails() {
+	const unadoptable = "unadoptable"
+
+	s.client.domains[unadoptable] = libvirtdomain.Domain{
+		Name: unadoptable,
+		UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), unadoptable),
+	}
+
+	failing := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, unadoptable)
+	failing.TypedSpec().DomainXML = `<domain><name>` + unadoptable + `</name></domain>`
+	failing.TypedSpec().PowerState = "running"
+	s.Create(failing)
+
+	s.start()
+
+	spec := s.startGracefully("healthy")
+	s.assertLifecycleHeld(true)
+
+	s.tearDownLifecycle(time.Now().Add(constants.VirtualMachineShutdownTimeout))
+
+	s.assertAsked("healthy", 1)
+	s.assertDomain("healthy", spec.TypedSpec().DomainXML, true)
+}
+
+// A guest of this controller may be running while virtqemud is not ready, so the barrier is held
+// for it until the deadline, then let go since nothing else can stop the guest.
+func (s *VirtualMachineDomainSuite) TestNodeShutdownWithVirtqemudDownHoldsTheBarrierUntilTheDeadline() {
+	s.start()
+
+	s.startGracefully("orphaned")
+
+	s.Destroy(newReadyVirtqemudService())
+
+	s.tearDownLifecycle(time.Now().Add(30*time.Second + 2*time.Second))
+
+	s.assertLifecycleHeldFor(time.Second)
+	s.assertLifecycleHeld(false)
+}
+
+// libvirt failing while virtqemud reports ready must not strand the barrier: the controller retries
+// on its own, and releases the barrier at the force point as it does with the daemon down.
+func (s *VirtualMachineDomainSuite) TestNodeShutdownWithLibvirtFailingReleasesTheBarrierAtTheDeadline() {
+	s.start()
+
+	s.startGracefully("wedged")
+
+	s.client.mu.Lock()
+	s.client.listErr = errors.New("injected libvirt failure")
+	s.client.mu.Unlock()
+
+	s.tearDownLifecycle(time.Now().Add(30*time.Second + 2*time.Second))
+
+	s.assertLifecycleHeldFor(time.Second)
+	s.assertLifecycleHeld(false)
+}
+
+// Without a claimed domain there is nothing to wait for while virtqemud is down.
+func (s *VirtualMachineDomainSuite) TestNodeShutdownWithoutVirtqemudReleasesTheBarrier() {
+	s.start()
+	s.assertLifecycleHeld(true)
+
+	s.Destroy(newReadyVirtqemudService())
+
+	s.tearDownLifecycle(time.Now().Add(constants.VirtualMachineShutdownTimeout))
+
+	s.assertLifecycleHeld(false)
 }
 
 // A Ready volume is published only after its controller commits a pool-status

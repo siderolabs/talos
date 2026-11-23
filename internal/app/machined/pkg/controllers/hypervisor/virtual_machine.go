@@ -23,6 +23,7 @@ import (
 	"libvirt.org/go/libvirtxml"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor/internal/placement"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/internal/lifecycle"
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	libvirtdomain "github.com/siderolabs/talos/internal/pkg/libvirt/domain"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -162,6 +163,12 @@ func (ctrl *VirtualMachineController) Inputs() []controller.Input {
 			ID:        optional.Some(virtqemudServiceID),
 			Kind:      controller.InputWeak,
 		},
+		{
+			Namespace: hypervisor.NamespaceName,
+			Type:      hypervisor.VirtualMachineLifecycleType,
+			ID:        optional.Some(hypervisor.VirtualMachineLifecycleID),
+			Kind:      controller.InputStrong,
+		},
 	}
 }
 
@@ -184,36 +191,185 @@ func (ctrl *VirtualMachineController) Run(ctx context.Context, runtime controlle
 	retry := time.NewTicker(ctrl.gracefulStopRetryInterval())
 	defer retry.Stop()
 
+	// Fires when the guests still powering themselves off on the way down are destroyed instead,
+	// nil while there are none.
+	var force <-chan time.Time
+
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
 		case <-runtime.EventCh():
+		case <-force:
 		case <-retry.C:
 			if len(ctrl.shutdownRequested) == 0 {
 				continue
 			}
 		}
 
-		if err := ctrl.reconcileWhenReady(ctx, runtime, logger); err != nil {
+		forceAt, err := ctrl.reconcileWhenReady(ctx, runtime, logger)
+		if err != nil {
 			return err
 		}
+
+		force = fireAt(forceAt)
 
 		runtime.ResetRestartBackoff()
 	}
 }
 
-func (ctrl *VirtualMachineController) reconcileWhenReady(ctx context.Context, r controller.ReaderWriter, logger *zap.Logger) error {
-	ready, err := virtqemudReady(ctx, r)
-	if err != nil {
-		return err
-	}
-
-	if !ready {
+// fireAt returns a channel which fires at the given time, or nil, which never fires, for the zero time.
+func fireAt(at time.Time) <-chan time.Time {
+	if at.IsZero() {
 		return nil
 	}
 
-	return ctrl.reconcile(ctx, r, logger)
+	return time.After(time.Until(at))
+}
+
+// reconcileWhenReady reconciles the domains once the daemon is up. On the way down it returns when
+// the guests still powering themselves off are to be destroyed, if any are.
+func (ctrl *VirtualMachineController) reconcileWhenReady(ctx context.Context, r controller.ReaderWriter, logger *zap.Logger) (time.Time, error) {
+	barrier, err := lifecycle.Read[hypervisor.VirtualMachineLifecycle](ctx, r, hypervisor.VirtualMachineLifecycleID)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	shutdown := nodeShutdownFor(barrier)
+
+	ready, err := virtqemudReady(ctx, r)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	if !ready {
+		return ctrl.holdWhileDaemonDown(ctx, r, logger, barrier, shutdown)
+	}
+
+	// Held before the domains are reconciled, so that a pass failing on one spec does not leave every
+	// other guest to be destroyed unasked on the way down. Never released here.
+	if err = lifecycle.Reconcile(ctx, r, logger, barrier, ctrl.Name(), false); err != nil {
+		return time.Time{}, err
+	}
+
+	if err = ctrl.reconcile(ctx, r, logger, shutdown); err != nil {
+		if shutdown == nil {
+			return time.Time{}, err
+		}
+
+		return ctrl.retryOnTheWayDown(ctx, r, logger, barrier, shutdown, err)
+	}
+
+	if err = lifecycle.Reconcile(ctx, r, logger, barrier, ctrl.Name(), shutdown.releasable()); err != nil {
+		return time.Time{}, err
+	}
+
+	if shutdown == nil || shutdown.poweringOff == 0 {
+		return time.Time{}, nil
+	}
+
+	return shutdown.forceAt, nil
+}
+
+// retryOnTheWayDown handles a failure to wind the domains down. It is retried here rather than
+// returned: a controller restart backs off for up to a minute, which can carry the retry past the
+// shutdown deadline. From the force point on nothing here can stop the guests, so the barrier is
+// released and the shutdown goes on without them.
+func (ctrl *VirtualMachineController) retryOnTheWayDown(
+	ctx context.Context, r controller.ReaderWriter, logger *zap.Logger, barrier *hypervisor.VirtualMachineLifecycle, shutdown *nodeShutdown, err error,
+) (time.Time, error) {
+	if now := time.Now(); now.Before(shutdown.forceAt) {
+		logger.Warn("failed to stop the guests, retrying", zap.Error(err))
+
+		retryAt := now.Add(ctrl.gracefulStopRetryInterval())
+		if retryAt.After(shutdown.forceAt) {
+			retryAt = shutdown.forceAt
+		}
+
+		return retryAt, nil
+	}
+
+	if barrier != nil && barrier.Metadata().Finalizers().Has(ctrl.Name()) {
+		logger.Warn("failed to stop the guests, releasing the shutdown barrier with them still there", zap.Error(err))
+	}
+
+	return time.Time{}, lifecycle.Reconcile(ctx, r, logger, barrier, ctrl.Name(), true)
+}
+
+// holdWhileDaemonDown handles the barrier while virtqemud is not ready. A claimed spec means a guest
+// may still be running without the daemon, and only the daemon can stop it, so on the way down the
+// barrier is held until the daemon is back or the force deadline passes. Past that deadline nothing
+// here can stop the guest, so the barrier is released and the shutdown goes on without it.
+func (ctrl *VirtualMachineController) holdWhileDaemonDown(
+	ctx context.Context, r controller.ReaderWriter, logger *zap.Logger, barrier *hypervisor.VirtualMachineLifecycle, shutdown *nodeShutdown,
+) (time.Time, error) {
+	if shutdown == nil {
+		return time.Time{}, lifecycle.Reconcile(ctx, r, logger, barrier, ctrl.Name(), false)
+	}
+
+	specs, err := safe.ReaderListAll[*hypervisor.VirtualMachineDomainSpec](ctx, r)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("failed to list virtual machine domain specs: %w", err)
+	}
+
+	claimed := false
+
+	for spec := range specs.All() {
+		claimed = claimed || spec.Metadata().Finalizers().Has(ctrl.Name())
+	}
+
+	if claimed && time.Now().Before(shutdown.forceAt) {
+		return shutdown.forceAt, lifecycle.Reconcile(ctx, r, logger, barrier, ctrl.Name(), false)
+	}
+
+	if claimed && barrier != nil && barrier.Metadata().Finalizers().Has(ctrl.Name()) {
+		logger.Warn("virtqemud is not ready to stop the guests, releasing the shutdown barrier with them still there")
+	}
+
+	return time.Time{}, lifecycle.Reconcile(ctx, r, logger, barrier, ctrl.Name(), true)
+}
+
+// nodeShutdown is the node shutdown this controller winds the domains down for.
+type nodeShutdown struct {
+	// forceAt is when a guest still powering itself off is destroyed instead.
+	forceAt time.Time
+	// poweringOff counts the guests which were asked to power off and are still running.
+	poweringOff int
+}
+
+// releasable reports whether the node is shutting down with no guest left powering itself off.
+func (s *nodeShutdown) releasable() bool {
+	return s != nil && s.poweringOff == 0
+}
+
+// shutdownForceMargin is kept from the shutdown deadline for destroying the domains still running
+// and releasing the barrier.
+const shutdownForceMargin = 30 * time.Second
+
+// nodeShutdownStopRequest is the stop request the power button is pressed for on the way down. It
+// differs from every request a spec carries, so a guest already asked to stop is asked again.
+const nodeShutdownStopRequest = "node-shutdown"
+
+// nodeShutdownFor returns the node shutdown the barrier is tearing down for, or nil while it is not.
+func nodeShutdownFor(barrier *hypervisor.VirtualMachineLifecycle) *nodeShutdown {
+	if !lifecycle.ShuttingDown(barrier) {
+		return nil
+	}
+
+	if barrier == nil {
+		return newNodeShutdown(time.Time{})
+	}
+
+	return newNodeShutdown(barrier.TypedSpec().ShutdownDeadline)
+}
+
+func newNodeShutdown(deadline time.Time) *nodeShutdown {
+	if deadline.IsZero() {
+		// No deadline to wait within: every domain left is destroyed.
+		return &nodeShutdown{}
+	}
+
+	return &nodeShutdown{forceAt: deadline.Add(-shutdownForceMargin)}
 }
 
 func virtqemudReady(ctx context.Context, reader controller.Reader) (bool, error) {
@@ -230,7 +386,7 @@ func virtqemudReady(ctx context.Context, reader controller.Reader) (bool, error)
 }
 
 //nolint:gocyclo
-func (ctrl *VirtualMachineController) reconcile(ctx context.Context, r controller.ReaderWriter, logger *zap.Logger) error {
+func (ctrl *VirtualMachineController) reconcile(ctx context.Context, r controller.ReaderWriter, logger *zap.Logger, shutdown *nodeShutdown) error {
 	specs, err := safe.ReaderListAll[*hypervisor.VirtualMachineDomainSpec](ctx, r)
 	if err != nil {
 		return fmt.Errorf("failed to list virtual machine domain specs: %w", err)
@@ -296,7 +452,7 @@ func (ctrl *VirtualMachineController) reconcile(ctx context.Context, r controlle
 	var reconcileErrors error
 
 	for spec := range specs.All() {
-		switch err = ctrl.reconcileSpec(ctx, r, logger, client, machineUUID, byName, spec, logReady); {
+		switch err = ctrl.reconcileSpec(ctx, r, logger, client, machineUUID, byName, spec, logReady, shutdown); {
 		case errors.Is(err, errDiskNotReady):
 			logger.Info("virtual machine is waiting for its disks",
 				zap.String("virtual_machine", spec.Metadata().ID()), zap.Error(err))
@@ -341,14 +497,24 @@ func getMachineUUID(ctx context.Context, reader controller.Reader) (uuid.UUID, e
 
 func (ctrl *VirtualMachineController) reconcileSpec(ctx context.Context, r controller.ReaderWriter, logger *zap.Logger,
 	client libvirtdomain.Client, machineUUID uuid.UUID, domains map[string]libvirtdomain.Domain,
-	spec *hypervisor.VirtualMachineDomainSpec, logReady bool,
+	spec *hypervisor.VirtualMachineDomainSpec, logReady bool, shutdown *nodeShutdown,
 ) error {
 	name := spec.Metadata().ID()
 	_, exists := domains[name]
 	claimed := spec.Metadata().Finalizers().Has(ctrl.Name())
 
+	if shutdown != nil {
+		return ctrl.stopForShutdown(ctx, r, logger, client, machineUUID, spec, exists, claimed, shutdown)
+	}
+
 	if spec.Metadata().Phase() != resource.PhaseRunning || spec.TypedSpec().PowerState == "stopped" {
-		return ctrl.stopClaimed(ctx, r, logger, client, machineUUID, spec, exists, claimed)
+		// Teardown is forced whatever the spec says: the definition is being withdrawn, and a guest
+		// which refuses to power off would hold this controller's claim, and with it every disk, for
+		// as long as it liked.
+		graceful := spec.Metadata().Phase() == resource.PhaseRunning &&
+			spec.TypedSpec().StopMode == hypervisorhelpers.StopModeGraceful.String()
+
+		return ctrl.stopClaimed(ctx, r, logger, client, machineUUID, spec, exists, claimed, graceful, spec.TypedSpec().StopRequest)
 	}
 
 	if spec.TypedSpec().PowerState != hypervisorhelpers.PowerStateRunning.String() {
@@ -1022,14 +1188,10 @@ func (ctrl *VirtualMachineController) stopClaimed(
 	spec *hypervisor.VirtualMachineDomainSpec,
 	exists bool,
 	claimed bool,
+	graceful bool,
+	request string,
 ) error {
 	name := spec.Metadata().ID()
-
-	// Teardown is forced whatever the spec says: the definition is being withdrawn, and a guest
-	// which refuses to power off would hold this controller's claim, and with it every disk, for
-	// as long as it liked.
-	graceful := spec.Metadata().Phase() == resource.PhaseRunning &&
-		spec.TypedSpec().StopMode == hypervisorhelpers.StopModeGraceful.String()
 
 	if exists && !claimed {
 		// Not this controller's domain to remove, and it goes on reading whatever it was given.
@@ -1047,7 +1209,9 @@ func (ctrl *VirtualMachineController) stopClaimed(
 			//
 			// That a guest powering itself off takes its domain with it is libvirt's default
 			// <on_poweroff>destroy</on_poweroff>, which nothing in the rendered definition overrides.
-			return ctrl.askGuestToPowerOff(logger, client, machineUUID, name, spec.TypedSpec().StopRequest)
+			_, err := ctrl.askGuestToPowerOff(logger, client, machineUUID, name, request)
+
+			return err
 		}
 
 		if err := client.Remove(libvirtdomain.Domain{Name: name, UUID: libvirtdomain.UUID(machineUUID, name)}); err != nil {
@@ -1056,6 +1220,50 @@ func (ctrl *VirtualMachineController) stopClaimed(
 	}
 
 	return ctrl.releaseStopped(ctx, r, spec, claimed)
+}
+
+// stopForShutdown stops a domain on the way down. The spec outlives the barrier and is still
+// running, so every domain is stopped whatever the spec says. Every guest is asked to power off, as
+// its stop mode describes an operator's stop request rather than the host going down. One which
+// cannot be asked, or is still running as the deadline draws near, is destroyed: services cannot be
+// stopped while it reads its disks.
+func (ctrl *VirtualMachineController) stopForShutdown(
+	ctx context.Context,
+	r controller.ReaderWriter,
+	logger *zap.Logger,
+	client libvirtdomain.Client,
+	machineUUID uuid.UUID,
+	spec *hypervisor.VirtualMachineDomainSpec,
+	exists bool,
+	claimed bool,
+	shutdown *nodeShutdown,
+) error {
+	if exists && claimed && time.Now().Before(shutdown.forceAt) {
+		asked, err := ctrl.askGuestToPowerOff(logger, client, machineUUID, spec.Metadata().ID(), nodeShutdownStopRequest)
+		if err != nil {
+			// Failing the pass would leave the force timer unarmed. The attempt is recorded instead,
+			// so the press is retried an interval from now rather than the guest only being
+			// destroyed at the deadline.
+			logger.Warn("failed to ask the guest to power off on the way down",
+				zap.String("virtual_machine", spec.Metadata().ID()), zap.Error(err))
+
+			ctrl.shutdownRequested[spec.Metadata().ID()] = shutdownPress{request: nodeShutdownStopRequest, at: time.Now()}
+
+			asked = true
+		}
+
+		if asked {
+			shutdown.poweringOff++
+
+			return nil
+		}
+	}
+
+	if exists && claimed {
+		logger.Warn("destroying the guest on the way down", zap.String("virtual_machine", spec.Metadata().ID()))
+	}
+
+	return ctrl.stopClaimed(ctx, r, logger, client, machineUUID, spec, exists, claimed, false, nodeShutdownStopRequest)
 }
 
 func (ctrl *VirtualMachineController) gracefulStopRetryInterval() time.Duration {
@@ -1068,13 +1276,14 @@ func (ctrl *VirtualMachineController) gracefulStopRetryInterval() time.Duration 
 
 // askGuestToPowerOff presses the virtual power button, again only once the retry interval has
 // passed since the last press for the same stop: the request is delivered rather than obeyed,
-// and asking every reconcile would say nothing new.
+// and asking every reconcile would say nothing new. It reports false for a guest which cannot be
+// asked at all.
 func (ctrl *VirtualMachineController) askGuestToPowerOff(
 	logger *zap.Logger, client libvirtdomain.Client, machineUUID uuid.UUID, name, request string,
-) error {
+) (bool, error) {
 	if previous, asked := ctrl.shutdownRequested[name]; asked && previous.request == request &&
 		time.Since(previous.at) < ctrl.gracefulStopRetryInterval() {
-		return nil
+		return true, nil
 	}
 
 	if err := client.Shutdown(libvirtdomain.Domain{Name: name, UUID: libvirtdomain.UUID(machineUUID, name)}); err != nil {
@@ -1085,10 +1294,10 @@ func (ctrl *VirtualMachineController) askGuestToPowerOff(
 
 			logger.Warn("guest cannot be asked to power off", zap.String("virtual_machine", name), zap.Error(err))
 
-			return nil
+			return false, nil
 		}
 
-		return fmt.Errorf("failed to ask domain %q to power off: %w", name, err)
+		return false, fmt.Errorf("failed to ask domain %q to power off: %w", name, err)
 	}
 
 	// Recorded only once libvirt has taken the request, so an ask which failed is asked again.
@@ -1096,7 +1305,7 @@ func (ctrl *VirtualMachineController) askGuestToPowerOff(
 
 	logger.Info("asked the guest to power itself off", zap.String("virtual_machine", name))
 
-	return nil
+	return true, nil
 }
 
 // releaseStopped gives back everything a domain which is gone was holding.

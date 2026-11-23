@@ -22,6 +22,7 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/internal/lifecycle"
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/pid"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
@@ -374,7 +375,7 @@ func (ctrl *RuntimeController) reconcile(
 	runtime controller.Runtime,
 	logger *zap.Logger,
 ) error {
-	containerLifecycle, err := readContainerLifecycle(ctx, runtime)
+	containerLifecycle, err := lifecycle.Read[containers.ContainerLifecycle](ctx, runtime, containers.ContainerLifecycleID)
 	if err != nil {
 		return err
 	}
@@ -391,7 +392,7 @@ func (ctrl *RuntimeController) reconcile(
 	// what previously restarted every container immediately after stopping it, leaving containers
 	// running into the phase that kills containerd, and their records behind to be swept as orphans on
 	// the next boot.
-	if containerLifecycle == nil || containerLifecycle.Metadata().Phase() == resource.PhaseTearingDown {
+	if lifecycle.ShuttingDown(containerLifecycle) {
 		var deadline time.Time
 
 		if containerLifecycle != nil {
@@ -408,13 +409,13 @@ func (ctrl *RuntimeController) reconcile(
 
 		ctrl.stopAll(logger, deadline, dependsOn)
 
-		return reconcileLifecycle(ctx, runtime, logger, containerLifecycle, ctrl.Name(), len(ctrl.instances) == 0)
+		return lifecycle.Reconcile(ctx, runtime, logger, containerLifecycle, ctrl.Name(), len(ctrl.instances) == 0)
 	}
 
 	if ctrl.taskRunner == nil {
 		logger.Debug("waiting for the container runtime")
 
-		return reconcileLifecycle(ctx, runtime, logger, containerLifecycle, ctrl.Name(), len(ctrl.instances) == 0)
+		return lifecycle.Reconcile(ctx, runtime, logger, containerLifecycle, ctrl.Name(), len(ctrl.instances) == 0)
 	}
 
 	containerInstanceSpecs, err := safe.ReaderListAll[*containers.ContainerInstanceSpec](ctx, runtime)
@@ -497,7 +498,7 @@ func (ctrl *RuntimeController) reconcile(
 		return fmt.Errorf("failed to clean up outputs: %w", err)
 	}
 
-	return reconcileLifecycle(ctx, runtime, logger, containerLifecycle, ctrl.Name(), len(ctrl.instances) == 0)
+	return lifecycle.Reconcile(ctx, runtime, logger, containerLifecycle, ctrl.Name(), len(ctrl.instances) == 0)
 }
 
 // reconcileInstanceSpec brings one instance in line with its spec, recording it in live if it is

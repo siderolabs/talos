@@ -630,6 +630,10 @@ const (
 
 	// ContainerShutdownTimeout bounds stopping all containers on shutdown, reboot and upgrade.
 	ContainerShutdownTimeout = 5 * time.Minute
+
+	// VirtualMachineShutdownTimeout bounds stopping all virtual machines on shutdown, reboot and upgrade.
+	VirtualMachineShutdownTimeout = 10 * time.Minute
+
 	// ContainerDefaultRestartDelay is the default time to wait after a container exited before it is restarted.
 	ContainerDefaultRestartDelay = 5 * time.Second
 
