@@ -61,6 +61,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/internal/machinehelper"
 	"github.com/siderolabs/talos/internal/app/lifecycle"
 	"github.com/siderolabs/talos/internal/app/lvmd"
+	"github.com/siderolabs/talos/internal/app/machined/internal/server/v1alpha1/internal/volumes"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
@@ -1377,9 +1378,12 @@ func (s *Server) Logs(req *machine.LogsRequest, l machine.MachineService_LogsSer
 }
 
 func (s *Server) vmLogs(req *machine.LogsRequest, stream machine.MachineService_LogsServer) error {
-	ctx := stream.Context()
+	path, err := s.vmSerialLogPath(stream.Context(), req.Id)
+	if err != nil {
+		return err
+	}
 
-	path, err := s.vmSerialLogPath(ctx, req.Id)
+	ctx, err := s.followContext(stream.Context(), req)
 	if err != nil {
 		return err
 	}
@@ -1426,8 +1430,22 @@ func (s *Server) logsChunker(ctx context.Context, req *machine.LogsRequest) (chu
 		// Declared containers log by config name so restart history outlives instances.
 		return s.serviceLogChunker(ctx, req, constants.TalosContainersLogPrefix+req.Id)
 	default:
+		ctx, err := s.followContext(ctx, req)
+		if err != nil {
+			return nil, nil, err
+		}
+
 		return k8slogs(ctx, req)
 	}
+}
+
+// followContext ends a follow of a log file once volumes are torn down, so the file does not keep its volume busy.
+func (s *Server) followContext(ctx context.Context, req *machine.LogsRequest) (context.Context, error) {
+	if !req.Follow {
+		return ctx, nil
+	}
+
+	return volumes.UntilTeardown(ctx, s.Controller.Runtime().State().V1Alpha2().Resources())
 }
 
 // validateLogKind rejects unknown selectors and incompatible namespaces before routing.
