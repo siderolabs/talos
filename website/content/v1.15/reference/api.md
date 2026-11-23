@@ -8533,6 +8533,7 @@ ContainerInstanceStatusSpec is the spec for ContainerInstanceStatus.
 | started_at | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  | StartedAt is when the task's process started. |
 | finished_at | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  | FinishedAt is when the task stopped running. |
 | refused | [bool](#bool) |  | Refused is set when Talos didn't start the instance because the mounts or devices it was created with are out of date. It says nothing about the container itself. |
+| error_last_log | [string](#string) |  | ErrorLastLog is the last log line(s) the task wrote before it failed. |
 
 
 
@@ -8757,6 +8758,7 @@ ContainerStatusSpec is the spec for ContainerStatus.
 | error | [string](#string) |  | Error is the last failure, verbatim, from whichever stage produced it. |
 | waiting_for | [string](#string) | repeated | WaitingFor lists the unmet readiness gates (image, mounts, dependsOn entries) while State is pending. |
 | generation | [uint64](#uint64) |  | Generation is the generation of the newest instance. |
+| error_last_log | [string](#string) |  | ErrorLastLog is the last log line(s) the task wrote before it failed, if Error comes from the task. |
 
 
 

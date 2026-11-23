@@ -133,6 +133,8 @@ message ContainerInstanceStatusSpec {
   // Refused is set when Talos didn't start the instance because the mounts or devices it was
   // created with are out of date. It says nothing about the container itself.
   bool refused = 9;
+  // ErrorLastLog is the last log line(s) the task wrote before it failed.
+  string error_last_log = 10;
 }
 
 // ContainerLifecycleSpec is the spec for ContainerLifecycle.
@@ -296,6 +298,8 @@ message ContainerStatusSpec {
   repeated string waiting_for = 8;
   // Generation is the generation of the newest instance.
   uint64 generation = 9;
+  // ErrorLastLog is the last log line(s) the task wrote before it failed, if Error comes from the task.
+  string error_last_log = 10;
 }
 
 // ResolvedDeviceSpec is a device with its host-side device node resolved.

@@ -408,12 +408,14 @@ func (suite *StatusSuite) TestLastExitSurvivesInstanceGap() {
 		spec.Phase = containers.ContainerInstancePhaseTerminated
 		spec.ExitCode = 137
 		spec.Error = "signal: killed"
+		spec.ErrorLastLog = "out of memory"
 	})
 
 	suite.assertStatus(func(status *containers.ContainerStatus, asrt *assert.Assertions) {
 		asrt.Equal(uint64(3), status.TypedSpec().Generation)
 		asrt.Equal(int32(137), status.TypedSpec().ExitCode)
 		asrt.Equal("signal: killed", status.TypedSpec().Error)
+		asrt.Equal("out of memory", status.TypedSpec().ErrorLastLog)
 	})
 
 	suite.Destroy(instanceStatus)
@@ -423,6 +425,7 @@ func (suite *StatusSuite) TestLastExitSurvivesInstanceGap() {
 		asrt.Equal(uint64(3), status.TypedSpec().Generation)
 		asrt.Equal(int32(137), status.TypedSpec().ExitCode)
 		asrt.Equal("signal: killed", status.TypedSpec().Error)
+		asrt.Equal("out of memory", status.TypedSpec().ErrorLastLog)
 	})
 }
 
@@ -532,10 +535,42 @@ func (suite *StatusSuite) TestInstanceErrorOutranksImageError() {
 	suite.setInstanceStatus(func(spec *containers.ContainerInstanceStatusSpec) {
 		spec.Phase = containers.ContainerInstancePhaseTerminated
 		spec.Error = "signal: killed"
+		spec.ErrorLastLog = "out of memory"
 	})
 
 	suite.assertStatus(func(status *containers.ContainerStatus, asrt *assert.Assertions) {
 		asrt.Equal("signal: killed", status.TypedSpec().Error)
+		asrt.Equal("out of memory", status.TypedSpec().ErrorLastLog)
+	})
+}
+
+// TestErrorLastLogClearsWithError covers ErrorLastLog clearing along with Error.
+func (suite *StatusSuite) TestErrorLastLogClearsWithError() {
+	suite.createSpec()
+	suite.markImageReady()
+
+	suite.setInstanceStatus(func(spec *containers.ContainerInstanceStatusSpec) {
+		spec.Generation = 3
+		spec.Phase = containers.ContainerInstancePhaseTerminated
+		spec.ExitCode = 1
+		spec.Error = "task failed: exit code 1"
+		spec.ErrorLastLog = "permission denied"
+	})
+
+	suite.assertStatus(func(status *containers.ContainerStatus, asrt *assert.Assertions) {
+		asrt.Equal("permission denied", status.TypedSpec().ErrorLastLog)
+	})
+
+	suite.setInstanceStatus(func(spec *containers.ContainerInstanceStatusSpec) {
+		spec.Generation = 4
+		spec.Phase = containers.ContainerInstancePhaseRunning
+		spec.PID = 1234
+	})
+
+	suite.assertStatus(func(status *containers.ContainerStatus, asrt *assert.Assertions) {
+		asrt.Equal(uint64(4), status.TypedSpec().Generation)
+		asrt.Empty(status.TypedSpec().Error)
+		asrt.Empty(status.TypedSpec().ErrorLastLog)
 	})
 }
 

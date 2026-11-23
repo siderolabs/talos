@@ -199,9 +199,7 @@ func logContainerStatusTransition(logger *zap.Logger, containerSpecID string, be
 			fields = append(fields, zap.Uint32("pid", after.PID))
 		}
 
-		if after.Error != "" {
-			fields = append(fields, zap.String("error", after.Error))
-		}
+		fields = appendContainerErrorFields(fields, after)
 
 		logger.Info("container state changed", fields...)
 
@@ -217,9 +215,7 @@ func logContainerStatusTransition(logger *zap.Logger, containerSpecID string, be
 			zap.Stringer("to", after.Health),
 		}
 
-		if after.Error != "" {
-			fields = append(fields, zap.String("error", after.Error))
-		}
+		fields = appendContainerErrorFields(fields, after)
 
 		// Log degradation at warn, so it (and its error) shows up when filtering for warnings.
 		if after.Health == containers.ContainerHealthDegraded {
@@ -232,11 +228,29 @@ func logContainerStatusTransition(logger *zap.Logger, containerSpecID string, be
 	}
 
 	// A container that stays in the same state but picks up a new error has still made news.
-	if before.Error != after.Error && after.Error != "" {
-		logger.Warn("container reported an error",
+	if after.Error != "" && (before.Error != after.Error || before.ErrorLastLog != after.ErrorLastLog) {
+		fields := []zap.Field{
 			zap.String("container", containerSpecID),
 			zap.Stringer("state", after.State),
-			zap.String("error", after.Error),
-		)
+		}
+
+		fields = appendContainerErrorFields(fields, after)
+
+		logger.Warn("container reported an error", fields...)
 	}
+}
+
+// appendContainerErrorFields appends the log fields for a container's error and last log, if set.
+func appendContainerErrorFields(fields []zap.Field, status containers.ContainerStatusSpec) []zap.Field {
+	if status.Error == "" {
+		return fields
+	}
+
+	fields = append(fields, zap.String("error", status.Error))
+
+	if status.ErrorLastLog != "" {
+		fields = append(fields, zap.String("lastLog", status.ErrorLastLog))
+	}
+
+	return fields
 }

@@ -8,10 +8,12 @@ import (
 	"cmp"
 	"fmt"
 	"math"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/dustin/go-humanize"
 	"github.com/rivo/tview"
@@ -369,10 +371,40 @@ func formatContainerDetail(
 	}
 
 	if status != nil && status.TypedSpec().Error != "" {
-		fields = append(fields, [2]string{"Error", colored("red", tview.Escape(status.TypedSpec().Error))})
+		fields = append(fields, [2]string{"Error", colored("red", tview.Escape(formatTaskError(status.TypedSpec().Error, status.TypedSpec().ErrorLastLog)))})
 	}
 
 	return renderFields(fields)
+}
+
+// ansiEscape matches a terminal control sequence: CSI ("\x1b[31m") or a two-byte escape.
+var ansiEscape = regexp.MustCompile(`\x1b(\[[0-?]*[ -/]*[@-~]|[@-Z\\-_])`)
+
+// formatTaskError renders a task error and the log the task wrote before it on a single line.
+func formatTaskError(errText, lastLog string) string {
+	var lines []string
+
+	for line := range strings.SplitSeq(lastLog, "\n") {
+		// Strip terminal escapes and control characters from the task's raw output.
+		line = ansiEscape.ReplaceAllString(line, "")
+		line = strings.Map(func(r rune) rune {
+			if unicode.IsControl(r) {
+				return -1
+			}
+
+			return r
+		}, line)
+
+		if line = strings.TrimSpace(line); line != "" {
+			lines = append(lines, line)
+		}
+	}
+
+	if len(lines) == 0 {
+		return errText
+	}
+
+	return errText + ": " + strings.Join(lines, " ⏎ ")
 }
 
 // renderFields renders label/value pairs with the labels padded to a common width.
@@ -554,7 +586,7 @@ func instanceRowCells(spec *containers.ContainerInstanceStatusSpec) []string {
 		exitCode = strconv.FormatInt(int64(spec.ExitCode), 10)
 	}
 
-	errText := spec.Error
+	errText := formatTaskError(spec.Error, spec.ErrorLastLog)
 	if errText == "" {
 		errText = metricUnknown
 	}

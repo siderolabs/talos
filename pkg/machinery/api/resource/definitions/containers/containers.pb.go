@@ -734,7 +734,9 @@ type ContainerInstanceStatusSpec struct {
 	FinishedAt *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=finished_at,json=finishedAt,proto3" json:"finished_at,omitempty"`
 	// Refused is set when Talos didn't start the instance because the mounts or devices it was
 	// created with are out of date. It says nothing about the container itself.
-	Refused       bool `protobuf:"varint,9,opt,name=refused,proto3" json:"refused,omitempty"`
+	Refused bool `protobuf:"varint,9,opt,name=refused,proto3" json:"refused,omitempty"`
+	// ErrorLastLog is the last log line(s) the task wrote before it failed.
+	ErrorLastLog  string `protobuf:"bytes,10,opt,name=error_last_log,json=errorLastLog,proto3" json:"error_last_log,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -830,6 +832,13 @@ func (x *ContainerInstanceStatusSpec) GetRefused() bool {
 		return x.Refused
 	}
 	return false
+}
+
+func (x *ContainerInstanceStatusSpec) GetErrorLastLog() string {
+	if x != nil {
+		return x.ErrorLastLog
+	}
+	return ""
 }
 
 // ContainerLifecycleSpec is the spec for ContainerLifecycle.
@@ -1701,7 +1710,9 @@ type ContainerStatusSpec struct {
 	// WaitingFor lists the unmet readiness gates (image, mounts, dependsOn entries) while State is pending.
 	WaitingFor []string `protobuf:"bytes,8,rep,name=waiting_for,json=waitingFor,proto3" json:"waiting_for,omitempty"`
 	// Generation is the generation of the newest instance.
-	Generation    uint64 `protobuf:"varint,9,opt,name=generation,proto3" json:"generation,omitempty"`
+	Generation uint64 `protobuf:"varint,9,opt,name=generation,proto3" json:"generation,omitempty"`
+	// ErrorLastLog is the last log line(s) the task wrote before it failed, if Error comes from the task.
+	ErrorLastLog  string `protobuf:"bytes,10,opt,name=error_last_log,json=errorLastLog,proto3" json:"error_last_log,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1797,6 +1808,13 @@ func (x *ContainerStatusSpec) GetGeneration() uint64 {
 		return x.Generation
 	}
 	return 0
+}
+
+func (x *ContainerStatusSpec) GetErrorLastLog() string {
+	if x != nil {
+		return x.ErrorLastLog
+	}
+	return ""
 }
 
 // ResolvedDeviceSpec is a device with its host-side device node resolved.
@@ -2041,7 +2059,7 @@ const file_resource_definitions_containers_containers_proto_rawDesc = "" +
 	"\tresources\x18\f \x01(\v2=.talos.resource.definitions.containers.ContainerResourcesSpecR\tresources\x12S\n" +
 	"\adevices\x18\r \x03(\v29.talos.resource.definitions.containers.ResolvedDeviceSpecR\adevices\x12<\n" +
 	"\fstop_timeout\x18\x0e \x01(\v2\x19.google.protobuf.DurationR\vstopTimeout\x12%\n" +
-	"\x0eexecution_hash\x18\x0f \x01(\tR\rexecutionHash\"\x91\x03\n" +
+	"\x0eexecution_hash\x18\x0f \x01(\tR\rexecutionHash\"\xb7\x03\n" +
 	"\x1bContainerInstanceStatusSpec\x12!\n" +
 	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x1e\n" +
 	"\n" +
@@ -2055,7 +2073,9 @@ const file_resource_definitions_containers_containers_proto_rawDesc = "" +
 	"started_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tstartedAt\x12;\n" +
 	"\vfinished_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"finishedAt\x12\x18\n" +
-	"\arefused\x18\t \x01(\bR\arefused\"a\n" +
+	"\arefused\x18\t \x01(\bR\arefused\x12$\n" +
+	"\x0eerror_last_log\x18\n" +
+	" \x01(\tR\ferrorLastLog\"a\n" +
 	"\x16ContainerLifecycleSpec\x12G\n" +
 	"\x11shutdown_deadline\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x10shutdownDeadline\"\xb1\x01\n" +
 	"\x12ContainerMountSpec\x12\x12\n" +
@@ -2130,7 +2150,7 @@ const file_resource_definitions_containers_containers_proto_rawDesc = "" +
 	"\adevices\x18\f \x03(\v2:.talos.resource.definitions.containers.ContainerDeviceSpecR\adevices\x12<\n" +
 	"\fstop_timeout\x18\r \x01(\v2\x19.google.protobuf.DurationR\vstopTimeout\x12U\n" +
 	"\arestart\x18\x0e \x01(\v2;.talos.resource.definitions.containers.ContainerRestartSpecR\arestart\x12b\n" +
-	"\fhealth_check\x18\x0f \x01(\v2?.talos.resource.definitions.containers.ContainerHealthCheckSpecR\vhealthCheck\"\xfd\x02\n" +
+	"\fhealth_check\x18\x0f \x01(\v2?.talos.resource.definitions.containers.ContainerHealthCheckSpecR\vhealthCheck\"\xa3\x03\n" +
 	"\x13ContainerStatusSpec\x12P\n" +
 	"\x05state\x18\x01 \x01(\x0e2:.talos.resource.definitions.enums.ContainersContainerStateR\x05state\x12S\n" +
 	"\x06health\x18\x02 \x01(\x0e2;.talos.resource.definitions.enums.ContainersContainerHealthR\x06health\x12\x14\n" +
@@ -2143,7 +2163,9 @@ const file_resource_definitions_containers_containers_proto_rawDesc = "" +
 	"waitingFor\x12\x1e\n" +
 	"\n" +
 	"generation\x18\t \x01(\x04R\n" +
-	"generation\"\xa0\x01\n" +
+	"generation\x12$\n" +
+	"\x0eerror_last_log\x18\n" +
+	" \x01(\tR\ferrorLastLog\"\xa0\x01\n" +
 	"\x12ResolvedDeviceSpec\x12\x12\n" +
 	"\x04kind\x18\x01 \x01(\tR\x04kind\x12\x16\n" +
 	"\x06source\x18\x02 \x01(\tR\x06source\x12 \n" +

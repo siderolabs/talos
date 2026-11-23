@@ -22,10 +22,17 @@ import (
 
 	containersctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/containers"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
+
+// selfExit is how a fake task ends on its own.
+type selfExit struct {
+	exitCode int32
+	err      error
+}
 
 // fakeTaskRunner stands in for containerd. Run blocks until either ctx is canceled (a stop was
 // requested) or the test calls exitNow (the container exiting on its own).
@@ -39,7 +46,7 @@ type fakeTaskRunner struct {
 	removeFails  map[string]struct{}
 	removeFailed map[string]int
 	startFails   map[string]error
-	selfExit     map[string]chan int32
+	selfExit     map[string]chan selfExit
 	heldStops    map[string]chan struct{}
 	stopping     map[string]struct{}
 	closed       bool
@@ -58,7 +65,7 @@ func newFakeTaskRunner() *fakeTaskRunner {
 		removeFails:  map[string]struct{}{},
 		removeFailed: map[string]int{},
 		startFails:   map[string]error{},
-		selfExit:     map[string]chan int32{},
+		selfExit:     map[string]chan selfExit{},
 		heldStops:    map[string]chan struct{}{},
 		stopping:     map[string]struct{}{},
 	}
@@ -166,7 +173,7 @@ func (f *fakeTaskRunner) Run(ctx context.Context, id string, _ containers.Contai
 	}
 
 	f.started[id] = fakePID
-	exitCh := make(chan int32, 1)
+	exitCh := make(chan selfExit, 1)
 	f.selfExit[id] = exitCh
 	f.mu.Unlock()
 
@@ -195,8 +202,8 @@ func (f *fakeTaskRunner) Run(ctx context.Context, id string, _ containers.Contai
 		}
 
 		return 0, nil
-	case exitCode := <-exitCh:
-		return exitCode, nil
+	case exit := <-exitCh:
+		return exit.exitCode, exit.err
 	}
 }
 
@@ -248,12 +255,17 @@ func (f *fakeTaskRunner) awaitConcurrentStops() {
 // exitNow makes a running instance's Run return exitCode on its own, simulating the container
 // process exiting without anyone asking it to stop.
 func (f *fakeTaskRunner) exitNow(id string, exitCode int32) {
+	f.exitWithError(id, exitCode, nil)
+}
+
+// exitWithError makes a running instance's Run return exitCode and err on its own.
+func (f *fakeTaskRunner) exitWithError(id string, exitCode int32, err error) {
 	f.mu.Lock()
 	ch := f.selfExit[id]
 	f.mu.Unlock()
 
 	if ch != nil {
-		ch <- exitCode
+		ch <- selfExit{exitCode: exitCode, err: err}
 	}
 }
 
@@ -503,6 +515,60 @@ func (suite *RuntimeSuite) TestReportsTerminatedOnSelfExit() {
 		asrt.Equal(containers.ContainerInstancePhaseTerminated, status.TypedSpec().Phase)
 		asrt.Equal(int32(137), status.TypedSpec().ExitCode)
 		asrt.Zero(status.TypedSpec().PID)
+	})
+}
+
+// TestReportsErrorLastLogSeparately covers a failed task's last log being reported in ErrorLastLog, not Error.
+func (suite *RuntimeSuite) TestReportsErrorLastLogSeparately() {
+	markCRIUp(suite)
+	suite.createLifecycle()
+
+	const id = "nginx-1"
+
+	suite.createInstanceSpec(id)
+
+	ctest.AssertResource(suite, id, func(status *containers.ContainerInstanceStatus, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerInstancePhaseRunning, status.TypedSpec().Phase)
+	})
+
+	const lastLog = "starting\nopen /x: permission denied"
+
+	suite.runner.exitWithError(id, 1, &runner.LastLogError{
+		Err:     fmt.Errorf("task %q failed: exit code %d", id, 1),
+		LastLog: lastLog,
+	})
+
+	ctest.AssertResource(suite, id, func(status *containers.ContainerInstanceStatus, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerInstancePhaseTerminated, status.TypedSpec().Phase)
+		asrt.Equal(int32(1), status.TypedSpec().ExitCode)
+		asrt.Equal(`task "nginx-1" failed: exit code 1`, status.TypedSpec().Error)
+		asrt.Equal(lastLog, status.TypedSpec().ErrorLastLog)
+	})
+}
+
+// TestErrorLastLogSanitisedToValidUTF8 covers a last log cut mid-rune being made valid UTF-8 before it
+// reaches ErrorLastLog, which is a protobuf string field.
+func (suite *RuntimeSuite) TestErrorLastLogSanitisedToValidUTF8() {
+	markCRIUp(suite)
+	suite.createLifecycle()
+
+	const id = "nginx-1"
+
+	suite.createInstanceSpec(id)
+
+	ctest.AssertResource(suite, id, func(status *containers.ContainerInstanceStatus, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerInstancePhaseRunning, status.TypedSpec().Phase)
+	})
+
+	// "\xc5" is the first byte of a two-byte rune whose second byte was truncated away.
+	suite.runner.exitWithError(id, 1, &runner.LastLogError{
+		Err:     fmt.Errorf("task %q failed: exit code %d", id, 1),
+		LastLog: "starting\nzażó\xc5",
+	})
+
+	ctest.AssertResource(suite, id, func(status *containers.ContainerInstanceStatus, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerInstancePhaseTerminated, status.TypedSpec().Phase)
+		asrt.Equal("starting\nzażó\uFFFD", status.TypedSpec().ErrorLastLog)
 	})
 }
 

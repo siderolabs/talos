@@ -45,6 +45,8 @@ type ContainerStatusSpec struct {
 	WaitingFor []string `yaml:"waitingFor,omitempty" protobuf:"8"`
 	// Generation is the generation of the newest instance.
 	Generation uint64 `yaml:"generation" protobuf:"9"`
+	// ErrorLastLog is the last log line(s) the task wrote before it failed, if Error comes from the task.
+	ErrorLastLog string `yaml:"errorLastLog,omitempty" protobuf:"10"`
 }
 
 // NewContainerStatus initializes a ContainerStatus resource.
@@ -158,7 +160,7 @@ func (containerStatusSpec *ContainerStatusSpec) Update(
 		containerStatusSpec.WaitingFor = containerDependencyStatus.TypedSpec().WaitingFor
 	}
 
-	containerStatusSpec.Error = DeriveReportedError(containerInstanceStatus, containerImageStatus)
+	containerStatusSpec.Error, containerStatusSpec.ErrorLastLog = DeriveReportedError(containerInstanceStatus, containerImageStatus)
 
 	healthChecked := healthCheckEnabled && containerStatusSpec.State == ContainerStateRunning
 
@@ -168,6 +170,7 @@ func (containerStatusSpec *ContainerStatusSpec) Update(
 
 	if containerStatusSpec.Error == "" && containerInstanceStatus == nil && prev.State != ContainerStateRunning {
 		containerStatusSpec.Error = prev.Error
+		containerStatusSpec.ErrorLastLog = prev.ErrorLastLog
 	}
 }
 

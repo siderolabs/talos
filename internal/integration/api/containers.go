@@ -3182,8 +3182,8 @@ func (suite *ContainersSuite) describeNewestInstance(ctx context.Context, contai
 
 	spec := newest.TypedSpec()
 
-	return fmt.Sprintf("instance %s: phase %s, exit code %d, error %q",
-		newest.Metadata().ID(), spec.Phase, spec.ExitCode, spec.Error)
+	return fmt.Sprintf("instance %s: phase %s, exit code %d, error %q, last log %q",
+		newest.Metadata().ID(), spec.Phase, spec.ExitCode, spec.Error, spec.ErrorLastLog)
 }
 
 // lookupNewestInstance returns the highest-generation instance status for containerName, or nil.

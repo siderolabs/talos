@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -23,6 +24,7 @@ import (
 
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/pid"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
@@ -169,6 +171,7 @@ type instanceRunState struct {
 	pid           uint32
 	exitCode      int32
 	err           error
+	errorLastLog  string
 	startedAt     time.Time
 	finishedAt    time.Time
 	stopRequested bool
@@ -188,6 +191,7 @@ func (s *instanceRunState) snapshot() containers.ContainerInstanceStatusSpec {
 
 	if s.err != nil {
 		containerInstanceStatusSpec.Error = s.err.Error()
+		containerInstanceStatusSpec.ErrorLastLog = s.errorLastLog
 	}
 
 	return containerInstanceStatusSpec
@@ -222,6 +226,11 @@ func (s *instanceRunState) setFinished(exitCode int32, err error, everStarted bo
 	s.pid = 0
 	s.err = err
 	s.finishedAt = time.Now()
+
+	// Only an unwrapped LastLogError is split, so a wrapped one keeps its context.
+	if lastLogErr, ok := err.(*runner.LastLogError); ok {
+		s.err, s.errorLastLog = lastLogErr.Err, strings.ToValidUTF8(lastLogErr.LastLog, "\uFFFD")
+	}
 }
 
 func (s *instanceRunState) finished() bool {
@@ -945,6 +954,7 @@ func (ctrl *RuntimeController) writeStatus(
 			instanceStatus.PID = snapshot.PID
 			instanceStatus.ExitCode = snapshot.ExitCode
 			instanceStatus.Error = snapshot.Error
+			instanceStatus.ErrorLastLog = snapshot.ErrorLastLog
 			instanceStatus.StartedAt = snapshot.StartedAt
 			instanceStatus.FinishedAt = snapshot.FinishedAt
 

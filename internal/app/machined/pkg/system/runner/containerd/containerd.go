@@ -294,7 +294,10 @@ taskWaitLoop:
 				status.ExitCode = int(code) //nolint:gosec
 
 				if code != 0 {
-					return status, fmt.Errorf("task %q failed: exit code %d (last log %q)", c.args.ID, code, lastLog.GetLastLog())
+					return status, &runner.LastLogError{
+						Err:     fmt.Errorf("task %q failed: exit code %d", c.args.ID, code),
+						LastLog: lastLog.GetLastLog(),
+					}
 				}
 
 				return status, nil

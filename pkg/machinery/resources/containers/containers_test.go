@@ -191,14 +191,15 @@ func TestInstanceStatusProtobufRoundTrip(t *testing.T) {
 
 	status := containers.NewContainerInstanceStatus(containers.NamespaceName, containers.InstanceID("nginx", 3))
 	*status.TypedSpec() = containers.ContainerInstanceStatusSpec{
-		ContainerID: "nginx",
-		Generation:  3,
-		Phase:       containers.ContainerInstancePhaseTerminated,
-		PID:         1234,
-		ExitCode:    137,
-		Error:       "signal: killed",
-		StartedAt:   time.Unix(1700000000, 0).UTC(),
-		FinishedAt:  time.Unix(1700000123, 0).UTC(),
+		ContainerID:  "nginx",
+		Generation:   3,
+		Phase:        containers.ContainerInstancePhaseTerminated,
+		PID:          1234,
+		ExitCode:     137,
+		Error:        "signal: killed",
+		ErrorLastLog: "starting\nout of memory",
+		StartedAt:    time.Unix(1700000000, 0).UTC(),
+		FinishedAt:   time.Unix(1700000123, 0).UTC(),
 	}
 
 	assertRoundTrip(t, status)
@@ -257,6 +258,7 @@ func TestStatusProtobufRoundTrip(t *testing.T) {
 		Error:        "signal: killed",
 		WaitingFor:   []string{"container: other"},
 		Generation:   2,
+		ErrorLastLog: "starting\nout of memory",
 	}
 
 	assertRoundTrip(t, status)

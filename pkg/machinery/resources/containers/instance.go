@@ -187,6 +187,8 @@ type ContainerInstanceStatusSpec struct {
 	// Refused is set when Talos didn't start the instance because the mounts or devices it was
 	// created with are out of date. It says nothing about the container itself.
 	Refused bool `yaml:"refused,omitempty" protobuf:"9"`
+	// ErrorLastLog is the last log line(s) the task wrote before it failed.
+	ErrorLastLog string `yaml:"errorLastLog,omitempty" protobuf:"10"`
 }
 
 // NewContainerInstanceStatus initializes a ContainerInstanceStatus resource.
@@ -303,17 +305,21 @@ func ImageDigest(imageStatus *ContainerImageStatus, imageRef string) string {
 	return imageStatus.TypedSpec().Digest
 }
 
-// DeriveReportedError picks the error to report, preferring the running execution's over the image's.
-func DeriveReportedError(containerInstanceStatus *ContainerInstanceStatus, containerImageStatus *ContainerImageStatus) string {
+// DeriveReportedError picks the error to report, preferring the running execution's over the image's,
+// and returns it with the execution's last log.
+func DeriveReportedError(
+	containerInstanceStatus *ContainerInstanceStatus,
+	containerImageStatus *ContainerImageStatus,
+) (errText, lastLog string) {
 	if containerInstanceStatus != nil && containerInstanceStatus.TypedSpec().Error != "" {
-		return containerInstanceStatus.TypedSpec().Error
+		return containerInstanceStatus.TypedSpec().Error, containerInstanceStatus.TypedSpec().ErrorLastLog
 	}
 
 	if containerImageStatus != nil && containerImageStatus.TypedSpec().Error != "" {
-		return containerImageStatus.TypedSpec().Error
+		return containerImageStatus.TypedSpec().Error, ""
 	}
 
-	return ""
+	return "", ""
 }
 
 // LatestInstanceStatus returns the newest instance status of containerID, or nil if there is none.

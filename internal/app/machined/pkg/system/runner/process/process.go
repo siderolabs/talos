@@ -476,7 +476,7 @@ func (p *processRunner) run(ctx context.Context, eventSink events.Recorder, onSt
 	case err = <-waitCh:
 		// process exited
 		if err != nil {
-			err = fmt.Errorf("%w (last log %q)", err, lastLog.GetLastLog())
+			err = &runner.LastLogError{Err: err, LastLog: lastLog.GetLastLog()}
 		}
 
 		return status, err
@@ -576,7 +576,7 @@ func (p *processRunner) runInSandbox(
 	select {
 	case err = <-waitCh:
 		if err != nil {
-			err = fmt.Errorf("%w (last log %q)", err, lastLog.GetLastLog())
+			err = &runner.LastLogError{Err: err, LastLog: lastLog.GetLastLog()}
 		}
 
 		return status, err

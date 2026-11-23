@@ -354,6 +354,26 @@ func TestInstanceRowCells(t *testing.T) {
 	assert.Equal(t, []string{"117", "running", "99", metricUnknown, "2026-08-31 12:03:45", metricUnknown, metricUnknown}, cells)
 }
 
+func TestFormatTaskError(t *testing.T) {
+	for _, test := range []struct {
+		name    string
+		errText string
+		lastLog string
+		want    string
+	}{
+		{name: "no log", errText: "exit code 1", want: "exit code 1"},
+		{name: "single line", errText: "exit code 1", lastLog: "permission denied", want: "exit code 1: permission denied"},
+		{name: "all lines", errText: "exit code 1", lastLog: "starting\nopen /x: permission denied\n", want: "exit code 1: starting ⏎ open /x: permission denied"},
+		{name: "blank lines dropped", errText: "exit code 1", lastLog: "starting\n\n  \nfatal", want: "exit code 1: starting ⏎ fatal"},
+		{name: "whitespace only", errText: "exit code 1", lastLog: " \n\t\n", want: "exit code 1"},
+		{name: "control characters", errText: "exit code 1", lastLog: "\x1b[31mstarting\x1b[0m\r\n\x1b[1mfatal\x1b[0m\r", want: "exit code 1: starting ⏎ fatal"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.want, formatTaskError(test.errText, test.lastLog))
+		})
+	}
+}
+
 func TestContainerHealthSummary(t *testing.T) {
 	assert.Equal(t, "no containers", containerHealthSummary(nil))
 

@@ -576,9 +576,10 @@ func TestResolvedMountsEqual(t *testing.T) {
 func TestDeriveReportedError(t *testing.T) {
 	t.Parallel()
 
-	newInstanceStatus := func(errMsg string) *containers.ContainerInstanceStatus {
+	newInstanceStatus := func(errMsg, lastLog string) *containers.ContainerInstanceStatus {
 		status := containers.NewContainerInstanceStatus(containers.NamespaceName, "nginx-0")
 		status.TypedSpec().Error = errMsg
+		status.TypedSpec().ErrorLastLog = lastLog
 
 		return status
 	}
@@ -595,14 +596,16 @@ func TestDeriveReportedError(t *testing.T) {
 		containerInstanceStatus *containers.ContainerInstanceStatus
 		containerImageStatus    *containers.ContainerImageStatus
 		want                    string
+		wantLastLog             string
 	}{
 		{
 			name: "neither present",
 		},
 		{
 			name:                    "instance error only",
-			containerInstanceStatus: newInstanceStatus("instance failed"),
+			containerInstanceStatus: newInstanceStatus("instance failed", "permission denied"),
 			want:                    "instance failed",
+			wantLastLog:             "permission denied",
 		},
 		{
 			name:                 "image error only",
@@ -611,13 +614,14 @@ func TestDeriveReportedError(t *testing.T) {
 		},
 		{
 			name:                    "instance error outranks image error",
-			containerInstanceStatus: newInstanceStatus("instance failed"),
+			containerInstanceStatus: newInstanceStatus("instance failed", "permission denied"),
 			containerImageStatus:    newImageStatus("pull failed"),
 			want:                    "instance failed",
+			wantLastLog:             "permission denied",
 		},
 		{
 			name:                    "instance present without an error falls back to the image error",
-			containerInstanceStatus: newInstanceStatus(""),
+			containerInstanceStatus: newInstanceStatus("", ""),
 			containerImageStatus:    newImageStatus("pull failed"),
 			want:                    "pull failed",
 		},
@@ -627,8 +631,9 @@ func TestDeriveReportedError(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := containers.DeriveReportedError(tt.containerInstanceStatus, tt.containerImageStatus)
+			got, gotLastLog := containers.DeriveReportedError(tt.containerInstanceStatus, tt.containerImageStatus)
 			assert.Equal(t, tt.want, got)
+			assert.Equal(t, tt.wantLastLog, gotLastLog)
 		})
 	}
 }
