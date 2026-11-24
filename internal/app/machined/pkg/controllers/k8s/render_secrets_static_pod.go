@@ -18,6 +18,7 @@ import (
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/internal/pkg/etcd"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/pemutils"
@@ -159,6 +160,16 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 		k8sSecrets := secretsRes.TypedSpec()
 		k8sCerts := certsRes.TypedSpec()
 		etcdEncryption := etcdEncryptionConfig.TypedSpec()
+
+		// the etcd certificates are issued asynchronously when the issuing CA changes, so wait for the PKI to be consistent
+		etcdConsistent, err := etcd.CertificatesIssuedBy(rootEtcdSecrets.EtcdCA, etcdSecrets.EtcdAPIServer)
+		if err != nil {
+			return err
+		}
+
+		if !etcdConsistent {
+			continue
+		}
 
 		type secret struct {
 			getter       func() *x509.PEMEncodedCertificateAndKey
@@ -344,6 +355,8 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 		if err = safe.WriterModify(ctx, r, k8s.NewSecretsStatus(k8s.ControlPlaneNamespaceName, k8s.StaticPodSecretsStaticPodID), func(r *k8s.SecretsStatus) error {
 			r.TypedSpec().Ready = true
 			r.TypedSpec().Version = secretsRes.Metadata().Version().String()
+			r.TypedSpec().EtcdCAFingerprint = pemutils.Fingerprint(rootEtcdSecrets.AcceptedCAs)
+			r.TypedSpec().EtcdIssuingCAFingerprint = pemutils.Fingerprint([]*x509.PEMEncodedCertificate{{Crt: rootEtcdSecrets.EtcdCA.Crt}})
 
 			return nil
 		}); err != nil {

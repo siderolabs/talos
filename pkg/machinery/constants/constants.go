@@ -1188,6 +1188,9 @@ const (
 	// AnnotationStaticPodConfigFileVersion is the annotation key for the static pod configuration file version.
 	AnnotationStaticPodConfigFileVersion = "talos.dev/config-file-version"
 
+	// AnnotationStaticPodEtcdCAFingerprint is the annotation key for the fingerprint of the etcd CAs the static pod was rendered with.
+	AnnotationStaticPodEtcdCAFingerprint = "talos.dev/etcd-ca-fingerprint"
+
 	// AnnotationOwnedLabels is the annotation key for the list of node labels owned by Talos.
 	AnnotationOwnedLabels = "talos.dev/owned-labels"
 

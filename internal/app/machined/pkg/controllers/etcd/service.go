@@ -163,13 +163,14 @@ func (ctrl *ServiceController) Run(ctx context.Context, r controller.Runtime, lo
 				return err
 			}
 		case current.TypedSpec().Image == desired.Image &&
+			current.TypedSpec().CAFingerprint == desired.CAFingerprint &&
 			slices.Equal(current.TypedSpec().Args, desired.Args) &&
 			slices.Equal(current.TypedSpec().AdvertiseOverrides, desired.AdvertiseOverrides):
 			// etcd is running with the up-to-date spec
 			if err = ctrl.startIfFailed(logger); err != nil {
 				return err
 			}
-		case current.TypedSpec().Image == desired.Image && slices.Equal(
+		case current.TypedSpec().Image == desired.Image && current.TypedSpec().CAFingerprint == desired.CAFingerprint && slices.Equal(
 			etcdcli.RestartArgs(current.TypedSpec().Args, current.TypedSpec().AdvertiseOverrides),
 			etcdcli.RestartArgs(desired.Args, desired.AdvertiseOverrides),
 		):
@@ -180,6 +181,9 @@ func (ctrl *ServiceController) Run(ctx context.Context, r controller.Runtime, lo
 			}
 		default:
 			// etcd spec has changed, etcd should be restarted
+			//
+			// this includes the change of the set of the etcd CAs: etcd picks up the re-issued certificates on its own
+			// (including the case when the issuing CA is replaced with another accepted CA), but the trusted CAs are only loaded on start
 			var canRestart bool
 
 			canRestart, err = ctrl.canRestart(ctx, r)
@@ -223,7 +227,8 @@ func (ctrl *ServiceController) desiredSpec(ctx context.Context, r controller.Run
 		return nil, fmt.Errorf("error getting etcd spec: %w", err)
 	}
 
-	if _, err = safe.ReaderGetByID[*etcd.PKIStatus](ctx, r, etcd.PKIID); err != nil {
+	pkiStatus, err := safe.ReaderGetByID[*etcd.PKIStatus](ctx, r, etcd.PKIID)
+	if err != nil {
 		if state.IsNotFoundError(err) {
 			return nil, nil
 		}
@@ -240,6 +245,7 @@ func (ctrl *ServiceController) desiredSpec(ctx context.Context, r controller.Run
 		Image:              spec.TypedSpec().Image,
 		Args:               args,
 		AdvertiseOverrides: etcdcli.AdvertiseOverrides(spec.TypedSpec()),
+		CAFingerprint:      pkiStatus.TypedSpec().CAFingerprint,
 	}, nil
 }
 

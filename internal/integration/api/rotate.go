@@ -13,25 +13,31 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/siderolabs/crypto/x509"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
+	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate/secrets"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	etcdcfg "github.com/siderolabs/talos/pkg/machinery/config/types/etcd"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/pemutils"
+	etcdres "github.com/siderolabs/talos/pkg/machinery/resources/etcd"
 	secretsres "github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 	"github.com/siderolabs/talos/pkg/provision/access"
+	"github.com/siderolabs/talos/pkg/rotate/pki/etcd"
 	"github.com/siderolabs/talos/pkg/rotate/pki/kubernetes"
 	"github.com/siderolabs/talos/pkg/rotate/pki/talos"
 )
 
-// RotateCASuite verifies rotation of Talos and Kubernetes CAs.
+// RotateCASuite verifies rotation of Talos, Kubernetes and etcd CAs.
 type RotateCASuite struct {
 	base.K8sSuite
 
@@ -196,6 +202,90 @@ func (suite *RotateCASuite) TestKubernetes() {
 	suite.AssertClusterHealthy(rotationCtx)
 
 	suite.rollKubeProxy(suite.newRotationContext())
+}
+
+// TestEtcd updates etcd CA in the cluster.
+func (suite *RotateCASuite) TestEtcd() {
+	if suite.Cluster == nil {
+		suite.T().Skip("cluster information is not available")
+	}
+
+	if testing.Short() {
+		suite.T().Skip("skipping in short mode")
+	}
+
+	nodeInternalIP := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
+	nodeCtx := client.WithNode(suite.ctx, nodeInternalIP)
+
+	cfg, err := suite.ReadConfigFromNode(nodeCtx)
+	suite.Require().NoError(err)
+
+	if !cfg.Has(etcdcfg.EtcdCAConfig) {
+		suite.T().Skipf("etcd CA rotation requires %s machine configuration document", etcdcfg.EtcdCAConfig)
+	}
+
+	suite.T().Logf("capturing current etcd CA")
+
+	// save etcdRoot
+	etcdRoot, err := safe.StateGetByID[*secretsres.EtcdRoot](nodeCtx, suite.Client.State(), secretsres.EtcdRootID)
+	suite.Require().NoError(err)
+
+	suite.T().Logf("rotating current CA -> new CA")
+
+	newBundle, err := secrets.NewBundle(secrets.NewFixedClock(time.Now()), config.TalosVersionCurrent)
+	suite.Require().NoError(err)
+
+	suite.rotateEtcd(newBundle.Certs.Etcd)
+
+	suite.T().Logf("rotating back new CA -> old CA")
+
+	suite.rotateEtcd(etcdRoot.TypedSpec().EtcdCA)
+}
+
+// rotateEtcd rotates the etcd CA, and verifies that the cluster is using only the new CA afterwards.
+func (suite *RotateCASuite) rotateEtcd(newCA *x509.PEMEncodedCertificateAndKey) {
+	// etcd and kube-apiserver are restarted twice on each control plane node, one node at a time
+	rotationCtx, cancel := context.WithTimeout(context.Background(), 20*time.Minute)
+	defer cancel()
+
+	suite.Require().NoError(etcd.Rotate(rotationCtx, etcd.Options{
+		TalosClient: suite.Client,
+		ClusterInfo: access.NewAdapter(suite.Cluster),
+
+		NewEtcdCA: newCA,
+
+		EncoderOption: encoder.WithComments(encoder.CommentsAll),
+
+		Printf: suite.T().Logf,
+	}))
+
+	expectedFingerprint := pemutils.Fingerprint([]*x509.PEMEncodedCertificate{{Crt: newCA.Crt}})
+
+	for _, node := range suite.DiscoverNodeInternalIPsByType(rotationCtx, machine.TypeControlPlane) {
+		nodeCtx := client.WithNode(rotationCtx, node)
+
+		etcdRoot, err := safe.StateGetByID[*secretsres.EtcdRoot](nodeCtx, suite.Client.State(), secretsres.EtcdRootID)
+		suite.Require().NoError(err)
+
+		suite.Assert().Equal(newCA.Crt, etcdRoot.TypedSpec().EtcdCA.Crt, "node %s", node)
+		suite.Assert().Equal(expectedFingerprint, pemutils.Fingerprint(etcdRoot.TypedSpec().AcceptedCAs), "node %s", node)
+
+		serviceSpec, err := safe.StateGetByID[*etcdres.ServiceSpec](nodeCtx, suite.Client.State(), etcdres.ServiceSpecID)
+		suite.Require().NoError(err)
+
+		suite.Assert().Equal(expectedFingerprint, serviceSpec.TypedSpec().CAFingerprint, "node %s", node)
+
+		pkiStatus, err := safe.StateGetByID[*etcdres.PKIStatus](nodeCtx, suite.Client.State(), etcdres.PKIID)
+		suite.Require().NoError(err)
+
+		suite.Assert().Equal(expectedFingerprint, pkiStatus.TypedSpec().IssuingCAFingerprint, "node %s", node)
+
+		// the etcd API goes via the etcd client of the node
+		_, err = suite.Client.EtcdMemberList(nodeCtx, &machineapi.EtcdMemberListRequest{})
+		suite.Require().NoError(err)
+	}
+
+	suite.AssertClusterHealthy(rotationCtx)
 }
 
 // rollKubeProxy restarts kube-proxy once the Kubernetes CA rotation is over.

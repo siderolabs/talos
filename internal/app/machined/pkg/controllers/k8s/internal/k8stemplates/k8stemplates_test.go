@@ -178,7 +178,7 @@ func TestTemplates(t *testing.T) {
 					},
 				}
 
-				obj, err := k8stemplates.APIServerPod(cfg, "111", "222")
+				obj, err := k8stemplates.APIServerPod(cfg, "111", "abc", "222")
 				require.NoError(t, err)
 
 				return obj
@@ -199,7 +199,7 @@ func TestTemplates(t *testing.T) {
 					},
 				}
 
-				obj, err := k8stemplates.APIServerPod(cfg, "111", "222")
+				obj, err := k8stemplates.APIServerPod(cfg, "111", "abc", "222")
 				require.NoError(t, err)
 
 				return obj
@@ -220,7 +220,7 @@ func TestTemplates(t *testing.T) {
 					},
 				}
 
-				obj, err := k8stemplates.APIServerPod(cfg, "111", "222")
+				obj, err := k8stemplates.APIServerPod(cfg, "111", "abc", "222")
 				require.NoError(t, err)
 
 				return obj
@@ -256,7 +256,7 @@ func TestTemplates(t *testing.T) {
 					},
 				}
 
-				obj, err := k8stemplates.APIServerPod(cfg, "111", "222")
+				obj, err := k8stemplates.APIServerPod(cfg, "111", "abc", "222")
 				require.NoError(t, err)
 
 				return obj
@@ -290,7 +290,7 @@ func TestTemplates(t *testing.T) {
 					},
 				}
 
-				obj, err := k8stemplates.APIServerPod(cfg, "111", "222")
+				obj, err := k8stemplates.APIServerPod(cfg, "111", "abc", "222")
 				require.NoError(t, err)
 
 				return obj

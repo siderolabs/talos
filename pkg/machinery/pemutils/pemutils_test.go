@@ -86,3 +86,45 @@ func TestJoinKeys(t *testing.T) {
 
 	assert.Equal(t, "k1\nk2\n", string(pemutils.JoinKeys([]*x509.PEMEncodedKey{{Key: []byte("k1")}, nil, {Key: []byte("k2\n")}})))
 }
+
+func TestFingerprint(t *testing.T) {
+	t.Parallel()
+
+	newCA := func(org string) []byte {
+		ca, err := x509.NewSelfSignedCertificateAuthority(x509.Organization(org), x509.NotAfter(time.Now().Add(time.Hour)))
+		require.NoError(t, err)
+
+		return ca.CrtPEM
+	}
+
+	ca1, ca2 := newCA("one"), newCA("two")
+
+	certs := func(crts ...[]byte) []*x509.PEMEncodedCertificate {
+		result := make([]*x509.PEMEncodedCertificate, 0, len(crts))
+
+		for _, crt := range crts {
+			result = append(result, &x509.PEMEncodedCertificate{Crt: crt})
+		}
+
+		return result
+	}
+
+	fingerprint := pemutils.Fingerprint(certs(ca1, ca2))
+
+	assert.Len(t, fingerprint, 64)
+	assert.Equal(t, fingerprint, pemutils.Fingerprint(certs(ca1, ca2)))
+
+	// the formatting of the PEM doesn't matter, as well as the way the certificates are split
+	assert.Equal(t, fingerprint, pemutils.Fingerprint(certs(append([]byte("\n"), ca1...), append(bytes.TrimSpace(ca2), "\n\n"...))))
+	assert.Equal(t, fingerprint, pemutils.Fingerprint(certs(pemutils.Join(ca1, ca2))))
+	assert.Equal(t, fingerprint, pemutils.Fingerprint(append(certs(ca1), nil, &x509.PEMEncodedCertificate{Crt: ca2})))
+
+	// the order of the certificates and the duplicates don't matter
+	assert.Equal(t, fingerprint, pemutils.Fingerprint(certs(ca2, ca1)))
+	assert.Equal(t, fingerprint, pemutils.Fingerprint(certs(ca2, ca1, ca2)))
+
+	// the set of the certificates matters
+	assert.NotEqual(t, fingerprint, pemutils.Fingerprint(certs(ca1)))
+	assert.NotEqual(t, pemutils.Fingerprint(certs(ca1)), pemutils.Fingerprint(certs(ca2)))
+	assert.NotEqual(t, fingerprint, pemutils.Fingerprint(nil))
+}

@@ -3531,16 +3531,21 @@ talosctl rollback [flags]
 
 ## talosctl rotate-ca
 
-Rotate cluster CAs (Talos and Kubernetes APIs).
+Rotate cluster CAs (Talos API, Kubernetes API and etcd).
 
 ### Synopsis
 
-The command can rotate both Talos and Kubernetes root CAs (for the API).
-By default both CAs are rotated, but you can choose to rotate just one or another.
+The command can rotate Talos and Kubernetes root CAs (for the API), and the etcd CA.
+By default Talos and Kubernetes CAs are rotated, but you can choose which CAs to rotate.
 The command starts by generating new CAs, and gracefully applying it to the cluster.
 
 For Kubernetes, the command only rotates the API server issuing CA, and other Kubernetes
 PKI can be rotated by applying machine config changes to the controlplane nodes.
+
+The etcd CA rotation should be enabled explicitly with the '--etcd' flag, and it requires
+the etcd CA to be configured with the EtcdCAConfig machine configuration document.
+While the etcd CA is rotated, etcd and kube-apiserver are restarted twice on each
+control plane node (one node at a time).
 
 ```
 talosctl rotate-ca [flags]
@@ -3554,6 +3559,7 @@ talosctl rotate-ca [flags]
       --control-plane-nodes strings   specify IPs of control plane nodes
       --dry-run[=true|false]          dry-run mode (no changes to the cluster) (default true)
   -e, --endpoints strings             override default endpoints in Talos configuration
+      --etcd[=true|false]             rotate etcd CA
   -h, --help[=true|false]             help for rotate-ca
       --init-node string              specify IPs of init node
       --k8s-endpoint string           use endpoint instead of kubeconfig default
@@ -4200,7 +4206,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl reset](#talosctl-reset)	 - Reset a node
 * [talosctl restart](#talosctl-restart)	 - Restart a process
 * [talosctl rollback](#talosctl-rollback)	 - Rollback a node to the previous installation
-* [talosctl rotate-ca](#talosctl-rotate-ca)	 - Rotate cluster CAs (Talos and Kubernetes APIs).
+* [talosctl rotate-ca](#talosctl-rotate-ca)	 - Rotate cluster CAs (Talos API, Kubernetes API and etcd).
 * [talosctl service](#talosctl-service)	 - Retrieve the state of a service (or all services), control service state
 * [talosctl shutdown](#talosctl-shutdown)	 - Shutdown a node
 * [talosctl stats](#talosctl-stats)	 - Get container stats

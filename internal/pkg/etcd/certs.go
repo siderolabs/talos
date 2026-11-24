@@ -137,3 +137,35 @@ func (gen *CertificateGenerator) GenerateClientCert(commonName string) (*x509.PE
 
 	return x509.NewCertificateAndKeyFromKeyPair(keyPair), nil
 }
+
+// CertificatesIssuedBy checks that all the certificates are issued by the given CA.
+//
+// The etcd certificates are issued asynchronously after the issuing CA changes, so this check allows to wait for the
+// PKI to become consistent before it is used.
+func CertificatesIssuedBy(ca *x509.PEMEncodedCertificateAndKey, certs ...*x509.PEMEncodedCertificateAndKey) (bool, error) {
+	if ca == nil {
+		return false, nil
+	}
+
+	caCert, err := ca.GetCert()
+	if err != nil {
+		return false, fmt.Errorf("failed to parse etcd CA: %w", err)
+	}
+
+	for _, cert := range certs {
+		if cert == nil {
+			return false, nil
+		}
+
+		parsed, err := cert.GetCert()
+		if err != nil {
+			return false, fmt.Errorf("failed to parse etcd certificate: %w", err)
+		}
+
+		if parsed.CheckSignatureFrom(caCert) != nil {
+			return false, nil //nolint:nilerr
+		}
+	}
+
+	return true, nil
+}

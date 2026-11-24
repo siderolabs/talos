@@ -343,6 +343,63 @@ func (suite *ServiceSuite) TestRestartOnAdvertiseOverrideChange() {
 	suite.assertOperations("load", "start", "stop", "start", "stop", "start")
 }
 
+func (suite *ServiceSuite) TestRestartOnCAChange() {
+	suite.createSpec()
+	suite.createLaunchSpec()
+	suite.setPhase(etcd.MembershipPhaseMember)
+
+	suite.assertOperations("load", "start")
+
+	pkiStatus := etcd.NewPKIStatus(etcd.NamespaceName, etcd.PKIID)
+
+	// the certificates are re-issued (e.g. the addresses of the machine have changed): etcd picks them up without a restart
+	ctest.UpdateWithConflicts(suite, pkiStatus, func(status *etcd.PKIStatus) error {
+		status.TypedSpec().Version = "2"
+
+		return nil
+	})
+
+	// the trusted CAs are only loaded on start, so etcd is restarted
+	ctest.UpdateWithConflicts(suite, pkiStatus, func(status *etcd.PKIStatus) error {
+		status.TypedSpec().CAFingerprint = "fingerprint1"
+
+		return nil
+	})
+
+	ctest.AssertResource(suite, etcd.ServiceSpecID, func(spec *etcd.ServiceSpec, asrt *assert.Assertions) {
+		asrt.Equal("fingerprint1", spec.TypedSpec().CAFingerprint)
+	})
+	suite.assertOperations("load", "start", "stop", "start")
+
+	// the learner is not restarted until it is promoted
+	suite.setPhase(etcd.MembershipPhaseLearner)
+
+	service := v1alpha1.NewService("etcd")
+	service.TypedSpec().Running = true
+	suite.Create(service)
+
+	ctest.UpdateWithConflicts(suite, pkiStatus, func(status *etcd.PKIStatus) error {
+		status.TypedSpec().CAFingerprint = "fingerprint2"
+
+		return nil
+	})
+
+	suite.Never(func() bool {
+		return len(suite.services.operations()) > 4
+	}, 500*time.Millisecond, 50*time.Millisecond)
+
+	ctest.AssertResource(suite, etcd.ServiceSpecID, func(spec *etcd.ServiceSpec, asrt *assert.Assertions) {
+		asrt.Equal("fingerprint1", spec.TypedSpec().CAFingerprint)
+	})
+
+	suite.setPhase(etcd.MembershipPhaseMember)
+
+	ctest.AssertResource(suite, etcd.ServiceSpecID, func(spec *etcd.ServiceSpec, asrt *assert.Assertions) {
+		asrt.Equal("fingerprint2", spec.TypedSpec().CAFingerprint)
+	})
+	suite.assertOperations("load", "start", "stop", "start", "stop", "start")
+}
+
 func (suite *ServiceSuite) TestRestartLearnerNotRunning() {
 	spec := suite.createSpec()
 	suite.createLaunchSpec()
