@@ -12,7 +12,6 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"slices"
 	"strconv"
 	"strings"
 
@@ -150,6 +149,9 @@ var managedEtcFiles = []string{
 	"localtime",
 	"os-release",
 	"xattr.conf",
+	"iscsi/initiatorname.iscsi",
+	"nvme/hostid",
+	"nvme/hostnqn",
 }
 
 var managedEtcPrefixes = []string{
@@ -158,10 +160,8 @@ var managedEtcPrefixes = []string{
 	"ca-certificates/",
 	"cni/",
 	"cri/",
-	"iscsi/",
 	"kubernetes/",
 	"lvm/",
-	"nvme/",
 	"pki/",
 	"selinux/",
 	"ssl/",
@@ -173,8 +173,11 @@ func validateEtcFilePath(path string) error {
 		return fmt.Errorf("user etc file %q must be a local path", path)
 	}
 
-	if slices.Contains(managedEtcFiles, path) {
-		return fmt.Errorf("user etc file %q is managed by Talos", path)
+	for _, managed := range managedEtcFiles {
+		// a file at a managed file's parent directory path would break writing the managed file
+		if path == managed || strings.HasPrefix(managed, path+"/") {
+			return fmt.Errorf("user etc file %q is managed by Talos", path)
+		}
 	}
 
 	for _, prefix := range managedEtcPrefixes {

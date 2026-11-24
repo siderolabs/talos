@@ -142,6 +142,39 @@ func TestEtcFileValidate(t *testing.T) {
 			expectedError: `user etc file "selinux/config" is managed by Talos`,
 		},
 		{
+			name:       "iscsid.conf",
+			configName: "iscsi/iscsid.conf",
+		},
+		{
+			name:          "iscsi initiator name",
+			configName:    "iscsi/initiatorname.iscsi",
+			expectedError: `user etc file "iscsi/initiatorname.iscsi" is managed by Talos`,
+		},
+		{
+			name:          "iscsi directory",
+			configName:    "iscsi",
+			expectedError: `user etc file "iscsi" is managed by Talos`,
+		},
+		{
+			name:       "nvme discovery.conf",
+			configName: "nvme/discovery.conf",
+		},
+		{
+			name:          "nvme hostid",
+			configName:    "nvme/hostid",
+			expectedError: `user etc file "nvme/hostid" is managed by Talos`,
+		},
+		{
+			name:          "nvme hostnqn",
+			configName:    "nvme/hostnqn",
+			expectedError: `user etc file "nvme/hostnqn" is managed by Talos`,
+		},
+		{
+			name:          "nvme directory",
+			configName:    "nvme",
+			expectedError: `user etc file "nvme" is managed by Talos`,
+		},
+		{
 			name:          "escaped path",
 			configName:    "../foo",
 			expectedError: `user etc file "../foo" must be a local path`,
