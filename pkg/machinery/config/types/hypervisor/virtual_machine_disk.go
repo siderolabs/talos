@@ -181,7 +181,8 @@ type VirtualMachineDiskProvision struct {
 	//   description: |
 	//     Create an empty volume, formatted per `format`.
 	//
-	//     On a `cdrom`, an empty drive with no volume; `pool` may be omitted.
+	//     On a `cdrom`, an empty drive with no volume; `pool` may be omitted. Switching between
+	//     `blank` and `fromImage` loads or ejects media without restarting the virtual machine.
 	BlankConfig *VirtualMachineDiskBlank `yaml:"blank,omitempty"`
 	//   description: |
 	//     Initialize an independent volume from a content library image.

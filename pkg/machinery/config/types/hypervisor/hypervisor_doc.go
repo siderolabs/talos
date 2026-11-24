@@ -735,7 +735,7 @@ func (VirtualMachineDiskProvision) Doc() *encoder.Doc {
 				Name:        "blank",
 				Type:        "VirtualMachineDiskBlank",
 				Note:        "",
-				Description: "Create an empty volume, formatted per `format`.\n\nOn a `cdrom`, an empty drive with no volume; `pool` may be omitted.",
+				Description: "Create an empty volume, formatted per `format`.\n\nOn a `cdrom`, an empty drive with no volume; `pool` may be omitted. Switching between\n`blank` and `fromImage` loads or ejects media without restarting the virtual machine.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Create an empty volume, formatted per `format`." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{

@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -75,6 +76,12 @@ type domainClient struct {
 	listed          chan struct{}
 	checkStart      func() error
 
+	// mediaChange, when set, models every definition change of an existing domain as a medium change.
+	// sessionOps records, per session, the domains each started or changed the medium of.
+	mediaChange func(name string) error
+	sessions    int
+	sessionOps  map[int][]string
+
 	// definitionErr, when set, is what reading any domain's definition fails with.
 	definitionErr error
 
@@ -91,8 +98,36 @@ func (c *domainClient) open(context.Context) (libvirtdomain.Client, error) {
 	defer c.mu.Unlock()
 
 	c.opens++
+	c.sessions++
 
-	return c, nil
+	return &domainSession{domainClient: c, id: c.sessions}, nil
+}
+
+// domainSession is one session opened on a domainClient.
+type domainSession struct {
+	*domainClient
+
+	id int
+}
+
+func (s *domainSession) Start(domain libvirtdomain.Domain, text string, opts ...libvirtdomain.StartOption) error {
+	return s.start(s.id, domain, text, opts...)
+}
+
+// opsOf reports the ops of each session which touched name.
+func (c *domainClient) opsOf(name string) [][]string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	var result [][]string
+
+	for _, ops := range c.sessionOps {
+		if slices.ContainsFunc(ops, func(op string) bool { return strings.HasSuffix(op, ":"+name) }) {
+			result = append(result, ops)
+		}
+	}
+
+	return result
 }
 
 func (c *domainClient) Close() {
@@ -197,6 +232,10 @@ func (c *domainClient) Define(domain libvirtdomain.Domain, text string) error {
 }
 
 func (c *domainClient) Start(domain libvirtdomain.Domain, text string, opts ...libvirtdomain.StartOption) error {
+	return c.start(0, domain, text, opts...)
+}
+
+func (c *domainClient) start(session int, domain libvirtdomain.Domain, text string, opts ...libvirtdomain.StartOption) error {
 	c.mu.Lock()
 
 	if c.startErr != nil {
@@ -208,10 +247,15 @@ func (c *domainClient) Start(domain libvirtdomain.Domain, text string, opts ...l
 
 	_, exists := c.domains[domain.Name]
 	unchanged := exists && c.texts[domain.Name] == text
+	mediaChange := c.mediaChange
 	c.mu.Unlock()
 
 	if unchanged {
 		return nil
+	}
+
+	if exists && mediaChange != nil {
+		return c.changeMedium(session, mediaChange, domain, text, opts...)
 	}
 
 	if err := libvirtdomain.Admit(opts...); err != nil {
@@ -226,9 +270,44 @@ func (c *domainClient) Start(domain libvirtdomain.Domain, text string, opts ...l
 
 	c.mu.Lock()
 	c.starts[domain.Name]++
+	c.recordOp(session, "start:"+domain.Name)
 	c.mu.Unlock()
 
 	return c.Define(domain, text)
+}
+
+// changeMedium models a medium change of a running domain.
+func (c *domainClient) changeMedium(session int, change func(string) error, domain libvirtdomain.Domain, text string,
+	opts ...libvirtdomain.StartOption,
+) error {
+	if libvirtdomain.MediaChangeDeferred(opts...) {
+		return libvirtdomain.ErrMediaChangeDeferred
+	}
+
+	if err := change(domain.Name); err != nil {
+		return err
+	}
+
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.recordOp(session, "media:"+domain.Name)
+	c.texts[domain.Name] = text
+
+	return nil
+}
+
+// recordOp notes what a session did. Caller holds c.mu.
+func (c *domainClient) recordOp(session int, op string) {
+	if session == 0 {
+		return
+	}
+
+	if c.sessionOps == nil {
+		c.sessionOps = map[int][]string{}
+	}
+
+	c.sessionOps[session] = append(c.sessionOps[session], op)
 }
 
 func (c *domainClient) Shutdown(domain libvirtdomain.Domain) error {
@@ -3529,6 +3608,110 @@ func (s *VirtualMachineDomainSuite) TestCoalescedStartAndSuccessorStopAskTheGues
 		return nil
 	})
 	s.assertAsked("coalesced", 2)
+}
+
+// A refused medium change is retried on the retry interval until it goes through.
+func (s *VirtualMachineDomainSuite) TestRefusedMediaChangeIsRetriedWithoutAnEvent() {
+	var refusals atomic.Int32
+
+	s.client.checkStart = func() error {
+		// More refusals than self-triggered passes, so only the retry interval gets it through.
+		if refusals.Add(1) <= 3 {
+			return fmt.Errorf("%w: tray is locked", libvirtdomain.ErrMediaChange)
+		}
+
+		return nil
+	}
+
+	s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.VirtualMachineController{
+		Open:                      s.client.open,
+		GracefulStopRetryInterval: 200 * time.Millisecond,
+	}))
+
+	spec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, "media")
+	spec.TypedSpec().DomainXML = `<domain><name>media</name><vcpu>1</vcpu></domain>`
+	spec.TypedSpec().PowerState = "running"
+	s.Create(spec)
+
+	s.assertDomain("media", spec.TypedSpec().DomainXML, true)
+	s.Require().Greater(refusals.Load(), int32(3))
+}
+
+// startMediaDomain brings up a domain whose later definition changes are medium changes.
+func (s *VirtualMachineDomainSuite) startMediaDomain(name string, retryInterval time.Duration, change func(string) error) {
+	s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.VirtualMachineController{
+		Open:                      s.client.open,
+		GracefulStopRetryInterval: retryInterval,
+	}))
+
+	spec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, name)
+	spec.TypedSpec().DomainXML = fmt.Sprintf(`<domain><name>%s</name><vcpu>1</vcpu></domain>`, name)
+	spec.TypedSpec().PowerState = "running"
+	s.Create(spec)
+
+	s.assertDomain(name, spec.TypedSpec().DomainXML, true)
+	s.assertFinalizer(name, true)
+
+	s.client.mu.Lock()
+	s.client.mediaChange = change
+	s.client.mu.Unlock()
+}
+
+// changeMedium asks for a new medium in a running domain's drive.
+func (s *VirtualMachineDomainSuite) changeMedium(name, medium string) string {
+	text := fmt.Sprintf(`<domain><name>%s</name><vcpu>1</vcpu><!-- %s --></domain>`, name, medium)
+
+	_, err := safe.StateUpdateWithConflicts(s.Ctx(), s.State(),
+		hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, name).Metadata(),
+		func(spec *hypervisor.VirtualMachineDomainSpec) error {
+			spec.TypedSpec().DomainXML = text
+
+			return nil
+		})
+	s.Require().NoError(err)
+
+	return text
+}
+
+// A medium change runs in its own session, never the shared one.
+func (s *VirtualMachineDomainSuite) TestMediaChangeRunsInASessionOfItsOwn() {
+	s.startMediaDomain("media", time.Minute, func(string) error { return nil })
+
+	text := s.changeMedium("media", "b.iso")
+
+	other := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, "other")
+	other.TypedSpec().DomainXML = `<domain><name>other</name><vcpu>1</vcpu></domain>`
+	other.TypedSpec().PowerState = "running"
+	s.Create(other)
+
+	s.assertDomain("media", text, true)
+	s.assertDomain("other", other.TypedSpec().DomainXML, true)
+
+	for _, ops := range s.client.opsOf("media") {
+		if slices.Contains(ops, "media:media") {
+			s.Require().Equal([]string{"media:media"}, ops, "a medium change shares its session with nothing")
+		}
+	}
+}
+
+// Repeated refusals back off.
+func (s *VirtualMachineDomainSuite) TestRefusedMediaChangeBacksOff() {
+	var attempts atomic.Int32
+
+	s.startMediaDomain("media", 100*time.Millisecond, func(string) error {
+		attempts.Add(1)
+
+		return fmt.Errorf("%w: tray is locked", libvirtdomain.ErrMediaChange)
+	})
+
+	s.changeMedium("media", "b.iso")
+
+	s.Require().Eventually(func() bool { return attempts.Load() >= 1 }, 5*time.Second, 10*time.Millisecond)
+
+	// Attempts at 0, 100, 300, 700 and 1500 ms with the back-off; every 100 ms without it.
+	time.Sleep(time.Second)
+
+	s.Require().LessOrEqual(attempts.Load(), int32(5))
 }
 
 // A press the guest was not listening for yet is lost, so a guest which has not powered off is

@@ -2448,6 +2448,205 @@ func (suite *VirtualMachineStaleDiskSuite) TestWaitsOutADiskStatusForAnotherImag
 	})
 }
 
+// A running definition is kept while a new medium resolves.
+func (suite *VirtualMachineStaleDiskSuite) TestKeepsTheDomainRunningWhileANewMediumResolves() {
+	loaded := cdromDiskSpec("install", libraryName, "old.iso", "")
+
+	spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, vmName)
+	*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
+		CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
+		Memory:     hypervisor.VirtualMachineMemorySpec{Size: 1 << 30},
+		PowerState: "running",
+		Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+		Disks:      []hypervisor.VirtualMachineDiskSpec{loaded},
+	}
+	suite.Create(spec)
+
+	status := hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, hypervisor.VirtualMachineDiskStatusID(vmName, loaded))
+	*status.TypedSpec() = hypervisor.VirtualMachineDiskStatusSpec{
+		VirtualMachine: vmName,
+		Name:           "install",
+		SourcePath:     filepath.Join(contentLibraryPlaceholder, "old.iso"),
+		Format:         "raw",
+		ReadOnly:       true,
+		Phase:          hypervisor.VirtualMachineDiskPhaseReady,
+		Image:          hypervisor.VirtualMachineDiskFromImageSpec{Library: libraryName, File: "old.iso"},
+	}
+	suite.Create(status)
+
+	var original string
+
+	ctest.AssertResource(suite, vmName, func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.Equal("running", res.TypedSpec().PowerState)
+		asrt.Equal([]string{status.Metadata().ID()}, res.TypedSpec().Disks)
+
+		original = res.TypedSpec().DomainXML
+	})
+
+	swapped := cdromDiskSpec("install", libraryName, "new.iso", "")
+
+	ctest.UpdateWithConflicts(suite, spec, func(current *hypervisor.VirtualMachineSpec) error {
+		current.TypedSpec().Disks = []hypervisor.VirtualMachineDiskSpec{swapped}
+
+		return nil
+	})
+
+	ctx, st := suite.Ctx(), suite.State()
+	suite.Require().Never(func() bool {
+		domain, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](ctx, st, vmName)
+
+		return err != nil || domain.TypedSpec().PowerState != "running" || domain.TypedSpec().DomainXML != original
+	}, 200*time.Millisecond, 10*time.Millisecond)
+
+	current := hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, hypervisor.VirtualMachineDiskStatusID(vmName, swapped))
+	*current.TypedSpec() = *status.TypedSpec()
+	current.TypedSpec().SourcePath = filepath.Join(contentLibraryPlaceholder, "new.iso")
+	current.TypedSpec().Image.File = "new.iso"
+	suite.Create(current)
+
+	ctest.AssertResource(suite, vmName, func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.Equal("running", res.TypedSpec().PowerState)
+		asrt.Contains(res.TypedSpec().DomainXML, filepath.Join(contentLibraryPlaceholder, "new.iso"))
+		asrt.Equal([]string{current.Metadata().ID()}, res.TypedSpec().Disks)
+	})
+
+	// The current medium no longer resolving stops the guest.
+	ctest.UpdateWithConflicts(suite, current, func(res *hypervisor.VirtualMachineDiskStatus) error {
+		res.TypedSpec().Phase = hypervisor.VirtualMachineDiskPhaseNotReady
+
+		return nil
+	})
+	ctest.AssertResource(suite, vmName, func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.Equal("stopped", res.TypedSpec().PowerState)
+	})
+}
+
+// Changing two drives at once keeps the guest running while one new medium is already ready
+// (here an eject) and the other still resolves; both are applied once the second is ready.
+func (suite *VirtualMachineStaleDiskSuite) TestKeepsTheDomainRunningWhileOneOfTwoNewMediaResolves() {
+	first := cdromDiskSpec("first", libraryName, "first.iso", "")
+	second := cdromDiskSpec("second", libraryName, "old.iso", "")
+
+	spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, vmName)
+	*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
+		CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
+		Memory:     hypervisor.VirtualMachineMemorySpec{Size: 1 << 30},
+		PowerState: "running",
+		Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+		Disks:      []hypervisor.VirtualMachineDiskSpec{first, second},
+	}
+	suite.Create(spec)
+
+	libraryStatus := func(disk hypervisor.VirtualMachineDiskSpec) *hypervisor.VirtualMachineDiskStatus {
+		status := hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, hypervisor.VirtualMachineDiskStatusID(vmName, disk))
+		*status.TypedSpec() = hypervisor.VirtualMachineDiskStatusSpec{
+			VirtualMachine: vmName,
+			Name:           disk.Name,
+			SourcePath:     filepath.Join(contentLibraryPlaceholder, disk.Provision.FromImage.File),
+			Format:         "raw",
+			ReadOnly:       true,
+			Phase:          hypervisor.VirtualMachineDiskPhaseReady,
+			Image:          *disk.Provision.FromImage,
+		}
+		suite.Create(status)
+
+		return status
+	}
+
+	libraryStatus(first)
+	libraryStatus(second)
+
+	var original string
+
+	ctest.AssertResource(suite, vmName, func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.Equal("running", res.TypedSpec().PowerState)
+		asrt.Len(res.TypedSpec().Disks, 2)
+
+		original = res.TypedSpec().DomainXML
+	})
+
+	ejected := blankCDROMDiskSpec("first")
+	swapped := cdromDiskSpec("second", libraryName, "new.iso", "")
+
+	ejectedStatus := hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, hypervisor.VirtualMachineDiskStatusID(vmName, ejected))
+	*ejectedStatus.TypedSpec() = hypervisor.VirtualMachineDiskStatusSpec{
+		VirtualMachine: vmName,
+		Name:           ejected.Name,
+		Format:         "raw",
+		ReadOnly:       true,
+		Phase:          hypervisor.VirtualMachineDiskPhaseReady,
+	}
+	suite.Create(ejectedStatus)
+
+	ctest.UpdateWithConflicts(suite, spec, func(current *hypervisor.VirtualMachineSpec) error {
+		current.TypedSpec().Disks = []hypervisor.VirtualMachineDiskSpec{ejected, swapped}
+
+		return nil
+	})
+
+	ctx, st := suite.Ctx(), suite.State()
+	suite.Require().Never(func() bool {
+		domain, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](ctx, st, vmName)
+
+		return err != nil || domain.TypedSpec().PowerState != "running" || domain.TypedSpec().DomainXML != original
+	}, 300*time.Millisecond, 10*time.Millisecond)
+
+	current := libraryStatus(swapped)
+
+	ctest.AssertResource(suite, vmName, func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.Equal("running", res.TypedSpec().PowerState)
+		asrt.Contains(res.TypedSpec().DomainXML, filepath.Join(contentLibraryPlaceholder, "new.iso"))
+		asrt.NotContains(res.TypedSpec().DomainXML, "first.iso")
+		asrt.Equal([]string{ejectedStatus.Metadata().ID(), current.Metadata().ID()}, res.TypedSpec().Disks)
+	})
+}
+
+// pendingMediumWithObservationOutage runs a VM with a copied writable disk and an empty drive,
+// loads a medium which does not resolve yet into the drive, then loses the writable disk's
+// observation.
+func (suite *VirtualMachineStaleDiskSuite) pendingMediumWithObservationOutage(name string, prepare func(copiedOutageFixture)) func() bool {
+	f := completedCopy(&suite.DefaultSuite, name, true, blankCDROMDiskSpec("spare"))
+
+	ctest.UpdateWithConflicts(suite, f.vm, func(current *hypervisor.VirtualMachineSpec) error {
+		current.TypedSpec().Disks[1] = cdromDiskSpec("spare", libraryName, "new.iso", "")
+
+		return nil
+	})
+
+	if prepare != nil {
+		prepare(f)
+	}
+
+	loseCopyObservation(&suite.DefaultSuite, f)
+
+	ctx, st := suite.Ctx(), suite.State()
+
+	return func() bool {
+		domain, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](ctx, st, name)
+
+		return err != nil || domain.TypedSpec().PowerState != "running" || domain.TypedSpec().DomainXML != f.xml
+	}
+}
+
+// A lost observation of an unchanged disk does not stop a guest whose new medium still resolves.
+func (suite *VirtualMachineStaleDiskSuite) TestPendingMediumRetainedThroughObservationOutage() {
+	changed := suite.pendingMediumWithObservationOutage("pending-outage", nil)
+	suite.Require().Never(changed, 300*time.Millisecond, 10*time.Millisecond)
+}
+
+// A lost observation of a disk whose backing is being mutated is not retained.
+func (suite *VirtualMachineStaleDiskSuite) TestPendingMediumOutageWithMutatedBackingStops() {
+	changed := suite.pendingMediumWithObservationOutage("pending-mutated", func(f copiedOutageFixture) {
+		suite.AddFinalizer(f.pool.Metadata(), "storage.StoragePoolController/mutating/backing")
+	})
+	suite.Require().Eventually(changed, 5*time.Second, 10*time.Millisecond)
+
+	ctest.AssertResource(suite, "pending-mutated", func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.Equal("stopped", res.TypedSpec().PowerState)
+		asrt.Equal(hypervisorhelpers.StopModeForced.String(), res.TypedSpec().StopMode)
+	})
+}
+
 // A directly authored spec may name a disk outside the configuration's alphabet, as long as
 // the name is a valid device alias.
 func (suite *VirtualMachineStaleDiskSuite) TestRendersDiskNameOutsideConfigAlphabet() {
