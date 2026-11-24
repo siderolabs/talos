@@ -188,12 +188,12 @@ func (ctrl *VirtualMachineController) Run(ctx context.Context, runtime controlle
 		ctrl.shutdownRequested = map[string]shutdownPress{}
 	}
 
-	retry := time.NewTicker(ctrl.gracefulStopRetryInterval())
-	defer retry.Stop()
-
 	// Fires when the guests still powering themselves off on the way down are destroyed instead,
 	// nil while there are none.
 	var force <-chan time.Time
+
+	// Fires when the next power button press is due, nil while no stop waits on one.
+	var retry <-chan time.Time
 
 	for {
 		select {
@@ -201,10 +201,7 @@ func (ctrl *VirtualMachineController) Run(ctx context.Context, runtime controlle
 			return nil
 		case <-runtime.EventCh():
 		case <-force:
-		case <-retry.C:
-			if len(ctrl.shutdownRequested) == 0 {
-				continue
-			}
+		case <-retry:
 		}
 
 		forceAt, err := ctrl.reconcileWhenReady(ctx, runtime, logger)
@@ -213,6 +210,7 @@ func (ctrl *VirtualMachineController) Run(ctx context.Context, runtime controlle
 		}
 
 		force = fireAt(forceAt)
+		retry = fireAt(ctrl.nextPress(time.Now()))
 
 		runtime.ResetRestartBackoff()
 	}
@@ -1272,6 +1270,33 @@ func (ctrl *VirtualMachineController) gracefulStopRetryInterval() time.Duration 
 	}
 
 	return defaultGracefulStopRetryInterval
+}
+
+// nextPress returns when the next power button press is due, or the zero time if no stop waits on
+// one.
+//
+// The wake-up is timed from the last press rather than taken from a fixed ticker: a ticker running
+// on its own phase lands a hair short of the interval after each press it triggers, so the
+// throttle in askGuestToPowerOff skips every other tick. A press already due which the reconcile
+// just done did not deliver, such as one held back while virtqemud is down, is retried an interval
+// from now rather than at once, which would spin.
+func (ctrl *VirtualMachineController) nextPress(now time.Time) time.Time {
+	interval := ctrl.gracefulStopRetryInterval()
+
+	var next time.Time
+
+	for _, press := range ctrl.shutdownRequested {
+		due := press.at.Add(interval)
+		if !due.After(now) {
+			due = now.Add(interval)
+		}
+
+		if next.IsZero() || due.Before(next) {
+			next = due
+		}
+	}
+
+	return next
 }
 
 // askGuestToPowerOff presses the virtual power button, again only once the retry interval has

@@ -3544,6 +3544,37 @@ func (s *VirtualMachineDomainSuite) TestGracefulStopIsAskedAgainAfterTheRetryInt
 	s.assertDomain("repress", spec.TypedSpec().DomainXML, true)
 }
 
+// A guest which ignores the press is asked once per retry interval, not once per two: the retry is
+// timed from the last press, which a ticker running on its own phase landed just short of.
+func (s *VirtualMachineDomainSuite) TestGracefulStopIsAskedOncePerRetryInterval() {
+	const interval = 300 * time.Millisecond
+
+	s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.VirtualMachineController{
+		Open:                      s.client.open,
+		GracefulStopRetryInterval: interval,
+	}))
+
+	spec := s.startGracefully("ignores")
+
+	s.drivePowerState(spec, "stopped", hypervisorhelpers.StopModeGraceful.String())
+
+	client := s.client
+
+	s.Require().Eventually(func() bool {
+		return client.shutdownCount("ignores") >= 1
+	}, 5*time.Second, time.Millisecond, "guest was never asked")
+
+	first := time.Now()
+
+	s.Require().Eventually(func() bool {
+		return client.shutdownCount("ignores") >= 6
+	}, 5*time.Second, time.Millisecond, "guest was not asked again")
+
+	// Five more presses are due 5 intervals after the first; one per two intervals takes about 10.
+	// The bound leaves the slack each press needs for controller event latency on a loaded runner.
+	s.Assert().Less(time.Since(first), 8*interval)
+}
+
 // A record of an ask does not outlive the spec it was made against, so a machine configured again
 // under a name which was once stopped is still asked.
 func (s *VirtualMachineDomainSuite) TestARecreatedSpecIsAskedAgain() {
