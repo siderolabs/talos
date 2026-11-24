@@ -12,11 +12,11 @@ import (
 	"strings"
 
 	"github.com/prometheus/procfs"
-	"github.com/prometheus/procfs/sysfs"
 	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/gen/xslices"
 	"google.golang.org/protobuf/types/known/emptypb"
 
+	"github.com/siderolabs/talos/internal/pkg/sysfs"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 )
 
@@ -144,33 +144,15 @@ func (s *Server) SystemStat(ctx context.Context, in *emptypb.Empty) (*machine.Sy
 
 // CPUFreqStats implements the machine.MachineServer interface.
 func (s *Server) CPUFreqStats(ctx context.Context, in *emptypb.Empty) (*machine.CPUFreqStatsResponse, error) {
-	fs, err := sysfs.NewDefaultFS()
+	stats, err := sysfs.CPUFreqStats("/sys")
 	if err != nil {
 		return nil, err
-	}
-
-	systemCpufreqStats, err := fs.SystemCpufreq()
-	if err != nil {
-		return nil, err
-	}
-
-	translateCPUFreqStats := func(in sysfs.SystemCPUCpufreqStats) *machine.CPUFreqStats {
-		if in.CpuinfoCurrentFrequency == nil || in.CpuinfoMinimumFrequency == nil || in.CpuinfoMaximumFrequency == nil {
-			return &machine.CPUFreqStats{}
-		}
-
-		return &machine.CPUFreqStats{
-			CurrentFrequency: *in.CpuinfoCurrentFrequency,
-			MinimumFrequency: *in.CpuinfoMinimumFrequency,
-			MaximumFrequency: *in.CpuinfoMaximumFrequency,
-			Governor:         in.Governor,
-		}
 	}
 
 	reply := &machine.CPUFreqStatsResponse{
 		Messages: []*machine.CPUsFreqStats{
 			{
-				CpuFreqStats: xslices.Map(systemCpufreqStats, translateCPUFreqStats),
+				CpuFreqStats: stats,
 			},
 		},
 	}

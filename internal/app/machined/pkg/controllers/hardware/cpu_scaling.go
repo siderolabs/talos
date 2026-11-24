@@ -26,6 +26,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/internal/kobject"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/internal/trigger"
 	runtimetalos "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/pkg/sysfs"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
@@ -46,7 +47,7 @@ type CPUScalingController struct {
 	// ReconcileCh triggers an additional reconcile on each receive. Intended for testing only.
 	ReconcileCh <-chan struct{}
 
-	// ReadFile reads a sysfs attribute, defaults to os.ReadFile. Overridable for testing, as some
+	// ReadFile reads a sysfs attribute, defaults to sysfs.ReadFile. Overridable for testing, as some
 	// sysfs read errors (e.g. EBUSY from an inactive policy) cannot be reproduced with plain files.
 	ReadFile func(name string) ([]byte, error)
 
@@ -99,7 +100,7 @@ func (ctrl *CPUScalingController) Run(ctx context.Context, r controller.Runtime,
 	}
 
 	if ctrl.ReadFile == nil {
-		ctrl.ReadFile = os.ReadFile
+		ctrl.ReadFile = sysfs.ReadFile
 	}
 
 	if ctrl.defaults == nil {
