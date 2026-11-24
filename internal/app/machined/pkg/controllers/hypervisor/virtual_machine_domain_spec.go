@@ -25,6 +25,7 @@ import (
 	domainbuilder "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor/internal/domain"
 	vmprofile "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor/internal/profile"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/internal/cleanup"
+	libvirtdomain "github.com/siderolabs/talos/internal/pkg/libvirt/domain"
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
@@ -205,7 +206,7 @@ func updateRenderedDomain(ctx context.Context, r controller.Reader, logger *zap.
 
 	generation := hypervisor.VirtualMachineEffectiveGeneration(vm, override)
 
-	domainXML, attachedDisks, seedID, renderErr := renderVirtualMachineDomainWithSeed(ctx, r, name, vm.TypedSpec(), links, disks)
+	rendered, renderErr := renderVirtualMachineDomainWithSeed(ctx, r, name, vm.TypedSpec(), links, disks)
 	if renderErr != nil {
 		retain, checkErr := retainDomainOnStorageOutage(ctx, r, vm, powerState, generation, domain, disks, renderErr)
 		if checkErr != nil {
@@ -235,10 +236,10 @@ func updateRenderedDomain(ctx context.Context, r controller.Reader, logger *zap.
 	}
 
 	*domain.TypedSpec() = hypervisor.VirtualMachineDomainSpecSpec{
-		DomainXML:          domainXML,
+		DomainXML:          rendered.DomainXML,
 		PowerState:         powerState,
-		Disks:              attachedDisks,
-		CloudInit:          seedID,
+		Disks:              rendered.Disks,
+		CloudInit:          rendered.CloudInit,
 		ObservedGeneration: generation,
 		StopMode:           stopModeOf(stopRequest),
 		StopRequest:        stopRequest,
@@ -506,15 +507,25 @@ func domainAttachesCurrentSeed(domainXML string, asset *hypervisor.CloudInitStat
 	return false
 }
 
+// renderedDomain is one rendered definition and what the render decided about it.
+type renderedDomain struct {
+	// DomainXML is the definition libvirt is handed.
+	DomainXML string
+	// Disks are the IDs of the disk statuses the definition attaches, in configuration order.
+	Disks []string
+	// CloudInit is the ID of the seed status the definition attaches, if any.
+	CloudInit string
+}
+
 // renderVirtualMachineDomainWithSeed resolves host resources before building and serializing once.
 //
 //nolint:gocyclo
 func renderVirtualMachineDomainWithSeed(
 	ctx context.Context, r controller.Reader, name string, spec *hypervisor.VirtualMachineSpecSpec,
 	links hostLinks, resolvedDisks map[resource.ID]hypervisor.VirtualMachineDiskStatusSpec,
-) (string, []string, string, error) {
+) (renderedDomain, error) {
 	if err := validateVirtualMachineDomainSpec(name, spec); err != nil {
-		return "", nil, "", err
+		return renderedDomain{}, err
 	}
 
 	profileName := spec.Profile
@@ -525,23 +536,23 @@ func renderVirtualMachineDomainWithSeed(
 	profile, err := safe.ReaderGetByID[*hypervisor.VirtualMachineProfileSpec](ctx, r, profileName)
 	if err != nil {
 		if state.IsNotFoundError(err) {
-			return "", nil, "", fmt.Errorf("virtual machine %q: profile %q not found: %w", name, profileName, vmprofile.ErrNotReady)
+			return renderedDomain{}, fmt.Errorf("virtual machine %q: profile %q not found: %w", name, profileName, vmprofile.ErrNotReady)
 		}
 
-		return "", nil, "", fmt.Errorf("virtual machine %q: profile %q: %w", name, profileName, err)
+		return renderedDomain{}, fmt.Errorf("virtual machine %q: profile %q: %w", name, profileName, err)
 	}
 
 	if profile.Metadata().Phase() != resource.PhaseRunning {
-		return "", nil, "", fmt.Errorf("virtual machine %q: profile %q is not available: %w", name, profileName, vmprofile.ErrNotReady)
+		return renderedDomain{}, fmt.Errorf("virtual machine %q: profile %q is not available: %w", name, profileName, vmprofile.ErrNotReady)
 	}
 
 	if err := vmprofile.Validate(goruntime.GOARCH, profileName, *profile.TypedSpec()); err != nil {
-		return "", nil, "", fmt.Errorf("virtual machine %q: profile %q: %w", name, profileName, err)
+		return renderedDomain{}, fmt.Errorf("virtual machine %q: profile %q: %w", name, profileName, err)
 	}
 
 	resolvedLinks, err := resolveInterfaceLinks(name, spec.Interfaces, links)
 	if err != nil {
-		return "", nil, "", err
+		return renderedDomain{}, err
 	}
 
 	var (
@@ -554,7 +565,7 @@ func renderVirtualMachineDomainWithSeed(
 
 	platform, err := domainbuilder.PlatformFor(goruntime.GOARCH)
 	if err != nil {
-		return "", nil, "", err
+		return renderedDomain{}, err
 	}
 
 	definition, attachedDisks, err := domainbuilder.Build(domainbuilder.Inputs{
@@ -567,20 +578,20 @@ func renderVirtualMachineDomainWithSeed(
 		SeedPath: seedPath,
 	})
 	if err != nil {
-		return "", nil, "", err
+		return renderedDomain{}, err
 	}
 
 	// Base-domain errors take precedence over waiting for the optional seed.
 	if seedErr != nil {
-		return "", nil, "", seedErr
+		return renderedDomain{}, seedErr
 	}
 
 	text, err := definition.Marshal()
 	if err != nil {
-		return "", nil, "", fmt.Errorf("failed to marshal virtual machine %q: %w", name, err)
+		return renderedDomain{}, fmt.Errorf("failed to marshal virtual machine %q: %w", name, err)
 	}
 
-	return text, attachedDisks, seedID, nil
+	return renderedDomain{DomainXML: text, Disks: attachedDisks, CloudInit: seedID}, nil
 }
 
 // resolveCloudInit requires the exact projected seed and its current pool backing before rendering.
@@ -1019,6 +1030,27 @@ func validateVirtualMachineDomainSpec(name string, spec *hypervisor.VirtualMachi
 
 	if err := validateVirtualMachineInterfaces(name, spec.Interfaces); err != nil {
 		return err
+	}
+
+	return validateVirtualMachineDisks(name, spec.Disks)
+}
+
+// validateVirtualMachineDisks checks disk names, which become libvirt device aliases and must
+// be unique as those are. Only what the alias needs is checked: a spec may be authored by other
+// producers than the configuration, whose stricter naming rule is enforced there.
+func validateVirtualMachineDisks(name string, disks []hypervisor.VirtualMachineDiskSpec) error {
+	names := make(map[string]struct{}, len(disks))
+
+	for _, disk := range disks {
+		if err := libvirtdomain.ValidateAliasName(disk.Name); err != nil {
+			return fmt.Errorf("virtual machine %q: disk %w", name, err)
+		}
+
+		if _, exists := names[disk.Name]; exists {
+			return fmt.Errorf("virtual machine %q: duplicate disk name %q", name, disk.Name)
+		}
+
+		names[disk.Name] = struct{}{}
 	}
 
 	return nil

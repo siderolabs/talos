@@ -512,6 +512,43 @@ func (suite *VirtualMachineSpecSuite) assertConversionError(name, reason string)
 	}, 30*time.Second, time.Millisecond)
 }
 
+// Disk names are validated on directly authored specs too.
+func (suite *VirtualMachineSpecSuite) TestRejectsDiskNameOutsideAliasCharset() {
+	spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "external-bad-disk")
+	*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
+		CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
+		Memory:     hypervisor.VirtualMachineMemorySpec{Size: 512 << 20},
+		PowerState: "running",
+		Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+		Disks:      []hypervisor.VirtualMachineDiskSpec{{Name: "a/b"}},
+	}
+	suite.Create(spec)
+
+	suite.assertConversionError(spec.Metadata().ID(), `disk name "a/b" can only contain ASCII letters, digits, dots, underscores and hyphens`)
+	ctest.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](suite, spec.Metadata().ID())
+	suite.Destroy(spec)
+}
+
+// Two disks of one name would share a device alias, which libvirt rejects.
+func (suite *VirtualMachineSpecSuite) TestRejectsDuplicateDiskNames() {
+	spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "external-duplicate-disk")
+	*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
+		CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
+		Memory:     hypervisor.VirtualMachineMemorySpec{Size: 512 << 20},
+		PowerState: "running",
+		Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+		Disks: []hypervisor.VirtualMachineDiskSpec{
+			{Name: "data_1", Bus: "sata", Type: "cdrom", Provision: hypervisor.VirtualMachineDiskProvisionSpec{Blank: true}},
+			{Name: "data_1", Bus: "sata", Type: "cdrom", Provision: hypervisor.VirtualMachineDiskProvisionSpec{Blank: true}},
+		},
+	}
+	suite.Create(spec)
+
+	suite.assertConversionError(spec.Metadata().ID(), `duplicate disk name "data_1"`)
+	ctest.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](suite, spec.Metadata().ID())
+	suite.Destroy(spec)
+}
+
 func (suite *VirtualMachineSpecSuite) TestRejectsCPUOutsideSchemaRange() {
 	for _, count := range []uint32{0, 65536, 4294967295} {
 		suite.logs.TakeAll()

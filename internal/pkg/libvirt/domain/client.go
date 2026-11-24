@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"net"
 	"net/netip"
+	"regexp"
 	"slices"
 	"time"
 
@@ -136,6 +137,7 @@ type Client interface {
 	Active(Domain) (bool, error)
 	Info(Domain) (Info, error)
 	GuestInterfaces(Domain) ([]GuestInterface, error)
+	Definition(Domain) (Definition, error)
 	Start(Domain, string, ...StartOption) error
 	Shutdown(Domain) error
 	Reboot(Domain) error
@@ -366,7 +368,7 @@ func (c *client) Start(d Domain, renderedXML string, opts ...StartOption) error 
 		return err
 	}
 
-	desired, digest, err := domainDefinition(d, renderedXML)
+	desired, err := domainDefinition(d, renderedXML)
 	if err != nil {
 		return err
 	}
@@ -376,7 +378,7 @@ func (c *client) Start(d Domain, renderedXML string, opts ...StartOption) error 
 		return err
 	}
 
-	restart, err := c.needsRestart(found, exists, digest)
+	restart, err := c.needsRestart(found, exists, desired)
 	if err != nil {
 		return err
 	}
@@ -385,17 +387,46 @@ func (c *client) Start(d Domain, renderedXML string, opts ...StartOption) error 
 		return nil
 	}
 
-	if err = Admit(opts...); err != nil {
+	return c.replace(d, desired, exists, opts...)
+}
+
+// replace defines the domain, taking any existing one down first.
+func (c *client) replace(d Domain, desired definition, exists bool, opts ...StartOption) error {
+	if err := Admit(opts...); err != nil {
 		return err
 	}
 
 	if exists {
-		if err = c.Remove(d); err != nil {
+		if err := c.Remove(d); err != nil {
 			return err
 		}
 	}
 
-	return c.createTransient(d, desired)
+	return c.createTransient(d, desired.text)
+}
+
+// aliasPrefix marks a configured device; libvirt keeps "ua-" aliases.
+const aliasPrefix = "ua-talos-"
+
+// DeviceAlias names a configured device. name must pass ValidateAliasName.
+func DeviceAlias(kind, name string) string {
+	return aliasPrefix + kind + "-" + name
+}
+
+// aliasNamePattern is what QEMU accepts in a device id after the prefix supplies its leading
+// letter. It also leaves out "/" and "@", which separate a disk name in its status ID.
+var aliasNamePattern = regexp.MustCompile(`^[A-Za-z0-9._-]+$`)
+
+// ValidateAliasName checks that name can be passed to DeviceAlias.
+func ValidateAliasName(name string) error {
+	switch {
+	case name == "":
+		return errors.New("name is required")
+	case !aliasNamePattern.MatchString(name):
+		return fmt.Errorf("name %q can only contain ASCII letters, digits, dots, underscores and hyphens", name)
+	}
+
+	return nil
 }
 
 func (c *client) createTransient(d Domain, desired string) error {
@@ -422,20 +453,31 @@ func (c *client) createTransient(d Domain, desired string) error {
 
 const metadataNamespace = "https://talos.dev/libvirt/domain"
 
-type definitionDigests struct {
-	Full          string `xml:",chardata"`
-	Configuration string `xml:"configuration,attr"`
+// definitionMetadata is the marker Talos writes into a domain it owns.
+type definitionMetadata struct {
+	XMLName xml.Name `xml:"https://talos.dev/libvirt/domain definition"`
+	// Configuration excludes the hardware profile.
+	Configuration string `xml:"configuration,attr,omitempty"`
+	// Digest covers the whole definition.
+	Digest string `xml:",chardata"`
 }
 
-func domainDefinition(d Domain, renderedXML string) (string, definitionDigests, error) {
+// definition is one rendered domain XML, prepared for libvirt and digested.
+type definition struct {
+	text          string // handed to libvirt, marker included
+	full          string
+	configuration string
+}
+
+func domainDefinition(d Domain, renderedXML string) (definition, error) {
 	var desc libvirtxml.Domain
 
 	if err := desc.Unmarshal(renderedXML); err != nil {
-		return "", definitionDigests{}, fmt.Errorf("invalid domain XML: %w", err)
+		return definition{}, fmt.Errorf("invalid domain XML: %w", err)
 	}
 
 	if desc.Name != d.Name {
-		return "", definitionDigests{}, fmt.Errorf("domain XML name %q does not match %q", desc.Name, d.Name)
+		return definition{}, fmt.Errorf("domain XML name %q does not match %q", desc.Name, d.Name)
 	}
 
 	desc.UUID = d.UUID.String()
@@ -445,36 +487,53 @@ func domainDefinition(d Domain, renderedXML string) (string, definitionDigests, 
 	// bound retention. Never accept a log path from the rendered input.
 	setSerialCapture(&desc, d.UUID)
 
-	canonical, err := desc.Marshal()
+	// All digests are taken before the marker is added.
+	full, err := marshalDigest(desc, "domain XML")
 	if err != nil {
-		return "", definitionDigests{}, fmt.Errorf("marshal domain XML: %w", err)
+		return definition{}, err
 	}
 
-	configuration, err := profileIndependentDigest(desc)
+	// Topology, vCPU count, tuning, memory, devices and all other VM intent stay in this
+	// digest, so a profile edit cannot hide an unrelated definition change.
+	configuration, err := marshalDigest(withoutProfile(desc), "profile-independent domain XML")
 	if err != nil {
-		return "", definitionDigests{}, err
+		return definition{}, err
 	}
 
-	digests := definitionDigests{
-		Full:          fmt.Sprintf("%x", sha256.Sum256([]byte(canonical))),
-		Configuration: configuration,
+	result := definition{
+		full:          full,
+		configuration: configuration,
+	}
+
+	if result.text, err = markedDefinition(desc, result); err != nil {
+		return definition{}, err
+	}
+
+	return result, nil
+}
+
+// markedDefinition marshals desc with the ownership marker added.
+func markedDefinition(desc libvirtxml.Domain, digests definition) (string, error) {
+	marker, err := definitionMarker(digests)
+	if err != nil {
+		return "", err
 	}
 
 	if desc.Metadata == nil {
 		desc.Metadata = &libvirtxml.DomainMetadata{}
+	} else {
+		metadata := *desc.Metadata
+		desc.Metadata = &metadata
 	}
 
-	desc.Metadata.XML += fmt.Sprintf(
-		`<talos:definition xmlns:talos="%s" configuration="%s">%s</talos:definition>`,
-		metadataNamespace, digests.Configuration, digests.Full,
-	)
+	desc.Metadata.XML += marker
 
-	definition, err := desc.Marshal()
+	text, err := desc.Marshal()
 	if err != nil {
-		return "", definitionDigests{}, fmt.Errorf("marshal domain metadata: %w", err)
+		return "", fmt.Errorf("marshal domain metadata: %w", err)
 	}
 
-	return definition, digests, nil
+	return text, nil
 }
 
 func setSerialCapture(desc *libvirtxml.Domain, id uuid.UUID) {
@@ -493,11 +552,23 @@ func setSerialCapture(desc *libvirtxml.Domain, id uuid.UUID) {
 	}
 }
 
-// profileIndependentDigest excludes only fields controlled by a hardware profile
-// (machine type, CPU model and features, platform timers).
-// Topology, vCPU count, tuning, memory, devices and all other VM intent remain in
-// this digest so a profile edit cannot hide an unrelated definition change.
-func profileIndependentDigest(desc libvirtxml.Domain) (string, error) {
+// hexDigest is the hex-encoded SHA-256 of data.
+func hexDigest(data []byte) string {
+	return fmt.Sprintf("%x", sha256.Sum256(data))
+}
+
+// marshalDigest is the hexDigest of a description's canonical XML.
+func marshalDigest(desc libvirtxml.Domain, what string) (string, error) {
+	canonical, err := desc.Marshal()
+	if err != nil {
+		return "", fmt.Errorf("marshal %s: %w", what, err)
+	}
+
+	return hexDigest([]byte(canonical)), nil
+}
+
+// withoutProfile is a shallow copy of desc with the fields a hardware profile controls left out.
+func withoutProfile(desc libvirtxml.Domain) libvirtxml.Domain {
 	if desc.OS != nil && desc.OS.Type != nil {
 		os := *desc.OS
 		kind := *os.Type
@@ -521,20 +592,32 @@ func profileIndependentDigest(desc libvirtxml.Domain) (string, error) {
 	// timers existed carry no <clock>, so it must not reach the digest at all.
 	desc.Clock = nil
 
-	canonical, err := desc.Marshal()
-	if err != nil {
-		return "", fmt.Errorf("marshal profile-independent domain XML: %w", err)
-	}
-
-	return fmt.Sprintf("%x", sha256.Sum256([]byte(canonical))), nil
+	return desc
 }
 
-func (c *client) needsRestart(found libvirt.Domain, exists bool, desired definitionDigests) (bool, error) {
+// definitionMarker renders the ownership marker. Never empty: libvirt deletes empty metadata.
+func definitionMarker(digests definition) (string, error) {
+	if digests.full == "" {
+		return "", errors.New("refusing to write an empty ownership marker")
+	}
+
+	text, err := xml.Marshal(definitionMetadata{
+		Configuration: digests.configuration,
+		Digest:        digests.full,
+	})
+	if err != nil {
+		return "", fmt.Errorf("marshal domain metadata: %w", err)
+	}
+
+	return string(text), nil
+}
+
+func (c *client) needsRestart(found libvirt.Domain, exists bool, desired definition) (bool, error) {
 	if !exists {
 		return true, nil
 	}
 
-	current, err := c.definitionMetadata(found)
+	_, current, err := c.liveDefinition(found)
 	if err != nil {
 		return false, err
 	}
@@ -560,39 +643,98 @@ func (c *client) needsRestart(found libvirt.Domain, exists bool, desired definit
 	// A profile-only edit takes effect at the next stop/start. Both digests are
 	// stored by libvirt, so this survives a machined reconnect without pretending
 	// libvirt's expanded live CPU XML is identical to the requested profile.
-	return current.Full != desired.Full &&
-		(current.Configuration == "" || current.Configuration != desired.Configuration), nil
+	return !current.recorded().Runs(desired.recorded()), nil
 }
 
-func (c *client) definitionMetadata(found libvirt.Domain) (definitionDigests, error) {
-	currentXML, err := c.rpc.DomainGetXMLDesc(found, 0)
-	if err != nil {
-		return definitionDigests{}, err
-	}
-
+// liveDefinition reads a running domain and the ownership marker Talos left in it.
+func (c *client) liveDefinition(found libvirt.Domain) (libvirtxml.Domain, definitionMetadata, error) {
 	var current libvirtxml.Domain
 
+	currentXML, err := c.rpc.DomainGetXMLDesc(found, 0)
+	if err != nil {
+		return current, definitionMetadata{}, err
+	}
+
 	if err = current.Unmarshal(currentXML); err != nil {
-		return definitionDigests{}, err
+		return current, definitionMetadata{}, err
 	}
 
 	if current.Metadata == nil {
-		return definitionDigests{}, fmt.Errorf("domain %q has no Talos ownership metadata", found.Name)
+		return current, definitionMetadata{}, fmt.Errorf("domain %q %w", found.Name, errNotOwned)
 	}
 
-	var metadata struct {
-		Definition definitionDigests `xml:"https://talos.dev/libvirt/domain definition"`
+	var wrapper struct {
+		Definition definitionMetadata `xml:"https://talos.dev/libvirt/domain definition"`
 	}
 
-	if err = xml.Unmarshal([]byte("<metadata>"+current.Metadata.XML+"</metadata>"), &metadata); err != nil {
-		return definitionDigests{}, fmt.Errorf("invalid domain metadata: %w", err)
+	if err = xml.Unmarshal([]byte("<metadata>"+current.Metadata.XML+"</metadata>"), &wrapper); err != nil {
+		return current, definitionMetadata{}, fmt.Errorf("invalid domain metadata: %w", err)
 	}
 
-	if metadata.Definition.Full == "" {
-		return definitionDigests{}, fmt.Errorf("domain %q has no Talos ownership metadata", found.Name)
+	if wrapper.Definition.Digest == "" {
+		return current, definitionMetadata{}, fmt.Errorf("domain %q %w", found.Name, errNotOwned)
 	}
 
-	return metadata.Definition, nil
+	return current, wrapper.Definition, nil
+}
+
+// errNotOwned marks a domain which carries no Talos ownership marker.
+var errNotOwned = errors.New("has no Talos ownership metadata")
+
+// Definition is what a domain records, in its ownership marker, about the definition it runs.
+type Definition struct {
+	// Digest covers the whole definition.
+	Digest string
+	// Configuration covers it with the fields a hardware profile controls left out.
+	Configuration string
+}
+
+// recorded is the part of the marker which says what the domain runs.
+func (m definitionMetadata) recorded() Definition {
+	return Definition{Digest: m.Digest, Configuration: m.Configuration}
+}
+
+// Runs reports whether desired is running, ignoring a pending profile edit.
+func (r Definition) Runs(desired Definition) bool {
+	return r.Digest == desired.Digest || (r.Configuration != "" && r.Configuration == desired.Configuration)
+}
+
+// DefinitionOf is what a domain started on renderedXML records about the definition it runs.
+func DefinitionOf(d Domain, renderedXML string) (Definition, error) {
+	desired, err := domainDefinition(d, renderedXML)
+	if err != nil {
+		return Definition{}, err
+	}
+
+	return desired.recorded(), nil
+}
+
+// recorded is what a domain started on this definition records.
+func (d definition) recorded() Definition {
+	return Definition{Digest: d.full, Configuration: d.configuration}
+}
+
+// Definition reads what a domain records about the definition it runs; zero for an unowned domain.
+func (c *client) Definition(domain Domain) (Definition, error) {
+	found, exists, err := c.lookup(domain)
+	if err != nil {
+		return Definition{}, err
+	}
+
+	if !exists {
+		return Definition{}, fmt.Errorf("domain %q disappeared before reading its definition", domain.Name)
+	}
+
+	_, current, err := c.liveDefinition(found)
+	if errors.Is(err, errNotOwned) {
+		return Definition{}, nil
+	}
+
+	if err != nil {
+		return Definition{}, err
+	}
+
+	return current.recorded(), nil
 }
 
 func (c *client) removeManagedSave(found libvirt.Domain) error {
@@ -632,7 +774,7 @@ func (c *client) owned(d Domain) (libvirt.Domain, bool, error) {
 		return libvirt.Domain{}, false, err
 	}
 
-	if _, err = c.definitionMetadata(found); err != nil {
+	if _, _, err = c.liveDefinition(found); err != nil {
 		return libvirt.Domain{}, false, err
 	}
 
@@ -726,7 +868,7 @@ func (c *client) Remove(d Domain) error {
 		return err
 	}
 
-	if _, err = c.definitionMetadata(found); err != nil {
+	if _, _, err = c.liveDefinition(found); err != nil {
 		return err
 	}
 

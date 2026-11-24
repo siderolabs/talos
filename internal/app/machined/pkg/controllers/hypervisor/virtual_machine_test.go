@@ -75,6 +75,9 @@ type domainClient struct {
 	listed          chan struct{}
 	checkStart      func() error
 
+	// definitionErr, when set, is what reading any domain's definition fails with.
+	definitionErr error
+
 	// shutdowns and reboots count what was asked of each guest. Neither call changes the domain:
 	// the request is delivered rather than obeyed, and a guest which obeys is modeled by the test
 	// deleting the domain itself, the way a libvirt lifecycle event would report it.
@@ -144,6 +147,28 @@ func (c *domainClient) GuestInterfaces(domain libvirtdomain.Domain) ([]libvirtdo
 	}
 
 	return c.guestInterfaces, nil
+}
+
+// Definition reports the definition a domain was last started on; empty for one placed directly.
+func (c *domainClient) Definition(domain libvirtdomain.Domain) (libvirtdomain.Definition, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	existing, ok := c.domains[domain.Name]
+	if !ok || existing.UUID != domain.UUID {
+		return libvirtdomain.Definition{}, fmt.Errorf("domain %q disappeared", domain.Name)
+	}
+
+	if c.definitionErr != nil {
+		return libvirtdomain.Definition{}, c.definitionErr
+	}
+
+	text, started := c.texts[domain.Name]
+	if !started {
+		return libvirtdomain.Definition{}, nil
+	}
+
+	return libvirtdomain.DefinitionOf(existing, text)
 }
 
 func (c *domainClient) Define(domain libvirtdomain.Domain, text string) error {
