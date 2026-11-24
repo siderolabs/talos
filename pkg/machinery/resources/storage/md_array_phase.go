@@ -9,6 +9,10 @@ type MDArrayPhase int
 
 // MD array phases.
 //
+// Unknown is also reported for an existing array whose health could not be read.
+// Ready means the array is idle with every RAID slot backed by an in-sync member;
+// Degraded means it is idle but running without full redundancy.
+//
 //structprotogen:gen_enum
 const (
 	MDArrayPhaseUnknown    MDArrayPhase = iota // unknown
@@ -16,4 +20,5 @@ const (
 	MDArrayPhaseRebuilding                     // rebuilding
 	MDArrayPhaseReady                          // ready
 	MDArrayPhaseError                          // error
+	MDArrayPhaseDegraded                       // degraded
 )

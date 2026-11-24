@@ -29,7 +29,7 @@ type MDArrayStatusSpec struct {
 	Device string `yaml:"device" protobuf:"2"`
 	// Members is the list of member device paths.
 	Members []string `yaml:"members" protobuf:"3"`
-	// Error is the last provisioning error, if any.
+	// Error is the last provisioning or health observation error, if any.
 	Error string `yaml:"error,omitempty" protobuf:"4"`
 	// Status is the provisioning/sync state of the array.
 	Status MDArrayPhase `yaml:"status" protobuf:"5"`
@@ -51,6 +51,10 @@ type MDArrayStatusSpec struct {
 	// on disk (e.g. assembled by the kernel/udev before Talos ever wrote a
 	// RAIDArrayConfig for them), and are never reconciled or self-healed.
 	Unmanaged bool `yaml:"unmanaged,omitempty" protobuf:"12"`
+	// InSyncMembers is the list of members carrying current array data.
+	//
+	// Members missing from it are faulty, spare, or still recovering.
+	InSyncMembers []string `yaml:"inSyncMembers,omitempty" protobuf:"13"`
 }
 
 // NewMDArrayStatus initializes an MDArrayStatus resource.

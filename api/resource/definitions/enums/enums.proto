@@ -964,6 +964,7 @@ enum StorageMDArrayPhase {
   MD_ARRAY_PHASE_REBUILDING = 2;
   MD_ARRAY_PHASE_READY = 3;
   MD_ARRAY_PHASE_ERROR = 4;
+  MD_ARRAY_PHASE_DEGRADED = 5;
 }
 
 // StorageMDLevel describes the RAID level of an MD (software RAID) array.

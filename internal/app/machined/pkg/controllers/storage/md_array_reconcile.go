@@ -44,6 +44,7 @@ type MDProvisioner interface {
 	IsSyncing(device string) (bool, error)
 	ArrayStateForDevice(device string) (string, error)
 	SyncActionForDevice(device string) (md.SyncAction, error)
+	InSyncMembers(device string) ([]string, error)
 }
 
 // MDArrayReconcileController converges MDArraySpec resources into running MD arrays.
@@ -234,9 +235,7 @@ func (ctrl *MDArrayReconcileController) reportUnmanagedArrays(ctx context.Contex
 		id := filepath.Base(byID)
 		status := &storage.MDArrayStatusSpec{Level: storage.MDLevelRAID1, Device: byID, Unmanaged: true}
 
-		applyDetail(status, detail)
-		ctrl.updateSysfsStatus(device, status)
-		markReadyIfIdle(status)
+		ctrl.observeHealth(ctx, device, status)
 
 		if err := safe.WriterModify(ctx, r, storage.NewMDArrayStatus(storage.NamespaceName, id), func(s *storage.MDArrayStatus) error {
 			*s.TypedSpec() = *status
@@ -290,7 +289,7 @@ func (ctrl *MDArrayReconcileController) reconcileArray(ctx context.Context, logg
 	}
 
 	if err := ctrl.reconcileExistingArray(ctx, logger, name, device, diskPaths); err != nil {
-		ctrl.updateObservedStatus(ctx, device, status)
+		ctrl.observeHealth(ctx, device, status)
 
 		if errors.Is(err, md.ErrResync) {
 			status.Status = storage.MDArrayPhaseRebuilding
@@ -303,8 +302,7 @@ func (ctrl *MDArrayReconcileController) reconcileArray(ctx context.Context, logg
 		return status, device, err
 	}
 
-	ctrl.updateObservedStatus(ctx, device, status)
-	markReadyIfIdle(status)
+	ctrl.observeHealth(ctx, device, status)
 
 	return status, device, nil
 }
@@ -322,12 +320,6 @@ func statusWithError(status *storage.MDArrayStatusSpec, err error) (*storage.MDA
 	status.Error = provisioningError(err)
 
 	return status, err
-}
-
-func markReadyIfIdle(status *storage.MDArrayStatusSpec) {
-	if status.Status != storage.MDArrayPhaseRebuilding {
-		status.Status = storage.MDArrayPhaseReady
-	}
 }
 
 func (ctrl *MDArrayReconcileController) createArray(
@@ -365,8 +357,7 @@ func (ctrl *MDArrayReconcileController) createArray(
 		return status, "", nil
 	}
 
-	ctrl.updateObservedStatus(ctx, device, status)
-	markReadyIfIdle(status)
+	ctrl.observeHealth(ctx, device, status)
 
 	return status, device, nil
 }
@@ -450,12 +441,59 @@ func (ctrl *MDArrayReconcileController) ensureArrayIdle(device string) error {
 	return nil
 }
 
-func (ctrl *MDArrayReconcileController) updateObservedStatus(ctx context.Context, device string, status *storage.MDArrayStatusSpec) {
-	if detail, err := ctrl.MD.DetailDevice(ctx, device); err == nil {
+// observeHealth fills status with the array's observed state and derives its phase.
+//
+// A failed read makes the phase Unknown: missing data must never read as a healthy array.
+func (ctrl *MDArrayReconcileController) observeHealth(ctx context.Context, device string, status *storage.MDArrayStatusSpec) {
+	if err := ctrl.readHealth(ctx, device, status); err != nil {
+		status.Status = storage.MDArrayPhaseUnknown
+		status.Error = "observe array health: " + provisioningError(err)
+
+		return
+	}
+
+	status.Status = healthPhase(status)
+}
+
+func (ctrl *MDArrayReconcileController) readHealth(ctx context.Context, device string, status *storage.MDArrayStatusSpec) error {
+	var errs error
+
+	if detail, err := ctrl.MD.DetailDevice(ctx, device); err != nil {
+		errs = errors.Join(errs, fmt.Errorf("detail: %w", err))
+	} else {
 		applyDetail(status, detail)
 	}
 
-	ctrl.updateSysfsStatus(device, status)
+	if arrayState, err := ctrl.MD.ArrayStateForDevice(device); err != nil {
+		errs = errors.Join(errs, fmt.Errorf("read array_state: %w", err))
+	} else {
+		status.ArrayState = arrayState
+	}
+
+	if syncAction, err := ctrl.MD.SyncActionForDevice(device); err != nil {
+		errs = errors.Join(errs, fmt.Errorf("read sync_action: %w", err))
+	} else {
+		status.SyncAction = string(syncAction)
+	}
+
+	if inSync, err := ctrl.MD.InSyncMembers(device); err != nil {
+		errs = errors.Join(errs, fmt.Errorf("read member states: %w", err))
+	} else {
+		status.InSyncMembers = inSync
+	}
+
+	return errs
+}
+
+func healthPhase(status *storage.MDArrayStatusSpec) storage.MDArrayPhase {
+	switch {
+	case status.SyncAction != "" && status.SyncAction != string(md.SyncActionIdle):
+		return storage.MDArrayPhaseRebuilding
+	case len(status.InSyncMembers) < status.RaidDevices:
+		return storage.MDArrayPhaseDegraded
+	default:
+		return storage.MDArrayPhaseReady
+	}
 }
 
 func applyDetail(status *storage.MDArrayStatusSpec, detail md.Detail) {
@@ -464,19 +502,6 @@ func applyDetail(status *storage.MDArrayStatusSpec, detail md.Detail) {
 	status.UUID = detail.UUID
 	status.Name = detail.Name
 	status.Metadata = detail.Metadata
-}
-
-func (ctrl *MDArrayReconcileController) updateSysfsStatus(device string, status *storage.MDArrayStatusSpec) {
-	if arrayState, err := ctrl.MD.ArrayStateForDevice(device); err == nil {
-		status.ArrayState = arrayState
-	}
-
-	if syncAction, err := ctrl.MD.SyncActionForDevice(device); err == nil {
-		status.SyncAction = string(syncAction)
-		if syncAction != "" && syncAction != md.SyncActionIdle {
-			status.Status = storage.MDArrayPhaseRebuilding
-		}
-	}
 }
 
 func (ctrl *MDArrayReconcileController) systemDiskDevPath(ctx context.Context) (string, error) {

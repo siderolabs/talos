@@ -1483,6 +1483,7 @@ echo b > /proc/sysrq-trigger
 	}, raidAssertTimeout, raidAssertInterval, "boot array %q was not rebuilt", raidName)
 
 	suite.requireMDArrayIdle(nodeCtx, raidName)
+	suite.requireMDMirrorConsistent(nodeCtx, node, raidName)
 }
 
 // TestRAIDArrayUnmanaged_RAID1 provisions a raid1 array via a RAIDArrayConfig, then
@@ -1629,7 +1630,8 @@ func (suite *StorageSuite) mdArrayStatusMatches(ctx context.Context, name, devic
 	return true
 }
 
-// requireMDArrayIdle waits until the MDArrayStatus reports the resync finished.
+// requireMDArrayIdle waits until the MDArrayStatus reports the resync finished
+// with every member back in sync, i.e. redundancy is restored.
 func (suite *StorageSuite) requireMDArrayIdle(ctx context.Context, name string) {
 	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
 		status, err := safe.StateGetByID[*storageres.MDArrayStatus](ctx, suite.Client.State(), name)
@@ -1637,9 +1639,37 @@ func (suite *StorageSuite) requireMDArrayIdle(ctx context.Context, name string) 
 			return
 		}
 
-		assert.Equal(collect, storageres.MDArrayPhaseReady, status.TypedSpec().Status)
-		assert.Equal(collect, "idle", status.TypedSpec().SyncAction)
-	}, raidAssertTimeout, raidAssertInterval, "MD array %q did not return to ready/idle", name)
+		spec := status.TypedSpec()
+
+		assert.Equal(collect, storageres.MDArrayPhaseReady, spec.Status)
+		assert.Equal(collect, "idle", spec.SyncAction)
+		assert.Empty(collect, spec.Error)
+		assert.Len(collect, spec.InSyncMembers, spec.RaidDevices)
+		assert.ElementsMatch(collect, spec.Members, spec.InSyncMembers)
+	}, raidAssertTimeout, raidAssertInterval, "MD array %q did not return to ready/idle with all members in sync", name)
+}
+
+// requireMDMirrorConsistent runs an md consistency check on the array and requires
+// every mirror to hold identical data.
+func (suite *StorageSuite) requireMDMirrorConsistent(nodeCtx context.Context, node, name string) {
+	devName, ok := suite.raidArrayDevName(nodeCtx, name)
+	suite.Require().True(ok, "MD array %q has no block device", name)
+
+	const busybox = "/nix/var/nix/profiles/default/bin/busybox"
+
+	out, code := suite.RunDebugContainer(nodeCtx, node, busybox, "sh", "-c", `
+set -e
+md=/sys/block/$1/md
+echo check > "$md/sync_action"
+`+busybox+` sleep 1
+while [ "$(`+busybox+` cat "$md/sync_action")" != idle ]; do `+busybox+` sleep 5; done
+`+busybox+` cat "$md/mismatch_cnt"
+`, "md-check", devName)
+	suite.Require().Zero(code, "md check on %s failed: %s", devName, out)
+
+	lines := strings.Fields(out)
+	suite.Require().NotEmpty(lines, "md check on %s produced no output", devName)
+	suite.Require().Equal("0", lines[len(lines)-1], "MD array %q mirrors differ after recovery", name)
 }
 
 // mdArrayStatusIsUnmanaged reports whether the MDArrayStatus with the given ID is marked

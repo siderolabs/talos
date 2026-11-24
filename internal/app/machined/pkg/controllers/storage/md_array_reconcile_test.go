@@ -6,6 +6,7 @@ package storage_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"sort"
@@ -38,6 +39,10 @@ type fakeMDProvisioner struct {
 	details map[string]md.Detail
 	// syncAction maps md node -> current sync action (default idle).
 	syncAction map[string]md.SyncAction
+	// syncActionErr maps md node -> error returned when reading its sync action.
+	syncActionErr map[string]error
+	// inSync maps md node -> in-sync members (default: every Detail member).
+	inSync map[string][]string
 	// arrays is returned by ListArrays, simulating every MD device present on the box.
 	arrays []string
 
@@ -54,14 +59,16 @@ type fakeMDProvisioner struct {
 
 func newFakeMDProvisioner() *fakeMDProvisioner {
 	return &fakeMDProvisioner{
-		findByMember: map[string]string{},
-		details:      map[string]md.Detail{},
-		syncAction:   map[string]md.SyncAction{},
-		createNode:   "/dev/md0",
-		createNodes:  map[string]string{},
-		creates:      map[string]md.CreateOptions{},
-		adds:         map[string]map[string]struct{}{},
-		grows:        map[string]int{},
+		findByMember:  map[string]string{},
+		details:       map[string]md.Detail{},
+		syncAction:    map[string]md.SyncAction{},
+		syncActionErr: map[string]error{},
+		inSync:        map[string][]string{},
+		createNode:    "/dev/md0",
+		createNodes:   map[string]string{},
+		creates:       map[string]md.CreateOptions{},
+		adds:          map[string]map[string]struct{}{},
+		grows:         map[string]int{},
 	}
 }
 
@@ -174,11 +181,30 @@ func (f *fakeMDProvisioner) SyncActionForDevice(device string) (md.SyncAction, e
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
+	if err := f.syncActionErr[device]; err != nil {
+		return "", err
+	}
+
 	if a, ok := f.syncAction[device]; ok {
 		return a, nil
 	}
 
 	return md.SyncActionIdle, nil
+}
+
+func (f *fakeMDProvisioner) InSyncMembers(device string) ([]string, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	if members, ok := f.inSync[device]; ok {
+		return append([]string(nil), members...), nil
+	}
+
+	if d, ok := f.details[device]; ok {
+		return append([]string(nil), d.Members...), nil
+	}
+
+	return nil, md.ErrNotFound
 }
 
 //nolint:unparam
@@ -230,6 +256,8 @@ func (f *fakeMDProvisioner) reset() {
 	f.findByMember = map[string]string{}
 	f.details = map[string]md.Detail{}
 	f.syncAction = map[string]md.SyncAction{}
+	f.syncActionErr = map[string]error{}
+	f.inSync = map[string][]string{}
 	f.arrays = nil
 	f.createNode = "/dev/md0"
 	f.createErr = nil
@@ -404,6 +432,69 @@ func (suite *MDArrayReconcileSuite) TestReportsSyncActionAsRebuilding() {
 	ctest.AssertResource(suite, "data", func(status *storageres.MDArrayStatus, asrt *assert.Assertions) {
 		asrt.Equal(storageres.MDArrayPhaseRebuilding, status.TypedSpec().Status)
 		asrt.Equal(string(md.SyncActionRecover), status.TypedSpec().SyncAction)
+	})
+}
+
+func (suite *MDArrayReconcileSuite) seedIdleMirror() {
+	suite.md.with(func(f *fakeMDProvisioner) {
+		f.findByMember["/dev/nvme0n1"] = "/dev/md0"
+		f.findByMember["/dev/nvme1n1"] = "/dev/md0"
+		f.details["/dev/md0"] = md.Detail{
+			Level:       "raid1",
+			RaidDevices: 2,
+			Members:     []string{"/dev/nvme0n1", "/dev/nvme1n1"},
+		}
+	})
+
+	createDisk(&suite.DefaultSuite, "nvme0n1", "/dev/nvme0n1", "nvme")
+	createDisk(&suite.DefaultSuite, "nvme1n1", "/dev/nvme1n1", "nvme")
+}
+
+// A failed member that stays enumerated still matches the selector, and the
+// array is idle: only the member states reveal the lost redundancy.
+func (suite *MDArrayReconcileSuite) TestIdleArrayWithFailedMemberIsDegraded() {
+	suite.seedIdleMirror()
+	suite.md.with(func(f *fakeMDProvisioner) {
+		f.inSync["/dev/md0"] = []string{"/dev/nvme0n1"}
+	})
+
+	suite.createArraySpec("data", `disk.transport == "nvme"`)
+
+	ctest.AssertResource(suite, "data", func(status *storageres.MDArrayStatus, asrt *assert.Assertions) {
+		spec := status.TypedSpec()
+		asrt.Equal(storageres.MDArrayPhaseDegraded, spec.Status)
+		asrt.Equal(string(md.SyncActionIdle), spec.SyncAction)
+		asrt.Equal([]string{"/dev/nvme0n1", "/dev/nvme1n1"}, spec.Members)
+		asrt.Equal([]string{"/dev/nvme0n1"}, spec.InSyncMembers)
+		asrt.Empty(spec.Error)
+	})
+
+	suite.Assert().Empty(suite.md.added("/dev/md0"), "an attached member must not be re-added")
+
+	suite.md.with(func(f *fakeMDProvisioner) {
+		delete(f.inSync, "/dev/md0")
+	})
+	suite.Create(storageres.NewMDRefreshRequest(storageres.NamespaceName, storageres.RefreshID))
+
+	ctest.AssertResource(suite, "data", func(status *storageres.MDArrayStatus, asrt *assert.Assertions) {
+		asrt.Equal(storageres.MDArrayPhaseReady, status.TypedSpec().Status)
+		asrt.Equal([]string{"/dev/nvme0n1", "/dev/nvme1n1"}, status.TypedSpec().InSyncMembers)
+	})
+}
+
+func (suite *MDArrayReconcileSuite) TestFailedHealthReadIsUnknown() {
+	suite.seedIdleMirror()
+	suite.md.with(func(f *fakeMDProvisioner) {
+		f.syncActionErr["/dev/md0"] = errors.New("sysfs unavailable")
+	})
+
+	suite.createArraySpec("data", `disk.transport == "nvme"`)
+
+	ctest.AssertResource(suite, "data", func(status *storageres.MDArrayStatus, asrt *assert.Assertions) {
+		spec := status.TypedSpec()
+		asrt.Equal(storageres.MDArrayPhaseUnknown, spec.Status)
+		asrt.Contains(spec.Error, "read sync_action: sysfs unavailable")
+		asrt.Empty(spec.SyncAction)
 	})
 }
 

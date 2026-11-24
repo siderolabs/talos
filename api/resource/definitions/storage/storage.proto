@@ -269,7 +269,7 @@ message MDArrayStatusSpec {
   string device = 2;
   // Members is the list of member device paths.
   repeated string members = 3;
-  // Error is the last provisioning error, if any.
+  // Error is the last provisioning or health observation error, if any.
   string error = 4;
   // Status is the provisioning/sync state of the array.
   talos.resource.definitions.enums.StorageMDArrayPhase status = 5;
@@ -291,6 +291,10 @@ message MDArrayStatusSpec {
   // on disk (e.g. assembled by the kernel/udev before Talos ever wrote a
   // RAIDArrayConfig for them), and are never reconciled or self-healed.
   bool unmanaged = 12;
+  // InSyncMembers is the list of members carrying current array data.
+  //
+  // Members missing from it are faulty, spare, or still recovering.
+  repeated string in_sync_members = 13;
 }
 
 // MDRefreshRequestSpec is the spec for MDRefreshRequest.

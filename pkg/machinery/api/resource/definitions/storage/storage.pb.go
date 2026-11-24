@@ -1319,7 +1319,7 @@ type MDArrayStatusSpec struct {
 	Device string `protobuf:"bytes,2,opt,name=device,proto3" json:"device,omitempty"`
 	// Members is the list of member device paths.
 	Members []string `protobuf:"bytes,3,rep,name=members,proto3" json:"members,omitempty"`
-	// Error is the last provisioning error, if any.
+	// Error is the last provisioning or health observation error, if any.
 	Error string `protobuf:"bytes,4,opt,name=error,proto3" json:"error,omitempty"`
 	// Status is the provisioning/sync state of the array.
 	Status enums.StorageMDArrayPhase `protobuf:"varint,5,opt,name=status,proto3,enum=talos.resource.definitions.enums.StorageMDArrayPhase" json:"status,omitempty"`
@@ -1340,7 +1340,11 @@ type MDArrayStatusSpec struct {
 	// Unmanaged arrays are reported for visibility only: they are discovered
 	// on disk (e.g. assembled by the kernel/udev before Talos ever wrote a
 	// RAIDArrayConfig for them), and are never reconciled or self-healed.
-	Unmanaged     bool `protobuf:"varint,12,opt,name=unmanaged,proto3" json:"unmanaged,omitempty"`
+	Unmanaged bool `protobuf:"varint,12,opt,name=unmanaged,proto3" json:"unmanaged,omitempty"`
+	// InSyncMembers is the list of members carrying current array data.
+	//
+	// Members missing from it are faulty, spare, or still recovering.
+	InSyncMembers []string `protobuf:"bytes,13,rep,name=in_sync_members,json=inSyncMembers,proto3" json:"in_sync_members,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1457,6 +1461,13 @@ func (x *MDArrayStatusSpec) GetUnmanaged() bool {
 		return x.Unmanaged
 	}
 	return false
+}
+
+func (x *MDArrayStatusSpec) GetInSyncMembers() []string {
+	if x != nil {
+		return x.InSyncMembers
+	}
+	return nil
 }
 
 // MDRefreshRequestSpec is the spec for MDRefreshRequest.
@@ -2152,7 +2163,7 @@ const file_resource_definitions_storage_storage_proto_rawDesc = "" +
 	"\x0fMDArraySpecSpec\x12F\n" +
 	"\x05level\x18\x01 \x01(\x0e20.talos.resource.definitions.enums.StorageMDLevelR\x05level\x12N\n" +
 	"\x0fvolume_selector\x18\x02 \x01(\v2%.google.api.expr.v1alpha1.CheckedExprR\x0evolumeSelector\x12O\n" +
-	"\bmetadata\x18\x03 \x01(\x0e23.talos.resource.definitions.enums.StorageMDMetadataR\bmetadata\"\xb9\x03\n" +
+	"\bmetadata\x18\x03 \x01(\x0e23.talos.resource.definitions.enums.StorageMDMetadataR\bmetadata\"\xe1\x03\n" +
 	"\x11MDArrayStatusSpec\x12F\n" +
 	"\x05level\x18\x01 \x01(\x0e20.talos.resource.definitions.enums.StorageMDLevelR\x05level\x12\x16\n" +
 	"\x06device\x18\x02 \x01(\tR\x06device\x12\x18\n" +
@@ -2168,7 +2179,8 @@ const file_resource_definitions_storage_storage_proto_rawDesc = "" +
 	"arrayState\x12\x1f\n" +
 	"\vsync_action\x18\v \x01(\tR\n" +
 	"syncAction\x12\x1c\n" +
-	"\tunmanaged\x18\f \x01(\bR\tunmanaged\"0\n" +
+	"\tunmanaged\x18\f \x01(\bR\tunmanaged\x12&\n" +
+	"\x0fin_sync_members\x18\r \x03(\tR\rinSyncMembers\"0\n" +
 	"\x14MDRefreshRequestSpec\x12\x18\n" +
 	"\arequest\x18\x01 \x01(\x03R\arequest\"S\n" +
 	"\x13StoragePoolSpecSpec\x12\x1b\n" +

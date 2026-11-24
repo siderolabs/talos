@@ -4862,6 +4862,7 @@ const (
 	StorageMDArrayPhase_MD_ARRAY_PHASE_REBUILDING StorageMDArrayPhase = 2
 	StorageMDArrayPhase_MD_ARRAY_PHASE_READY      StorageMDArrayPhase = 3
 	StorageMDArrayPhase_MD_ARRAY_PHASE_ERROR      StorageMDArrayPhase = 4
+	StorageMDArrayPhase_MD_ARRAY_PHASE_DEGRADED   StorageMDArrayPhase = 5
 )
 
 // Enum value maps for StorageMDArrayPhase.
@@ -4872,6 +4873,7 @@ var (
 		2: "MD_ARRAY_PHASE_REBUILDING",
 		3: "MD_ARRAY_PHASE_READY",
 		4: "MD_ARRAY_PHASE_ERROR",
+		5: "MD_ARRAY_PHASE_DEGRADED",
 	}
 	StorageMDArrayPhase_value = map[string]int32{
 		"MD_ARRAY_PHASE_UNKNOWN":    0,
@@ -4879,6 +4881,7 @@ var (
 		"MD_ARRAY_PHASE_REBUILDING": 2,
 		"MD_ARRAY_PHASE_READY":      3,
 		"MD_ARRAY_PHASE_ERROR":      4,
+		"MD_ARRAY_PHASE_DEGRADED":   5,
 	}
 )
 
@@ -6755,13 +6758,14 @@ const file_resource_definitions_enums_enums_proto_rawDesc = "" +
 	"\x1eLVM_LOGICAL_VOLUME_TYPE_LINEAR\x10\x00\x12!\n" +
 	"\x1dLVM_LOGICAL_VOLUME_TYPE_RAID1\x10\x01\x12!\n" +
 	"\x1dLVM_LOGICAL_VOLUME_TYPE_RAID0\x10\x02\x12\"\n" +
-	"\x1eLVM_LOGICAL_VOLUME_TYPE_RAID10\x10\x03*\xa0\x01\n" +
+	"\x1eLVM_LOGICAL_VOLUME_TYPE_RAID10\x10\x03*\xbd\x01\n" +
 	"\x13StorageMDArrayPhase\x12\x1a\n" +
 	"\x16MD_ARRAY_PHASE_UNKNOWN\x10\x00\x12\x1a\n" +
 	"\x16MD_ARRAY_PHASE_WAITING\x10\x01\x12\x1d\n" +
 	"\x19MD_ARRAY_PHASE_REBUILDING\x10\x02\x12\x18\n" +
 	"\x14MD_ARRAY_PHASE_READY\x10\x03\x12\x18\n" +
-	"\x14MD_ARRAY_PHASE_ERROR\x10\x04*$\n" +
+	"\x14MD_ARRAY_PHASE_ERROR\x10\x04\x12\x1b\n" +
+	"\x17MD_ARRAY_PHASE_DEGRADED\x10\x05*$\n" +
 	"\x0eStorageMDLevel\x12\x12\n" +
 	"\x0eMD_LEVEL_RAID1\x10\x00*9\n" +
 	"\x11StorageMDMetadata\x12\x11\n" +

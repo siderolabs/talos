@@ -83,6 +83,10 @@ func (o MDArrayStatusSpec) DeepCopy() MDArrayStatusSpec {
 		cp.Members = make([]string, len(o.Members))
 		copy(cp.Members, o.Members)
 	}
+	if o.InSyncMembers != nil {
+		cp.InSyncMembers = make([]string, len(o.InSyncMembers))
+		copy(cp.InSyncMembers, o.InSyncMembers)
+	}
 	return cp
 }
 

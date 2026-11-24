@@ -266,11 +266,11 @@ func (i *MDMetadata) UnmarshalText(text []byte) error {
 	return err
 }
 
-const _MDArrayPhaseName = "unknownwaitingrebuildingreadyerror"
+const _MDArrayPhaseName = "unknownwaitingrebuildingreadyerrordegraded"
 
-var _MDArrayPhaseIndex = [...]uint8{0, 7, 14, 24, 29, 34}
+var _MDArrayPhaseIndex = [...]uint8{0, 7, 14, 24, 29, 34, 42}
 
-const _MDArrayPhaseLowerName = "unknownwaitingrebuildingreadyerror"
+const _MDArrayPhaseLowerName = "unknownwaitingrebuildingreadyerrordegraded"
 
 func (i MDArrayPhase) String() string {
 	if i < 0 || i >= MDArrayPhase(len(_MDArrayPhaseIndex)-1) {
@@ -288,9 +288,10 @@ func _MDArrayPhaseNoOp() {
 	_ = x[MDArrayPhaseRebuilding-(2)]
 	_ = x[MDArrayPhaseReady-(3)]
 	_ = x[MDArrayPhaseError-(4)]
+	_ = x[MDArrayPhaseDegraded-(5)]
 }
 
-var _MDArrayPhaseValues = []MDArrayPhase{MDArrayPhaseUnknown, MDArrayPhaseWaiting, MDArrayPhaseRebuilding, MDArrayPhaseReady, MDArrayPhaseError}
+var _MDArrayPhaseValues = []MDArrayPhase{MDArrayPhaseUnknown, MDArrayPhaseWaiting, MDArrayPhaseRebuilding, MDArrayPhaseReady, MDArrayPhaseError, MDArrayPhaseDegraded}
 
 var _MDArrayPhaseNameToValueMap = map[string]MDArrayPhase{
 	_MDArrayPhaseName[0:7]:   MDArrayPhaseUnknown,
@@ -298,6 +299,7 @@ var _MDArrayPhaseNameToValueMap = map[string]MDArrayPhase{
 	_MDArrayPhaseName[14:24]: MDArrayPhaseRebuilding,
 	_MDArrayPhaseName[24:29]: MDArrayPhaseReady,
 	_MDArrayPhaseName[29:34]: MDArrayPhaseError,
+	_MDArrayPhaseName[34:42]: MDArrayPhaseDegraded,
 }
 
 var _MDArrayPhaseLowerNameToValueMap = map[string]MDArrayPhase{
@@ -306,6 +308,7 @@ var _MDArrayPhaseLowerNameToValueMap = map[string]MDArrayPhase{
 	_MDArrayPhaseLowerName[14:24]: MDArrayPhaseRebuilding,
 	_MDArrayPhaseLowerName[24:29]: MDArrayPhaseReady,
 	_MDArrayPhaseLowerName[29:34]: MDArrayPhaseError,
+	_MDArrayPhaseLowerName[34:42]: MDArrayPhaseDegraded,
 }
 
 var _MDArrayPhaseNames = []string{
@@ -314,6 +317,7 @@ var _MDArrayPhaseNames = []string{
 	_MDArrayPhaseName[14:24],
 	_MDArrayPhaseName[24:29],
 	_MDArrayPhaseName[29:34],
+	_MDArrayPhaseName[34:42],
 }
 
 // MDArrayPhaseString retrieves an enum value from the enum constants string name.

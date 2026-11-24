@@ -7367,6 +7367,7 @@ StorageMDArrayPhase describes the provisioning/sync state of an MD array.
 | MD_ARRAY_PHASE_REBUILDING | 2 |  |
 | MD_ARRAY_PHASE_READY | 3 |  |
 | MD_ARRAY_PHASE_ERROR | 4 |  |
+| MD_ARRAY_PHASE_DEGRADED | 5 |  |
 
 
 
@@ -14673,7 +14674,7 @@ MDArrayStatusSpec is the spec for MDArrayStatus resource.
 | level | [talos.resource.definitions.enums.StorageMDLevel](#talos.resource.definitions.enums.StorageMDLevel) |  | Level is the RAID level. |
 | device | [string](#string) |  | Device is the stable by-id device path of the array. |
 | members | [string](#string) | repeated | Members is the list of member device paths. |
-| error | [string](#string) |  | Error is the last provisioning error, if any. |
+| error | [string](#string) |  | Error is the last provisioning or health observation error, if any. |
 | status | [talos.resource.definitions.enums.StorageMDArrayPhase](#talos.resource.definitions.enums.StorageMDArrayPhase) |  | Status is the provisioning/sync state of the array. |
 | raid_devices | [int64](#int64) |  | RaidDevices is the observed active RAID device count. |
 | uuid | [string](#string) |  | UUID is the stable MD array UUID. |
@@ -14682,6 +14683,7 @@ MDArrayStatusSpec is the spec for MDArrayStatus resource.
 | array_state | [string](#string) |  | ArrayState is the current sysfs array_state value. |
 | sync_action | [string](#string) |  | SyncAction is the current sysfs sync_action value. |
 | unmanaged | [bool](#bool) |  | Unmanaged is true when this array has no backing MDArraySpec.<br><br>Unmanaged arrays are reported for visibility only: they are discovered on disk (e.g. assembled by the kernel/udev before Talos ever wrote a RAIDArrayConfig for them), and are never reconciled or self-healed. |
+| in_sync_members | [string](#string) | repeated | InSyncMembers is the list of members carrying current array data.<br><br>Members missing from it are faulty, spare, or still recovering. |
 
 
 
