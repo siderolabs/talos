@@ -8,8 +8,10 @@ package hypervisor
 
 import (
 	"context"
+	"io"
 	"net"
 	"os"
+	"slices"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
@@ -18,6 +20,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/siderolabs/talos/internal/integration/base"
+	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	hypervisorcfg "github.com/siderolabs/talos/pkg/machinery/config/types/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
@@ -25,7 +28,9 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	"github.com/siderolabs/talos/pkg/machinery/resources/perf"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 // BootSuite boots a Talos ISO and talks to the guest.
@@ -52,6 +57,164 @@ const (
 // virtual machine was configured with, and answers its own Talos API describing the hardware it was
 // given.
 func (suite *BootSuite) TestBootsAndServesItsAPI() {
+	node, nodeCtx, doc, guestIP := suite.prepareTalosGuest()
+	name := doc.Name()
+
+	suite.T().Logf("waiting for the guest to take %s and serve its API", guestIP)
+
+	guest := suite.awaitGuestAPI(guestIP)
+	defer guest.Close() //nolint:errcheck
+
+	suite.assertGuestHardware(guest)
+
+	// Stop the guest first.
+	doc.PowerStateConfig = hypervisorhelpers.PowerStateStopped
+	suite.PatchMachineConfig(nodeCtx, doc)
+	suite.assertStoppedDomain(nodeCtx, node, name)
+
+	// Start it once more. The disk outlived the stop, so the guest boots the same image again and
+	// takes the same lease, which is what makes the removal below a removal of a live guest.
+	doc.PowerStateConfig = hypervisorhelpers.PowerStateRunning
+	suite.PatchMachineConfig(nodeCtx, doc)
+	suite.assertRunningTransientDomainWithDevices(node, name, guestCPUCount, 2, 1)
+
+	suite.T().Logf("waiting for the restarted guest to serve its API on %s", guestIP)
+
+	restarted := suite.awaitGuestAPI(guestIP)
+	defer restarted.Close() //nolint:errcheck
+
+	// Removing the document alone has to stop the running domain and take every resource derived
+	// from it with it: no explicit stop precedes this one.
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, hypervisorcfg.VirtualMachineConfigKind, name)
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](nodeCtx, suite.T(), suite.Client.State(), name)
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineStatus](nodeCtx, suite.T(), suite.Client.State(), name)
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDiskStatus](nodeCtx, suite.T(), suite.Client.State(),
+		diskStatusID(name, doc.DisksConfig[0]))
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDiskStatus](nodeCtx, suite.T(), suite.Client.State(),
+		diskStatusID(name, doc.DisksConfig[1]))
+
+	// No status is left to read once the document is gone; ask libvirt whether the domain outlived it.
+	suite.assertNoDomain(node, name)
+}
+
+// TestCopySurvivesSourceDeletionAndHostReboot requires a cold guest boot from the existing pool copy
+// after both the library alias and immutable object are gone.
+func (suite *BootSuite) TestCopySurvivesSourceDeletionAndHostReboot() {
+	if !suite.hostRebootSupported() {
+		suite.T().Skip("skipping as host reboots are only supported on qemu")
+	}
+
+	node, nodeCtx, doc, guestIP := suite.prepareTalosGuest()
+	name := doc.Name()
+	disk := doc.DisksConfig[0]
+	image := disk.ProvisionConfig.FromImageConfig
+
+	guestMAC := doc.NetworkingConfig.InterfacesConfig[0].HardwareAddressConfig
+	beforeBootID := suite.guestBootID(guestIP, guestMAC)
+
+	var copyPath string
+
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), diskStatusID(name, disk),
+		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
+			asrt.Equal(hypervisor.VirtualMachineDiskPhaseReady, status.TypedSpec().Phase, "error: %q", status.TypedSpec().Error)
+			asrt.True(status.TypedSpec().ReadOnly)
+			copyPath = status.TypedSpec().SourcePath
+			asrt.NotEmpty(copyPath)
+			asrt.NotContains(copyPath, "/objects/")
+		},
+	)
+
+	// Removing only the alias would leave the ISO object available for a fresh copy.
+	_, err := suite.Client.ContentLibraryService().Delete(nodeCtx, &machine.ContentLibraryServiceDeleteRequest{
+		LibraryId: image.ImageLibrary,
+		Target:    &machine.ContentLibraryServiceDeleteRequest_Name{Name: image.ImageFile},
+	})
+	suite.Require().NoError(err)
+
+	_, err = suite.Client.ContentLibraryService().Delete(nodeCtx, &machine.ContentLibraryServiceDeleteRequest{
+		LibraryId: image.ImageLibrary,
+		Target:    &machine.ContentLibraryServiceDeleteRequest_Sha256{Sha256: image.ImageDigest},
+	})
+	suite.Require().NoError(err)
+
+	assertSourceAbsent := func() {
+		suite.T().Helper()
+
+		stream, listErr := suite.Client.ContentLibraryService().List(nodeCtx, &machine.ContentLibraryServiceListRequest{
+			LibraryId: image.ImageLibrary,
+		})
+		suite.Require().NoError(listErr)
+
+		_, listErr = stream.Recv()
+		suite.Require().ErrorIs(listErr, io.EOF, "the dedicated library must contain no ISO objects")
+	}
+	assertSourceAbsent()
+
+	// This is a host reboot, not a VM reboot or daemon restart. No configuration
+	// is reapplied afterwards: recovery must adopt the on-disk copy on its own.
+	suite.AssertRebootedNoChecks(suite.ctx, node, func(ctx context.Context) error {
+		return base.IgnoreGRPCUnavailable(suite.Client.Reboot(ctx))
+	}, 5*time.Minute)
+	suite.WaitForBootDone(suite.ctx)
+	suite.AssertServicesRunning(suite.ctx, node, map[string]string{
+		"ext-virtqemud":    "Running",
+		"ext-virtstoraged": "Running",
+	})
+
+	assertSourceAbsent()
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), diskStatusID(name, disk),
+		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
+			asrt.Equal(hypervisor.VirtualMachineDiskPhaseReady, status.TypedSpec().Phase, "error: %q", status.TypedSpec().Error)
+			asrt.Equal(copyPath, status.TypedSpec().SourcePath, "recovery must reuse the existing pool copy")
+			asrt.True(status.TypedSpec().ReadOnly)
+		},
+	)
+	suite.assertRunningTransientDomainWithDevices(node, name, guestCPUCount, 2, 1)
+	suite.Require().Contains(suite.runVirsh(node, "domblklist", name, "--details"), copyPath)
+
+	// A fresh boot ID proves the guest booted again. A libvirt running state alone could also
+	// describe a QEMU process stuck at firmware or a boot error.
+	suite.Require().NotEqual(beforeBootID, suite.guestBootID(guestIP, guestMAC), "the guest must cold-boot after the host reboot")
+
+	// A graceful stop has no forced fallback, so the domain going away proves the guest obeyed the
+	// power button.
+	_, err = suite.Client.HypervisorService().Stop(nodeCtx, &machine.VirtualMachineStopRequest{Name: name})
+	suite.Require().NoError(err)
+	suite.assertStoppedDomain(nodeCtx, node, name)
+	suite.assertStopMode(nodeCtx, name, hypervisorhelpers.StopModeGraceful)
+}
+
+// guestBootID waits for the guest to serve its API and returns its kernel boot ID. The guest must
+// own mac: another machine answering on the address would also report a different boot ID.
+func (suite *LibvirtSuite) guestBootID(ip string, mac nethelpers.HardwareAddr) string {
+	suite.T().Helper()
+
+	guest := suite.awaitGuestAPI(ip)
+	defer guest.Close() //nolint:errcheck
+
+	ctx, cancel := context.WithTimeout(suite.ctx, time.Minute)
+	defer cancel()
+
+	links, err := safe.StateListAll[*network.LinkStatus](ctx, guest.State())
+	suite.Require().NoError(err)
+
+	_, owned := links.Find(func(link *network.LinkStatus) bool {
+		return slices.Equal(link.TypedSpec().HardwareAddr, mac)
+	})
+	suite.Require().True(owned, "the guest answering on %s must own %s", ip, net.HardwareAddr(mac))
+
+	bootID, err := safe.StateGetByID[*runtime.BootID](ctx, guest.State(), runtime.BootIDID)
+	suite.Require().NoError(err)
+	suite.Require().NotEmpty(bootID.TypedSpec().BootID)
+
+	return bootID.TypedSpec().BootID
+}
+
+// prepareTalosGuest boots the Talos ISO from a content library of its own on a random node, on the
+// address of a reserved DHCP lease, and returns the guest once its domain runs. It skips the test
+// unless the cluster can serve the guest that lease.
+func (suite *LibvirtSuite) prepareTalosGuest() (string, context.Context, *hypervisorcfg.VirtualMachineConfigV1Alpha1, string) {
+	suite.T().Helper()
 	suite.requireContentLibrarySupport()
 
 	if suite.HypervisorTalosISOPath == "" {
@@ -154,42 +317,7 @@ func (suite *BootSuite) TestBootsAndServesItsAPI() {
 
 	suite.assertRunningTransientDomainWithDevices(node, name, guestCPUCount, 2, 1)
 
-	guestIP := ourRecord.IP.Addr().String()
-	suite.T().Logf("waiting for the guest to take %s and serve its API", guestIP)
-
-	guest := suite.awaitGuestAPI(guestIP)
-	defer guest.Close() //nolint:errcheck
-
-	suite.assertGuestHardware(guest)
-
-	// Stop the guest first.
-	doc.PowerStateConfig = hypervisorhelpers.PowerStateStopped
-	suite.PatchMachineConfig(nodeCtx, doc)
-	suite.assertStoppedDomain(nodeCtx, node, name)
-
-	// Start it once more. The disk outlived the stop, so the guest boots the same image again and
-	// takes the same lease, which is what makes the removal below a removal of a live guest.
-	doc.PowerStateConfig = hypervisorhelpers.PowerStateRunning
-	suite.PatchMachineConfig(nodeCtx, doc)
-	suite.assertRunningTransientDomainWithDevices(node, name, guestCPUCount, 2, 1)
-
-	suite.T().Logf("waiting for the restarted guest to serve its API on %s", guestIP)
-
-	restarted := suite.awaitGuestAPI(guestIP)
-	defer restarted.Close() //nolint:errcheck
-
-	// Removing the document alone has to stop the running domain and take every resource derived
-	// from it with it: no explicit stop precedes this one.
-	suite.RemoveMachineConfigDocumentsByName(nodeCtx, hypervisorcfg.VirtualMachineConfigKind, name)
-	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](nodeCtx, suite.T(), suite.Client.State(), name)
-	rtestutils.AssertNoResource[*hypervisor.VirtualMachineStatus](nodeCtx, suite.T(), suite.Client.State(), name)
-	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDiskStatus](nodeCtx, suite.T(), suite.Client.State(),
-		diskStatusID(name, doc.DisksConfig[0]))
-	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDiskStatus](nodeCtx, suite.T(), suite.Client.State(),
-		diskStatusID(name, doc.DisksConfig[1]))
-
-	// No status is left to read once the document is gone; ask libvirt whether the domain outlived it.
-	suite.assertNoDomain(node, name)
+	return node, nodeCtx, doc, ourRecord.IP.Addr().String()
 }
 
 // awaitGuestAPI waits for the guest to answer its maintenance API, which it does only once it has

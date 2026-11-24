@@ -10,7 +10,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"slices"
 	"strconv"
 	"strings"
@@ -23,8 +22,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"libvirt.org/go/libvirtxml"
 
-	"github.com/siderolabs/talos/internal/integration/base"
-	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	configconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	hypervisorcfg "github.com/siderolabs/talos/pkg/machinery/config/types/hypervisor"
@@ -40,92 +37,6 @@ type AlpineSuite struct{ LibvirtSuite }
 
 // SuiteName implements base.NamedSuite.
 func (suite *AlpineSuite) SuiteName() string { return "hypervisor.AlpineSuite" }
-
-// TestAlpineCopySurvivesSourceDeletionAndHostReboot requires a cold guest boot from
-// the existing pool copy after both the library alias and immutable object are gone.
-func (suite *AlpineSuite) TestAlpineCopySurvivesSourceDeletionAndHostReboot() {
-	if !suite.hostRebootSupported() {
-		suite.T().Skip("skipping as host reboots are only supported on qemu")
-	}
-
-	node, nodeCtx := suite.requireAlpineGuestNode()
-	doc := suite.prepareAlpineGuestOnNode(node, nodeCtx, nil, 512<<20, "")
-	name := doc.Name()
-	disk := doc.DisksConfig[0]
-	image := disk.ProvisionConfig.FromImageConfig
-
-	console := suite.loginAlpineConsole(nodeCtx, name)
-	beforeBootID, beforeMarker := suite.alpineProfileBootIdentity(console)
-	suite.detachAlpineConsole(console)
-
-	var copyPath string
-
-	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), diskStatusID(name, disk),
-		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
-			asrt.Equal(hypervisor.VirtualMachineDiskPhaseReady, status.TypedSpec().Phase, "error: %q", status.TypedSpec().Error)
-			asrt.True(status.TypedSpec().ReadOnly)
-			copyPath = status.TypedSpec().SourcePath
-			asrt.NotEmpty(copyPath)
-			asrt.NotContains(copyPath, "/objects/")
-		},
-	)
-
-	// Removing only the alias would leave the ISO object available for a fresh copy.
-	_, err := suite.Client.ContentLibraryService().Delete(nodeCtx, &machine.ContentLibraryServiceDeleteRequest{
-		LibraryId: image.ImageLibrary,
-		Target:    &machine.ContentLibraryServiceDeleteRequest_Name{Name: image.ImageFile},
-	})
-	suite.Require().NoError(err)
-
-	_, err = suite.Client.ContentLibraryService().Delete(nodeCtx, &machine.ContentLibraryServiceDeleteRequest{
-		LibraryId: image.ImageLibrary,
-		Target:    &machine.ContentLibraryServiceDeleteRequest_Sha256{Sha256: image.ImageDigest},
-	})
-	suite.Require().NoError(err)
-
-	assertSourceAbsent := func() {
-		suite.T().Helper()
-
-		stream, listErr := suite.Client.ContentLibraryService().List(nodeCtx, &machine.ContentLibraryServiceListRequest{
-			LibraryId: image.ImageLibrary,
-		})
-		suite.Require().NoError(listErr)
-
-		_, listErr = stream.Recv()
-		suite.Require().ErrorIs(listErr, io.EOF, "the dedicated library must contain no ISO objects")
-	}
-	assertSourceAbsent()
-
-	// This is a host reboot, not a VM reboot or daemon restart. No configuration
-	// is reapplied afterwards: recovery must adopt the on-disk copy on its own.
-	suite.AssertRebootedNoChecks(suite.ctx, node, func(ctx context.Context) error {
-		return base.IgnoreGRPCUnavailable(suite.Client.Reboot(ctx))
-	}, 5*time.Minute)
-	suite.WaitForBootDone(suite.ctx)
-	suite.AssertServicesRunning(suite.ctx, node, map[string]string{
-		"ext-virtqemud":    "Running",
-		"ext-virtstoraged": "Running",
-	})
-
-	assertSourceAbsent()
-	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), diskStatusID(name, disk),
-		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
-			asrt.Equal(hypervisor.VirtualMachineDiskPhaseReady, status.TypedSpec().Phase, "error: %q", status.TypedSpec().Error)
-			asrt.Equal(copyPath, status.TypedSpec().SourcePath, "recovery must reuse the existing pool copy")
-			asrt.True(status.TypedSpec().ReadOnly)
-		},
-	)
-	suite.assertRunningTransientDomainWithDevices(node, name, 1, 1, 0)
-	suite.Require().Contains(suite.runVirsh(node, "domblklist", name, "--details"), copyPath)
-
-	// A fresh shell response proves the guest booted. A libvirt running state
-	// alone could also describe a QEMU process stuck at firmware or a boot error.
-	console = suite.loginAlpineConsole(nodeCtx, name)
-	afterBootID, afterMarker := suite.alpineProfileBootIdentity(console)
-	suite.detachAlpineConsole(console)
-	suite.Require().NotEqual(beforeBootID, afterBootID, "the guest must cold-boot after the host reboot")
-	suite.Require().NotEqual(beforeMarker, afterMarker, "the guest's old tmpfs must not survive the host reboot")
-}
 
 // TestAlpineBuiltinProfiles boots the stock ISO on each builtin guest ABI of the node architecture.
 // The selected profile is present before the VM is first created and started.
