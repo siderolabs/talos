@@ -45,6 +45,10 @@ func (resolver *NeighborResolver) ResolvePeers(
 	resolved := make([]Peer, 0, len(config.Neighbors))
 
 	for _, neighbor := range config.Neighbors {
+		if neighbor.Prefix.IsValid() {
+			continue
+		}
+
 		peer, ok := resolver.resolvePeer(neighbor, runtimeState, current, logger)
 		if !ok {
 			logger.Debug("unnumbered BGP peer not yet discovered, will retry", zap.String("link", neighbor.Link))

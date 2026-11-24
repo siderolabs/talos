@@ -84,6 +84,7 @@ message BGPNeighborConfigSpec {
   uint32 ebgp_multi_hop = 9;
   // GracefulRestart enables graceful restart helper mode when set.
   BGPGracefulRestartConfigSpec graceful_restart = 10;
+  common.NetIPPrefix prefix = 11;
 }
 
 // BGPPeerStatusSpec describes the status of a BGP peering session.

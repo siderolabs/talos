@@ -30,7 +30,7 @@ importRoutes:
         - 198.51.100.0/24
 # BGP neighbors in this routing instance.
 neighbors:
-    - link: enp1s0 # Link name or alias for an unnumbered (IPv6 link-local) session. Mutually exclusive with `address`.
+    - link: enp1s0 # Link name or alias for an unnumbered (IPv6 link-local) session. Mutually exclusive with `address` and `prefix`.
       peerASN: 65000 # Expected peer ASN. Zero accepts any ASN advertised by the peer (eBGP "external").
       holdTime: 9s # BGP hold time for this neighbor. Zero uses the implementation default.
       # BFD (Bidirectional Forwarding Detection) settings for this neighbor.
@@ -38,7 +38,7 @@ neighbors:
         transmitInterval: 300ms # Desired minimum transmit interval. Zero uses the implementation default.
         receiveInterval: 300ms # Required minimum receive interval. Zero uses the implementation default.
         detectMultiplier: 3 # BFD detection multiplier. Zero uses the implementation default.
-    - link: enp2s0 # Link name or alias for an unnumbered (IPv6 link-local) session. Mutually exclusive with `address`.
+    - link: enp2s0 # Link name or alias for an unnumbered (IPv6 link-local) session. Mutually exclusive with `address` and `prefix`.
       peerASN: 65000 # Expected peer ASN. Zero accepts any ASN advertised by the peer (eBGP "external").
       holdTime: 9s # BGP hold time for this neighbor. Zero uses the implementation default.
       # BFD (Bidirectional Forwarding Detection) settings for this neighbor.
@@ -102,18 +102,19 @@ BGPImportRoute selects routes learned by another BGP instance for one-way import
 
 ## neighbors[] {#BGPInstanceConfig.neighbors.}
 
-BGPNeighborConfig configures a concrete BGP neighbor.
+BGPNeighborConfig configures a BGP neighbor, or a range of dynamic neighbors.
 
 
 
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`address` |Addr |Neighbor IP address for a numbered session. Mutually exclusive with `link`.  | |
-|`link` |string |Link name or alias for an unnumbered (IPv6 link-local) session. Mutually exclusive with `address`.  | |
+|`address` |Addr |Neighbor IP address for a numbered session. Mutually exclusive with `link` and `prefix`.  | |
+|`link` |string |Link name or alias for an unnumbered (IPv6 link-local) session. Mutually exclusive with `address` and `prefix`.  | |
+|`prefix` |Prefix |Accept BGP sessions from any peer whose address is within this prefix (dynamic neighbors).<br>Mutually exclusive with `address` and `link`.<br>Dynamic neighbors are always passive: Talos never initiates the session.<br>A neighbor configured with `address` takes precedence over a matching `prefix`.<br>If the `prefix` neighbor has an `authPassword`, a neighbor configured with an `address` within it must have one too.<br>Prefixes of one BGP instance must not overlap.<br>Changing the settings of a `prefix` neighbor resets all sessions accepted through it.  | |
 |`peerASN` |uint32 |Expected peer ASN. Zero accepts any ASN advertised by the peer (eBGP "external").  | |
 |`localASN` |uint32 |Local ASN override for this neighbor. Zero uses the instance local ASN.  | |
-|`passive` |bool |Wait for the neighbor to establish the connection instead of initiating it.  | |
+|`passive` |bool |Wait for the neighbor to establish the connection instead of initiating it.<br>Always enabled for `prefix` neighbors.  | |
 |`holdTime` |Duration |BGP hold time for this neighbor. Zero uses the implementation default.<br>The hold time is negotiated when the session is established: a change applies to the next session.  | |
 |`bfd` |<a href="#BGPInstanceConfig.neighbors..bfd">BGPBFDConfig</a> |BFD (Bidirectional Forwarding Detection) settings for this neighbor.<br>The presence of this block enables BFD; an empty block uses the implementation defaults.<br>BFD is supported only when the BGP instance uses the default routing domain, not a VRF.  | |
 |`authPassword` |string |Password for TCP MD5 signature authentication (RFC 2385) of the BGP session.<br>The same password must be configured on the neighbor. Supported for VRF-bound BGP instances as well.<br>The password must not exceed 80 bytes. If unset, the session is not authenticated.<br>The kernel matches the password by peer address (and VRF, if any), so unnumbered neighbors<br>sharing the same link-local address on different links must all use the same password (or none).  | |

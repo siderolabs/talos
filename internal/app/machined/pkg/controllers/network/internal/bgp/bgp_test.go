@@ -256,6 +256,51 @@ func TestSessionState(t *testing.T) {
 	}
 }
 
+func TestBuildPeerGroup(t *testing.T) {
+	t.Parallel()
+
+	neighbor := network.BGPNeighborConfigSpec{
+		Prefix:          netip.MustParsePrefix("192.0.2.0/24"),
+		PeerASN:         65002,
+		LocalASN:        65010,
+		HoldTime:        9 * time.Second,
+		AuthPassword:    "secret",
+		EBGPMultiHop:    3,
+		BFD:             &network.BGPBFDConfigSpec{TransmitInterval: 300 * time.Millisecond, DetectMultiplier: 3},
+		GracefulRestart: &network.BGPGracefulRestartConfigSpec{Notification: true},
+	}
+
+	group := internalbgp.BuildPeerGroup(neighbor, "vrf-blue", true)
+
+	assert.Equal(t, "dynamic/192.0.2.0/24", group.GetConf().GetPeerGroupName())
+	assert.Equal(t, uint32(65002), group.GetConf().GetPeerAsn())
+	assert.Equal(t, uint32(65010), group.GetConf().GetLocalAsn())
+	assert.Equal(t, "secret", group.GetConf().GetAuthPassword())
+	assert.True(t, group.GetTransport().GetPassiveMode())
+	assert.Equal(t, "vrf-blue", group.GetTransport().GetBindInterface())
+	assert.Equal(t, uint64(9), group.GetTimers().GetConfig().GetHoldTime())
+	assert.Equal(t, uint32(3), group.GetEbgpMultihop().GetMultihopTtl())
+	assert.True(t, group.GetBfd().GetEnabled())
+	assert.True(t, group.GetBfd().GetMultihop())
+	assert.True(t, group.GetGracefulRestart().GetEnabled())
+	assert.True(t, group.GetGracefulRestart().GetHelperOnly())
+	assert.True(t, group.GetGracefulRestart().GetNotificationEnabled())
+	require.Len(t, group.GetAfiSafis(), 2)
+	assert.True(t, group.GetAfiSafis()[0].GetUseMultiplePaths().GetConfig().GetEnabled())
+}
+
+func TestPeerStatusDynamicNeighbor(t *testing.T) {
+	t.Parallel()
+
+	status := internalbgp.PeerStatus(&gobgpapi.Peer{
+		Conf:  &gobgpapi.PeerConf{PeerGroup: "dynamic/192.0.2.0/24"},
+		State: &gobgpapi.PeerState{NeighborAddress: "192.0.2.7", PeerAsn: 65002},
+	}, 65001)
+
+	assert.Equal(t, "192.0.2.7", status.Peer)
+	assert.Equal(t, uint32(65002), status.PeerASN)
+}
+
 func TestPeerStatus(t *testing.T) {
 	t.Parallel()
 

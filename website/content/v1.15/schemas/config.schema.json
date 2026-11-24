@@ -5716,16 +5716,24 @@
         "address": {
           "type": "string",
           "title": "address",
-          "description": "Neighbor IP address for a numbered session. Mutually exclusive with link.\n",
-          "markdownDescription": "Neighbor IP address for a numbered session. Mutually exclusive with `link`.",
-          "x-intellij-html-description": "\u003cp\u003eNeighbor IP address for a numbered session. Mutually exclusive with \u003ccode\u003elink\u003c/code\u003e.\u003c/p\u003e\n"
+          "description": "Neighbor IP address for a numbered session. Mutually exclusive with link and prefix.\n",
+          "markdownDescription": "Neighbor IP address for a numbered session. Mutually exclusive with `link` and `prefix`.",
+          "x-intellij-html-description": "\u003cp\u003eNeighbor IP address for a numbered session. Mutually exclusive with \u003ccode\u003elink\u003c/code\u003e and \u003ccode\u003eprefix\u003c/code\u003e.\u003c/p\u003e\n"
         },
         "link": {
           "type": "string",
           "title": "link",
-          "description": "Link name or alias for an unnumbered (IPv6 link-local) session. Mutually exclusive with address.\n",
-          "markdownDescription": "Link name or alias for an unnumbered (IPv6 link-local) session. Mutually exclusive with `address`.",
-          "x-intellij-html-description": "\u003cp\u003eLink name or alias for an unnumbered (IPv6 link-local) session. Mutually exclusive with \u003ccode\u003eaddress\u003c/code\u003e.\u003c/p\u003e\n"
+          "description": "Link name or alias for an unnumbered (IPv6 link-local) session. Mutually exclusive with address and prefix.\n",
+          "markdownDescription": "Link name or alias for an unnumbered (IPv6 link-local) session. Mutually exclusive with `address` and `prefix`.",
+          "x-intellij-html-description": "\u003cp\u003eLink name or alias for an unnumbered (IPv6 link-local) session. Mutually exclusive with \u003ccode\u003eaddress\u003c/code\u003e and \u003ccode\u003eprefix\u003c/code\u003e.\u003c/p\u003e\n"
+        },
+        "prefix": {
+          "type": "string",
+          "pattern": "^[0-9a-f.:]+/\\d{1,3}$",
+          "title": "prefix",
+          "description": "Accept BGP sessions from any peer whose address is within this prefix (dynamic neighbors).\nMutually exclusive with address and link.\nDynamic neighbors are always passive: Talos never initiates the session.\nA neighbor configured with address takes precedence over a matching prefix.\nIf the prefix neighbor has an authPassword, a neighbor configured with an address within it must have one too.\nPrefixes of one BGP instance must not overlap.\nChanging the settings of a prefix neighbor resets all sessions accepted through it.\n",
+          "markdownDescription": "Accept BGP sessions from any peer whose address is within this prefix (dynamic neighbors).\nMutually exclusive with `address` and `link`.\nDynamic neighbors are always passive: Talos never initiates the session.\nA neighbor configured with `address` takes precedence over a matching `prefix`.\nIf the `prefix` neighbor has an `authPassword`, a neighbor configured with an `address` within it must have one too.\nPrefixes of one BGP instance must not overlap.\nChanging the settings of a `prefix` neighbor resets all sessions accepted through it.",
+          "x-intellij-html-description": "\u003cp\u003eAccept BGP sessions from any peer whose address is within this prefix (dynamic neighbors).\nMutually exclusive with \u003ccode\u003eaddress\u003c/code\u003e and \u003ccode\u003elink\u003c/code\u003e.\nDynamic neighbors are always passive: Talos never initiates the session.\nA neighbor configured with \u003ccode\u003eaddress\u003c/code\u003e takes precedence over a matching \u003ccode\u003eprefix\u003c/code\u003e.\nIf the \u003ccode\u003eprefix\u003c/code\u003e neighbor has an \u003ccode\u003eauthPassword\u003c/code\u003e, a neighbor configured with an \u003ccode\u003eaddress\u003c/code\u003e within it must have one too.\nPrefixes of one BGP instance must not overlap.\nChanging the settings of a \u003ccode\u003eprefix\u003c/code\u003e neighbor resets all sessions accepted through it.\u003c/p\u003e\n"
         },
         "peerASN": {
           "type": "integer",
@@ -5744,9 +5752,9 @@
         "passive": {
           "type": "boolean",
           "title": "passive",
-          "description": "Wait for the neighbor to establish the connection instead of initiating it.\n",
-          "markdownDescription": "Wait for the neighbor to establish the connection instead of initiating it.",
-          "x-intellij-html-description": "\u003cp\u003eWait for the neighbor to establish the connection instead of initiating it.\u003c/p\u003e\n"
+          "description": "Wait for the neighbor to establish the connection instead of initiating it.\nAlways enabled for prefix neighbors.\n",
+          "markdownDescription": "Wait for the neighbor to establish the connection instead of initiating it.\nAlways enabled for `prefix` neighbors.",
+          "x-intellij-html-description": "\u003cp\u003eWait for the neighbor to establish the connection instead of initiating it.\nAlways enabled for \u003ccode\u003eprefix\u003c/code\u003e neighbors.\u003c/p\u003e\n"
         },
         "holdTime": {
           "type": "string",
@@ -5787,7 +5795,7 @@
       },
       "additionalProperties": false,
       "type": "object",
-      "description": "BGPNeighborConfig configures a concrete BGP neighbor."
+      "description": "BGPNeighborConfig configures a BGP neighbor, or a range of dynamic neighbors."
     },
     "network.BlackholeRouteConfigV1Alpha1": {
       "properties": {
