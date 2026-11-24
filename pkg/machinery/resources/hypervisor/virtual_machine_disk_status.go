@@ -81,6 +81,9 @@ func VirtualMachineDiskStatusID(virtualMachine string, disk VirtualMachineDiskSp
 	var parts []string
 
 	switch {
+	case disk.IsEmptyDrive():
+		// Distinct from a blank disk's ID, so the status is replaced, not rewritten.
+		parts = []string{"drive=empty"}
 	case disk.Provision.Blank:
 		// Pool and format are in, because each changes the file the domain is pointed at -- and
 		// format changes its driver type too -- so a running domain must be re-rendered onto a new
@@ -113,7 +116,12 @@ func VirtualMachineDiskStatusID(virtualMachine string, disk VirtualMachineDiskSp
 
 	sum := sha256.Sum256([]byte(strings.Join(parts, "\x00")))
 
-	return virtualMachine + "/" + disk.Name + "@" + hex.EncodeToString(sum[:])[:diskStatusIDDigestLength]
+	return VirtualMachineDiskStatusIDPrefix(virtualMachine, disk.Name) + hex.EncodeToString(sum[:])[:diskStatusIDDigestLength]
+}
+
+// VirtualMachineDiskStatusIDPrefix is the part of a VirtualMachineDiskStatusID shared by all IDs of one disk.
+func VirtualMachineDiskStatusIDPrefix(virtualMachine, disk string) string {
+	return virtualMachine + "/" + disk + "@"
 }
 
 // NewVirtualMachineDiskStatus initializes a VirtualMachineDiskStatus resource.

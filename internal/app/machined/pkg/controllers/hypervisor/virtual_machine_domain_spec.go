@@ -301,19 +301,37 @@ func outageDisksMatchDomain(ctx context.Context, r controller.Reader, vm *hyperv
 		}
 
 		status, exists := disks[id]
-		if !retainedDiskMatchesVM(vm.Metadata().ID(), disk, status, exists, definition.Devices.Disks[i]) {
-			return false, false, nil
+
+		diskUnavailable, diskValid, diskErr := outageDiskMatchesDomain(ctx, r, vm.Metadata().ID(), disk, status, exists, definition.Devices.Disks[i])
+		if diskErr != nil || !diskValid {
+			return false, false, diskErr
 		}
 
-		poolValid, poolErr := outageDiskBackingCurrent(ctx, r, disk, status)
-		if poolErr != nil || !poolValid {
-			return false, false, poolErr
-		}
-
-		unavailable = unavailable || status.Phase == hypervisor.VirtualMachineDiskPhaseObservationUnavailable
+		unavailable = unavailable || diskUnavailable
 	}
 
 	return unavailable, true, nil
+}
+
+// outageDiskMatchesDomain checks one attached disk of a definition retained through an outage.
+func outageDiskMatchesDomain(ctx context.Context, r controller.Reader, name string, disk hypervisor.VirtualMachineDiskSpec,
+	status hypervisor.VirtualMachineDiskStatusSpec, exists bool, attached libvirtxml.DomainDisk,
+) (unavailable, valid bool, err error) {
+	if !retainedDiskMatchesVM(name, disk, status, exists, attached) {
+		return false, false, nil
+	}
+
+	if disk.IsEmptyDrive() {
+		// An empty drive has nothing an outage can invalidate.
+		return false, status.Phase == hypervisor.VirtualMachineDiskPhaseReady, nil
+	}
+
+	valid, err = outageDiskBackingCurrent(ctx, r, disk, status)
+	if err != nil || !valid {
+		return false, false, err
+	}
+
+	return status.Phase == hypervisor.VirtualMachineDiskPhaseObservationUnavailable, true, nil
 }
 
 func retainedDiskCountMatches(definition libvirtxml.Domain, count int) bool {
@@ -326,11 +344,21 @@ func retainedDiskMatchesVM(name string, disk hypervisor.VirtualMachineDiskSpec,
 	return exists && status.VirtualMachine == name && status.Name == disk.Name && retainedDiskAttached(attached, disk, status)
 }
 
+// retainedDiskAttached reports whether an attached drive is the one a disk and its status resolve to.
 func retainedDiskAttached(attached libvirtxml.DomainDisk, disk hypervisor.VirtualMachineDiskSpec, status hypervisor.VirtualMachineDiskStatusSpec) bool {
-	return attached.Source != nil && attached.Source.File != nil && status.SourcePath != "" &&
-		attached.Source.File.File == status.SourcePath && attached.Driver != nil && attached.Driver.Type == status.Format &&
+	return (status.SourcePath != "" || disk.IsEmptyDrive()) &&
+		attachedSourcePath(attached) == status.SourcePath && attached.Driver != nil && attached.Driver.Type == status.Format &&
 		attached.Device == disk.Type && attached.Target != nil && attached.Target.Bus == disk.Bus &&
 		(attached.ReadOnly != nil) == status.ReadOnly
+}
+
+// attachedSourcePath is the host file an attached drive reads, empty when it has none.
+func attachedSourcePath(attached libvirtxml.DomainDisk) string {
+	if attached.Source == nil || attached.Source.File == nil {
+		return ""
+	}
+
+	return attached.Source.File.File
 }
 
 func outageDiskBackingCurrent(ctx context.Context, r controller.Reader, disk hypervisor.VirtualMachineDiskSpec,

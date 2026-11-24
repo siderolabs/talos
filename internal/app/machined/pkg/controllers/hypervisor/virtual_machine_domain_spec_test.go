@@ -1696,6 +1696,71 @@ func (suite *VirtualMachineSpecSuite) TestRendersCDROMFromContentLibrary() {
 	suite.Require().NoError(validateDomainXML([]byte(res.TypedSpec().DomainXML)))
 }
 
+// An empty cdrom renders as the loaded drive without its source.
+func (suite *VirtualMachineSpecSuite) TestRendersAnEmptyCDROM() {
+	doc := newVirtualMachine("booted")
+	doc.DisksConfig = []hypervisorcfg.VirtualMachineDisk{
+		{
+			DiskName:      "install",
+			DiskPool:      "pool1",
+			DiskType:      hypervisorhelpers.VirtualMachineDiskTypeCDROM,
+			DiskBootOrder: 1,
+			ProvisionConfig: hypervisorcfg.VirtualMachineDiskProvision{
+				BlankConfig: &hypervisorcfg.VirtualMachineDiskBlank{},
+			},
+		},
+	}
+
+	cfg, err := container.New(doc)
+	suite.Require().NoError(err)
+	suite.Create(config.NewMachineConfig(cfg))
+
+	want, err := os.ReadFile(filepath.Join("testdata", "virtualmachinespec", "cdrom-empty.xml"))
+	suite.Require().NoError(err)
+
+	ctest.AssertResource(suite, doc.Name(), func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.Equal(string(want), res.TypedSpec().DomainXML+"\n")
+	})
+
+	res, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](suite.Ctx(), suite.State(), doc.Name())
+	suite.Require().NoError(err)
+	suite.Require().NoError(validateDomainXML([]byte(res.TypedSpec().DomainXML)))
+
+	loaded, err := os.ReadFile(filepath.Join("testdata", "virtualmachinespec", "cdrom.xml"))
+	suite.Require().NoError(err)
+
+	suite.Equal(string(want), strings.NewReplacer(
+		` type="file"`, "",
+		"      <source file=\"/storage-pool/install.iso\"></source>\n", "",
+	).Replace(string(loaded)))
+}
+
+// An empty drive renders the same with or without a pool.
+func (suite *VirtualMachineSpecSuite) TestRendersAnEmptyCDROMWithoutPool() {
+	doc := newVirtualMachine("booted")
+	doc.DisksConfig = []hypervisorcfg.VirtualMachineDisk{
+		{
+			DiskName:      "install",
+			DiskType:      hypervisorhelpers.VirtualMachineDiskTypeCDROM,
+			DiskBootOrder: 1,
+			ProvisionConfig: hypervisorcfg.VirtualMachineDiskProvision{
+				BlankConfig: &hypervisorcfg.VirtualMachineDiskBlank{},
+			},
+		},
+	}
+
+	cfg, err := container.New(doc)
+	suite.Require().NoError(err)
+	suite.Create(config.NewMachineConfig(cfg))
+
+	want, err := os.ReadFile(filepath.Join("testdata", "virtualmachinespec", "cdrom-empty.xml"))
+	suite.Require().NoError(err)
+
+	ctest.AssertResource(suite, doc.Name(), func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.Equal(string(want), res.TypedSpec().DomainXML+"\n")
+	})
+}
+
 // Two cdroms on the same driver must not both claim sda.
 func (suite *VirtualMachineSpecSuite) TestAllocatesDistinctTargetDevices() {
 	path := suite.T().TempDir()
@@ -1853,11 +1918,12 @@ type copiedOutageFixture struct {
 	xml     string
 }
 
-func completedCDROM(suite *ctest.DefaultSuite, name string) copiedOutageFixture {
-	return completedCopy(suite, name, false)
+// completedCDROM runs a VM with a ready copied cdrom, followed by any empty drives.
+func completedCDROM(suite *ctest.DefaultSuite, name string, emptyDrives ...hypervisor.VirtualMachineDiskSpec) copiedOutageFixture {
+	return completedCopy(suite, name, false, emptyDrives...)
 }
 
-func completedCopy(suite *ctest.DefaultSuite, name string, writable bool) copiedOutageFixture {
+func completedCopy(suite *ctest.DefaultSuite, name string, writable bool, emptyDrives ...hypervisor.VirtualMachineDiskSpec) copiedOutageFixture {
 	disk := cdromDiskSpec("install", libraryName, "talos.iso", "")
 
 	disk.Pool = name + "-pool"
@@ -1922,13 +1988,25 @@ func completedCopy(suite *ctest.DefaultSuite, name string, writable bool) copied
 	}
 	suite.Create(status)
 
+	for _, empty := range emptyDrives {
+		emptyStatus := hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, hypervisor.VirtualMachineDiskStatusID(name, empty))
+		*emptyStatus.TypedSpec() = hypervisor.VirtualMachineDiskStatusSpec{
+			VirtualMachine: name,
+			Name:           empty.Name,
+			Format:         "raw",
+			ReadOnly:       true,
+			Phase:          hypervisor.VirtualMachineDiskPhaseReady,
+		}
+		suite.Create(emptyStatus)
+	}
+
 	vm := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, name)
 	*vm.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
 		CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
 		Memory:     hypervisor.VirtualMachineMemorySpec{Size: 512 << 20},
 		PowerState: "running",
 		Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "bios"},
-		Disks:      []hypervisor.VirtualMachineDiskSpec{disk},
+		Disks:      append([]hypervisor.VirtualMachineDiskSpec{disk}, emptyDrives...),
 	}
 	suite.Create(vm)
 	ctest.AssertResource(suite, name, func(domain *hypervisor.VirtualMachineDomainSpec, a *assert.Assertions) {
@@ -1952,6 +2030,19 @@ func loseCopyObservation(suite *ctest.DefaultSuite, f copiedOutageFixture) {
 
 		return nil
 	})
+}
+
+// An empty drive does not break retention through a storage outage.
+func (suite *VirtualMachineStaleDiskSuite) TestObservationOutageWithAnEmptyDrive() {
+	f := completedCDROM(&suite.DefaultSuite, "with-empty", blankCDROMDiskSpec("spare"))
+	loseCopyObservation(&suite.DefaultSuite, f)
+	ctx, st := suite.Ctx(), suite.State()
+	changed := func() bool {
+		domain, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](ctx, st, "with-empty")
+
+		return err != nil || domain.TypedSpec().PowerState != "running" || domain.TypedSpec().DomainXML != f.xml
+	}
+	suite.Require().Never(changed, 300*time.Millisecond, 10*time.Millisecond)
 }
 
 func (suite *VirtualMachineStaleDiskSuite) TestCompletedCDROMObservationOutage() {
