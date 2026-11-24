@@ -413,16 +413,17 @@ func stampDiskStatus(
 		status.Image = *image
 	}
 
-	if disk.Provision.Blank || disk.Provision.FromImage != nil {
-		status.Pool = disk.Pool
-		if disk.Provision.Blank {
-			status.Blank = true
-		}
+	volume := disk.ProvisionsVolume()
 
-		if disk.Provision.Blank {
-			if volumeName, err := blankVolumeName(name, disk); err == nil {
-				status.Volume = volumeName
-			}
+	if volume || disk.Provision.FromImage != nil {
+		status.Pool = disk.Pool
+	}
+
+	if volume {
+		status.Blank = true
+
+		if volumeName, err := blankVolumeName(name, disk); err == nil {
+			status.Volume = volumeName
 		}
 	}
 
@@ -490,7 +491,12 @@ func (ctrl *Reconciler) progressDisk(
 		}, err
 	}
 
-	if disk.Provision.Blank {
+	// An empty drive has no source, library or volume to look up.
+	if disk.IsEmptyDrive() {
+		return ObserveEmptyDrive(), nil
+	}
+
+	if disk.ProvisionsVolume() {
 		request, err := ctrl.requestBlankVolume(ctx, r, name, disk, pass)
 		if err != nil {
 			return hypervisor.VirtualMachineDiskStatusSpec{
@@ -1044,12 +1050,9 @@ func bindImageCopySource(ctx context.Context, r controller.ReaderWriter,
 	})
 }
 
-// CheckSupported reports whether a disk is one this slice provisions at all, as
-// opposed to one that is merely not resolved yet. Kept apart so the status and the render grade it alike.
+// CheckSupported reports whether a disk can be provisioned at all, as opposed to not resolved yet.
 //
-// Machine configuration validation already rejects most of this. It is checked again because
-// VirtualMachineSpec is a shared output: another producer may author one, and nothing binds it to
-// the rules a machine configuration document is held to.
+// It repeats config validation, because a VirtualMachineSpec may come from another producer.
 func CheckSupported(disk hypervisor.VirtualMachineDiskSpec) error {
 	if disk.Provision.Blank && disk.Provision.FromImage != nil {
 		return fmt.Errorf("%w: provision: blank and fromImage are mutually exclusive", ErrDiskUnsupported)
@@ -1057,6 +1060,10 @@ func CheckSupported(disk hypervisor.VirtualMachineDiskSpec) error {
 
 	switch disk.Type {
 	case hypervisorhelpers.VirtualMachineDiskTypeCDROM.String():
+		if disk.IsEmptyDrive() {
+			return nil
+		}
+
 		return checkCDROMDiskSupported(disk)
 	case hypervisorhelpers.VirtualMachineDiskTypeDisk.String():
 		if !disk.Provision.Blank && disk.Provision.FromImage == nil {
@@ -1167,8 +1174,8 @@ func writableImageNeedsSource(ctx context.Context, r controller.Reader, request 
 }
 
 func checkCDROMDiskSupported(disk hypervisor.VirtualMachineDiskSpec) error {
-	if disk.Provision.FromImage == nil || disk.Provision.Blank {
-		return fmt.Errorf("%w: a cdrom requires provision.fromImage", ErrDiskUnsupported)
+	if disk.Provision.FromImage == nil {
+		return fmt.Errorf("%w: a cdrom requires provision.fromImage or provision.blank", ErrDiskUnsupported)
 	}
 
 	if err := storagehelpers.ValidateStoragePoolName(disk.Pool); err != nil {

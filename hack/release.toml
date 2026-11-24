@@ -318,6 +318,9 @@ Four behaviours are worth knowing before you rely on this:
 
 Provisioning a disk from a content library image is not implemented yet; `provision.fromImage` is
 still only supported on a `cdrom`.
+
+On a `cdrom`, `provision.blank` gives an empty drive with no volume and no `pool`; switching between an
+empty and a loaded drive restarts the virtual machine.
 """
 
     [notes.vm_power_state]

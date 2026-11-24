@@ -115,6 +115,8 @@ func (suite *BootSuite) TestBootsAndServesItsAPI() {
 				},
 			},
 		},
+		// An empty drive beside the ISO takes the next target and must not get in the boot's way.
+		emptyCDROMDisk("spare"),
 	}
 	doc.NetworkingConfig.InterfacesConfig = []hypervisorcfg.VirtualMachineInterface{
 		{
@@ -136,7 +138,8 @@ func (suite *BootSuite) TestBootsAndServesItsAPI() {
 
 	suite.PatchMachineConfig(nodeCtx, doc)
 
-	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.State(), []string{diskStatusID(name, doc.DisksConfig[0])},
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.State(),
+		[]string{diskStatusID(name, doc.DisksConfig[0]), diskStatusID(name, doc.DisksConfig[1])},
 		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
 			asrt.True(status.TypedSpec().Phase == hypervisor.VirtualMachineDiskPhaseReady, "error: %q", status.TypedSpec().Error)
 		},
@@ -149,7 +152,7 @@ func (suite *BootSuite) TestBootsAndServesItsAPI() {
 		},
 	)
 
-	suite.assertRunningTransientDomainWithDevices(node, name, guestCPUCount, 1, 1)
+	suite.assertRunningTransientDomainWithDevices(node, name, guestCPUCount, 2, 1)
 
 	guestIP := ourRecord.IP.Addr().String()
 	suite.T().Logf("waiting for the guest to take %s and serve its API", guestIP)
@@ -168,7 +171,7 @@ func (suite *BootSuite) TestBootsAndServesItsAPI() {
 	// takes the same lease, which is what makes the removal below a removal of a live guest.
 	doc.PowerStateConfig = hypervisorhelpers.PowerStateRunning
 	suite.PatchMachineConfig(nodeCtx, doc)
-	suite.assertRunningTransientDomainWithDevices(node, name, guestCPUCount, 1, 1)
+	suite.assertRunningTransientDomainWithDevices(node, name, guestCPUCount, 2, 1)
 
 	suite.T().Logf("waiting for the restarted guest to serve its API on %s", guestIP)
 
@@ -182,6 +185,8 @@ func (suite *BootSuite) TestBootsAndServesItsAPI() {
 	rtestutils.AssertNoResource[*hypervisor.VirtualMachineStatus](nodeCtx, suite.T(), suite.Client.State(), name)
 	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDiskStatus](nodeCtx, suite.T(), suite.Client.State(),
 		diskStatusID(name, doc.DisksConfig[0]))
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDiskStatus](nodeCtx, suite.T(), suite.Client.State(),
+		diskStatusID(name, doc.DisksConfig[1]))
 
 	// No status is left to read once the document is gone; ask libvirt whether the domain outlived it.
 	suite.assertNoDomain(node, name)

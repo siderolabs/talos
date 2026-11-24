@@ -3273,16 +3273,16 @@
         "pool": {
           "type": "string",
           "title": "pool",
-          "description": "Name of the StoragePoolConfig document this disk’s volume lives in.\n\nThe pool is declared separately and is not provisioned by this document, but it must be\ndeclared: a disk naming a pool no StoragePoolConfig document declares is a configuration\nerror.\n\nThe volume is named after this virtual machine and this disk, so a volume of that name\nalready in the pool is adopted with its existing contents. Removing the disk from the\nconfiguration never deletes the volume, so re-declaring the same virtual machine and disk\nnames in the same pool reattaches the same data.\n\nRequired for both disk and cdrom. CD-ROM media is copied from the content library\ninto an independent volume in this pool, not attached directly from the library.\n",
-          "markdownDescription": "Name of the `StoragePoolConfig` document this disk's volume lives in.\n\nThe pool is declared separately and is not provisioned by this document, but it must be\ndeclared: a disk naming a pool no `StoragePoolConfig` document declares is a configuration\nerror.\n\nThe volume is named after this virtual machine and this disk, so a volume of that name\nalready in the pool is adopted with its existing contents. Removing the disk from the\nconfiguration never deletes the volume, so re-declaring the same virtual machine and disk\nnames in the same pool reattaches the same data.\n\nRequired for both `disk` and `cdrom`. CD-ROM media is copied from the content library\ninto an independent volume in this pool, not attached directly from the library.",
-          "x-intellij-html-description": "\u003cp\u003eName of the \u003ccode\u003eStoragePoolConfig\u003c/code\u003e document this disk\u0026rsquo;s volume lives in.\u003c/p\u003e\n\n\u003cp\u003eThe pool is declared separately and is not provisioned by this document, but it must be\ndeclared: a disk naming a pool no \u003ccode\u003eStoragePoolConfig\u003c/code\u003e document declares is a configuration\nerror.\u003c/p\u003e\n\n\u003cp\u003eThe volume is named after this virtual machine and this disk, so a volume of that name\nalready in the pool is adopted with its existing contents. Removing the disk from the\nconfiguration never deletes the volume, so re-declaring the same virtual machine and disk\nnames in the same pool reattaches the same data.\u003c/p\u003e\n\n\u003cp\u003eRequired for both \u003ccode\u003edisk\u003c/code\u003e and \u003ccode\u003ecdrom\u003c/code\u003e. CD-ROM media is copied from the content library\ninto an independent volume in this pool, not attached directly from the library.\u003c/p\u003e\n"
+          "description": "Name of the StoragePoolConfig document this disk’s volume lives in.\n\nThe pool must be declared by a StoragePoolConfig document. The volume is named after\nthe virtual machine and the disk, so an existing volume of that name is adopted, and\nremoving the disk never deletes it.\n\nRequired, except on an empty cdrom, where it is not allowed.\n",
+          "markdownDescription": "Name of the `StoragePoolConfig` document this disk's volume lives in.\n\nThe pool must be declared by a `StoragePoolConfig` document. The volume is named after\nthe virtual machine and the disk, so an existing volume of that name is adopted, and\nremoving the disk never deletes it.\n\nRequired, except on an empty `cdrom`, where it is not allowed.",
+          "x-intellij-html-description": "\u003cp\u003eName of the \u003ccode\u003eStoragePoolConfig\u003c/code\u003e document this disk\u0026rsquo;s volume lives in.\u003c/p\u003e\n\n\u003cp\u003eThe pool must be declared by a \u003ccode\u003eStoragePoolConfig\u003c/code\u003e document. The volume is named after\nthe virtual machine and the disk, so an existing volume of that name is adopted, and\nremoving the disk never deletes it.\u003c/p\u003e\n\n\u003cp\u003eRequired, except on an empty \u003ccode\u003ecdrom\u003c/code\u003e, where it is not allowed.\u003c/p\u003e\n"
         },
         "size": {
           "type": "string",
           "title": "size",
-          "description": "Size of the volume.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 20GiB.\n\nRequired for a disk, and not allowed on a cdrom, whose size is that of its image.\n",
-          "markdownDescription": "Size of the volume.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 20GiB.\n\nRequired for a `disk`, and not allowed on a `cdrom`, whose size is that of its image.",
-          "x-intellij-html-description": "\u003cp\u003eSize of the volume.\u003c/p\u003e\n\n\u003cp\u003eSize is specified in bytes, but can be expressed in human readable format, e.g. 20GiB.\u003c/p\u003e\n\n\u003cp\u003eRequired for a \u003ccode\u003edisk\u003c/code\u003e, and not allowed on a \u003ccode\u003ecdrom\u003c/code\u003e, whose size is that of its image.\u003c/p\u003e\n"
+          "description": "Size of the volume.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 20GiB.\n\nRequired for a disk, and not allowed on a cdrom.\n",
+          "markdownDescription": "Size of the volume.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 20GiB.\n\nRequired for a `disk`, and not allowed on a `cdrom`.",
+          "x-intellij-html-description": "\u003cp\u003eSize of the volume.\u003c/p\u003e\n\n\u003cp\u003eSize is specified in bytes, but can be expressed in human readable format, e.g. 20GiB.\u003c/p\u003e\n\n\u003cp\u003eRequired for a \u003ccode\u003edisk\u003c/code\u003e, and not allowed on a \u003ccode\u003ecdrom\u003c/code\u003e.\u003c/p\u003e\n"
         },
         "format": {
           "enum": [
@@ -3311,9 +3311,9 @@
             "cdrom"
           ],
           "title": "type",
-          "description": "Kind of device the disk is presented as.\n\nA cdrom is read-only – QEMU emulates no CD burner – so its contents are required and\nit has no size and no format of its own.\n\nOptional; defaults to disk.\n",
-          "markdownDescription": "Kind of device the disk is presented as.\n\nA `cdrom` is read-only -- QEMU emulates no CD burner -- so its contents are required and\nit has no size and no format of its own.\n\nOptional; defaults to `disk`.",
-          "x-intellij-html-description": "\u003cp\u003eKind of device the disk is presented as.\u003c/p\u003e\n\n\u003cp\u003eA \u003ccode\u003ecdrom\u003c/code\u003e is read-only \u0026ndash; QEMU emulates no CD burner \u0026ndash; so its contents are required and\nit has no size and no format of its own.\u003c/p\u003e\n\n\u003cp\u003eOptional; defaults to \u003ccode\u003edisk\u003c/code\u003e.\u003c/p\u003e\n"
+          "description": "Kind of device the disk is presented as.\n\nA cdrom is read-only and has no size or format of its own.\n\nOptional; defaults to disk.\n",
+          "markdownDescription": "Kind of device the disk is presented as.\n\nA `cdrom` is read-only and has no size or format of its own.\n\nOptional; defaults to `disk`.",
+          "x-intellij-html-description": "\u003cp\u003eKind of device the disk is presented as.\u003c/p\u003e\n\n\u003cp\u003eA \u003ccode\u003ecdrom\u003c/code\u003e is read-only and has no size or format of its own.\u003c/p\u003e\n\n\u003cp\u003eOptional; defaults to \u003ccode\u003edisk\u003c/code\u003e.\u003c/p\u003e\n"
         },
         "bootOrder": {
           "type": "integer",
@@ -3342,7 +3342,7 @@
       "properties": {},
       "additionalProperties": false,
       "type": "object",
-      "description": "VirtualMachineDiskBlank provisions an empty volume."
+      "description": "VirtualMachineDiskBlank provisions an empty volume, or an empty cdrom drive."
     },
     "hypervisor.VirtualMachineDiskFromImage": {
       "properties": {
@@ -3381,9 +3381,9 @@
         "blank": {
           "$ref": "#/$defs/hypervisor.VirtualMachineDiskBlank",
           "title": "blank",
-          "description": "Create an empty volume, formatted per format.\n\nNot allowed on a cdrom, which has no meaningful empty contents.\n",
-          "markdownDescription": "Create an empty volume, formatted per `format`.\n\nNot allowed on a `cdrom`, which has no meaningful empty contents.",
-          "x-intellij-html-description": "\u003cp\u003eCreate an empty volume, formatted per \u003ccode\u003eformat\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003eNot allowed on a \u003ccode\u003ecdrom\u003c/code\u003e, which has no meaningful empty contents.\u003c/p\u003e\n"
+          "description": "Create an empty volume, or an empty drive on a cdrom.\n\nA disk volume is formatted per format. An empty cdrom has no volume; omit pool.\n",
+          "markdownDescription": "Create an empty volume, or an empty drive on a `cdrom`.\n\nA `disk` volume is formatted per `format`. An empty `cdrom` has no volume; omit `pool`.",
+          "x-intellij-html-description": "\u003cp\u003eCreate an empty volume, or an empty drive on a \u003ccode\u003ecdrom\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003eA \u003ccode\u003edisk\u003c/code\u003e volume is formatted per \u003ccode\u003eformat\u003c/code\u003e. An empty \u003ccode\u003ecdrom\u003c/code\u003e has no volume; omit \u003ccode\u003epool\u003c/code\u003e.\u003c/p\u003e\n"
         },
         "fromImage": {
           "$ref": "#/$defs/hypervisor.VirtualMachineDiskFromImage",

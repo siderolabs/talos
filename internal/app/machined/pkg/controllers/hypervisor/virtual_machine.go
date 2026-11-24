@@ -508,7 +508,7 @@ func effectiveVMPowerState(ctx context.Context, r controller.Reader, vm *hypervi
 
 func writableDiskPoolsReady(ctx context.Context, r controller.Reader, disks []hypervisor.VirtualMachineDiskSpec) (bool, error) {
 	for _, disk := range disks {
-		if !disk.Provision.Blank && !disk.IsWritableImage() {
+		if !disk.ProvisionsVolume() && !disk.IsWritableImage() {
 			continue
 		}
 

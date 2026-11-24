@@ -71,29 +71,19 @@ type VirtualMachineDiskStatusSpec struct {
 // tell one configuration of a single disk apart from the next.
 const diskStatusIDDigestLength = 12
 
-// VirtualMachineDiskStatusID builds the resource ID for a disk of a virtual machine. Both names are
-// validated against ^[A-Za-z0-9-]+$, so neither separator can occur within either.
+// VirtualMachineDiskStatusID builds the resource ID for a disk of a virtual machine.
 //
-// Read-only media includes its source selectors so replacement gets a new status.
-// Writable images include only attachment identity: their source initializes the
-// destination once, and changing it must not revoke a running domain's status.
+// It hashes whatever, when changed, must give the disk a new status rather than retarget a running one.
 func VirtualMachineDiskStatusID(virtualMachine string, disk VirtualMachineDiskSpec) resource.ID {
 	var parts []string
 
 	switch {
+	case disk.IsEmptyDrive():
+		// Distinct from a blank disk's ID, so the status is replaced, not rewritten.
+		parts = []string{"drive=empty"}
 	case disk.Provision.Blank:
-		// Pool and format are in, because each changes the file the domain is pointed at -- and
-		// format changes its driver type too -- so a running domain must be re-rendered onto a new
-		// status rather than silently retargeted.
-		//
-		// Size is deliberately out. The volume's file name cannot depend on it, or growing a volume
-		// would create a fresh empty one beside it, so a size in the ID would put two statuses on
-		// one file at two capacities with no way to say which wins. Keeping it out makes a resize a
-		// plain update of the status a running domain already holds, which is legal, and which the
-		// domain XML -- carrying no capacity at all -- needs no change for.
-		//
-		// "provision=blank" cannot collide with the image branch below: '=' is outside the charset
-		// a library name is validated against.
+		// Pool and format retarget the file, so they are in; size is out, so a resize updates in
+		// place. '=' cannot occur in a library name, so this cannot collide with the image branch.
 		parts = []string{"provision=blank", disk.Pool, disk.Format}
 	case disk.IsWritableImage():
 		// Capacity and initialization selectors cannot retarget the owned disk.

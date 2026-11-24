@@ -396,6 +396,8 @@ func renderVirtualMachineDisks(
 			return nil, fmt.Errorf("virtual machine %q: disk %q is %w: no disk status yet", name, disk.Name, ErrDiskNotReady)
 		case resolved.Phase != hypervisor.VirtualMachineDiskPhaseReady:
 			return nil, fmt.Errorf("virtual machine %q: disk %q is %w: %s", name, disk.Name, ErrDiskNotReady, resolved.Error)
+		case resolved.SourcePath == "" && !disk.IsEmptyDrive():
+			return nil, fmt.Errorf("virtual machine %q: disk %q is %w: ready without a source path", name, disk.Name, ErrDiskNotReady)
 		}
 
 		attached = append(attached, id)
@@ -429,15 +431,18 @@ func appendVirtualMachineDisk(
 			Name: "qemu",
 			Type: resolved.Format,
 		},
-		Source: &libvirtxml.DomainDiskSource{
-			File: &libvirtxml.DomainDiskSourceFile{
-				File: resolved.SourcePath,
-			},
-		},
 		Target: &libvirtxml.DomainDiskTarget{
 			Dev: dev,
 			Bus: disk.Bus,
 		},
+	}
+
+	if !disk.IsEmptyDrive() {
+		rendered.Source = &libvirtxml.DomainDiskSource{
+			File: &libvirtxml.DomainDiskSourceFile{
+				File: resolved.SourcePath,
+			},
+		}
 	}
 
 	if resolved.ReadOnly {

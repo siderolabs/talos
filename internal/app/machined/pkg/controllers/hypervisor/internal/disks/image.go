@@ -76,6 +76,15 @@ func (verifier *ImageVerifier) Observe(
 	}, nil
 }
 
+// ObserveEmptyDrive is a cdrom with no medium; Format and ReadOnly match a loaded drive.
+func ObserveEmptyDrive() hypervisor.VirtualMachineDiskStatusSpec {
+	return hypervisor.VirtualMachineDiskStatusSpec{
+		Format:   rawDiskFormat,
+		ReadOnly: true,
+		Phase:    hypervisor.VirtualMachineDiskPhaseReady,
+	}
+}
+
 // checkLibraryFile confirms the image exists and, when a digest is pinned, that it still hashes to it.
 func (verifier *ImageVerifier) checkLibraryFile(libraryPath, name, expected string) (string, error) {
 	root, err := os.OpenRoot(libraryPath)

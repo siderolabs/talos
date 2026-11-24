@@ -653,14 +653,14 @@ func (VirtualMachineDisk) Doc() *encoder.Doc {
 				Name:        "pool",
 				Type:        "string",
 				Note:        "",
-				Description: "Name of the `StoragePoolConfig` document this disk's volume lives in.\n\nThe pool is declared separately and is not provisioned by this document, but it must be\ndeclared: a disk naming a pool no `StoragePoolConfig` document declares is a configuration\nerror.\n\nThe volume is named after this virtual machine and this disk, so a volume of that name\nalready in the pool is adopted with its existing contents. Removing the disk from the\nconfiguration never deletes the volume, so re-declaring the same virtual machine and disk\nnames in the same pool reattaches the same data.\n\nRequired for both `disk` and `cdrom`. CD-ROM media is copied from the content library\ninto an independent volume in this pool, not attached directly from the library.",
+				Description: "Name of the `StoragePoolConfig` document this disk's volume lives in.\n\nThe pool must be declared by a `StoragePoolConfig` document. The volume is named after\nthe virtual machine and the disk, so an existing volume of that name is adopted, and\nremoving the disk never deletes it.\n\nRequired, except on an empty `cdrom`, where it is not allowed.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the `StoragePoolConfig` document this disk's volume lives in." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
 				Name:        "size",
 				Type:        "ByteSize",
 				Note:        "",
-				Description: "Size of the volume.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 20GiB.\n\nRequired for a `disk`, and not allowed on a `cdrom`, whose size is that of its image.",
+				Description: "Size of the volume.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 20GiB.\n\nRequired for a `disk`, and not allowed on a `cdrom`.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Size of the volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
@@ -690,7 +690,7 @@ func (VirtualMachineDisk) Doc() *encoder.Doc {
 				Name:        "type",
 				Type:        "VirtualMachineDiskType",
 				Note:        "",
-				Description: "Kind of device the disk is presented as.\n\nA `cdrom` is read-only -- QEMU emulates no CD burner -- so its contents are required and\nit has no size and no format of its own.\n\nOptional; defaults to `disk`.",
+				Description: "Kind of device the disk is presented as.\n\nA `cdrom` is read-only and has no size or format of its own.\n\nOptional; defaults to `disk`.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Kind of device the disk is presented as." /* encoder.LineComment */, "" /* encoder.FootComment */},
 				Values: []string{
 					"disk",
@@ -735,8 +735,8 @@ func (VirtualMachineDiskProvision) Doc() *encoder.Doc {
 				Name:        "blank",
 				Type:        "VirtualMachineDiskBlank",
 				Note:        "",
-				Description: "Create an empty volume, formatted per `format`.\n\nNot allowed on a `cdrom`, which has no meaningful empty contents.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Create an empty volume, formatted per `format`." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "Create an empty volume, or an empty drive on a `cdrom`.\n\nA `disk` volume is formatted per `format`. An empty `cdrom` has no volume; omit `pool`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Create an empty volume, or an empty drive on a `cdrom`." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
 				Name:        "fromImage",
@@ -754,8 +754,8 @@ func (VirtualMachineDiskProvision) Doc() *encoder.Doc {
 func (VirtualMachineDiskBlank) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "VirtualMachineDiskBlank",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineDiskBlank provisions an empty volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "VirtualMachineDiskBlank provisions an empty volume.",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineDiskBlank provisions an empty volume, or an empty cdrom drive." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineDiskBlank provisions an empty volume, or an empty cdrom drive.",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "VirtualMachineDiskProvision",

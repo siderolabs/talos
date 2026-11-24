@@ -11,6 +11,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"testing"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
@@ -138,6 +139,173 @@ func (suite *CDROMSuite) TestCDROMFromContentLibrary() {
 
 	suite.RemoveMachineConfigDocumentsByName(nodeCtx, hypervisorcfg.VirtualMachineConfigKind, name)
 	suite.assertNoDomain(node, name)
+}
+
+// TestEmptyCDROM runs a guest with an empty cdrom: no pool, no library, no source.
+func (suite *CDROMSuite) TestEmptyCDROM() {
+	if testing.Short() {
+		suite.T().Skip("skipping test in short mode.")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP()
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	suite.AssertServicesRunning(suite.ctx, node, map[string]string{"ext-virtqemud": "Running"})
+
+	name := "vm-empty-cdrom-" + uuid.NewString()
+	emptyDisk := emptyCDROMDisk("spare")
+
+	doc := suite.cdromVirtualMachine(node, name, emptyDisk)
+
+	suite.T().Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer cancel()
+
+		suite.RemoveMachineConfigDocumentsByName(client.WithNode(ctx, node), hypervisorcfg.VirtualMachineConfigKind, name)
+	})
+
+	suite.PatchMachineConfig(nodeCtx, doc)
+
+	suite.assertEmptyCDROMReady(nodeCtx, name, emptyDisk)
+	suite.assertRunningTransientDomainWithDevices(node, name, 1, 1, 0)
+
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, hypervisorcfg.VirtualMachineConfigKind, name)
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDiskStatus](nodeCtx, suite.T(), suite.Client.State(),
+		diskStatusID(name, emptyDisk))
+	suite.assertNoDomain(node, name)
+}
+
+// TestCDROMSwapsBetweenEmptyAndLoaded loads media into an empty drive and ejects it again. Each
+// swap replaces the disk status and restarts the guest.
+func (suite *CDROMSuite) TestCDROMSwapsBetweenEmptyAndLoaded() {
+	if testing.Short() {
+		suite.T().Skip("skipping test in short mode.")
+	}
+
+	suite.requireContentLibrarySupport()
+
+	node := suite.RandomDiscoveredNodeInternalIP()
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	suite.AssertServicesRunning(suite.ctx, node, map[string]string{"ext-virtqemud": "Running"})
+
+	library, _ := provisionContentLibrary(&suite.APISuite, nodeCtx, node)
+	pool, poolPath := suite.provisionContentLibraryPool(nodeCtx, node, library)
+
+	_, err := suite.Client.ContentLibraryUpload(nodeCtx, library, isoName, "", bytes.NewReader([]byte("talos swapped cdrom")))
+	suite.Require().NoError(err)
+
+	name := "vm-cdrom-swap-" + uuid.NewString()
+	emptyDisk := emptyCDROMDisk("install")
+	loadedDisk := emptyDisk
+	loadedDisk.DiskPool = pool
+	loadedDisk.ProvisionConfig = hypervisorcfg.VirtualMachineDiskProvision{
+		FromImageConfig: &hypervisorcfg.VirtualMachineDiskFromImage{
+			ImageLibrary: library,
+			ImageFile:    isoName,
+		},
+	}
+
+	suite.T().Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer cancel()
+
+		suite.RemoveMachineConfigDocumentsByName(client.WithNode(ctx, node), hypervisorcfg.VirtualMachineConfigKind, name)
+	})
+
+	suite.PatchMachineConfig(nodeCtx, suite.cdromVirtualMachine(node, name, emptyDisk))
+	suite.assertEmptyCDROMReady(nodeCtx, name, emptyDisk)
+	suite.assertRunningTransientDomainWithDevices(node, name, 1, 1, 0)
+
+	emptyID := suite.runVirsh(node, "domid", name)
+
+	suite.swapCDROM(nodeCtx, node, name, loadedDisk)
+
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.State(), []string{diskStatusID(name, loadedDisk)},
+		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
+			asrt.True(status.TypedSpec().Phase == hypervisor.VirtualMachineDiskPhaseReady, "error: %q", status.TypedSpec().Error)
+			asrt.Equal(filepath.Join(poolPath, status.TypedSpec().Volume), status.TypedSpec().SourcePath)
+		},
+	)
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDiskStatus](nodeCtx, suite.T(), suite.Client.State(),
+		diskStatusID(name, emptyDisk))
+	suite.assertRunningTransientDomainWithDevices(node, name, 1, 1, 0)
+	suite.Require().Contains(suite.runVirsh(node, "domblklist", name), poolPath)
+
+	loadedID := suite.runVirsh(node, "domid", name)
+	suite.Require().NotEqual(emptyID, loadedID, "loading media must restart the guest")
+
+	suite.swapCDROM(nodeCtx, node, name, emptyDisk)
+
+	suite.assertEmptyCDROMReady(nodeCtx, name, emptyDisk)
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDiskStatus](nodeCtx, suite.T(), suite.Client.State(),
+		diskStatusID(name, loadedDisk))
+	suite.assertRunningTransientDomainWithDevices(node, name, 1, 1, 0)
+	suite.Require().NotContains(suite.runVirsh(node, "domblklist", name), poolPath)
+	suite.Require().NotEqual(loadedID, suite.runVirsh(node, "domid", name), "ejecting media must restart the guest")
+
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, hypervisorcfg.VirtualMachineConfigKind, name)
+	suite.assertNoDomain(node, name)
+}
+
+// emptyCDROMDisk is a cdrom drive with no medium.
+func emptyCDROMDisk(name string) hypervisorcfg.VirtualMachineDisk {
+	return hypervisorcfg.VirtualMachineDisk{
+		DiskName: name,
+		DiskType: hypervisorhelpers.VirtualMachineDiskTypeCDROM,
+		ProvisionConfig: hypervisorcfg.VirtualMachineDiskProvision{
+			BlankConfig: &hypervisorcfg.VirtualMachineDiskBlank{},
+		},
+	}
+}
+
+// cdromVirtualMachine is a minimal running guest with the given disks.
+func (suite *CDROMSuite) cdromVirtualMachine(node, name string, disks ...hypervisorcfg.VirtualMachineDisk) *hypervisorcfg.VirtualMachineConfigV1Alpha1 {
+	doc := hypervisorcfg.NewVirtualMachineConfigV1Alpha1()
+	doc.MetaName = name
+	doc.PowerStateConfig = hypervisorhelpers.PowerStateRunning
+	doc.FirmwareConfig.FirmwareType = suite.guestArch(node).firmware
+	doc.CPUConfig.CPUCount = 1
+	doc.MemoryConfig.MemorySize = meta.MustByteSize("128MiB")
+	doc.DisksConfig = disks
+
+	return doc
+}
+
+// swapCDROM replaces a disk in one apply. Disks merge by name, so the old one is deleted first:
+// merging would keep its pool and provisioning source.
+func (suite *CDROMSuite) swapCDROM(nodeCtx context.Context, node, name string, disk hypervisorcfg.VirtualMachineDisk) {
+	suite.PatchMachineConfig(nodeCtx,
+		map[string]any{
+			"apiVersion": "v1alpha1",
+			"kind":       hypervisorcfg.VirtualMachineConfigKind,
+			"name":       name,
+			"disks": []any{
+				map[string]any{"name": disk.DiskName, "$patch": "delete"},
+			},
+		},
+		suite.cdromVirtualMachine(node, name, disk),
+	)
+}
+
+// assertEmptyCDROMReady waits for an empty drive's status and its sourceless domain definition.
+func (suite *CDROMSuite) assertEmptyCDROMReady(nodeCtx context.Context, name string, disk hypervisorcfg.VirtualMachineDisk) {
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.State(), []string{diskStatusID(name, disk)},
+		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
+			asrt.True(status.TypedSpec().Phase == hypervisor.VirtualMachineDiskPhaseReady, "error: %q", status.TypedSpec().Error)
+			asrt.Empty(status.TypedSpec().SourcePath)
+			asrt.Empty(status.TypedSpec().Pool)
+			asrt.Equal("raw", status.TypedSpec().Format)
+			asrt.True(status.TypedSpec().ReadOnly)
+		},
+	)
+
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), name,
+		func(spec *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+			asrt.Contains(spec.TypedSpec().DomainXML, `device="cdrom"`)
+			asrt.NotContains(spec.TypedSpec().DomainXML, `<source file=`)
+		},
+	)
 }
 
 // TestCDROMWaitsForItsImage covers a cdrom naming a file the library does not hold: the disk says

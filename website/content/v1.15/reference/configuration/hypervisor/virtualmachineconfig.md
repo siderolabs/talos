@@ -68,14 +68,14 @@ disks:
       bootOrder: 1 # Position of this disk in the guest's boot order, lowest first.
       # Where the volume's contents come from.
       provision:
-        # Create an empty volume, formatted per `format`.
+        # Create an empty volume, or an empty drive on a `cdrom`.
         blank: {}
     - name: data # Name of the disk, unique within the virtual machine.
       pool: pool1 # Name of the `StoragePoolConfig` document this disk's volume lives in.
       size: 100GiB # Size of the volume.
       # Where the volume's contents come from.
       provision:
-        # Create an empty volume, formatted per `format`.
+        # Create an empty volume, or an empty drive on a `cdrom`.
         blank: {}
     - name: install # Name of the disk, unique within the virtual machine.
       pool: pool1 # Name of the `StoragePoolConfig` document this disk's volume lives in.
@@ -343,13 +343,13 @@ VirtualMachineDisk describes a single disk attached to a virtual machine.
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`name` |string |Name of the disk, unique within the virtual machine.<br><br>Must be between 1 and 63 characters long, and can only contain ASCII letters,<br>digits and hyphens. It names the volume created in the storage pool.  | |
-|`pool` |string |Name of the `StoragePoolConfig` document this disk's volume lives in.<br><br>The pool is declared separately and is not provisioned by this document, but it must be<br>declared: a disk naming a pool no `StoragePoolConfig` document declares is a configuration<br>error.<br><br>The volume is named after this virtual machine and this disk, so a volume of that name<br>already in the pool is adopted with its existing contents. Removing the disk from the<br>configuration never deletes the volume, so re-declaring the same virtual machine and disk<br>names in the same pool reattaches the same data.<br><br>Required for both `disk` and `cdrom`. CD-ROM media is copied from the content library<br>into an independent volume in this pool, not attached directly from the library. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`pool` |string |Name of the `StoragePoolConfig` document this disk's volume lives in.<br><br>The pool must be declared by a `StoragePoolConfig` document. The volume is named after<br>the virtual machine and the disk, so an existing volume of that name is adopted, and<br>removing the disk never deletes it.<br><br>Required, except on an empty `cdrom`, where it is not allowed. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 pool: pool1
 {{< /highlight >}}</details> | |
-|`size` |ByteSize |Size of the volume.<br><br>Size is specified in bytes, but can be expressed in human readable format, e.g. 20GiB.<br><br>Required for a `disk`, and not allowed on a `cdrom`, whose size is that of its image.  | |
+|`size` |ByteSize |Size of the volume.<br><br>Size is specified in bytes, but can be expressed in human readable format, e.g. 20GiB.<br><br>Required for a `disk`, and not allowed on a `cdrom`.  | |
 |`format` |VirtualMachineDiskFormat |On-disk format of a writable volume.<br><br>Choose `raw` or `qcow2`. The destination format is independent of a content library<br>image's format. Writable disks default to qcow2.<br><br>Optional; defaults to `qcow2` on a writable disk. Not allowed on a `cdrom`, whose<br>copied ISO volume uses `raw`.  |`raw`<br />`qcow2`<br /> |
 |`bus` |VirtualMachineDiskBus |Controller the disk is attached to.<br><br>`virtio` for anything modern; `sata` for guests without virtio drivers at install time.<br><br>Optional; defaults to `virtio` on a `disk`. A `cdrom` defaults to `sata` on<br>amd64 and `scsi` on arm64, where the bundled UEFI firmware supports virtio-scsi<br>but not SATA.<br>A `cdrom` cannot be attached to `virtio`, which presents no ejectable media.  |`virtio`<br />`scsi`<br />`sata`<br /> |
-|`type` |VirtualMachineDiskType |Kind of device the disk is presented as.<br><br>A `cdrom` is read-only -- QEMU emulates no CD burner -- so its contents are required and<br>it has no size and no format of its own.<br><br>Optional; defaults to `disk`.  |`disk`<br />`cdrom`<br /> |
+|`type` |VirtualMachineDiskType |Kind of device the disk is presented as.<br><br>A `cdrom` is read-only and has no size or format of its own.<br><br>Optional; defaults to `disk`.  |`disk`<br />`cdrom`<br /> |
 |`bootOrder` |uint32 |Position of this disk in the guest's boot order, lowest first.<br><br>Values must be unique across everything the virtual machine can boot from. Only disks<br>are bootable today, so that is only the disks; network interfaces will share this<br>namespace once they are configurable.<br><br>Optional; a disk without a boot order is not booted from.  | |
 |`provision` |<a href="#VirtualMachineConfig.disks..provision">VirtualMachineDiskProvision</a> |Where the volume's contents come from.<br><br>Exactly one source must be set.  | |
 
@@ -368,7 +368,7 @@ Exactly one source must be set.
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`blank` |<a href="#VirtualMachineConfig.disks..provision.blank">VirtualMachineDiskBlank</a> |Create an empty volume, formatted per `format`.<br><br>Not allowed on a `cdrom`, which has no meaningful empty contents.  | |
+|`blank` |<a href="#VirtualMachineConfig.disks..provision.blank">VirtualMachineDiskBlank</a> |Create an empty volume, or an empty drive on a `cdrom`.<br><br>A `disk` volume is formatted per `format`. An empty `cdrom` has no volume; omit `pool`.  | |
 |`fromImage` |<a href="#VirtualMachineConfig.disks..provision.fromImage">VirtualMachineDiskFromImage</a> |Initialize an independent volume from a content library image.<br><br>Set `type: cdrom`, `pool` to a declared storage pool, and `library` and `file` here.<br>Talos copies the image into an independent read-only CD-ROM volume in the pool. Omit<br>`size` and `format`.<br>For a writable `disk`, set `size` and `pool`. The source must be a self-contained,<br>uncompressed raw or qcow2 image (no backing or external data files); it can<br>initialize a raw or qcow2 disk (default qcow2). A file without the qcow2 signature<br>is copied byte for byte as raw, so decompress `.zst`/`.xz`/`.gz` images and convert<br>VMDK, VHDX or VDI images first; common compressed and foreign formats are rejected.<br><br>`size` must be at least the source virtual size; qcow2 disks are rounded up to a<br>multiple of 512 bytes. The pool filesystem must support `user.*` extended attributes,<br>which record which image a disk was created from.<br><br>Existing disks only grow and are never reimaged when the source selector or alias<br>changes. Guest data survives source deletion and configuration removal. Deleting<br>the disk file from the pool triggers a fresh import from the source. Expanding the<br>guest filesystem is the guest's responsibility.  | |
 
 
@@ -376,7 +376,7 @@ Exactly one source must be set.
 
 #### blank {#VirtualMachineConfig.disks..provision.blank}
 
-VirtualMachineDiskBlank provisions an empty volume.
+VirtualMachineDiskBlank provisions an empty volume, or an empty cdrom drive.
 
 
 

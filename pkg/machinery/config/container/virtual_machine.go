@@ -48,7 +48,7 @@ func validateVirtualMachinePoolReferences(container *Container) error {
 			poolName := disk.Pool()
 
 			if poolName == "" {
-				// A missing pool name is reported by the document's own validation.
+				// Empty cdrom drives have no pool.
 				continue
 			}
 
