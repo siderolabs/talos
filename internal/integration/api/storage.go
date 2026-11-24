@@ -1327,6 +1327,12 @@ func (suite *StorageSuite) provisionRAID1Mirror(raidName string, minDisks int) (
 		return suite.mdArrayStatusMatches(nodeCtx, raidName, expectedDevice, memberDisks)
 	}, raidAssertTimeout, raidAssertInterval, "MD array status not reported for %q", raidName)
 
+	// mdadm >= 4.4 no longer adds a write-intent bitmap by default; without one an
+	// unclean shutdown forces a full resync.
+	devName, ok := suite.raidArrayDevName(nodeCtx, raidName)
+	suite.Require().True(ok, "MD array %q has no block device", raidName)
+	suite.Require().Equal("bitmap", suite.ReadFile(nodeCtx, filepath.Join("/sys/class/block", devName, "md/consistency_policy")))
+
 	return nodeCtx, expectedDevice, userDisks, teardown
 }
 

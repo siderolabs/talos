@@ -461,5 +461,5 @@ case "$*" in *--detail*) printf 'MD_DEVICES=2\nMD_DEVICE_dev_sda_DEV=/dev/sda\nM
 	require.NoError(t, err)
 	assert.Contains(t, string(out), "--add /dev/md0 /dev/sdc")
 	assert.Contains(t, string(out), "--grow /dev/md0 --raid-devices=3")
-	assert.Contains(t, string(out), "--create /dev/md0 --name data --homehost=talos --run --assume-clean --level=1 --raid-devices=2 /dev/sda /dev/sdb")
+	assert.Contains(t, string(out), "--create /dev/md0 --name data --homehost=talos --run --assume-clean --level=1 --raid-devices=2 --bitmap=internal /dev/sda /dev/sdb")
 }

@@ -358,6 +358,12 @@ func (md *MD) Create(ctx context.Context, name string, opts CreateOptions) (stri
 		args = append(args, "--metadata="+opts.Metadata)
 	}
 
+	// mdadm >= 4.4 no longer adds a write-intent bitmap by default, so request one
+	// explicitly; without it every unclean shutdown triggers a full resync.
+	if opts.Level >= 1 {
+		args = append(args, "--bitmap=internal")
+	}
+
 	args = append(args, opts.Devices...)
 
 	if _, err := md.run(ctx, args...); err != nil {
