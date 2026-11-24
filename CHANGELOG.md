@@ -1,3 +1,59 @@
+## [Talos 1.14.7](https://github.com/siderolabs/talos/releases/tag/v1.14.7) (2026-11-24)
+
+Welcome to the v1.14.7 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.18.65
+etcd: 3.7.4
+Flannel CNI: 0.28.11
+
+Talos is built with Go 1.26.11.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Fred Heinecke
+* GitBluub
+* Noel Georgi
+
+### Changes
+<details><summary>4 commits</summary>
+<p>
+
+* [`ad14bbb0d`](https://github.com/siderolabs/talos/commit/ad14bbb0d258c40e50dd59131e030e19fa52318f) feat: update Flannel to 0.28.11
+* [`4fdb745d4`](https://github.com/siderolabs/talos/commit/4fdb745d4c77ad6bfaf22b6e53d1a08cfdeca245) feat: update etcd to 3.7.4
+* [`82a8ef3ed`](https://github.com/siderolabs/talos/commit/82a8ef3edcacbe2bc16bf00a184fe6572fdc7b73) fix: serve logind D-Bus broker clients independently
+* [`68d5c6332`](https://github.com/siderolabs/talos/commit/68d5c6332cca14da090cf07c9ef4e4489e44c661) feat: update Linux 6.18.65
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>7 commits</summary>
+<p>
+
+* [`a1a4897`](https://github.com/siderolabs/pkgs/commit/a1a4897db70d69ca5b2d8466668b5d3f7d405840) feat: update Linux to 6.18.65
+* [`62c1972`](https://github.com/siderolabs/pkgs/commit/62c197207a2501d20b4744f85433780abde60571) feat: update libseccomp to 2.6.2
+* [`e5ea794`](https://github.com/siderolabs/pkgs/commit/e5ea7940e5b8453747e27018dc2afad1061616a3) feat: enable MEMORY_FAILURE
+* [`d81814b`](https://github.com/siderolabs/pkgs/commit/d81814b9eaa585b5ae3b2a6538d9bb5a51440de4) feat: enable DCB support in the i40e driver
+* [`ecf0095`](https://github.com/siderolabs/pkgs/commit/ecf0095ee91eb2c0cc35204485021422fdd9029c) feat: update DRBD to 9.3.5
+* [`9c51ef6`](https://github.com/siderolabs/pkgs/commit/9c51ef6aeb3144b9dd702b17fb4cf8b4e29770b3) fix: add azure nvme udev rules
+* [`ef78851`](https://github.com/siderolabs/pkgs/commit/ef7885153f7142f35377d998e6c4cfdf5bb26ebb) fix: backport virtio UDP tunnel GSO outer protocol validation
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/pkgs**  v1.14.0-59-ge6ad19d -> v1.14.0-66-ga1a4897
+
+Previous release can be found at [v1.14.6](https://github.com/siderolabs/talos/releases/tag/v1.14.6)
+
 ## [Talos 1.14.6](https://github.com/siderolabs/talos/releases/tag/v1.14.6) (2026-11-11)
 
 Welcome to the v1.14.6 release of Talos!
