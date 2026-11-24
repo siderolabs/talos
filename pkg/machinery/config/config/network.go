@@ -508,6 +508,8 @@ type NetworkBGPNeighbor interface {
 	Address() netip.Addr
 	// Link is the link name for an unnumbered (IPv6 link-local) session; empty when numbered.
 	Link() string
+	// Prefix is the range of addresses accepted as dynamic neighbors; zero value for a single neighbor.
+	Prefix() netip.Prefix
 	// PeerASN is the expected peer ASN; zero means accept any ASN (eBGP "external").
 	PeerASN() uint32
 	// LocalASN is the local ASN override; zero means use the instance ASN.

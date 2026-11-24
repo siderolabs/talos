@@ -505,6 +505,7 @@ type BGPNeighborConfigSpec struct {
 	Passive       bool                   `protobuf:"varint,7,opt,name=passive,proto3" json:"passive,omitempty"`
 	AuthPassword  string                 `protobuf:"bytes,8,opt,name=auth_password,json=authPassword,proto3" json:"auth_password,omitempty"`
 	EbgpMultiHop  uint32                 `protobuf:"varint,9,opt,name=ebgp_multi_hop,json=ebgpMultiHop,proto3" json:"ebgp_multi_hop,omitempty"`
+	Prefix        *common.NetIPPrefix    `protobuf:"bytes,10,opt,name=prefix,proto3" json:"prefix,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -600,6 +601,13 @@ func (x *BGPNeighborConfigSpec) GetEbgpMultiHop() uint32 {
 		return x.EbgpMultiHop
 	}
 	return 0
+}
+
+func (x *BGPNeighborConfigSpec) GetPrefix() *common.NetIPPrefix {
+	if x != nil {
+		return x.Prefix
+	}
+	return nil
 }
 
 // BGPPeerStatusSpec describes the status of a BGP peering session.
@@ -6651,7 +6659,7 @@ const file_resource_definitions_network_network_proto_rawDesc = "" +
 	"\tvrf_table\x18\t \x01(\x0e28.talos.resource.definitions.enums.NethelpersRoutingTableR\bvrfTable\x12[\n" +
 	"\rimport_routes\x18\n" +
 	" \x03(\v26.talos.resource.definitions.network.BGPImportRouteSpecR\fimportRoutes\x12%\n" +
-	"\x0einstall_routes\x18\v \x01(\bR\rinstallRoutes\"\xf1\x02\n" +
+	"\x0einstall_routes\x18\v \x01(\bR\rinstallRoutes\"\x9e\x03\n" +
 	"\x15BGPNeighborConfigSpec\x12'\n" +
 	"\aaddress\x18\x01 \x01(\v2\r.common.NetIPR\aaddress\x12\x12\n" +
 	"\x04link\x18\x02 \x01(\tR\x04link\x12\x19\n" +
@@ -6661,7 +6669,9 @@ const file_resource_definitions_network_network_proto_rawDesc = "" +
 	"\tlocal_asn\x18\x06 \x01(\rR\blocalAsn\x12\x18\n" +
 	"\apassive\x18\a \x01(\bR\apassive\x12#\n" +
 	"\rauth_password\x18\b \x01(\tR\fauthPassword\x12$\n" +
-	"\x0eebgp_multi_hop\x18\t \x01(\rR\febgpMultiHop\"\xa1\x03\n" +
+	"\x0eebgp_multi_hop\x18\t \x01(\rR\febgpMultiHop\x12+\n" +
+	"\x06prefix\x18\n" +
+	" \x01(\v2\x13.common.NetIPPrefixR\x06prefix\"\xa1\x03\n" +
 	"\x11BGPPeerStatusSpec\x12\x12\n" +
 	"\x04peer\x18\x01 \x01(\tR\x04peer\x12\x1b\n" +
 	"\tlocal_asn\x18\x02 \x01(\rR\blocalAsn\x12\x19\n" +
@@ -7354,178 +7364,179 @@ var file_resource_definitions_network_network_proto_depIdxs = []int32{
 	88,  // 19: talos.resource.definitions.network.BGPNeighborConfigSpec.address:type_name -> common.NetIP
 	89,  // 20: talos.resource.definitions.network.BGPNeighborConfigSpec.hold_time:type_name -> google.protobuf.Duration
 	2,   // 21: talos.resource.definitions.network.BGPNeighborConfigSpec.bfd:type_name -> talos.resource.definitions.network.BGPBFDConfigSpec
-	91,  // 22: talos.resource.definitions.network.BGPPeerStatusSpec.state:type_name -> talos.resource.definitions.enums.NethelpersBGPSessionState
-	88,  // 23: talos.resource.definitions.network.BGPPeerStatusSpec.router_id:type_name -> common.NetIP
-	92,  // 24: talos.resource.definitions.network.BGPPeerStatusSpec.since:type_name -> google.protobuf.Timestamp
-	93,  // 25: talos.resource.definitions.network.BondMasterSpec.mode:type_name -> talos.resource.definitions.enums.NethelpersBondMode
-	94,  // 26: talos.resource.definitions.network.BondMasterSpec.hash_policy:type_name -> talos.resource.definitions.enums.NethelpersBondXmitHashPolicy
-	95,  // 27: talos.resource.definitions.network.BondMasterSpec.lacp_rate:type_name -> talos.resource.definitions.enums.NethelpersLACPRate
-	96,  // 28: talos.resource.definitions.network.BondMasterSpec.arp_validate:type_name -> talos.resource.definitions.enums.NethelpersARPValidate
-	97,  // 29: talos.resource.definitions.network.BondMasterSpec.arp_all_targets:type_name -> talos.resource.definitions.enums.NethelpersARPAllTargets
-	98,  // 30: talos.resource.definitions.network.BondMasterSpec.primary_reselect:type_name -> talos.resource.definitions.enums.NethelpersPrimaryReselect
-	99,  // 31: talos.resource.definitions.network.BondMasterSpec.fail_over_mac:type_name -> talos.resource.definitions.enums.NethelpersFailOverMAC
-	100, // 32: talos.resource.definitions.network.BondMasterSpec.ad_select:type_name -> talos.resource.definitions.enums.NethelpersADSelect
-	88,  // 33: talos.resource.definitions.network.BondMasterSpec.arpip_targets:type_name -> common.NetIP
-	88,  // 34: talos.resource.definitions.network.BondMasterSpec.nsip6_targets:type_name -> common.NetIP
-	101, // 35: talos.resource.definitions.network.BondMasterSpec.adlacp_active:type_name -> talos.resource.definitions.enums.NethelpersADLACPActive
-	67,  // 36: talos.resource.definitions.network.BridgeMasterSpec.stp:type_name -> talos.resource.definitions.network.STPSpec
-	11,  // 37: talos.resource.definitions.network.BridgeMasterSpec.vlan:type_name -> talos.resource.definitions.network.BridgeVLANSpec
-	102, // 38: talos.resource.definitions.network.ClientIdentifierSpec.client_identifier:type_name -> talos.resource.definitions.enums.NethelpersClientIdentifier
-	12,  // 39: talos.resource.definitions.network.DHCP4OperatorSpec.client_identifier:type_name -> talos.resource.definitions.network.ClientIdentifierSpec
-	12,  // 40: talos.resource.definitions.network.DHCP6OperatorSpec.client_identifier:type_name -> talos.resource.definitions.network.ClientIdentifierSpec
-	21,  // 41: talos.resource.definitions.network.EthernetSpecSpec.rings:type_name -> talos.resource.definitions.network.EthernetRingsSpec
-	83,  // 42: talos.resource.definitions.network.EthernetSpecSpec.features:type_name -> talos.resource.definitions.network.EthernetSpecSpec.FeaturesEntry
-	16,  // 43: talos.resource.definitions.network.EthernetSpecSpec.channels:type_name -> talos.resource.definitions.network.EthernetChannelsSpec
-	103, // 44: talos.resource.definitions.network.EthernetSpecSpec.wake_on_lan:type_name -> talos.resource.definitions.enums.NethelpersWOLMode
-	19,  // 45: talos.resource.definitions.network.EthernetSpecSpec.flow_control:type_name -> talos.resource.definitions.network.EthernetFlowControlSpec
-	104, // 46: talos.resource.definitions.network.EthernetStatusSpec.port:type_name -> talos.resource.definitions.enums.NethelpersPort
-	105, // 47: talos.resource.definitions.network.EthernetStatusSpec.duplex:type_name -> talos.resource.definitions.enums.NethelpersDuplex
-	22,  // 48: talos.resource.definitions.network.EthernetStatusSpec.rings:type_name -> talos.resource.definitions.network.EthernetRingsStatus
-	18,  // 49: talos.resource.definitions.network.EthernetStatusSpec.features:type_name -> talos.resource.definitions.network.EthernetFeatureStatus
-	17,  // 50: talos.resource.definitions.network.EthernetStatusSpec.channels:type_name -> talos.resource.definitions.network.EthernetChannelsStatus
-	103, // 51: talos.resource.definitions.network.EthernetStatusSpec.wake_on_lan:type_name -> talos.resource.definitions.enums.NethelpersWOLMode
-	20,  // 52: talos.resource.definitions.network.EthernetStatusSpec.flow_control:type_name -> talos.resource.definitions.network.EthernetFlowControlStatus
-	106, // 53: talos.resource.definitions.network.HTTPProbeSpec.url:type_name -> common.URL
-	89,  // 54: talos.resource.definitions.network.HTTPProbeSpec.timeout:type_name -> google.protobuf.Duration
-	107, // 55: talos.resource.definitions.network.HostDNSConfigSpec.listen_addresses:type_name -> common.NetIPPort
-	88,  // 56: talos.resource.definitions.network.HostDNSConfigSpec.service_host_dns_address:type_name -> common.NetIP
-	88,  // 57: talos.resource.definitions.network.HostDNSConfigSpec.service_host_dns_address_v6:type_name -> common.NetIP
-	87,  // 58: talos.resource.definitions.network.HostnameSpecSpec.config_layer:type_name -> talos.resource.definitions.enums.NetworkConfigLayer
-	33,  // 59: talos.resource.definitions.network.LLDPNeighborSpec.vlans:type_name -> talos.resource.definitions.network.LLDPVLANSpec
-	30,  // 60: talos.resource.definitions.network.LLDPNeighborStatusSpec.neighbors:type_name -> talos.resource.definitions.network.LLDPNeighborSpec
-	108, // 61: talos.resource.definitions.network.LinkSpecSpec.type:type_name -> talos.resource.definitions.enums.NethelpersLinkType
-	8,   // 62: talos.resource.definitions.network.LinkSpecSpec.bond_slave:type_name -> talos.resource.definitions.network.BondSlave
-	10,  // 63: talos.resource.definitions.network.LinkSpecSpec.bridge_slave:type_name -> talos.resource.definitions.network.BridgeSlave
-	76,  // 64: talos.resource.definitions.network.LinkSpecSpec.vlan:type_name -> talos.resource.definitions.network.VLANSpec
-	7,   // 65: talos.resource.definitions.network.LinkSpecSpec.bond_master:type_name -> talos.resource.definitions.network.BondMasterSpec
-	9,   // 66: talos.resource.definitions.network.LinkSpecSpec.bridge_master:type_name -> talos.resource.definitions.network.BridgeMasterSpec
-	82,  // 67: talos.resource.definitions.network.LinkSpecSpec.wireguard:type_name -> talos.resource.definitions.network.WireguardSpec
-	87,  // 68: talos.resource.definitions.network.LinkSpecSpec.config_layer:type_name -> talos.resource.definitions.enums.NetworkConfigLayer
-	77,  // 69: talos.resource.definitions.network.LinkSpecSpec.vrf_master:type_name -> talos.resource.definitions.network.VRFMasterSpec
-	78,  // 70: talos.resource.definitions.network.LinkSpecSpec.vrf_slave:type_name -> talos.resource.definitions.network.VRFSlave
-	80,  // 71: talos.resource.definitions.network.LinkSpecSpec.veth:type_name -> talos.resource.definitions.network.VethSpec
-	38,  // 72: talos.resource.definitions.network.LinkSpecSpec.mac_vlan:type_name -> talos.resource.definitions.network.MacVLANSpec
-	79,  // 73: talos.resource.definitions.network.LinkSpecSpec.vxlan:type_name -> talos.resource.definitions.network.VXLANSpec
-	108, // 74: talos.resource.definitions.network.LinkStatusSpec.type:type_name -> talos.resource.definitions.enums.NethelpersLinkType
-	109, // 75: talos.resource.definitions.network.LinkStatusSpec.operational_state:type_name -> talos.resource.definitions.enums.NethelpersOperationalState
-	104, // 76: talos.resource.definitions.network.LinkStatusSpec.port:type_name -> talos.resource.definitions.enums.NethelpersPort
-	105, // 77: talos.resource.definitions.network.LinkStatusSpec.duplex:type_name -> talos.resource.definitions.enums.NethelpersDuplex
-	76,  // 78: talos.resource.definitions.network.LinkStatusSpec.vlan:type_name -> talos.resource.definitions.network.VLANSpec
-	9,   // 79: talos.resource.definitions.network.LinkStatusSpec.bridge_master:type_name -> talos.resource.definitions.network.BridgeMasterSpec
-	7,   // 80: talos.resource.definitions.network.LinkStatusSpec.bond_master:type_name -> talos.resource.definitions.network.BondMasterSpec
-	82,  // 81: talos.resource.definitions.network.LinkStatusSpec.wireguard:type_name -> talos.resource.definitions.network.WireguardSpec
-	77,  // 82: talos.resource.definitions.network.LinkStatusSpec.vrf_master:type_name -> talos.resource.definitions.network.VRFMasterSpec
-	80,  // 83: talos.resource.definitions.network.LinkStatusSpec.veth:type_name -> talos.resource.definitions.network.VethSpec
-	38,  // 84: talos.resource.definitions.network.LinkStatusSpec.mac_vlan:type_name -> talos.resource.definitions.network.MacVLANSpec
-	79,  // 85: talos.resource.definitions.network.LinkStatusSpec.vxlan:type_name -> talos.resource.definitions.network.VXLANSpec
-	110, // 86: talos.resource.definitions.network.MacVLANSpec.mode:type_name -> talos.resource.definitions.enums.NethelpersMacvlanMode
-	88,  // 87: talos.resource.definitions.network.NameServerSpec.addr:type_name -> common.NetIP
-	111, // 88: talos.resource.definitions.network.NameServerSpec.protocol:type_name -> talos.resource.definitions.enums.NethelpersDNSProtocol
-	84,  // 89: talos.resource.definitions.network.NfTablesAddressMatch.include_subnets:type_name -> common.NetIPPrefix
-	84,  // 90: talos.resource.definitions.network.NfTablesAddressMatch.exclude_subnets:type_name -> common.NetIPPrefix
-	112, // 91: talos.resource.definitions.network.NfTablesChainSpec.hook:type_name -> talos.resource.definitions.enums.NethelpersNfTablesChainHook
-	113, // 92: talos.resource.definitions.network.NfTablesChainSpec.priority:type_name -> talos.resource.definitions.enums.NethelpersNfTablesChainPriority
-	51,  // 93: talos.resource.definitions.network.NfTablesChainSpec.rules:type_name -> talos.resource.definitions.network.NfTablesRule
-	114, // 94: talos.resource.definitions.network.NfTablesChainSpec.policy:type_name -> talos.resource.definitions.enums.NethelpersNfTablesVerdict
-	115, // 95: talos.resource.definitions.network.NfTablesConntrackStateMatch.states:type_name -> talos.resource.definitions.enums.NethelpersConntrackState
-	116, // 96: talos.resource.definitions.network.NfTablesICMPTypeMatch.types:type_name -> talos.resource.definitions.enums.NethelpersICMPType
-	117, // 97: talos.resource.definitions.network.NfTablesIfNameMatch.operator:type_name -> talos.resource.definitions.enums.NethelpersMatchOperator
-	118, // 98: talos.resource.definitions.network.NfTablesLayer4Match.protocol:type_name -> talos.resource.definitions.enums.NethelpersProtocol
-	50,  // 99: talos.resource.definitions.network.NfTablesLayer4Match.match_source_port:type_name -> talos.resource.definitions.network.NfTablesPortMatch
-	50,  // 100: talos.resource.definitions.network.NfTablesLayer4Match.match_destination_port:type_name -> talos.resource.definitions.network.NfTablesPortMatch
-	45,  // 101: talos.resource.definitions.network.NfTablesLayer4Match.match_icmp_type:type_name -> talos.resource.definitions.network.NfTablesICMPTypeMatch
-	57,  // 102: talos.resource.definitions.network.NfTablesPortMatch.ranges:type_name -> talos.resource.definitions.network.PortRange
-	46,  // 103: talos.resource.definitions.network.NfTablesRule.match_o_if_name:type_name -> talos.resource.definitions.network.NfTablesIfNameMatch
-	114, // 104: talos.resource.definitions.network.NfTablesRule.verdict:type_name -> talos.resource.definitions.enums.NethelpersNfTablesVerdict
-	49,  // 105: talos.resource.definitions.network.NfTablesRule.match_mark:type_name -> talos.resource.definitions.network.NfTablesMark
-	49,  // 106: talos.resource.definitions.network.NfTablesRule.set_mark:type_name -> talos.resource.definitions.network.NfTablesMark
-	40,  // 107: talos.resource.definitions.network.NfTablesRule.match_source_address:type_name -> talos.resource.definitions.network.NfTablesAddressMatch
-	40,  // 108: talos.resource.definitions.network.NfTablesRule.match_destination_address:type_name -> talos.resource.definitions.network.NfTablesAddressMatch
-	47,  // 109: talos.resource.definitions.network.NfTablesRule.match_layer4:type_name -> talos.resource.definitions.network.NfTablesLayer4Match
-	46,  // 110: talos.resource.definitions.network.NfTablesRule.match_i_if_name:type_name -> talos.resource.definitions.network.NfTablesIfNameMatch
-	42,  // 111: talos.resource.definitions.network.NfTablesRule.clamp_mss:type_name -> talos.resource.definitions.network.NfTablesClampMSS
-	48,  // 112: talos.resource.definitions.network.NfTablesRule.match_limit:type_name -> talos.resource.definitions.network.NfTablesLimitMatch
-	43,  // 113: talos.resource.definitions.network.NfTablesRule.match_conntrack_state:type_name -> talos.resource.definitions.network.NfTablesConntrackStateMatch
-	44,  // 114: talos.resource.definitions.network.NfTablesRule.match_hop_limit:type_name -> talos.resource.definitions.network.NfTablesHopLimitMatch
-	84,  // 115: talos.resource.definitions.network.NodeAddressFilterSpec.include_subnets:type_name -> common.NetIPPrefix
-	84,  // 116: talos.resource.definitions.network.NodeAddressFilterSpec.exclude_subnets:type_name -> common.NetIPPrefix
-	119, // 117: talos.resource.definitions.network.NodeAddressSortAlgorithmSpec.algorithm:type_name -> talos.resource.definitions.enums.NethelpersAddressSortAlgorithm
-	84,  // 118: talos.resource.definitions.network.NodeAddressSpec.addresses:type_name -> common.NetIPPrefix
-	119, // 119: talos.resource.definitions.network.NodeAddressSpec.sort_algorithm:type_name -> talos.resource.definitions.enums.NethelpersAddressSortAlgorithm
-	120, // 120: talos.resource.definitions.network.OperatorSpecSpec.operator:type_name -> talos.resource.definitions.enums.NetworkOperator
-	13,  // 121: talos.resource.definitions.network.OperatorSpecSpec.dhcp4:type_name -> talos.resource.definitions.network.DHCP4OperatorSpec
-	14,  // 122: talos.resource.definitions.network.OperatorSpecSpec.dhcp6:type_name -> talos.resource.definitions.network.DHCP6OperatorSpec
-	75,  // 123: talos.resource.definitions.network.OperatorSpecSpec.vip:type_name -> talos.resource.definitions.network.VIPOperatorSpec
-	87,  // 124: talos.resource.definitions.network.OperatorSpecSpec.config_layer:type_name -> talos.resource.definitions.enums.NetworkConfigLayer
-	32,  // 125: talos.resource.definitions.network.OperatorSpecSpec.lldp:type_name -> talos.resource.definitions.network.LLDPOperatorSpec
-	0,   // 126: talos.resource.definitions.network.PlatformConfigSpec.addresses:type_name -> talos.resource.definitions.network.AddressSpecSpec
-	36,  // 127: talos.resource.definitions.network.PlatformConfigSpec.links:type_name -> talos.resource.definitions.network.LinkSpecSpec
-	63,  // 128: talos.resource.definitions.network.PlatformConfigSpec.routes:type_name -> talos.resource.definitions.network.RouteSpecSpec
-	28,  // 129: talos.resource.definitions.network.PlatformConfigSpec.hostnames:type_name -> talos.resource.definitions.network.HostnameSpecSpec
-	60,  // 130: talos.resource.definitions.network.PlatformConfigSpec.resolvers:type_name -> talos.resource.definitions.network.ResolverSpecSpec
-	71,  // 131: talos.resource.definitions.network.PlatformConfigSpec.time_servers:type_name -> talos.resource.definitions.network.TimeServerSpecSpec
-	55,  // 132: talos.resource.definitions.network.PlatformConfigSpec.operators:type_name -> talos.resource.definitions.network.OperatorSpecSpec
-	88,  // 133: talos.resource.definitions.network.PlatformConfigSpec.external_ips:type_name -> common.NetIP
-	58,  // 134: talos.resource.definitions.network.PlatformConfigSpec.probes:type_name -> talos.resource.definitions.network.ProbeSpecSpec
-	121, // 135: talos.resource.definitions.network.PlatformConfigSpec.metadata:type_name -> talos.resource.definitions.runtime.PlatformMetadataSpec
-	89,  // 136: talos.resource.definitions.network.ProbeSpecSpec.interval:type_name -> google.protobuf.Duration
-	70,  // 137: talos.resource.definitions.network.ProbeSpecSpec.tcp:type_name -> talos.resource.definitions.network.TCPProbeSpec
-	87,  // 138: talos.resource.definitions.network.ProbeSpecSpec.config_layer:type_name -> talos.resource.definitions.enums.NetworkConfigLayer
-	25,  // 139: talos.resource.definitions.network.ProbeSpecSpec.http:type_name -> talos.resource.definitions.network.HTTPProbeSpec
-	88,  // 140: talos.resource.definitions.network.ResolverSpecSpec.dns_servers:type_name -> common.NetIP
-	87,  // 141: talos.resource.definitions.network.ResolverSpecSpec.config_layer:type_name -> talos.resource.definitions.enums.NetworkConfigLayer
-	39,  // 142: talos.resource.definitions.network.ResolverSpecSpec.name_servers:type_name -> talos.resource.definitions.network.NameServerSpec
-	88,  // 143: talos.resource.definitions.network.ResolverStatusSpec.dns_servers:type_name -> common.NetIP
-	39,  // 144: talos.resource.definitions.network.ResolverStatusSpec.name_servers:type_name -> talos.resource.definitions.network.NameServerSpec
-	88,  // 145: talos.resource.definitions.network.RouteNextHop.gateway:type_name -> common.NetIP
-	85,  // 146: talos.resource.definitions.network.RouteSpecSpec.family:type_name -> talos.resource.definitions.enums.NethelpersFamily
-	84,  // 147: talos.resource.definitions.network.RouteSpecSpec.destination:type_name -> common.NetIPPrefix
-	88,  // 148: talos.resource.definitions.network.RouteSpecSpec.source:type_name -> common.NetIP
-	88,  // 149: talos.resource.definitions.network.RouteSpecSpec.gateway:type_name -> common.NetIP
-	90,  // 150: talos.resource.definitions.network.RouteSpecSpec.table:type_name -> talos.resource.definitions.enums.NethelpersRoutingTable
-	86,  // 151: talos.resource.definitions.network.RouteSpecSpec.scope:type_name -> talos.resource.definitions.enums.NethelpersScope
-	122, // 152: talos.resource.definitions.network.RouteSpecSpec.type:type_name -> talos.resource.definitions.enums.NethelpersRouteType
-	123, // 153: talos.resource.definitions.network.RouteSpecSpec.protocol:type_name -> talos.resource.definitions.enums.NethelpersRouteProtocol
-	87,  // 154: talos.resource.definitions.network.RouteSpecSpec.config_layer:type_name -> talos.resource.definitions.enums.NetworkConfigLayer
-	62,  // 155: talos.resource.definitions.network.RouteSpecSpec.next_hops:type_name -> talos.resource.definitions.network.RouteNextHop
-	85,  // 156: talos.resource.definitions.network.RouteStatusSpec.family:type_name -> talos.resource.definitions.enums.NethelpersFamily
-	84,  // 157: talos.resource.definitions.network.RouteStatusSpec.destination:type_name -> common.NetIPPrefix
-	88,  // 158: talos.resource.definitions.network.RouteStatusSpec.source:type_name -> common.NetIP
-	88,  // 159: talos.resource.definitions.network.RouteStatusSpec.gateway:type_name -> common.NetIP
-	90,  // 160: talos.resource.definitions.network.RouteStatusSpec.table:type_name -> talos.resource.definitions.enums.NethelpersRoutingTable
-	86,  // 161: talos.resource.definitions.network.RouteStatusSpec.scope:type_name -> talos.resource.definitions.enums.NethelpersScope
-	122, // 162: talos.resource.definitions.network.RouteStatusSpec.type:type_name -> talos.resource.definitions.enums.NethelpersRouteType
-	123, // 163: talos.resource.definitions.network.RouteStatusSpec.protocol:type_name -> talos.resource.definitions.enums.NethelpersRouteProtocol
-	62,  // 164: talos.resource.definitions.network.RouteStatusSpec.next_hops:type_name -> talos.resource.definitions.network.RouteNextHop
-	85,  // 165: talos.resource.definitions.network.RoutingRuleSpecSpec.family:type_name -> talos.resource.definitions.enums.NethelpersFamily
-	84,  // 166: talos.resource.definitions.network.RoutingRuleSpecSpec.src:type_name -> common.NetIPPrefix
-	84,  // 167: talos.resource.definitions.network.RoutingRuleSpecSpec.dst:type_name -> common.NetIPPrefix
-	90,  // 168: talos.resource.definitions.network.RoutingRuleSpecSpec.table:type_name -> talos.resource.definitions.enums.NethelpersRoutingTable
-	124, // 169: talos.resource.definitions.network.RoutingRuleSpecSpec.action:type_name -> talos.resource.definitions.enums.NethelpersRoutingRuleAction
-	87,  // 170: talos.resource.definitions.network.RoutingRuleSpecSpec.config_layer:type_name -> talos.resource.definitions.enums.NetworkConfigLayer
-	85,  // 171: talos.resource.definitions.network.RoutingRuleStatusSpec.family:type_name -> talos.resource.definitions.enums.NethelpersFamily
-	84,  // 172: talos.resource.definitions.network.RoutingRuleStatusSpec.src:type_name -> common.NetIPPrefix
-	84,  // 173: talos.resource.definitions.network.RoutingRuleStatusSpec.dst:type_name -> common.NetIPPrefix
-	90,  // 174: talos.resource.definitions.network.RoutingRuleStatusSpec.table:type_name -> talos.resource.definitions.enums.NethelpersRoutingTable
-	124, // 175: talos.resource.definitions.network.RoutingRuleStatusSpec.action:type_name -> talos.resource.definitions.enums.NethelpersRoutingRuleAction
-	88,  // 176: talos.resource.definitions.network.StaticHostSpec.addresses:type_name -> common.NetIP
-	89,  // 177: talos.resource.definitions.network.TCPProbeSpec.timeout:type_name -> google.protobuf.Duration
-	87,  // 178: talos.resource.definitions.network.TimeServerSpecSpec.config_layer:type_name -> talos.resource.definitions.enums.NetworkConfigLayer
-	88,  // 179: talos.resource.definitions.network.VIPOperatorSpec.ip:type_name -> common.NetIP
-	73,  // 180: talos.resource.definitions.network.VIPOperatorSpec.equinix_metal:type_name -> talos.resource.definitions.network.VIPEquinixMetalSpec
-	74,  // 181: talos.resource.definitions.network.VIPOperatorSpec.h_cloud:type_name -> talos.resource.definitions.network.VIPHCloudSpec
-	125, // 182: talos.resource.definitions.network.VLANSpec.protocol:type_name -> talos.resource.definitions.enums.NethelpersVLANProtocol
-	90,  // 183: talos.resource.definitions.network.VRFMasterSpec.table:type_name -> talos.resource.definitions.enums.NethelpersRoutingTable
-	88,  // 184: talos.resource.definitions.network.VXLANSpec.local:type_name -> common.NetIP
-	88,  // 185: talos.resource.definitions.network.VXLANSpec.group:type_name -> common.NetIP
-	89,  // 186: talos.resource.definitions.network.WireguardPeer.persistent_keepalive_interval:type_name -> google.protobuf.Duration
-	84,  // 187: talos.resource.definitions.network.WireguardPeer.allowed_ips:type_name -> common.NetIPPrefix
-	81,  // 188: talos.resource.definitions.network.WireguardSpec.peers:type_name -> talos.resource.definitions.network.WireguardPeer
-	189, // [189:189] is the sub-list for method output_type
-	189, // [189:189] is the sub-list for method input_type
-	189, // [189:189] is the sub-list for extension type_name
-	189, // [189:189] is the sub-list for extension extendee
-	0,   // [0:189] is the sub-list for field type_name
+	84,  // 22: talos.resource.definitions.network.BGPNeighborConfigSpec.prefix:type_name -> common.NetIPPrefix
+	91,  // 23: talos.resource.definitions.network.BGPPeerStatusSpec.state:type_name -> talos.resource.definitions.enums.NethelpersBGPSessionState
+	88,  // 24: talos.resource.definitions.network.BGPPeerStatusSpec.router_id:type_name -> common.NetIP
+	92,  // 25: talos.resource.definitions.network.BGPPeerStatusSpec.since:type_name -> google.protobuf.Timestamp
+	93,  // 26: talos.resource.definitions.network.BondMasterSpec.mode:type_name -> talos.resource.definitions.enums.NethelpersBondMode
+	94,  // 27: talos.resource.definitions.network.BondMasterSpec.hash_policy:type_name -> talos.resource.definitions.enums.NethelpersBondXmitHashPolicy
+	95,  // 28: talos.resource.definitions.network.BondMasterSpec.lacp_rate:type_name -> talos.resource.definitions.enums.NethelpersLACPRate
+	96,  // 29: talos.resource.definitions.network.BondMasterSpec.arp_validate:type_name -> talos.resource.definitions.enums.NethelpersARPValidate
+	97,  // 30: talos.resource.definitions.network.BondMasterSpec.arp_all_targets:type_name -> talos.resource.definitions.enums.NethelpersARPAllTargets
+	98,  // 31: talos.resource.definitions.network.BondMasterSpec.primary_reselect:type_name -> talos.resource.definitions.enums.NethelpersPrimaryReselect
+	99,  // 32: talos.resource.definitions.network.BondMasterSpec.fail_over_mac:type_name -> talos.resource.definitions.enums.NethelpersFailOverMAC
+	100, // 33: talos.resource.definitions.network.BondMasterSpec.ad_select:type_name -> talos.resource.definitions.enums.NethelpersADSelect
+	88,  // 34: talos.resource.definitions.network.BondMasterSpec.arpip_targets:type_name -> common.NetIP
+	88,  // 35: talos.resource.definitions.network.BondMasterSpec.nsip6_targets:type_name -> common.NetIP
+	101, // 36: talos.resource.definitions.network.BondMasterSpec.adlacp_active:type_name -> talos.resource.definitions.enums.NethelpersADLACPActive
+	67,  // 37: talos.resource.definitions.network.BridgeMasterSpec.stp:type_name -> talos.resource.definitions.network.STPSpec
+	11,  // 38: talos.resource.definitions.network.BridgeMasterSpec.vlan:type_name -> talos.resource.definitions.network.BridgeVLANSpec
+	102, // 39: talos.resource.definitions.network.ClientIdentifierSpec.client_identifier:type_name -> talos.resource.definitions.enums.NethelpersClientIdentifier
+	12,  // 40: talos.resource.definitions.network.DHCP4OperatorSpec.client_identifier:type_name -> talos.resource.definitions.network.ClientIdentifierSpec
+	12,  // 41: talos.resource.definitions.network.DHCP6OperatorSpec.client_identifier:type_name -> talos.resource.definitions.network.ClientIdentifierSpec
+	21,  // 42: talos.resource.definitions.network.EthernetSpecSpec.rings:type_name -> talos.resource.definitions.network.EthernetRingsSpec
+	83,  // 43: talos.resource.definitions.network.EthernetSpecSpec.features:type_name -> talos.resource.definitions.network.EthernetSpecSpec.FeaturesEntry
+	16,  // 44: talos.resource.definitions.network.EthernetSpecSpec.channels:type_name -> talos.resource.definitions.network.EthernetChannelsSpec
+	103, // 45: talos.resource.definitions.network.EthernetSpecSpec.wake_on_lan:type_name -> talos.resource.definitions.enums.NethelpersWOLMode
+	19,  // 46: talos.resource.definitions.network.EthernetSpecSpec.flow_control:type_name -> talos.resource.definitions.network.EthernetFlowControlSpec
+	104, // 47: talos.resource.definitions.network.EthernetStatusSpec.port:type_name -> talos.resource.definitions.enums.NethelpersPort
+	105, // 48: talos.resource.definitions.network.EthernetStatusSpec.duplex:type_name -> talos.resource.definitions.enums.NethelpersDuplex
+	22,  // 49: talos.resource.definitions.network.EthernetStatusSpec.rings:type_name -> talos.resource.definitions.network.EthernetRingsStatus
+	18,  // 50: talos.resource.definitions.network.EthernetStatusSpec.features:type_name -> talos.resource.definitions.network.EthernetFeatureStatus
+	17,  // 51: talos.resource.definitions.network.EthernetStatusSpec.channels:type_name -> talos.resource.definitions.network.EthernetChannelsStatus
+	103, // 52: talos.resource.definitions.network.EthernetStatusSpec.wake_on_lan:type_name -> talos.resource.definitions.enums.NethelpersWOLMode
+	20,  // 53: talos.resource.definitions.network.EthernetStatusSpec.flow_control:type_name -> talos.resource.definitions.network.EthernetFlowControlStatus
+	106, // 54: talos.resource.definitions.network.HTTPProbeSpec.url:type_name -> common.URL
+	89,  // 55: talos.resource.definitions.network.HTTPProbeSpec.timeout:type_name -> google.protobuf.Duration
+	107, // 56: talos.resource.definitions.network.HostDNSConfigSpec.listen_addresses:type_name -> common.NetIPPort
+	88,  // 57: talos.resource.definitions.network.HostDNSConfigSpec.service_host_dns_address:type_name -> common.NetIP
+	88,  // 58: talos.resource.definitions.network.HostDNSConfigSpec.service_host_dns_address_v6:type_name -> common.NetIP
+	87,  // 59: talos.resource.definitions.network.HostnameSpecSpec.config_layer:type_name -> talos.resource.definitions.enums.NetworkConfigLayer
+	33,  // 60: talos.resource.definitions.network.LLDPNeighborSpec.vlans:type_name -> talos.resource.definitions.network.LLDPVLANSpec
+	30,  // 61: talos.resource.definitions.network.LLDPNeighborStatusSpec.neighbors:type_name -> talos.resource.definitions.network.LLDPNeighborSpec
+	108, // 62: talos.resource.definitions.network.LinkSpecSpec.type:type_name -> talos.resource.definitions.enums.NethelpersLinkType
+	8,   // 63: talos.resource.definitions.network.LinkSpecSpec.bond_slave:type_name -> talos.resource.definitions.network.BondSlave
+	10,  // 64: talos.resource.definitions.network.LinkSpecSpec.bridge_slave:type_name -> talos.resource.definitions.network.BridgeSlave
+	76,  // 65: talos.resource.definitions.network.LinkSpecSpec.vlan:type_name -> talos.resource.definitions.network.VLANSpec
+	7,   // 66: talos.resource.definitions.network.LinkSpecSpec.bond_master:type_name -> talos.resource.definitions.network.BondMasterSpec
+	9,   // 67: talos.resource.definitions.network.LinkSpecSpec.bridge_master:type_name -> talos.resource.definitions.network.BridgeMasterSpec
+	82,  // 68: talos.resource.definitions.network.LinkSpecSpec.wireguard:type_name -> talos.resource.definitions.network.WireguardSpec
+	87,  // 69: talos.resource.definitions.network.LinkSpecSpec.config_layer:type_name -> talos.resource.definitions.enums.NetworkConfigLayer
+	77,  // 70: talos.resource.definitions.network.LinkSpecSpec.vrf_master:type_name -> talos.resource.definitions.network.VRFMasterSpec
+	78,  // 71: talos.resource.definitions.network.LinkSpecSpec.vrf_slave:type_name -> talos.resource.definitions.network.VRFSlave
+	80,  // 72: talos.resource.definitions.network.LinkSpecSpec.veth:type_name -> talos.resource.definitions.network.VethSpec
+	38,  // 73: talos.resource.definitions.network.LinkSpecSpec.mac_vlan:type_name -> talos.resource.definitions.network.MacVLANSpec
+	79,  // 74: talos.resource.definitions.network.LinkSpecSpec.vxlan:type_name -> talos.resource.definitions.network.VXLANSpec
+	108, // 75: talos.resource.definitions.network.LinkStatusSpec.type:type_name -> talos.resource.definitions.enums.NethelpersLinkType
+	109, // 76: talos.resource.definitions.network.LinkStatusSpec.operational_state:type_name -> talos.resource.definitions.enums.NethelpersOperationalState
+	104, // 77: talos.resource.definitions.network.LinkStatusSpec.port:type_name -> talos.resource.definitions.enums.NethelpersPort
+	105, // 78: talos.resource.definitions.network.LinkStatusSpec.duplex:type_name -> talos.resource.definitions.enums.NethelpersDuplex
+	76,  // 79: talos.resource.definitions.network.LinkStatusSpec.vlan:type_name -> talos.resource.definitions.network.VLANSpec
+	9,   // 80: talos.resource.definitions.network.LinkStatusSpec.bridge_master:type_name -> talos.resource.definitions.network.BridgeMasterSpec
+	7,   // 81: talos.resource.definitions.network.LinkStatusSpec.bond_master:type_name -> talos.resource.definitions.network.BondMasterSpec
+	82,  // 82: talos.resource.definitions.network.LinkStatusSpec.wireguard:type_name -> talos.resource.definitions.network.WireguardSpec
+	77,  // 83: talos.resource.definitions.network.LinkStatusSpec.vrf_master:type_name -> talos.resource.definitions.network.VRFMasterSpec
+	80,  // 84: talos.resource.definitions.network.LinkStatusSpec.veth:type_name -> talos.resource.definitions.network.VethSpec
+	38,  // 85: talos.resource.definitions.network.LinkStatusSpec.mac_vlan:type_name -> talos.resource.definitions.network.MacVLANSpec
+	79,  // 86: talos.resource.definitions.network.LinkStatusSpec.vxlan:type_name -> talos.resource.definitions.network.VXLANSpec
+	110, // 87: talos.resource.definitions.network.MacVLANSpec.mode:type_name -> talos.resource.definitions.enums.NethelpersMacvlanMode
+	88,  // 88: talos.resource.definitions.network.NameServerSpec.addr:type_name -> common.NetIP
+	111, // 89: talos.resource.definitions.network.NameServerSpec.protocol:type_name -> talos.resource.definitions.enums.NethelpersDNSProtocol
+	84,  // 90: talos.resource.definitions.network.NfTablesAddressMatch.include_subnets:type_name -> common.NetIPPrefix
+	84,  // 91: talos.resource.definitions.network.NfTablesAddressMatch.exclude_subnets:type_name -> common.NetIPPrefix
+	112, // 92: talos.resource.definitions.network.NfTablesChainSpec.hook:type_name -> talos.resource.definitions.enums.NethelpersNfTablesChainHook
+	113, // 93: talos.resource.definitions.network.NfTablesChainSpec.priority:type_name -> talos.resource.definitions.enums.NethelpersNfTablesChainPriority
+	51,  // 94: talos.resource.definitions.network.NfTablesChainSpec.rules:type_name -> talos.resource.definitions.network.NfTablesRule
+	114, // 95: talos.resource.definitions.network.NfTablesChainSpec.policy:type_name -> talos.resource.definitions.enums.NethelpersNfTablesVerdict
+	115, // 96: talos.resource.definitions.network.NfTablesConntrackStateMatch.states:type_name -> talos.resource.definitions.enums.NethelpersConntrackState
+	116, // 97: talos.resource.definitions.network.NfTablesICMPTypeMatch.types:type_name -> talos.resource.definitions.enums.NethelpersICMPType
+	117, // 98: talos.resource.definitions.network.NfTablesIfNameMatch.operator:type_name -> talos.resource.definitions.enums.NethelpersMatchOperator
+	118, // 99: talos.resource.definitions.network.NfTablesLayer4Match.protocol:type_name -> talos.resource.definitions.enums.NethelpersProtocol
+	50,  // 100: talos.resource.definitions.network.NfTablesLayer4Match.match_source_port:type_name -> talos.resource.definitions.network.NfTablesPortMatch
+	50,  // 101: talos.resource.definitions.network.NfTablesLayer4Match.match_destination_port:type_name -> talos.resource.definitions.network.NfTablesPortMatch
+	45,  // 102: talos.resource.definitions.network.NfTablesLayer4Match.match_icmp_type:type_name -> talos.resource.definitions.network.NfTablesICMPTypeMatch
+	57,  // 103: talos.resource.definitions.network.NfTablesPortMatch.ranges:type_name -> talos.resource.definitions.network.PortRange
+	46,  // 104: talos.resource.definitions.network.NfTablesRule.match_o_if_name:type_name -> talos.resource.definitions.network.NfTablesIfNameMatch
+	114, // 105: talos.resource.definitions.network.NfTablesRule.verdict:type_name -> talos.resource.definitions.enums.NethelpersNfTablesVerdict
+	49,  // 106: talos.resource.definitions.network.NfTablesRule.match_mark:type_name -> talos.resource.definitions.network.NfTablesMark
+	49,  // 107: talos.resource.definitions.network.NfTablesRule.set_mark:type_name -> talos.resource.definitions.network.NfTablesMark
+	40,  // 108: talos.resource.definitions.network.NfTablesRule.match_source_address:type_name -> talos.resource.definitions.network.NfTablesAddressMatch
+	40,  // 109: talos.resource.definitions.network.NfTablesRule.match_destination_address:type_name -> talos.resource.definitions.network.NfTablesAddressMatch
+	47,  // 110: talos.resource.definitions.network.NfTablesRule.match_layer4:type_name -> talos.resource.definitions.network.NfTablesLayer4Match
+	46,  // 111: talos.resource.definitions.network.NfTablesRule.match_i_if_name:type_name -> talos.resource.definitions.network.NfTablesIfNameMatch
+	42,  // 112: talos.resource.definitions.network.NfTablesRule.clamp_mss:type_name -> talos.resource.definitions.network.NfTablesClampMSS
+	48,  // 113: talos.resource.definitions.network.NfTablesRule.match_limit:type_name -> talos.resource.definitions.network.NfTablesLimitMatch
+	43,  // 114: talos.resource.definitions.network.NfTablesRule.match_conntrack_state:type_name -> talos.resource.definitions.network.NfTablesConntrackStateMatch
+	44,  // 115: talos.resource.definitions.network.NfTablesRule.match_hop_limit:type_name -> talos.resource.definitions.network.NfTablesHopLimitMatch
+	84,  // 116: talos.resource.definitions.network.NodeAddressFilterSpec.include_subnets:type_name -> common.NetIPPrefix
+	84,  // 117: talos.resource.definitions.network.NodeAddressFilterSpec.exclude_subnets:type_name -> common.NetIPPrefix
+	119, // 118: talos.resource.definitions.network.NodeAddressSortAlgorithmSpec.algorithm:type_name -> talos.resource.definitions.enums.NethelpersAddressSortAlgorithm
+	84,  // 119: talos.resource.definitions.network.NodeAddressSpec.addresses:type_name -> common.NetIPPrefix
+	119, // 120: talos.resource.definitions.network.NodeAddressSpec.sort_algorithm:type_name -> talos.resource.definitions.enums.NethelpersAddressSortAlgorithm
+	120, // 121: talos.resource.definitions.network.OperatorSpecSpec.operator:type_name -> talos.resource.definitions.enums.NetworkOperator
+	13,  // 122: talos.resource.definitions.network.OperatorSpecSpec.dhcp4:type_name -> talos.resource.definitions.network.DHCP4OperatorSpec
+	14,  // 123: talos.resource.definitions.network.OperatorSpecSpec.dhcp6:type_name -> talos.resource.definitions.network.DHCP6OperatorSpec
+	75,  // 124: talos.resource.definitions.network.OperatorSpecSpec.vip:type_name -> talos.resource.definitions.network.VIPOperatorSpec
+	87,  // 125: talos.resource.definitions.network.OperatorSpecSpec.config_layer:type_name -> talos.resource.definitions.enums.NetworkConfigLayer
+	32,  // 126: talos.resource.definitions.network.OperatorSpecSpec.lldp:type_name -> talos.resource.definitions.network.LLDPOperatorSpec
+	0,   // 127: talos.resource.definitions.network.PlatformConfigSpec.addresses:type_name -> talos.resource.definitions.network.AddressSpecSpec
+	36,  // 128: talos.resource.definitions.network.PlatformConfigSpec.links:type_name -> talos.resource.definitions.network.LinkSpecSpec
+	63,  // 129: talos.resource.definitions.network.PlatformConfigSpec.routes:type_name -> talos.resource.definitions.network.RouteSpecSpec
+	28,  // 130: talos.resource.definitions.network.PlatformConfigSpec.hostnames:type_name -> talos.resource.definitions.network.HostnameSpecSpec
+	60,  // 131: talos.resource.definitions.network.PlatformConfigSpec.resolvers:type_name -> talos.resource.definitions.network.ResolverSpecSpec
+	71,  // 132: talos.resource.definitions.network.PlatformConfigSpec.time_servers:type_name -> talos.resource.definitions.network.TimeServerSpecSpec
+	55,  // 133: talos.resource.definitions.network.PlatformConfigSpec.operators:type_name -> talos.resource.definitions.network.OperatorSpecSpec
+	88,  // 134: talos.resource.definitions.network.PlatformConfigSpec.external_ips:type_name -> common.NetIP
+	58,  // 135: talos.resource.definitions.network.PlatformConfigSpec.probes:type_name -> talos.resource.definitions.network.ProbeSpecSpec
+	121, // 136: talos.resource.definitions.network.PlatformConfigSpec.metadata:type_name -> talos.resource.definitions.runtime.PlatformMetadataSpec
+	89,  // 137: talos.resource.definitions.network.ProbeSpecSpec.interval:type_name -> google.protobuf.Duration
+	70,  // 138: talos.resource.definitions.network.ProbeSpecSpec.tcp:type_name -> talos.resource.definitions.network.TCPProbeSpec
+	87,  // 139: talos.resource.definitions.network.ProbeSpecSpec.config_layer:type_name -> talos.resource.definitions.enums.NetworkConfigLayer
+	25,  // 140: talos.resource.definitions.network.ProbeSpecSpec.http:type_name -> talos.resource.definitions.network.HTTPProbeSpec
+	88,  // 141: talos.resource.definitions.network.ResolverSpecSpec.dns_servers:type_name -> common.NetIP
+	87,  // 142: talos.resource.definitions.network.ResolverSpecSpec.config_layer:type_name -> talos.resource.definitions.enums.NetworkConfigLayer
+	39,  // 143: talos.resource.definitions.network.ResolverSpecSpec.name_servers:type_name -> talos.resource.definitions.network.NameServerSpec
+	88,  // 144: talos.resource.definitions.network.ResolverStatusSpec.dns_servers:type_name -> common.NetIP
+	39,  // 145: talos.resource.definitions.network.ResolverStatusSpec.name_servers:type_name -> talos.resource.definitions.network.NameServerSpec
+	88,  // 146: talos.resource.definitions.network.RouteNextHop.gateway:type_name -> common.NetIP
+	85,  // 147: talos.resource.definitions.network.RouteSpecSpec.family:type_name -> talos.resource.definitions.enums.NethelpersFamily
+	84,  // 148: talos.resource.definitions.network.RouteSpecSpec.destination:type_name -> common.NetIPPrefix
+	88,  // 149: talos.resource.definitions.network.RouteSpecSpec.source:type_name -> common.NetIP
+	88,  // 150: talos.resource.definitions.network.RouteSpecSpec.gateway:type_name -> common.NetIP
+	90,  // 151: talos.resource.definitions.network.RouteSpecSpec.table:type_name -> talos.resource.definitions.enums.NethelpersRoutingTable
+	86,  // 152: talos.resource.definitions.network.RouteSpecSpec.scope:type_name -> talos.resource.definitions.enums.NethelpersScope
+	122, // 153: talos.resource.definitions.network.RouteSpecSpec.type:type_name -> talos.resource.definitions.enums.NethelpersRouteType
+	123, // 154: talos.resource.definitions.network.RouteSpecSpec.protocol:type_name -> talos.resource.definitions.enums.NethelpersRouteProtocol
+	87,  // 155: talos.resource.definitions.network.RouteSpecSpec.config_layer:type_name -> talos.resource.definitions.enums.NetworkConfigLayer
+	62,  // 156: talos.resource.definitions.network.RouteSpecSpec.next_hops:type_name -> talos.resource.definitions.network.RouteNextHop
+	85,  // 157: talos.resource.definitions.network.RouteStatusSpec.family:type_name -> talos.resource.definitions.enums.NethelpersFamily
+	84,  // 158: talos.resource.definitions.network.RouteStatusSpec.destination:type_name -> common.NetIPPrefix
+	88,  // 159: talos.resource.definitions.network.RouteStatusSpec.source:type_name -> common.NetIP
+	88,  // 160: talos.resource.definitions.network.RouteStatusSpec.gateway:type_name -> common.NetIP
+	90,  // 161: talos.resource.definitions.network.RouteStatusSpec.table:type_name -> talos.resource.definitions.enums.NethelpersRoutingTable
+	86,  // 162: talos.resource.definitions.network.RouteStatusSpec.scope:type_name -> talos.resource.definitions.enums.NethelpersScope
+	122, // 163: talos.resource.definitions.network.RouteStatusSpec.type:type_name -> talos.resource.definitions.enums.NethelpersRouteType
+	123, // 164: talos.resource.definitions.network.RouteStatusSpec.protocol:type_name -> talos.resource.definitions.enums.NethelpersRouteProtocol
+	62,  // 165: talos.resource.definitions.network.RouteStatusSpec.next_hops:type_name -> talos.resource.definitions.network.RouteNextHop
+	85,  // 166: talos.resource.definitions.network.RoutingRuleSpecSpec.family:type_name -> talos.resource.definitions.enums.NethelpersFamily
+	84,  // 167: talos.resource.definitions.network.RoutingRuleSpecSpec.src:type_name -> common.NetIPPrefix
+	84,  // 168: talos.resource.definitions.network.RoutingRuleSpecSpec.dst:type_name -> common.NetIPPrefix
+	90,  // 169: talos.resource.definitions.network.RoutingRuleSpecSpec.table:type_name -> talos.resource.definitions.enums.NethelpersRoutingTable
+	124, // 170: talos.resource.definitions.network.RoutingRuleSpecSpec.action:type_name -> talos.resource.definitions.enums.NethelpersRoutingRuleAction
+	87,  // 171: talos.resource.definitions.network.RoutingRuleSpecSpec.config_layer:type_name -> talos.resource.definitions.enums.NetworkConfigLayer
+	85,  // 172: talos.resource.definitions.network.RoutingRuleStatusSpec.family:type_name -> talos.resource.definitions.enums.NethelpersFamily
+	84,  // 173: talos.resource.definitions.network.RoutingRuleStatusSpec.src:type_name -> common.NetIPPrefix
+	84,  // 174: talos.resource.definitions.network.RoutingRuleStatusSpec.dst:type_name -> common.NetIPPrefix
+	90,  // 175: talos.resource.definitions.network.RoutingRuleStatusSpec.table:type_name -> talos.resource.definitions.enums.NethelpersRoutingTable
+	124, // 176: talos.resource.definitions.network.RoutingRuleStatusSpec.action:type_name -> talos.resource.definitions.enums.NethelpersRoutingRuleAction
+	88,  // 177: talos.resource.definitions.network.StaticHostSpec.addresses:type_name -> common.NetIP
+	89,  // 178: talos.resource.definitions.network.TCPProbeSpec.timeout:type_name -> google.protobuf.Duration
+	87,  // 179: talos.resource.definitions.network.TimeServerSpecSpec.config_layer:type_name -> talos.resource.definitions.enums.NetworkConfigLayer
+	88,  // 180: talos.resource.definitions.network.VIPOperatorSpec.ip:type_name -> common.NetIP
+	73,  // 181: talos.resource.definitions.network.VIPOperatorSpec.equinix_metal:type_name -> talos.resource.definitions.network.VIPEquinixMetalSpec
+	74,  // 182: talos.resource.definitions.network.VIPOperatorSpec.h_cloud:type_name -> talos.resource.definitions.network.VIPHCloudSpec
+	125, // 183: talos.resource.definitions.network.VLANSpec.protocol:type_name -> talos.resource.definitions.enums.NethelpersVLANProtocol
+	90,  // 184: talos.resource.definitions.network.VRFMasterSpec.table:type_name -> talos.resource.definitions.enums.NethelpersRoutingTable
+	88,  // 185: talos.resource.definitions.network.VXLANSpec.local:type_name -> common.NetIP
+	88,  // 186: talos.resource.definitions.network.VXLANSpec.group:type_name -> common.NetIP
+	89,  // 187: talos.resource.definitions.network.WireguardPeer.persistent_keepalive_interval:type_name -> google.protobuf.Duration
+	84,  // 188: talos.resource.definitions.network.WireguardPeer.allowed_ips:type_name -> common.NetIPPrefix
+	81,  // 189: talos.resource.definitions.network.WireguardSpec.peers:type_name -> talos.resource.definitions.network.WireguardPeer
+	190, // [190:190] is the sub-list for method output_type
+	190, // [190:190] is the sub-list for method input_type
+	190, // [190:190] is the sub-list for extension type_name
+	190, // [190:190] is the sub-list for extension extendee
+	0,   // [0:190] is the sub-list for field type_name
 }
 
 func init() { file_resource_definitions_network_network_proto_init() }

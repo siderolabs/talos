@@ -42,6 +42,7 @@ type Instance struct {
 	localASN      uint32
 	installRoutes bool
 	peers         map[string]string
+	dynamic       map[netip.Prefix]string
 	peerIfaces    map[netip.Addr]string
 	unnumbered    map[string]netip.Addr
 }
@@ -52,6 +53,7 @@ func NewInstance() *Instance {
 		originated: map[netip.Prefix]struct{}{},
 		imported:   map[netip.Prefix]importedPath{},
 		peers:      map[string]string{},
+		dynamic:    map[netip.Prefix]string{},
 		peerIfaces: map[netip.Addr]string{},
 		unnumbered: map[string]netip.Addr{},
 	}
@@ -96,6 +98,7 @@ func (instance *Instance) clearState() {
 	instance.localASN = 0
 	instance.installRoutes = false
 	instance.peers = map[string]string{}
+	instance.dynamic = map[netip.Prefix]string{}
 	instance.peerIfaces = map[netip.Addr]string{}
 	instance.unnumbered = map[string]netip.Addr{}
 }
@@ -163,6 +166,7 @@ func (instance *Instance) EnsureServer(
 		instance.watchCancel = watchCancel
 		instance.originated = map[netip.Prefix]struct{}{}
 		instance.peers = map[string]string{}
+		instance.dynamic = map[netip.Prefix]string{}
 
 		logger.Info("started embedded BGP speaker", zap.Uint32("asn", config.LocalASN), zap.Stringer("router_id", routerID))
 	}
@@ -183,7 +187,10 @@ func (instance *Instance) EnsureServer(
 		}
 	}
 
-	return instance.reconcilePeers(ctx, config, resolvedPeers)
+	return errors.Join(
+		instance.reconcilePeers(ctx, config, resolvedPeers),
+		instance.reconcileDynamicNeighbors(ctx, config),
+	)
 }
 
 // serverIdentity returns the router ID and server key to run with.
@@ -361,8 +368,8 @@ func (instance *Instance) reconcilePeers(
 
 		switch {
 		case !ok:
-			if err := instance.server.AddPeer(ctx, &gobgpapi.AddPeerRequest{Peer: BuildPeer(peer, config.Multipath)}); err != nil {
-				errs = errors.Join(errs, fmt.Errorf("error adding BGP peer %s: %w", peer.Address, err))
+			if err := instance.addPeer(ctx, peer, config.Multipath); err != nil {
+				errs = errors.Join(errs, err)
 
 				continue
 			}
@@ -378,4 +385,17 @@ func (instance *Instance) reconcilePeers(
 	}
 
 	return errs
+}
+
+// addPeer adds a static peer, evicting first a dynamic neighbor GoBGP accepted from the same address.
+func (instance *Instance) addPeer(ctx context.Context, peer Peer, multipath bool) error {
+	if err := instance.evictDynamicNeighbor(ctx, peer.Address); err != nil {
+		return err
+	}
+
+	if err := instance.server.AddPeer(ctx, &gobgpapi.AddPeerRequest{Peer: BuildPeer(peer, multipath)}); err != nil {
+		return fmt.Errorf("error adding BGP peer %s: %w", peer.Address, err)
+	}
+
+	return nil
 }

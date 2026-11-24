@@ -25,7 +25,12 @@ func SetInstanceServerForTest(instance *Instance, server *gobgpsrv.BgpServer) {
 
 // InstanceMapsInitializedForTest reports whether constructor-owned maps are initialized.
 func InstanceMapsInitializedForTest(instance *Instance) bool {
-	return instance.originated != nil && instance.imported != nil && instance.peers != nil && instance.peerIfaces != nil
+	return instance.originated != nil && instance.imported != nil && instance.peers != nil && instance.dynamic != nil && instance.peerIfaces != nil
+}
+
+// InstanceDynamicKeysForTest returns the reconciled dynamic neighbor key snapshot.
+func InstanceDynamicKeysForTest(instance *Instance) map[netip.Prefix]string {
+	return maps.Clone(instance.dynamic)
 }
 
 // InstancePeerKeysForTest returns the reconciled peer-key snapshot.

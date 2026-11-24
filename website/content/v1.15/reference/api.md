@@ -12363,6 +12363,7 @@ BGPNeighborConfigSpec contains the runtime configuration for a BGP neighbor.
 | passive | [bool](#bool) |  |  |
 | auth_password | [string](#string) |  |  |
 | ebgp_multi_hop | [uint32](#uint32) |  |  |
+| prefix | [common.NetIPPrefix](#common.NetIPPrefix) |  |  |
 
 
 

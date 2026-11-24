@@ -151,8 +151,8 @@ func (BGPImportRoute) Doc() *encoder.Doc {
 func (BGPNeighborConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "BGPNeighborConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "BGPNeighborConfig configures a concrete BGP neighbor." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "BGPNeighborConfig configures a concrete BGP neighbor.",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "BGPNeighborConfig configures a BGP neighbor, or a range of dynamic neighbors." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "BGPNeighborConfig configures a BGP neighbor, or a range of dynamic neighbors.",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "BGPInstanceConfigV1Alpha1",
@@ -164,15 +164,22 @@ func (BGPNeighborConfig) Doc() *encoder.Doc {
 				Name:        "address",
 				Type:        "Addr",
 				Note:        "",
-				Description: "Neighbor IP address for a numbered session. Mutually exclusive with `link`.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Neighbor IP address for a numbered session. Mutually exclusive with `link`." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "Neighbor IP address for a numbered session. Mutually exclusive with `link` and `prefix`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Neighbor IP address for a numbered session. Mutually exclusive with `link` and `prefix`." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
 				Name:        "link",
 				Type:        "string",
 				Note:        "",
-				Description: "Link name or alias for an unnumbered (IPv6 link-local) session. Mutually exclusive with `address`.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Link name or alias for an unnumbered (IPv6 link-local) session. Mutually exclusive with `address`." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "Link name or alias for an unnumbered (IPv6 link-local) session. Mutually exclusive with `address` and `prefix`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Link name or alias for an unnumbered (IPv6 link-local) session. Mutually exclusive with `address` and `prefix`." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "prefix",
+				Type:        "Prefix",
+				Note:        "",
+				Description: "Accept BGP sessions from any peer whose address is within this prefix (dynamic neighbors).\nMutually exclusive with `address` and `link`.\nDynamic neighbors are always passive: Talos never initiates the session.\nA neighbor configured with `address` takes precedence over a matching `prefix`.\nIf the `prefix` neighbor has an `authPassword`, a neighbor configured with an `address` within it must have one too.\nPrefixes of one BGP instance must not overlap.\nChanging the settings of a `prefix` neighbor resets all sessions accepted through it.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Accept BGP sessions from any peer whose address is within this prefix (dynamic neighbors)." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
 				Name:        "peerASN",
@@ -192,7 +199,7 @@ func (BGPNeighborConfig) Doc() *encoder.Doc {
 				Name:        "passive",
 				Type:        "bool",
 				Note:        "",
-				Description: "Wait for the neighbor to establish the connection instead of initiating it.",
+				Description: "Wait for the neighbor to establish the connection instead of initiating it.\nAlways enabled for `prefix` neighbors.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Wait for the neighbor to establish the connection instead of initiating it." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{

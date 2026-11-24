@@ -280,6 +280,7 @@ func buildBGPInstanceConfigSpec(cfg talosconfig.NetworkBGPInstanceConfig) networ
 		neighborSpec := network.BGPNeighborConfigSpec{
 			Address:      neighbor.Address(),
 			Link:         neighbor.Link(),
+			Prefix:       neighbor.Prefix(),
 			PeerASN:      neighbor.PeerASN(),
 			LocalASN:     neighbor.LocalASN(),
 			Passive:      neighbor.Passive(),

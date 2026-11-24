@@ -57,6 +57,10 @@ func newFabricConfig(holdTime time.Duration) *networkcfg.BGPInstanceConfigV1Alph
 			NeighborAuthPassword:  "secret",
 			NeighborEBGPMultiHop:  2,
 		},
+		{
+			NeighborPrefixConfig: meta.Prefix{Prefix: netip.MustParsePrefix("198.51.100.0/24")},
+			NeighborPeerASN:      65005,
+		},
 	}
 
 	return instance
@@ -78,7 +82,7 @@ func (suite *BGPInstanceConfigSuite) TestRenderInlineBehaviorAndPreserveConfigur
 		assertions.Equal([]string{"node-ip"}, spec.AdvertiseLinks)
 		assertions.True(spec.InstallRoutes)
 		assertions.Equal(nethelpers.TableMain, spec.VRFTable)
-		assertions.Len(spec.Neighbors, 2)
+		assertions.Len(spec.Neighbors, 3)
 		assertions.Equal("fabric0", spec.Neighbors[0].Link)
 		assertions.Equal(9*time.Second, spec.Neighbors[0].HoldTime)
 		assertions.NotNil(spec.Neighbors[0].BFD)
@@ -93,6 +97,9 @@ func (suite *BGPInstanceConfigSuite) TestRenderInlineBehaviorAndPreserveConfigur
 		assertions.Equal("secret", spec.Neighbors[1].AuthPassword)
 		assertions.Empty(spec.Neighbors[0].EBGPMultiHop)
 		assertions.Equal(uint32(2), spec.Neighbors[1].EBGPMultiHop)
+		assertions.False(spec.Neighbors[1].Prefix.IsValid())
+		assertions.Equal(netip.MustParsePrefix("198.51.100.0/24"), spec.Neighbors[2].Prefix)
+		assertions.Equal(uint32(65005), spec.Neighbors[2].PeerASN)
 	}, rtestutils.WithNamespace(network.NamespaceName))
 
 	updatedInstance := newFabricConfig(12 * time.Second)

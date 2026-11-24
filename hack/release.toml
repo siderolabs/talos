@@ -1191,6 +1191,24 @@ neighbors:
 The password is redacted from the machine configuration output. The `BGPInstanceConfigs` resource is now sensitive: the `os:admin` role reads it in full, while the other roles get it with the password replaced by `REDACTED`.
 """
 
+    [notes.bgp_dynamic_neighbors]
+        title = "BGP Dynamic Neighbors"
+        description = """\
+`BGPInstanceConfig` neighbors now accept a `prefix` instead of an `address` or a `link`, to accept BGP sessions from any peer within the prefix (equivalent to FRR's `bgp listen range`):
+
+```yaml
+apiVersion: v1alpha1
+kind: BGPInstanceConfig
+name: fabric
+localASN: 65001
+neighbors:
+  - prefix: 192.0.2.0/24
+    peerASN: 65000
+```
+
+Dynamic neighbors are always passive, and support the same settings as other neighbors (`holdTime`, `bfd`, `authPassword`, `ebgpMultiHop`, `localASN`).
+"""
+
     [notes.image_layers_sync_fs]
         title = "Image Layers Synced to Disk"
         description = """\

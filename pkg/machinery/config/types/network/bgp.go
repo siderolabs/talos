@@ -148,16 +148,28 @@ type BGPImportRoute struct {
 	ImportPrefixes []meta.Prefix `yaml:"prefixes"`
 }
 
-// BGPNeighborConfig configures a concrete BGP neighbor.
+// BGPNeighborConfig configures a BGP neighbor, or a range of dynamic neighbors.
 type BGPNeighborConfig struct {
 	//   description: |
-	//     Neighbor IP address for a numbered session. Mutually exclusive with `link`.
+	//     Neighbor IP address for a numbered session. Mutually exclusive with `link` and `prefix`.
 	//   schema:
 	//     type: string
 	NeighborAddressConfig meta.Addr `yaml:"address,omitempty"`
 	//   description: |
-	//     Link name or alias for an unnumbered (IPv6 link-local) session. Mutually exclusive with `address`.
+	//     Link name or alias for an unnumbered (IPv6 link-local) session. Mutually exclusive with `address` and `prefix`.
 	NeighborLinkConfig string `yaml:"link,omitempty"`
+	//   description: |
+	//     Accept BGP sessions from any peer whose address is within this prefix (dynamic neighbors).
+	//     Mutually exclusive with `address` and `link`.
+	//     Dynamic neighbors are always passive: Talos never initiates the session.
+	//     A neighbor configured with `address` takes precedence over a matching `prefix`.
+	//     If the `prefix` neighbor has an `authPassword`, a neighbor configured with an `address` within it must have one too.
+	//     Prefixes of one BGP instance must not overlap.
+	//     Changing the settings of a `prefix` neighbor resets all sessions accepted through it.
+	//   schema:
+	//     type: string
+	//     pattern: ^[0-9a-f.:]+/\d{1,3}$
+	NeighborPrefixConfig meta.Prefix `yaml:"prefix,omitempty"`
 	//   description: |
 	//     Expected peer ASN. Zero accepts any ASN advertised by the peer (eBGP "external").
 	NeighborPeerASN uint32 `yaml:"peerASN,omitempty"`
@@ -166,6 +178,7 @@ type BGPNeighborConfig struct {
 	NeighborLocalASN uint32 `yaml:"localASN,omitempty"`
 	//   description: |
 	//     Wait for the neighbor to establish the connection instead of initiating it.
+	//     Always enabled for `prefix` neighbors.
 	NeighborPassive bool `yaml:"passive,omitempty"`
 	//   description: |
 	//     BGP hold time for this neighbor. Zero uses the implementation default.
@@ -353,6 +366,8 @@ func (s *BGPInstanceConfigV1Alpha1) Validate(validation.RuntimeMode, ...validati
 		seen[key] = struct{}{}
 	}
 
+	errs = errors.Join(errs, validateBGPNeighborPrefixes(s.BGPNeighborConfigs), validateBGPNeighborPrefixAuth(s.BGPNeighborConfigs))
+
 	errs = errors.Join(errs, validateBGPImportRoutes(s.MetaName, s.BGPImportRoutes))
 
 	return warnings, errs
@@ -498,16 +513,87 @@ func prefixesOverlap(a, b netip.Prefix) bool {
 func bgpNeighborKey(index int, neighbor BGPNeighborConfig) (string, error) {
 	hasAddress := neighbor.NeighborAddressConfig.IsValid()
 	hasLink := neighbor.NeighborLinkConfig != ""
+	hasPrefix := neighbor.NeighborPrefixConfig.Prefix.IsValid()
 
-	if hasAddress == hasLink {
-		return "", fmt.Errorf("neighbor[%d]: exactly one of address or link must be set", index)
+	set := 0
+
+	for _, has := range []bool{hasAddress, hasLink, hasPrefix} {
+		if has {
+			set++
+		}
 	}
 
-	if hasAddress {
+	if set != 1 {
+		return "", fmt.Errorf("neighbor[%d]: exactly one of address, link or prefix must be set", index)
+	}
+
+	switch {
+	case hasAddress:
 		return neighbor.NeighborAddressConfig.String(), nil
+	case hasPrefix:
+		return neighbor.NeighborPrefixConfig.Prefix.String(), nil
+	default:
+		return neighbor.NeighborLinkConfig, nil
+	}
+}
+
+//docgen:nodoc
+type indexedBGPNeighborPrefix struct {
+	prefix netip.Prefix
+	index  int
+}
+
+func validateBGPNeighborPrefixes(neighbors []BGPNeighborConfig) error {
+	var (
+		errs     error
+		prefixes []indexedBGPNeighborPrefix
+	)
+
+	for i, neighbor := range neighbors {
+		prefix := neighbor.NeighborPrefixConfig.Prefix
+		if !prefix.IsValid() {
+			continue
+		}
+
+		if prefix != prefix.Masked() {
+			errs = errors.Join(errs, fmt.Errorf("neighbor[%d]: prefix %s must be masked", i, prefix))
+
+			continue
+		}
+
+		for _, other := range prefixes {
+			if other.prefix != prefix && prefixesOverlap(other.prefix, prefix) {
+				errs = errors.Join(errs, fmt.Errorf("neighbor[%d]: prefix %s overlaps neighbor[%d] prefix %s", i, prefix, other.index, other.prefix))
+			}
+		}
+
+		prefixes = append(prefixes, indexedBGPNeighborPrefix{prefix: prefix, index: i})
 	}
 
-	return neighbor.NeighborLinkConfig, nil
+	return errs
+}
+
+// validateBGPNeighborPrefixAuth rejects unauthenticated neighbors within an authenticated prefix.
+//
+// The kernel picks the most specific TCP MD5 key for a peer address, so the key installed for the prefix
+// applies to a neighbor within it which has no key of its own, and its unsigned sessions are dropped.
+func validateBGPNeighborPrefixAuth(neighbors []BGPNeighborConfig) error {
+	var errs error
+
+	for i, neighbor := range neighbors {
+		addr := neighbor.NeighborAddressConfig.Addr
+		if !addr.IsValid() || neighbor.NeighborAuthPassword != "" {
+			continue
+		}
+
+		for j, other := range neighbors {
+			if other.NeighborAuthPassword != "" && other.NeighborPrefixConfig.Prefix.IsValid() && other.NeighborPrefixConfig.Prefix.Contains(addr) {
+				errs = errors.Join(errs, fmt.Errorf("neighbor[%d]: address %s within neighbor[%d] prefix %s must set an authPassword", i, addr, j, other.NeighborPrefixConfig.Prefix))
+			}
+		}
+	}
+
+	return errs
 }
 
 //nolint:gocyclo
@@ -555,6 +641,9 @@ func (n BGPNeighborConfig) Address() netip.Addr { return n.NeighborAddressConfig
 
 // Link implements config.NetworkBGPNeighbor interface.
 func (n BGPNeighborConfig) Link() string { return n.NeighborLinkConfig }
+
+// Prefix implements config.NetworkBGPNeighbor interface.
+func (n BGPNeighborConfig) Prefix() netip.Prefix { return n.NeighborPrefixConfig.Prefix }
 
 // PeerASN implements config.NetworkBGPNeighbor interface.
 func (n BGPNeighborConfig) PeerASN() uint32 { return n.NeighborPeerASN }

@@ -238,7 +238,72 @@ func TestBGPInstanceConfigValidate(t *testing.T) {
 
 				return cfg
 			},
-			expectedError: "neighbor[0]: exactly one of address or link must be set",
+			expectedError: "neighbor[0]: exactly one of address, link or prefix must be set",
+		},
+		{
+			name: "neighbor with both address and prefix",
+			cfg: func() *network.BGPInstanceConfigV1Alpha1 {
+				cfg := network.NewBGPInstanceConfigV1Alpha1("fabric")
+				cfg.BGPLocalASN = 65001
+				cfg.BGPNeighborConfigs = []network.BGPNeighborConfig{{
+					NeighborAddressConfig: meta.Addr{Addr: netip.MustParseAddr("192.0.2.1")},
+					NeighborPrefixConfig:  meta.Prefix{Prefix: netip.MustParsePrefix("192.0.2.0/24")},
+				}}
+
+				return cfg
+			},
+			expectedError: "neighbor[0]: exactly one of address, link or prefix must be set",
+		},
+		{
+			name: "invalid dynamic neighbor prefixes",
+			cfg: func() *network.BGPInstanceConfigV1Alpha1 {
+				cfg := network.NewBGPInstanceConfigV1Alpha1("fabric")
+				cfg.BGPLocalASN = 65001
+				cfg.BGPNeighborConfigs = []network.BGPNeighborConfig{
+					{NeighborPrefixConfig: meta.Prefix{Prefix: netip.MustParsePrefix("192.0.2.1/24")}},
+					{NeighborPrefixConfig: meta.Prefix{Prefix: netip.MustParsePrefix("198.51.100.0/24")}},
+					{NeighborPrefixConfig: meta.Prefix{Prefix: netip.MustParsePrefix("198.51.100.128/25")}},
+					{NeighborPrefixConfig: meta.Prefix{Prefix: netip.MustParsePrefix("198.51.100.0/24")}},
+				}
+
+				return cfg
+			},
+			expectedError: strings.Join([]string{
+				"neighbor[3]: duplicate neighbor \"198.51.100.0/24\"",
+				"neighbor[0]: prefix 192.0.2.1/24 must be masked",
+				"neighbor[2]: prefix 198.51.100.128/25 overlaps neighbor[1] prefix 198.51.100.0/24",
+				"neighbor[3]: prefix 198.51.100.0/24 overlaps neighbor[2] prefix 198.51.100.128/25",
+			}, "\n"),
+		},
+		{
+			name: "unauthenticated neighbor within an authenticated prefix",
+			cfg: func() *network.BGPInstanceConfigV1Alpha1 {
+				cfg := network.NewBGPInstanceConfigV1Alpha1("fabric")
+				cfg.BGPLocalASN = 65001
+				cfg.BGPNeighborConfigs = []network.BGPNeighborConfig{
+					{NeighborPrefixConfig: meta.Prefix{Prefix: netip.MustParsePrefix("192.0.2.0/24")}, NeighborAuthPassword: "secret"},
+					{NeighborAddressConfig: meta.Addr{Addr: netip.MustParseAddr("192.0.2.1")}},
+					{NeighborAddressConfig: meta.Addr{Addr: netip.MustParseAddr("192.0.2.2")}, NeighborAuthPassword: "other"},
+					{NeighborAddressConfig: meta.Addr{Addr: netip.MustParseAddr("198.51.100.1")}},
+				}
+
+				return cfg
+			},
+			expectedError: "neighbor[1]: address 192.0.2.1 within neighbor[0] prefix 192.0.2.0/24 must set an authPassword",
+		},
+		{
+			name: "valid dynamic neighbors",
+			cfg: func() *network.BGPInstanceConfigV1Alpha1 {
+				cfg := network.NewBGPInstanceConfigV1Alpha1("fabric")
+				cfg.BGPLocalASN = 65001
+				cfg.BGPNeighborConfigs = []network.BGPNeighborConfig{
+					{NeighborPrefixConfig: meta.Prefix{Prefix: netip.MustParsePrefix("192.0.2.0/24")}, NeighborPeerASN: 65000},
+					{NeighborPrefixConfig: meta.Prefix{Prefix: netip.MustParsePrefix("2001:db8::/64")}, NeighborAuthPassword: "secret"},
+					{NeighborAddressConfig: meta.Addr{Addr: netip.MustParseAddr("192.0.2.1")}, NeighborPeerASN: 65002},
+				}
+
+				return cfg
+			},
 		},
 		{
 			name: "duplicate neighbor",
