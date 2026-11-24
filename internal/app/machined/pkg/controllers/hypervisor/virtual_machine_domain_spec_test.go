@@ -1696,6 +1696,43 @@ func (suite *VirtualMachineSpecSuite) TestRendersCDROMFromContentLibrary() {
 	suite.Require().NoError(validateDomainXML([]byte(res.TypedSpec().DomainXML)))
 }
 
+// A configured disk carries its name as the device alias.
+func (suite *VirtualMachineSpecSuite) TestNamesConfiguredDisks() {
+	path := suite.T().TempDir()
+	writeLibraryImage(suite.T(), path, "talos.iso", "iso")
+
+	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "images")
+	*library.TypedSpec() = hypervisor.ContentLibraryStatusSpec{VolumeName: "images", Path: path, Phase: hypervisor.ContentLibraryPhaseReady}
+	suite.Create(library)
+
+	doc := newVirtualMachine("booted")
+	doc.DisksConfig = []hypervisorcfg.VirtualMachineDisk{
+		{
+			DiskName:      "install",
+			DiskType:      hypervisorhelpers.VirtualMachineDiskTypeCDROM,
+			DiskPool:      "pool1",
+			DiskFormat:    hypervisorhelpers.VirtualMachineDiskFormatRaw,
+			DiskBootOrder: 1,
+			ProvisionConfig: hypervisorcfg.VirtualMachineDiskProvision{
+				FromImageConfig: &hypervisorcfg.VirtualMachineDiskFromImage{
+					ImageLibrary: "images",
+					ImageFile:    "talos.iso",
+				},
+			},
+		},
+	}
+
+	cfg, err := container.New(doc)
+	suite.Require().NoError(err)
+	suite.Create(config.NewMachineConfig(cfg))
+	copyPath := suite.publishCDROMCopy(doc.Name(), "install", suite.T().TempDir())
+
+	ctest.AssertResource(suite, doc.Name(), func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.Contains(res.TypedSpec().DomainXML, `<alias name="ua-talos-disk-install">`)
+		asrt.Contains(res.TypedSpec().DomainXML, copyPath)
+	})
+}
+
 // An empty cdrom renders as the loaded drive without its source.
 func (suite *VirtualMachineSpecSuite) TestRendersAnEmptyCDROM() {
 	doc := newVirtualMachine("booted")
@@ -2446,6 +2483,36 @@ func (suite *VirtualMachineStaleDiskSuite) TestWaitsOutADiskStatusForAnotherImag
 		// The definition carries what it was rendered from, so the controller which starts it can
 		// hold exactly those disks.
 		asrt.Equal([]string{current.Metadata().ID()}, res.TypedSpec().Disks)
+	})
+}
+
+// A directly authored spec may use any disk name that is a valid device alias.
+func (suite *VirtualMachineStaleDiskSuite) TestRendersDiskNameOutsideConfigAlphabet() {
+	disk := blankCDROMDiskSpec("data_1.a")
+
+	status := hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, hypervisor.VirtualMachineDiskStatusID(vmName, disk))
+	*status.TypedSpec() = hypervisor.VirtualMachineDiskStatusSpec{
+		VirtualMachine: vmName,
+		Name:           disk.Name,
+		Format:         "raw",
+		ReadOnly:       true,
+		Phase:          hypervisor.VirtualMachineDiskPhaseReady,
+	}
+	suite.Create(status)
+
+	spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, vmName)
+	*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
+		CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
+		Memory:     hypervisor.VirtualMachineMemorySpec{Size: 1 << 30},
+		PowerState: "running",
+		Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+		Disks:      []hypervisor.VirtualMachineDiskSpec{disk},
+	}
+	suite.Create(spec)
+
+	ctest.AssertResource(suite, vmName, func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.Equal("running", res.TypedSpec().PowerState)
+		asrt.Contains(res.TypedSpec().DomainXML, `<alias name="ua-talos-disk-data_1.a"></alias>`)
 	})
 }
 

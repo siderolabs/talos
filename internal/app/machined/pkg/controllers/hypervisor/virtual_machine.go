@@ -481,7 +481,7 @@ func currentVMDefinitionMatches(ctx context.Context, r controller.Reader, spec *
 		return false, err
 	}
 
-	text, attachedDisks, seedID, err := renderVirtualMachineDomainWithSeed(ctx, r, name, vm.TypedSpec(), newHostLinks(links), disks)
+	rendered, err := renderVirtualMachineDomainWithSeed(ctx, r, name, vm.TypedSpec(), newHostLinks(links), disks)
 	if err != nil {
 		if isHeldBack(err) {
 			return false, nil
@@ -490,7 +490,7 @@ func currentVMDefinitionMatches(ctx context.Context, r controller.Reader, spec *
 		return false, err
 	}
 
-	return matchesVMStartIntent(spec.TypedSpec(), text, attachedDisks, seedID, powerState), nil
+	return matchesVMStartIntent(spec.TypedSpec(), rendered, powerState), nil
 }
 
 func effectiveVMPowerState(ctx context.Context, r controller.Reader, vm *hypervisor.VirtualMachineSpec) (string, error) {
@@ -529,8 +529,9 @@ func writableDiskPoolsReady(ctx context.Context, r controller.Reader, disks []hy
 	return true, nil
 }
 
-func matchesVMStartIntent(spec *hypervisor.VirtualMachineDomainSpecSpec, text string, disks []string, seedID, powerState string) bool {
-	return text == spec.DomainXML && slices.Equal(disks, spec.Disks) && seedID == spec.CloudInit && powerState == spec.PowerState
+func matchesVMStartIntent(spec *hypervisor.VirtualMachineDomainSpecSpec, rendered renderedDomain, powerState string) bool {
+	return rendered.DomainXML == spec.DomainXML && slices.Equal(rendered.Disks, spec.Disks) &&
+		rendered.CloudInit == spec.CloudInit && powerState == spec.PowerState
 }
 
 // holdSeed pins the status before inspecting its pool backing or handing XML to libvirt.

@@ -13,6 +13,7 @@ import (
 	"libvirt.org/go/libvirtxml"
 
 	diskhelpers "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor/internal/disks"
+	libvirtdomain "github.com/siderolabs/talos/internal/pkg/libvirt/domain"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
@@ -427,6 +428,7 @@ func appendVirtualMachineDisk(
 
 	rendered := libvirtxml.DomainDisk{
 		Device: device,
+		Alias:  &libvirtxml.DomainAlias{Name: libvirtdomain.DeviceAlias("disk", disk.Name)},
 		Driver: &libvirtxml.DomainDiskDriver{
 			Name: "qemu",
 			Type: resolved.Format,
