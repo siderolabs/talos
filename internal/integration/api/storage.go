@@ -1403,9 +1403,7 @@ func (suite *StorageSuite) assertRAIDUserVolumeReadyMounted(nodeCtx context.Cont
 
 // TestRAIDArrayGrow provisions a raid1 array across two disks, then grows it by
 // adding a third matched disk, verifying the MDArrayStatus picks up all three
-// members and starts rebuilding. It intentionally does not wait for the resync to
-// finish (see mdArrayGrewToMembers). The array is torn down through the MDService
-// (talosctl wipe md) RPC.
+// members and starts rebuilding.
 func (suite *StorageSuite) TestRAIDArrayGrow_RAID1() {
 	const raidName = "mdgrow"
 
@@ -1421,6 +1419,8 @@ func (suite *StorageSuite) TestRAIDArrayGrow_RAID1() {
 	suite.Require().Eventually(func() bool {
 		return suite.mdArrayStatusMatches(nodeCtx, raidName, expectedDevice, grownMemberDisks)
 	}, raidAssertTimeout, raidAssertInterval, "MD array status was not grown for %q", raidName)
+
+	suite.requireMDArrayIdle(nodeCtx, raidName)
 }
 
 // TestRAIDBootArrayDegradedReboot simulates a boot array member dying and verifies the
@@ -1481,6 +1481,8 @@ echo b > /proc/sysrq-trigger
 	suite.Require().Eventually(func() bool {
 		return suite.mdArrayStatusMatches(nodeCtx, raidName, status.TypedSpec().Device, members)
 	}, raidAssertTimeout, raidAssertInterval, "boot array %q was not rebuilt", raidName)
+
+	suite.requireMDArrayIdle(nodeCtx, raidName)
 }
 
 // TestRAIDArrayUnmanaged_RAID1 provisions a raid1 array via a RAIDArrayConfig, then
@@ -1625,6 +1627,19 @@ func (suite *StorageSuite) mdArrayStatusMatches(ctx context.Context, name, devic
 	}
 
 	return true
+}
+
+// requireMDArrayIdle waits until the MDArrayStatus reports the resync finished.
+func (suite *StorageSuite) requireMDArrayIdle(ctx context.Context, name string) {
+	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+		status, err := safe.StateGetByID[*storageres.MDArrayStatus](ctx, suite.Client.State(), name)
+		if !assert.NoError(collect, err) {
+			return
+		}
+
+		assert.Equal(collect, storageres.MDArrayPhaseReady, status.TypedSpec().Status)
+		assert.Equal(collect, "idle", status.TypedSpec().SyncAction)
+	}, raidAssertTimeout, raidAssertInterval, "MD array %q did not return to ready/idle", name)
 }
 
 // mdArrayStatusIsUnmanaged reports whether the MDArrayStatus with the given ID is marked
