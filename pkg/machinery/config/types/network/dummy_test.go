@@ -32,6 +32,10 @@ func TestDummyLinkConfigMarshalStability(t *testing.T) {
 		{
 			AddressAddress: netip.MustParsePrefix("192.168.1.100/32"),
 		},
+		{
+			AddressAddress: netip.MustParsePrefix("169.254.100.1/32"),
+			AddressScope:   new(nethelpers.ScopeHost),
+		},
 	}
 
 	marshaled, err := encoder.NewEncoder(cfg, encoder.WithComments(encoder.CommentsDisabled)).Encode()
@@ -63,6 +67,10 @@ func TestDummyLinkConfigUnmarshal(t *testing.T) {
 			LinkAddresses: []network.AddressConfig{
 				{
 					AddressAddress: netip.MustParsePrefix("192.168.1.100/32"),
+				},
+				{
+					AddressAddress: netip.MustParsePrefix("169.254.100.1/32"),
+					AddressScope:   new(nethelpers.ScopeHost),
 				},
 			},
 		},

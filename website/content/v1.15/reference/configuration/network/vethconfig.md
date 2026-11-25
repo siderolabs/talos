@@ -23,9 +23,15 @@ peer:
     # Configure addresses to be statically assigned to the link.
     addresses:
         - address: fda1::/127 # IP address to be assigned to the link.
+
+          # # Scope of the address.
+          # scope: host
 # Configure addresses to be statically assigned to the link.
 addresses:
     - address: fda1::1/127 # IP address to be assigned to the link.
+
+      # # Scope of the address.
+      # scope: host
 {{< /highlight >}}
 
 
@@ -80,6 +86,9 @@ address: 192.168.1.100/24
 address: fd00::1/64
 {{< /highlight >}}</details> | |
 |`routePriority` |uint32 |Configure the route priority (metric) for routes created for this address.<br><br>If not specified, the system default route priority will be used.  | |
+|`scope` |Scope |Scope of the address.<br><br>Addresses with `link` or `host` scope are not used by the kernel as a source address<br>for traffic leaving the host, while local connections to them still work.<br>This is useful for helper addresses which are only used for local communication.<br><br>Non-global scope is only supported for IPv4 addresses, as the kernel derives<br>the scope of IPv6 addresses from the address itself.<br><br>If not specified, the address gets `global` scope. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+scope: host
+{{< /highlight >}}</details> |`global`<br />`link`<br />`host`<br /> |
 
 
 
@@ -128,6 +137,9 @@ address: 192.168.1.100/24
 address: fd00::1/64
 {{< /highlight >}}</details> | |
 |`routePriority` |uint32 |Configure the route priority (metric) for routes created for this address.<br><br>If not specified, the system default route priority will be used.  | |
+|`scope` |Scope |Scope of the address.<br><br>Addresses with `link` or `host` scope are not used by the kernel as a source address<br>for traffic leaving the host, while local connections to them still work.<br>This is useful for helper addresses which are only used for local communication.<br><br>Non-global scope is only supported for IPv4 addresses, as the kernel derives<br>the scope of IPv6 addresses from the address itself.<br><br>If not specified, the address gets `global` scope. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+scope: host
+{{< /highlight >}}</details> |`global`<br />`link`<br />`host`<br /> |
 
 
 

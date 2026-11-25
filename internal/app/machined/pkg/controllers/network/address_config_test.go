@@ -214,7 +214,19 @@ func (suite *AddressConfigSuite) TestMachineConfiguration() {
 		},
 	}
 
-	ctr, err := container.New(lc1, lc2)
+	dummy := networkcfg.NewDummyLinkConfigV1Alpha1("dummy0")
+	dummy.LinkAddresses = []networkcfg.AddressConfig{
+		{
+			AddressAddress: netip.MustParsePrefix("169.254.100.1/32"),
+			AddressScope:   new(nethelpers.ScopeHost),
+		},
+		{
+			AddressAddress: netip.MustParsePrefix("169.254.100.2/32"),
+			AddressScope:   new(nethelpers.ScopeLink),
+		},
+	}
+
+	ctr, err := container.New(lc1, lc2, dummy)
 	suite.Require().NoError(err)
 
 	suite.Create(config.NewMachineConfig(ctr))
@@ -224,12 +236,22 @@ func (suite *AddressConfigSuite) TestMachineConfiguration() {
 		[]string{
 			"configuration/enp0s2/10.12.3.4/24",
 			"configuration/enp0s3/172.20.0.1/20",
+			"configuration/dummy0/169.254.100.1/32",
+			"configuration/dummy0/169.254.100.2/32",
 		},
 		func(r *network.AddressSpec, asrt *assert.Assertions) {
 			asrt.Equal(network.ConfigMachineConfiguration, r.TypedSpec().ConfigLayer)
 
-			if r.Metadata().ID() == "configuration/enp0s3/172.20.0.1/20" {
+			switch r.Metadata().ID() {
+			case "configuration/enp0s3/172.20.0.1/20":
 				asrt.Equal(uint32(100), r.TypedSpec().Priority)
+				asrt.Equal(nethelpers.ScopeGlobal, r.TypedSpec().Scope)
+			case "configuration/dummy0/169.254.100.1/32":
+				asrt.Equal(nethelpers.ScopeHost, r.TypedSpec().Scope)
+			case "configuration/dummy0/169.254.100.2/32":
+				asrt.Equal(nethelpers.ScopeLink, r.TypedSpec().Scope)
+			default:
+				asrt.Equal(nethelpers.ScopeGlobal, r.TypedSpec().Scope)
 			}
 		},
 		rtestutils.WithNamespace(network.ConfigNamespaceName),

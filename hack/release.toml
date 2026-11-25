@@ -1266,6 +1266,14 @@ a node with an invalid mount path in its saved machine configuration fails to lo
 Config files are now stored on a dedicated 1 MiB tmpfs, which limits the total size of all extension service config files.
 """
 
+    [notes.link_address_scope]
+        title = "Link Address Scope"
+        description = """\
+Addresses in link configuration documents (`LinkConfig`, `DummyLinkConfig`, `VLANConfig`, etc.) support an optional `scope` field: `global` (default), `link` or `host`.
+The kernel doesn't use `link` or `host` scope addresses as a source address for traffic leaving the host, which is useful for helper addresses used only for local communication.
+Non-global scope is supported only for IPv4 addresses.
+"""
+
 [make_deps]
 
     [make_deps.tools]

@@ -148,6 +148,14 @@ func (suite *NetworkConfigSuite) TestDummyLinkConfig() {
 			AddressAddress:  netip.MustParsePrefix("fd13:1234::1/64"),
 			AddressPriority: new(uint32(100)),
 		},
+		{
+			AddressAddress: netip.MustParsePrefix("169.254.213.1/32"),
+			AddressScope:   new(nethelpers.ScopeHost),
+		},
+		{
+			AddressAddress: netip.MustParsePrefix("169.254.213.2/32"),
+			AddressScope:   new(nethelpers.ScopeLink),
+		},
 	}
 	dummy.LinkRoutes = []network.RouteConfig{
 		{
@@ -158,6 +166,8 @@ func (suite *NetworkConfigSuite) TestDummyLinkConfig() {
 	}
 
 	addressID := dummyName + "/fd13:1234::1/64"
+	hostScopeAddressID := dummyName + "/169.254.213.1/32"
+	linkScopeAddressID := dummyName + "/169.254.213.2/32"
 	routeID := "101/" + dummyName + "/inet6/fd13:1234::ffff/fd13:1235::/64/1024"
 	addressRouteID := dummyName + "/inet6//fd13:1234::/64/100"
 
@@ -172,10 +182,20 @@ func (suite *NetworkConfigSuite) TestDummyLinkConfig() {
 		},
 	)
 
-	rtestutils.AssertResource(
-		nodeCtx, suite.T(), suite.Client.State(), addressID,
+	rtestutils.AssertResources(
+		nodeCtx, suite.T(), suite.Client.State(),
+		[]resource.ID{addressID, hostScopeAddressID, linkScopeAddressID},
 		func(addr *networkres.AddressStatus, asrt *assert.Assertions) {
 			asrt.Equal(dummyName, addr.TypedSpec().LinkName)
+
+			switch addr.Metadata().ID() {
+			case hostScopeAddressID:
+				asrt.Equal(nethelpers.ScopeHost, addr.TypedSpec().Scope)
+			case linkScopeAddressID:
+				asrt.Equal(nethelpers.ScopeLink, addr.TypedSpec().Scope)
+			default:
+				asrt.Equal(nethelpers.ScopeGlobal, addr.TypedSpec().Scope)
+			}
 		},
 	)
 
@@ -197,6 +217,8 @@ func (suite *NetworkConfigSuite) TestDummyLinkConfig() {
 
 	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.State(), dummyName)
 	rtestutils.AssertNoResource[*networkres.AddressStatus](nodeCtx, suite.T(), suite.Client.State(), addressID)
+	rtestutils.AssertNoResource[*networkres.AddressStatus](nodeCtx, suite.T(), suite.Client.State(), hostScopeAddressID)
+	rtestutils.AssertNoResource[*networkres.AddressStatus](nodeCtx, suite.T(), suite.Client.State(), linkScopeAddressID)
 	rtestutils.AssertNoResource[*networkres.RouteStatus](nodeCtx, suite.T(), suite.Client.State(), addressRouteID)
 	rtestutils.AssertNoResource[*networkres.RouteStatus](nodeCtx, suite.T(), suite.Client.State(), routeID)
 }

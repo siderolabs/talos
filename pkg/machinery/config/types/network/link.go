@@ -128,6 +128,25 @@ type AddressConfig struct {
 	//
 	//     If not specified, the system default route priority will be used.
 	AddressPriority *uint32 `yaml:"routePriority,omitempty"`
+	//   description: |
+	//     Scope of the address.
+	//
+	//     Addresses with `link` or `host` scope are not used by the kernel as a source address
+	//     for traffic leaving the host, while local connections to them still work.
+	//     This is useful for helper addresses which are only used for local communication.
+	//
+	//     Non-global scope is only supported for IPv4 addresses, as the kernel derives
+	//     the scope of IPv6 addresses from the address itself.
+	//
+	//     If not specified, the address gets `global` scope.
+	//   examples:
+	//    - value: >
+	//       "host"
+	//   values:
+	//     - "global"
+	//     - "link"
+	//     - "host"
+	AddressScope *nethelpers.Scope `yaml:"scope,omitempty"`
 }
 
 // RouteConfig represents a network route configuration.
@@ -262,6 +281,10 @@ func (s *CommonLinkConfig) Validate() ([]string, error) {
 		case !addr.AddressAddress.Addr().IsValid() || addr.AddressAddress.Addr().IsUnspecified():
 			errs = errors.Join(errs, fmt.Errorf("address %d must be a valid IP address", i))
 		}
+
+		if err := addr.validateScope(); err != nil {
+			errs = errors.Join(errs, fmt.Errorf("address %d %w", i, err))
+		}
 	}
 
 	for i, route := range s.LinkRoutes {
@@ -338,6 +361,37 @@ func (a AddressConfig) RoutePriority() optional.Optional[uint32] {
 	}
 
 	return optional.Some(*a.AddressPriority)
+}
+
+// Scope implements NetworkAddressConfig interface.
+func (a AddressConfig) Scope() nethelpers.Scope {
+	if a.AddressScope == nil {
+		return nethelpers.ScopeGlobal
+	}
+
+	return *a.AddressScope
+}
+
+func (a AddressConfig) validateScope() error {
+	if a.AddressScope == nil {
+		return nil
+	}
+
+	switch scope := *a.AddressScope; scope {
+	case nethelpers.ScopeGlobal:
+		return nil
+	case nethelpers.ScopeLink, nethelpers.ScopeHost:
+		// the kernel ignores the requested scope of IPv6 addresses and derives it from the address itself
+		if a.AddressAddress.Addr().Is6() {
+			return fmt.Errorf("scope %q is not supported for IPv6 addresses", scope)
+		}
+
+		return nil
+	case nethelpers.ScopeSite, nethelpers.ScopeNowhere:
+		fallthrough
+	default:
+		return fmt.Errorf("scope %q is not supported, must be one of: global, link, host", scope)
+	}
 }
 
 // Destination implements NetworkRouteConfig interface.

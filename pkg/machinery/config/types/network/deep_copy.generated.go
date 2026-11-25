@@ -193,6 +193,10 @@ func (o *BondConfigV1Alpha1) DeepCopy() *BondConfigV1Alpha1 {
 				cp.CommonLinkConfig.LinkAddresses[i3].AddressPriority = new(uint32)
 				*cp.CommonLinkConfig.LinkAddresses[i3].AddressPriority = *o.CommonLinkConfig.LinkAddresses[i3].AddressPriority
 			}
+			if o.CommonLinkConfig.LinkAddresses[i3].AddressScope != nil {
+				cp.CommonLinkConfig.LinkAddresses[i3].AddressScope = new(nethelpers.Scope)
+				*cp.CommonLinkConfig.LinkAddresses[i3].AddressScope = *o.CommonLinkConfig.LinkAddresses[i3].AddressScope
+			}
 		}
 	}
 	if o.CommonLinkConfig.LinkRoutes != nil {
@@ -237,6 +241,10 @@ func (o *BridgeConfigV1Alpha1) DeepCopy() *BridgeConfigV1Alpha1 {
 				cp.CommonLinkConfig.LinkAddresses[i3].AddressPriority = new(uint32)
 				*cp.CommonLinkConfig.LinkAddresses[i3].AddressPriority = *o.CommonLinkConfig.LinkAddresses[i3].AddressPriority
 			}
+			if o.CommonLinkConfig.LinkAddresses[i3].AddressScope != nil {
+				cp.CommonLinkConfig.LinkAddresses[i3].AddressScope = new(nethelpers.Scope)
+				*cp.CommonLinkConfig.LinkAddresses[i3].AddressScope = *o.CommonLinkConfig.LinkAddresses[i3].AddressScope
+			}
 		}
 	}
 	if o.CommonLinkConfig.LinkRoutes != nil {
@@ -272,6 +280,10 @@ func (o *VRFConfigV1Alpha1) DeepCopy() *VRFConfigV1Alpha1 {
 			if o.CommonLinkConfig.LinkAddresses[i3].AddressPriority != nil {
 				cp.CommonLinkConfig.LinkAddresses[i3].AddressPriority = new(uint32)
 				*cp.CommonLinkConfig.LinkAddresses[i3].AddressPriority = *o.CommonLinkConfig.LinkAddresses[i3].AddressPriority
+			}
+			if o.CommonLinkConfig.LinkAddresses[i3].AddressScope != nil {
+				cp.CommonLinkConfig.LinkAddresses[i3].AddressScope = new(nethelpers.Scope)
+				*cp.CommonLinkConfig.LinkAddresses[i3].AddressScope = *o.CommonLinkConfig.LinkAddresses[i3].AddressScope
 			}
 		}
 	}
@@ -312,6 +324,10 @@ func (o *VXLANConfigV1Alpha1) DeepCopy() *VXLANConfigV1Alpha1 {
 			if o.CommonLinkConfig.LinkAddresses[i3].AddressPriority != nil {
 				cp.CommonLinkConfig.LinkAddresses[i3].AddressPriority = new(uint32)
 				*cp.CommonLinkConfig.LinkAddresses[i3].AddressPriority = *o.CommonLinkConfig.LinkAddresses[i3].AddressPriority
+			}
+			if o.CommonLinkConfig.LinkAddresses[i3].AddressScope != nil {
+				cp.CommonLinkConfig.LinkAddresses[i3].AddressScope = new(nethelpers.Scope)
+				*cp.CommonLinkConfig.LinkAddresses[i3].AddressScope = *o.CommonLinkConfig.LinkAddresses[i3].AddressScope
 			}
 		}
 	}
@@ -390,6 +406,10 @@ func (o *DummyLinkConfigV1Alpha1) DeepCopy() *DummyLinkConfigV1Alpha1 {
 			if o.CommonLinkConfig.LinkAddresses[i3].AddressPriority != nil {
 				cp.CommonLinkConfig.LinkAddresses[i3].AddressPriority = new(uint32)
 				*cp.CommonLinkConfig.LinkAddresses[i3].AddressPriority = *o.CommonLinkConfig.LinkAddresses[i3].AddressPriority
+			}
+			if o.CommonLinkConfig.LinkAddresses[i3].AddressScope != nil {
+				cp.CommonLinkConfig.LinkAddresses[i3].AddressScope = new(nethelpers.Scope)
+				*cp.CommonLinkConfig.LinkAddresses[i3].AddressScope = *o.CommonLinkConfig.LinkAddresses[i3].AddressScope
 			}
 		}
 	}
@@ -603,6 +623,10 @@ func (o *LinkConfigV1Alpha1) DeepCopy() *LinkConfigV1Alpha1 {
 				cp.CommonLinkConfig.LinkAddresses[i3].AddressPriority = new(uint32)
 				*cp.CommonLinkConfig.LinkAddresses[i3].AddressPriority = *o.CommonLinkConfig.LinkAddresses[i3].AddressPriority
 			}
+			if o.CommonLinkConfig.LinkAddresses[i3].AddressScope != nil {
+				cp.CommonLinkConfig.LinkAddresses[i3].AddressScope = new(nethelpers.Scope)
+				*cp.CommonLinkConfig.LinkAddresses[i3].AddressScope = *o.CommonLinkConfig.LinkAddresses[i3].AddressScope
+			}
 		}
 	}
 	if o.CommonLinkConfig.LinkRoutes != nil {
@@ -638,6 +662,10 @@ func (o *MacVLANConfigV1Alpha1) DeepCopy() *MacVLANConfigV1Alpha1 {
 			if o.CommonLinkConfig.LinkAddresses[i3].AddressPriority != nil {
 				cp.CommonLinkConfig.LinkAddresses[i3].AddressPriority = new(uint32)
 				*cp.CommonLinkConfig.LinkAddresses[i3].AddressPriority = *o.CommonLinkConfig.LinkAddresses[i3].AddressPriority
+			}
+			if o.CommonLinkConfig.LinkAddresses[i3].AddressScope != nil {
+				cp.CommonLinkConfig.LinkAddresses[i3].AddressScope = new(nethelpers.Scope)
+				*cp.CommonLinkConfig.LinkAddresses[i3].AddressScope = *o.CommonLinkConfig.LinkAddresses[i3].AddressScope
 			}
 		}
 	}
@@ -779,6 +807,10 @@ func (o *VethConfigV1Alpha1) DeepCopy() *VethConfigV1Alpha1 {
 				cp.VethPeer.CommonLinkConfig.LinkAddresses[i4].AddressPriority = new(uint32)
 				*cp.VethPeer.CommonLinkConfig.LinkAddresses[i4].AddressPriority = *o.VethPeer.CommonLinkConfig.LinkAddresses[i4].AddressPriority
 			}
+			if o.VethPeer.CommonLinkConfig.LinkAddresses[i4].AddressScope != nil {
+				cp.VethPeer.CommonLinkConfig.LinkAddresses[i4].AddressScope = new(nethelpers.Scope)
+				*cp.VethPeer.CommonLinkConfig.LinkAddresses[i4].AddressScope = *o.VethPeer.CommonLinkConfig.LinkAddresses[i4].AddressScope
+			}
 		}
 	}
 	if o.VethPeer.CommonLinkConfig.LinkRoutes != nil {
@@ -800,6 +832,10 @@ func (o *VethConfigV1Alpha1) DeepCopy() *VethConfigV1Alpha1 {
 			if o.CommonLinkConfig.LinkAddresses[i3].AddressPriority != nil {
 				cp.CommonLinkConfig.LinkAddresses[i3].AddressPriority = new(uint32)
 				*cp.CommonLinkConfig.LinkAddresses[i3].AddressPriority = *o.CommonLinkConfig.LinkAddresses[i3].AddressPriority
+			}
+			if o.CommonLinkConfig.LinkAddresses[i3].AddressScope != nil {
+				cp.CommonLinkConfig.LinkAddresses[i3].AddressScope = new(nethelpers.Scope)
+				*cp.CommonLinkConfig.LinkAddresses[i3].AddressScope = *o.CommonLinkConfig.LinkAddresses[i3].AddressScope
 			}
 		}
 	}
@@ -832,6 +868,10 @@ func (o *VLANConfigV1Alpha1) DeepCopy() *VLANConfigV1Alpha1 {
 			if o.CommonLinkConfig.LinkAddresses[i3].AddressPriority != nil {
 				cp.CommonLinkConfig.LinkAddresses[i3].AddressPriority = new(uint32)
 				*cp.CommonLinkConfig.LinkAddresses[i3].AddressPriority = *o.CommonLinkConfig.LinkAddresses[i3].AddressPriority
+			}
+			if o.CommonLinkConfig.LinkAddresses[i3].AddressScope != nil {
+				cp.CommonLinkConfig.LinkAddresses[i3].AddressScope = new(nethelpers.Scope)
+				*cp.CommonLinkConfig.LinkAddresses[i3].AddressScope = *o.CommonLinkConfig.LinkAddresses[i3].AddressScope
 			}
 		}
 	}
@@ -870,6 +910,10 @@ func (o *WireguardConfigV1Alpha1) DeepCopy() *WireguardConfigV1Alpha1 {
 			if o.CommonLinkConfig.LinkAddresses[i3].AddressPriority != nil {
 				cp.CommonLinkConfig.LinkAddresses[i3].AddressPriority = new(uint32)
 				*cp.CommonLinkConfig.LinkAddresses[i3].AddressPriority = *o.CommonLinkConfig.LinkAddresses[i3].AddressPriority
+			}
+			if o.CommonLinkConfig.LinkAddresses[i3].AddressScope != nil {
+				cp.CommonLinkConfig.LinkAddresses[i3].AddressScope = new(nethelpers.Scope)
+				*cp.CommonLinkConfig.LinkAddresses[i3].AddressScope = *o.CommonLinkConfig.LinkAddresses[i3].AddressScope
 			}
 		}
 	}

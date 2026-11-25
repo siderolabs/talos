@@ -200,6 +200,7 @@ type NetworkAdditionalLinkConfigs interface {
 type NetworkAddressConfig interface {
 	Address() netip.Prefix
 	RoutePriority() optional.Optional[uint32]
+	Scope() nethelpers.Scope
 }
 
 // NetworkRouteConfig defines a network route configuration.

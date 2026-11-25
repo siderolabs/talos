@@ -1822,11 +1822,24 @@ func (AddressConfig) Doc() *encoder.Doc {
 				Description: "Configure the route priority (metric) for routes created for this address.\n\nIf not specified, the system default route priority will be used.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Configure the route priority (metric) for routes created for this address." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "scope",
+				Type:        "Scope",
+				Note:        "",
+				Description: "Scope of the address.\n\nAddresses with `link` or `host` scope are not used by the kernel as a source address\nfor traffic leaving the host, while local connections to them still work.\nThis is useful for helper addresses which are only used for local communication.\n\nNon-global scope is only supported for IPv4 addresses, as the kernel derives\nthe scope of IPv6 addresses from the address itself.\n\nIf not specified, the address gets `global` scope.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Scope of the address." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"global",
+					"link",
+					"host",
+				},
+			},
 		},
 	}
 
 	doc.Fields[0].AddExample("", netip.MustParsePrefix("192.168.1.100/24"))
 	doc.Fields[0].AddExample("", netip.MustParsePrefix("fd00::1/64"))
+	doc.Fields[2].AddExample("", "host")
 
 	return doc
 }

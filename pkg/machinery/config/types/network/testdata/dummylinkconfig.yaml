@@ -5,3 +5,5 @@ hardwareAddr: 2e:3c:4d:5e:6f:70
 up: true
 addresses:
     - address: 192.168.1.100/32
+    - address: 169.254.100.1/32
+      scope: host

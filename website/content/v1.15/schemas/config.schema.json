@@ -5493,6 +5493,17 @@
           "description": "Configure the route priority (metric) for routes created for this address.\n\nIf not specified, the system default route priority will be used.\n",
           "markdownDescription": "Configure the route priority (metric) for routes created for this address.\n\nIf not specified, the system default route priority will be used.",
           "x-intellij-html-description": "\u003cp\u003eConfigure the route priority (metric) for routes created for this address.\u003c/p\u003e\n\n\u003cp\u003eIf not specified, the system default route priority will be used.\u003c/p\u003e\n"
+        },
+        "scope": {
+          "enum": [
+            "global",
+            "link",
+            "host"
+          ],
+          "title": "scope",
+          "description": "Scope of the address.\n\nAddresses with link or host scope are not used by the kernel as a source address\nfor traffic leaving the host, while local connections to them still work.\nThis is useful for helper addresses which are only used for local communication.\n\nNon-global scope is only supported for IPv4 addresses, as the kernel derives\nthe scope of IPv6 addresses from the address itself.\n\nIf not specified, the address gets global scope.\n",
+          "markdownDescription": "Scope of the address.\n\nAddresses with `link` or `host` scope are not used by the kernel as a source address\nfor traffic leaving the host, while local connections to them still work.\nThis is useful for helper addresses which are only used for local communication.\n\nNon-global scope is only supported for IPv4 addresses, as the kernel derives\nthe scope of IPv6 addresses from the address itself.\n\nIf not specified, the address gets `global` scope.",
+          "x-intellij-html-description": "\u003cp\u003eScope of the address.\u003c/p\u003e\n\n\u003cp\u003eAddresses with \u003ccode\u003elink\u003c/code\u003e or \u003ccode\u003ehost\u003c/code\u003e scope are not used by the kernel as a source address\nfor traffic leaving the host, while local connections to them still work.\nThis is useful for helper addresses which are only used for local communication.\u003c/p\u003e\n\n\u003cp\u003eNon-global scope is only supported for IPv4 addresses, as the kernel derives\nthe scope of IPv6 addresses from the address itself.\u003c/p\u003e\n\n\u003cp\u003eIf not specified, the address gets \u003ccode\u003eglobal\u003c/code\u003e scope.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

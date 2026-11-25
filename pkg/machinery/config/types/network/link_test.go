@@ -16,6 +16,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 )
 
 //go:embed testdata/linkconfig.yaml
@@ -134,6 +135,38 @@ func TestLinkValidate(t *testing.T) {
 			expectedError: "address 0 must be specified\naddress 1 must be a valid IP address",
 		},
 		{
+			name: "invalid address scope",
+
+			cfg: func() *network.LinkConfigV1Alpha1 {
+				cfg := network.NewLinkConfigV1Alpha1("enp0s2")
+				cfg.LinkAddresses = []network.AddressConfig{
+					{
+						AddressAddress: netip.MustParsePrefix("192.168.1.100/24"),
+						AddressScope:   new(nethelpers.ScopeSite),
+					},
+					{
+						AddressAddress: netip.MustParsePrefix("192.168.1.101/24"),
+						AddressScope:   new(nethelpers.ScopeNowhere),
+					},
+					{
+						AddressAddress: netip.MustParsePrefix("fd00::1/64"),
+						AddressScope:   new(nethelpers.ScopeHost),
+					},
+					{
+						AddressAddress: netip.MustParsePrefix("fe80::1/64"),
+						AddressScope:   new(nethelpers.ScopeLink),
+					},
+				}
+
+				return cfg
+			},
+
+			expectedError: "address 0 scope \"site\" is not supported, must be one of: global, link, host\n" +
+				"address 1 scope \"nowhere\" is not supported, must be one of: global, link, host\n" +
+				"address 2 scope \"host\" is not supported for IPv6 addresses\n" +
+				"address 3 scope \"link\" is not supported for IPv6 addresses",
+		},
+		{
 			name: "route destination with host bits",
 			cfg: func() *network.LinkConfigV1Alpha1 {
 				cfg := network.NewLinkConfigV1Alpha1("enp0s2")
@@ -161,6 +194,18 @@ func TestLinkValidate(t *testing.T) {
 					},
 					{
 						AddressAddress: netip.MustParsePrefix("fd00::1/64"),
+					},
+					{
+						AddressAddress: netip.MustParsePrefix("169.254.100.1/32"),
+						AddressScope:   new(nethelpers.ScopeHost),
+					},
+					{
+						AddressAddress: netip.MustParsePrefix("169.254.100.2/32"),
+						AddressScope:   new(nethelpers.ScopeLink),
+					},
+					{
+						AddressAddress: netip.MustParsePrefix("fd00::2/64"),
+						AddressScope:   new(nethelpers.ScopeGlobal),
 					},
 				}
 				cfg.LinkRoutes = []network.RouteConfig{

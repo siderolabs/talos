@@ -293,7 +293,7 @@ func (ctrl *AddressConfigController) processMachineConfig(linkConfigs []cfg.Netw
 		for _, addr := range linkConfig.Addresses() {
 			address := network.AddressSpecSpec{
 				Address:     addr.Address(),
-				Scope:       nethelpers.ScopeGlobal,
+				Scope:       addr.Scope(),
 				LinkName:    linkConfig.Name(),
 				ConfigLayer: network.ConfigMachineConfiguration,
 				Priority:    addr.RoutePriority().ValueOrZero(),
