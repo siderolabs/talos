@@ -668,6 +668,11 @@ Changing the health check takes effect without restarting the container.
 `mounts` accept host paths, `tmpfs`, and with `volume` a `UserVolumeConfig`, `ExistingVolumeConfig` or `ExternalVolumeConfig` by name.
 `devices.rawVolume` hands a `RawVolumeConfig` to a single container as a block device, without the `privileged` profile.
 
+`UserVolumeConfig` sets the owner, group and mode of its mount point with `mount.owner`, `mount.group` and `mount.mode`, so non-root workloads can write to it: Talos Containers, and pods mounting it as a `hostPath`.
+Workloads running as different users share a volume through a common group, e.g. `group: 2000` with `mode: 0o2770`.
+Only the mount point changes, not the files under it, and changes apply to a mounted volume in place.
+With SELinux categories enabled, a file written by one `restricted` container can't be read by another.
+
 #### Security and Resources
 
 When SELinux is enabled, Talos Containers use a dedicated SELinux domain; the `privileged` profile gets a writable `/sys` and is excluded from the per-container MCS categories.

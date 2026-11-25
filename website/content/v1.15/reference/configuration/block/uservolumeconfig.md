@@ -191,6 +191,42 @@ provisioning:
 #         - no_write_workqueue
 {{< /highlight >}}
 
+{{< highlight yaml >}}
+apiVersion: v1alpha1
+kind: UserVolumeConfig
+name: local-data # Name of the volume.
+volumeType: directory # Volume type.
+# The mount describes additional mount options.
+mount:
+    owner: 1000 # The user ID owning the mount point of the volume (`/var/mnt/<name>`).
+    group: 2000 # The group ID owning the mount point of the volume (`/var/mnt/<name>`).
+    mode: 0o2770 # The permissions of the mount point of the volume (`/var/mnt/<name>`) in octal.
+
+# # The encryption describes how the volume is encrypted.
+# encryption:
+#     provider: luks2 # Encryption provider to use for the encryption.
+#     # Defines the encryption keys generation and storage method.
+#     keys:
+#         - slot: 0 # Key slot number for LUKS2 encryption.
+#           # Key which value is stored in the configuration file.
+#           static:
+#             passphrase: exampleKey # Defines the static passphrase value.
+#
+#           # # KMS managed encryption key.
+#           # kms:
+#           #     endpoint: https://192.168.88.21:4443 # KMS endpoint to Seal/Unseal the key.
+#         - slot: 1 # Key slot number for LUKS2 encryption.
+#           # KMS managed encryption key.
+#           kms:
+#             endpoint: https://example-kms-endpoint.com # KMS endpoint to Seal/Unseal the key.
+#     cipher: aes-xts-plain64 # Cipher to use for the encryption. Depends on the encryption provider.
+#     blockSize: 4096 # Defines the encryption sector size.
+#     # Additional --perf parameters for the LUKS2 encryption.
+#     options:
+#         - no_read_workqueue
+#         - no_write_workqueue
+{{< /highlight >}}
+
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
@@ -459,6 +495,13 @@ UserMountSpec describes how the volume is mounted.
 |-------|------|-------------|----------|
 |`disableAccessTime` |bool |If true, disable file access time updates.  | |
 |`secure` |bool |Enable secure mount options (nosuid, nodev, noexec).<br><br>Defaults to true for better security.  | |
+|`owner` |uint32 |The user ID owning the mount point of the volume (`/var/mnt/<name>`).<br><br>Only the mount point itself is changed, not the files and directories under it.<br>Containers running as different users can share the volume through a common `group`.<br><br>Defaults to `0` (root). <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+owner: 1000
+{{< /highlight >}}</details> | |
+|`group` |uint32 |The group ID owning the mount point of the volume (`/var/mnt/<name>`).<br><br>Only the mount point itself is changed, not the files and directories under it.<br><br>Defaults to `0` (root). <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+group: 2000
+{{< /highlight >}}</details> | |
+|`mode` |UserVolumeMountMode |The permissions of the mount point of the volume (`/var/mnt/<name>`) in octal.<br><br>The value must be written in octal notation (`0o2770` or `02770`): an unprefixed<br>number such as `2770` is rejected, as YAML would read it as decimal.<br><br>The setuid (`0o4000`), setgid (`0o2000`) and sticky (`0o1000`) bits may be set:<br>with setgid, files created in the volume inherit the group of the mount point.<br><br>Defaults to `0o755`.  | |
 
 
 

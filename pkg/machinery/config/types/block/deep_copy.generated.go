@@ -289,6 +289,18 @@ func (o *UserVolumeConfigV1Alpha1) DeepCopy() *UserVolumeConfigV1Alpha1 {
 		cp.MountSpec.MountSecure = new(bool)
 		*cp.MountSpec.MountSecure = *o.MountSpec.MountSecure
 	}
+	if o.MountSpec.MountOwner != nil {
+		cp.MountSpec.MountOwner = new(uint32)
+		*cp.MountSpec.MountOwner = *o.MountSpec.MountOwner
+	}
+	if o.MountSpec.MountGroup != nil {
+		cp.MountSpec.MountGroup = new(uint32)
+		*cp.MountSpec.MountGroup = *o.MountSpec.MountGroup
+	}
+	if o.MountSpec.MountMode != nil {
+		cp.MountSpec.MountMode = new(UserVolumeMountMode)
+		*cp.MountSpec.MountMode = *o.MountSpec.MountMode
+	}
 	if o.TrimSpec != nil {
 		cp.TrimSpec = new(TrimConfig)
 		*cp.TrimSpec = *o.TrimSpec

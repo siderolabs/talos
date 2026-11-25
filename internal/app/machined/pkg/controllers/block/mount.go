@@ -55,8 +55,26 @@ type mountContext struct {
 	// mounting another instance over it.
 	settingsPending bool
 
+	// ownership is the mode and owner last applied to the mount target, nil if none were applied.
+	ownership *targetOwnership
+
 	// volumeSize is the size of the volume the filesystem was last grown for.
 	volumeSize uint64
+}
+
+// targetOwnership is the mode and owner of a mount target.
+type targetOwnership struct {
+	mode os.FileMode
+	uid  int
+	gid  int
+}
+
+func ownershipOf(mountSpec block.MountSpec) *targetOwnership {
+	return &targetOwnership{
+		mode: mountSpec.FileMode,
+		uid:  mountSpec.UID,
+		gid:  mountSpec.GID,
+	}
 }
 
 // Failed mount and unmount operations are retried with an exponential backoff, unless an input event comes first.
@@ -433,8 +451,13 @@ func (ctrl *MountController) handleDirectoryMountOperation(
 			rootPath, target, *volumeStatus.TypedSpec().MountSpec.BindTarget,
 			mountRequest, volumeStatus,
 		); err != nil {
-			return fmt.Errorf("target path %q is not a directory", targetPath)
+			return fmt.Errorf("failed to bind mount %q: %w", targetPath, err)
 		}
+	}
+
+	// Read-only volumes keep their existing metadata.
+	if !shouldUpdateSettings(mountRequest, volumeStatus) {
+		return nil
 	}
 
 	return ctrl.updateTargetSettings(targetPath, volumeStatus.TypedSpec().Filesystem, volumeStatus.TypedSpec().MountSpec)
@@ -878,6 +901,10 @@ func (ctrl *MountController) handleDiskMountOperation(
 			return errors.Join(err, fmt.Errorf("failed to unmount %q: %w", mountRequest.Metadata().ID(), unmountErr))
 		}
 
+		if shouldUpdateTargetSettings {
+			mountCtx.ownership = ownershipOf(volumeStatus.TypedSpec().MountSpec)
+		}
+
 		logger.Info(
 			"volume mount",
 			zap.String("volume", volumeStatus.Metadata().ID()),
@@ -898,6 +925,10 @@ func (ctrl *MountController) handleDiskMountOperation(
 		}
 
 		mountCtx.settingsPending = false
+
+		if shouldUpdateSettings(mountRequest, volumeStatus) && !mountRequest.TypedSpec().Detached {
+			mountCtx.ownership = ownershipOf(volumeStatus.TypedSpec().MountSpec)
+		}
 	}
 
 	if mountCtx.readOnly != mountRequest.TypedSpec().ReadOnly { // remount if needed
@@ -950,14 +981,64 @@ func (ctrl *MountController) handleDiskMountOperation(
 		return fmt.Errorf("failed to grow filesystem %q: %w", mountRequest.Metadata().ID(), err)
 	}
 
-	return updateMountSecurity(
+	if err := updateMountSecurity(
 		logger,
 		mountRequest.Metadata().ID(),
 		volumeStatus.Metadata().ID(),
 		mountCtx,
 		mountRequest.TypedSpec().Secure,
 		mountRequest.TypedSpec().NoExec,
-	)
+	); err != nil {
+		return err
+	}
+
+	// The ownership update runs last: a persistent chmod or chown failure must not hold back
+	// the growth and the security flags of the mount.
+	return ctrl.updateMountedTargetOwnership(logger, mountTarget, mountCtx, mountRequest, volumeStatus)
+}
+
+// updateMountedTargetOwnership applies a change of the mode or owner of a mounted volume in place.
+//
+// A target which got no settings on mount (it was mounted read-only) gets them once it is writable.
+func (ctrl *MountController) updateMountedTargetOwnership(
+	logger *zap.Logger,
+	mountTarget string,
+	mountCtx *mountContext,
+	mountRequest *block.MountRequest,
+	volumeStatus *block.VolumeStatus,
+) error {
+	if mountCtx.readOnly || mountCtx.detached || !shouldUpdateSettings(mountRequest, volumeStatus) {
+		return nil
+	}
+
+	desired := ownershipOf(volumeStatus.TypedSpec().MountSpec)
+	if mountCtx.ownership != nil && *desired == *mountCtx.ownership {
+		return nil
+	}
+
+	if err := ctrl.updateTargetSettings(mountTarget, volumeStatus.TypedSpec().Filesystem, volumeStatus.TypedSpec().MountSpec); err != nil {
+		return fmt.Errorf("failed to update target settings %q: %w", mountRequest.Metadata().ID(), err)
+	}
+
+	if mountCtx.ownership == nil {
+		logger.Info(
+			"volume mount target settings applied",
+			zap.String("volume", volumeStatus.Metadata().ID()),
+			zap.Stringer("mode", desired.mode),
+			zap.String("owner", fmt.Sprintf("%d:%d", desired.uid, desired.gid)),
+		)
+	} else {
+		logger.Info(
+			"volume mount target ownership updated",
+			zap.String("volume", volumeStatus.Metadata().ID()),
+			zap.String("mode", fmt.Sprintf("%v -> %v", mountCtx.ownership.mode, desired.mode)),
+			zap.String("owner", fmt.Sprintf("%d:%d -> %d:%d", mountCtx.ownership.uid, mountCtx.ownership.gid, desired.uid, desired.gid)),
+		)
+	}
+
+	mountCtx.ownership = desired
+
+	return nil
 }
 
 // growMountedFilesystem grows the filesystem of the mounted volume (if the volume is set to grow).

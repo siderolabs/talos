@@ -365,6 +365,12 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 			// against the latest desired state even when the volume is already ready.
 			if vc.TypedSpec().Type == block.VolumeTypeExternal {
 				volumeStatus.TypedSpec().MountSpec = vc.TypedSpec().Mount
+			} else if volumeStatus.TypedSpec().Phase == block.VolumePhaseReady && ownershipAppliedInPlace(vc.TypedSpec().Type) {
+				// Only the mode and owner may change on a ready volume. This is the desired value: the mount
+				// controller applies it only while the mount is writable and attached.
+				volumeStatus.TypedSpec().MountSpec.FileMode = vc.TypedSpec().Mount.FileMode
+				volumeStatus.TypedSpec().MountSpec.UID = vc.TypedSpec().Mount.UID
+				volumeStatus.TypedSpec().MountSpec.GID = vc.TypedSpec().Mount.GID
 			}
 
 			// Propagate resolved trim/scrub configuration and the encryption discard setting to the status,
@@ -717,4 +723,15 @@ func (ctrl *VolumeManagerController) bootPartitionUUID(ctx context.Context, r co
 	}
 
 	return bootPartition.TypedSpec().PartitionUUID, nil
+}
+
+// ownershipAppliedInPlace reports whether the mount controller applies a change of the mode or owner of a mounted
+// volume of the given type in place.
+func ownershipAppliedInPlace(volumeType block.VolumeType) bool {
+	switch volumeType { //nolint:exhaustive
+	case block.VolumeTypeDirectory, block.VolumeTypeDisk, block.VolumeTypePartition, block.VolumeTypeTmpfs:
+		return true
+	default:
+		return false
+	}
 }

@@ -69,6 +69,8 @@ func TestUserVolumeTransformer(t *testing.T) {
 					assert.Equal(t, "foo", vc.TypedSpec().Mount.TargetPath)
 					assert.Equal(t, constants.UserVolumeMountPoint, vc.TypedSpec().Mount.ParentID)
 					assert.Equal(t, fs.FileMode(0o755), vc.TypedSpec().Mount.FileMode)
+					assert.Equal(t, 0, vc.TypedSpec().Mount.UID)
+					assert.Equal(t, 0, vc.TypedSpec().Mount.GID)
 				})
 
 				testMountTransformFunc(t, resources[0].MountTransformFunc, func(t *testing.T, m *block.VolumeMountRequest, err error) {
@@ -107,6 +109,8 @@ func TestUserVolumeTransformer(t *testing.T) {
 					assert.Equal(t, constants.UserVolumeMountPoint, vc.TypedSpec().Mount.ParentID)
 					assert.Equal(t, new("bar"), vc.TypedSpec().Mount.BindTarget)
 					assert.Equal(t, fs.FileMode(0o755), vc.TypedSpec().Mount.FileMode)
+					assert.Equal(t, 0, vc.TypedSpec().Mount.UID)
+					assert.Equal(t, 0, vc.TypedSpec().Mount.GID)
 				})
 
 				testMountTransformFunc(t, resources[0].MountTransformFunc, func(t *testing.T, m *block.VolumeMountRequest, err error) {
@@ -114,6 +118,48 @@ func TestUserVolumeTransformer(t *testing.T) {
 					assert.True(t, m.TypedSpec().Secure)
 					assert.True(t, m.TypedSpec().NoExec)
 				})
+			},
+		},
+		{
+			name: "mount ownership",
+			cfg: func() []*blockcfg.UserVolumeConfigV1Alpha1 {
+				cfgs := make([]*blockcfg.UserVolumeConfigV1Alpha1, 0, 4)
+
+				for _, volumeType := range []block.VolumeType{
+					block.VolumeTypeDirectory,
+					block.VolumeTypeDisk,
+					block.VolumeTypePartition,
+					block.VolumeTypeTmpfs,
+				} {
+					cfgs = append(cfgs, &blockcfg.UserVolumeConfigV1Alpha1{
+						MetaKind:       blockcfg.UserVolumeConfigKind,
+						MetaAPIVersion: "v1alpha1",
+						MetaName:       volumeType.String(),
+						VolumeType:     new(volumeType),
+						MountSpec: blockcfg.UserMountSpec{
+							MountOwner: new(uint32(999)),
+							MountGroup: new(uint32(2000)),
+							MountMode:  new(blockcfg.UserVolumeMountMode(0o2770)),
+						},
+					})
+				}
+
+				return cfgs
+			}(),
+			checkFunc: func(t *testing.T, resources []volumeconfig.VolumeResource, err error) {
+				require.NoError(t, err)
+				require.Len(t, resources, 4)
+
+				for _, resource := range resources {
+					testTransformFunc(t, resource.TransformFunc, func(t *testing.T, vc *block.VolumeConfig, err error) {
+						require.NoError(t, err)
+
+						assert.Equal(t, fs.ModeSetgid|0o770, vc.TypedSpec().Mount.FileMode, resource.VolumeID)
+						assert.Equal(t, 999, vc.TypedSpec().Mount.UID, resource.VolumeID)
+						assert.Equal(t, 2000, vc.TypedSpec().Mount.GID, resource.VolumeID)
+						assert.False(t, vc.TypedSpec().Mount.RecursiveRelabel, resource.VolumeID)
+					})
+				}
 			},
 		},
 		{
@@ -145,6 +191,8 @@ func TestUserVolumeTransformer(t *testing.T) {
 					assert.Equal(t, constants.UserVolumeMountPoint, vc.TypedSpec().Mount.ParentID)
 					assert.Nil(t, vc.TypedSpec().Mount.BindTarget)
 					assert.Equal(t, fs.FileMode(0o755), vc.TypedSpec().Mount.FileMode)
+					assert.Equal(t, 0, vc.TypedSpec().Mount.UID)
+					assert.Equal(t, 0, vc.TypedSpec().Mount.GID)
 					assert.Equal(t, constants.EphemeralSelinuxLabel, vc.TypedSpec().Mount.SelinuxLabel)
 					assert.Equal(t,
 						[]block.ParameterSpec{block.NewStringParameter(block.TmpfsSizeParameter, "67108864")},
@@ -366,6 +414,8 @@ func TestExistingVolumeTransformer(t *testing.T) {
 					assert.Equal(t, "existing-data", vc.TypedSpec().Mount.TargetPath)
 					assert.Equal(t, constants.UserVolumeMountPoint, vc.TypedSpec().Mount.ParentID)
 					assert.Equal(t, fs.FileMode(0o755), vc.TypedSpec().Mount.FileMode)
+					assert.Equal(t, 0, vc.TypedSpec().Mount.UID)
+					assert.Equal(t, 0, vc.TypedSpec().Mount.GID)
 				})
 
 				testMountTransformFunc(t, resources[0].MountTransformFunc, func(t *testing.T, m *block.VolumeMountRequest, err error) {
@@ -469,6 +519,8 @@ func TestExternalVolumeTransformer(t *testing.T) {
 					assert.Equal(t, "external-data", vc.TypedSpec().Mount.TargetPath)
 					assert.Equal(t, constants.UserVolumeMountPoint, vc.TypedSpec().Mount.ParentID)
 					assert.Equal(t, fs.FileMode(0o755), vc.TypedSpec().Mount.FileMode)
+					assert.Equal(t, 0, vc.TypedSpec().Mount.UID)
+					assert.Equal(t, 0, vc.TypedSpec().Mount.GID)
 					assert.Equal(t, "data", vc.TypedSpec().Provisioning.DiskSelector.External)
 				})
 
@@ -511,6 +563,8 @@ func TestExternalVolumeTransformer(t *testing.T) {
 					assert.Equal(t, "external-data", vc.TypedSpec().Mount.TargetPath)
 					assert.Equal(t, constants.UserVolumeMountPoint, vc.TypedSpec().Mount.ParentID)
 					assert.Equal(t, fs.FileMode(0o755), vc.TypedSpec().Mount.FileMode)
+					assert.Equal(t, 0, vc.TypedSpec().Mount.UID)
+					assert.Equal(t, 0, vc.TypedSpec().Mount.GID)
 					assert.Equal(t, "data", vc.TypedSpec().Provisioning.DiskSelector.External)
 				})
 

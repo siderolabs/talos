@@ -2364,6 +2364,82 @@ func (suite *ContainersSuite) TestUserVolumeMountWritableByDefault() {
 		})
 }
 
+// TestSharedUserVolumeOwnership verifies that containers running as different non-root users write to
+// a user volume they share through its group: the ownership comes from the volume, not the containers.
+func (suite *ContainersSuite) TestSharedUserVolumeOwnership() {
+	ctx, name, node := suite.setupContainer("volume-shared")
+
+	otherName := name + "-other"
+
+	// the other container isn't owned by the setup, so it is removed here, before the volume
+	suite.T().Cleanup(func() {
+		suite.RemoveMachineConfigDocumentsByName(client.WithNode(context.Background(), node), containercfg.ContainerConfigKind, name, otherName)
+	})
+
+	const (
+		destination = "/mnt/data"
+		sharedGID   = 2000
+	)
+
+	volumeName := fmt.Sprintf("itv-shared-%04x", rand.Int31())
+	suite.ownVolume(name, volumeName)
+
+	volume := newDirectoryUserVolume(volumeName)
+	volume.MountSpec.MountGroup = new(uint32(sharedGID))
+	volume.MountSpec.MountMode = new(blockcfg.UserVolumeMountMode(0o2770))
+
+	suite.PatchMachineConfig(ctx, volume)
+
+	// the wait for the other file lists the directory: with SELinux categories, the file of the other
+	// container can't even be stat'ed, so `[ -e ]` would never succeed
+	newSharingContainer := func(self, other string, uid uint32) *containercfg.ContainerConfigV1Alpha1 {
+		gid := uint32(sharedGID)
+
+		doc := suite.shellContainer(self,
+			"echo from-"+self+" > "+destination+"/"+self+" || { echo WRITE-DENIED; exit 0; }; "+
+				"echo \"wrote gid=$(stat -c %g "+destination+"/"+self+")\"; "+
+				"echo \"self=$(cat "+destination+"/"+self+" 2>/dev/null || echo denied)\"; "+
+				"until case \" $(echo "+destination+"/*) \" in *\" "+destination+"/"+other+" \"*) true;; *) false;; esac; do sleep 1; done; "+
+				"echo \"read=$(cat "+destination+"/"+other+" 2>/dev/null || echo denied)\"; "+
+				"{ "+parkCommand+"; }")
+		doc.RunAsConfig = &containercfg.ContainerRunAs{
+			RunAsUID: &uid,
+			RunAsGID: &gid,
+		}
+		doc.MountsConfig = []containercfg.ContainerMount{
+			{
+				VolumeMount: &containercfg.VolumeMount{
+					VolumeName:       volumeName,
+					MountDestination: destination,
+				},
+			},
+		}
+
+		return doc
+	}
+
+	suite.applyContainers(ctx,
+		newSharingContainer(name, otherName, 1000),
+		newSharingContainer(otherName, name, 1100),
+	)
+
+	securityState, err := safe.StateGetByID[*runtimeres.SecurityState](ctx, suite.Client.State(), runtimeres.SecurityStateID)
+	suite.Require().NoError(err)
+
+	for self, other := range map[string]string{name: otherName, otherName: name} {
+		logs := suite.assertContainerLogged(ctx, self, "read=", "WRITE-DENIED")
+
+		suite.Assert().NotContains(logs, "WRITE-DENIED", "container %q can't write to the shared volume", self)
+		suite.Assert().Contains(logs, fmt.Sprintf("wrote gid=%d", sharedGID), "the file of container %q did not inherit the group of the volume", self)
+		suite.Assert().Contains(logs, "self=from-"+self, "container %q can't read its own file in the shared volume", self)
+
+		// with SELinux categories, the file of the other container carries categories this one lacks
+		if !securityState.TypedSpec().SELinuxCategories {
+			suite.Assert().Contains(logs, "read=from-"+other, "container %q can't read the file of %q", self, other)
+		}
+	}
+}
+
 // TestRawVolumeDevice verifies that a restricted container can do direct IO on an encrypted raw volume
 // handed to it as a device, and can't open another block device, and that the raw volume is held while
 // the container runs.

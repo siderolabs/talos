@@ -6,6 +6,7 @@
 package block_test
 
 import (
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -111,6 +112,20 @@ func TestUserVolumeConfigMarshalUnmarshal(t *testing.T) {
 				c.MetaName = "scratch"
 				c.VolumeType = new(blockres.VolumeTypeTmpfs)
 				c.ProvisioningSpec.ProvisioningMaxSize = block.MustSize("64MiB")
+
+				return c
+			},
+		},
+		{
+			name:     "mount ownership",
+			filename: "uservolumeconfig_ownership.yaml",
+			cfg: func(*testing.T) *block.UserVolumeConfigV1Alpha1 {
+				c := block.NewUserVolumeConfigV1Alpha1()
+				c.MetaName = "shared"
+				c.VolumeType = new(blockres.VolumeTypeDirectory)
+				c.MountSpec.MountOwner = new(uint32(999))
+				c.MountSpec.MountGroup = new(uint32(2000))
+				c.MountSpec.MountMode = new(block.UserVolumeMountMode(0o2770))
 
 				return c
 			},
@@ -447,6 +462,52 @@ func TestUserVolumeConfigValidate(t *testing.T) {
 			expectedErrors: "mount.disableAccessTime is invalid for volumeType directory",
 		},
 		{
+			name: "mount ownership for directory",
+
+			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
+				c := block.NewUserVolumeConfigV1Alpha1()
+				c.MetaName = constants.EphemeralPartitionLabel
+				c.VolumeType = new(blockres.VolumeTypeDirectory)
+				c.MountSpec.MountOwner = new(uint32(1000))
+				c.MountSpec.MountGroup = new(uint32(2000))
+				c.MountSpec.MountMode = new(block.UserVolumeMountMode(0o2770))
+
+				return c
+			},
+		},
+		{
+			name: "mount ownership for tmpfs",
+
+			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
+				c := block.NewUserVolumeConfigV1Alpha1()
+				c.MetaName = constants.EphemeralPartitionLabel
+				c.VolumeType = new(blockres.VolumeTypeTmpfs)
+				c.ProvisioningSpec.ProvisioningMaxSize = block.MustSize("64MiB")
+				c.MountSpec.MountOwner = new(uint32(1000))
+				c.MountSpec.MountMode = new(block.UserVolumeMountMode(0o700))
+
+				return c
+			},
+		},
+		{
+			name: "invalid mount ownership",
+
+			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
+				c := block.NewUserVolumeConfigV1Alpha1()
+				c.MetaName = constants.EphemeralPartitionLabel
+				c.VolumeType = new(blockres.VolumeTypeDirectory)
+				c.MountSpec.MountOwner = new(uint32(4294967295))
+				c.MountSpec.MountGroup = new(uint32(4294967295))
+				c.MountSpec.MountMode = new(block.UserVolumeMountMode(0o10755))
+
+				return c
+			},
+
+			expectedErrors: "mount.owner must be at most 4294967294, got 4294967295\n" +
+				"mount.group must be at most 4294967294, got 4294967295\n" +
+				"mount.mode 0o10755 may only contain permission, setuid, setgid and sticky bits",
+		},
+		{
 			name: "invalid volumeType",
 
 			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
@@ -682,6 +743,126 @@ func TestUserVolumeConfigValidate(t *testing.T) {
 
 				assert.EqualError(t, err, test.expectedErrors)
 			}
+		})
+	}
+}
+
+func TestUserVolumeConfigUnmarshalMode(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		mode string
+
+		expectedMode  block.UserVolumeMountMode
+		expectedError string
+	}{
+		{mode: "0o2770", expectedMode: 0o2770},
+		{mode: "02770", expectedMode: 0o2770},
+		{mode: "0o755", expectedMode: 0o755},
+		{mode: "0", expectedMode: 0},
+		{mode: "2770", expectedError: `mount.mode must be an octal number such as 0o2770, got "2770"`},
+		{mode: "755", expectedError: `mount.mode must be an octal number such as 0o2770, got "755"`},
+		{mode: "0x1ed", expectedError: `mount.mode must be an octal number such as 0o2770, got "0x1ed"`},
+		{mode: "0o9", expectedError: `mount.mode must be an octal number such as 0o2770, got "0o9"`},
+		{mode: `"0o755"`, expectedError: `mount.mode must be an octal number such as 0o2770, got "0o755"`},
+	} {
+		t.Run(test.mode, func(t *testing.T) {
+			t.Parallel()
+
+			provider, err := configloader.NewFromBytes([]byte(`apiVersion: v1alpha1
+kind: UserVolumeConfig
+name: shared
+volumeType: directory
+mount:
+    mode: ` + test.mode + "\n"))
+
+			if test.expectedError != "" {
+				require.ErrorContains(t, err, test.expectedError)
+
+				return
+			}
+
+			require.NoError(t, err)
+
+			docs := provider.Documents()
+			require.Len(t, docs, 1)
+
+			cfg, ok := docs[0].(*block.UserVolumeConfigV1Alpha1)
+			require.True(t, ok)
+			require.NotNil(t, cfg.MountSpec.MountMode)
+
+			assert.Equal(t, test.expectedMode, *cfg.MountSpec.MountMode)
+		})
+	}
+}
+
+func TestUserMountSpecOwnership(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name string
+
+		spec block.UserMountSpec
+
+		expectedOwner uint32
+		expectedGroup uint32
+		expectedMode  fs.FileMode
+	}{
+		{
+			name: "defaults",
+
+			expectedMode: 0o755,
+		},
+		{
+			name: "permission bits",
+
+			spec: block.UserMountSpec{
+				MountOwner: new(uint32(1000)),
+				MountGroup: new(uint32(2000)),
+				MountMode:  new(block.UserVolumeMountMode(0o750)),
+			},
+
+			expectedOwner: 1000,
+			expectedGroup: 2000,
+			expectedMode:  0o750,
+		},
+		{
+			name: "IDs above 2^31",
+
+			spec: block.UserMountSpec{
+				MountOwner: new(uint32(3000000000)),
+				MountGroup: new(uint32(4294967294)),
+			},
+
+			expectedOwner: 3000000000,
+			expectedGroup: 4294967294,
+			expectedMode:  0o755,
+		},
+		{
+			name: "setgid",
+
+			spec: block.UserMountSpec{
+				MountMode: new(block.UserVolumeMountMode(0o2770)),
+			},
+
+			expectedMode: fs.ModeSetgid | 0o770,
+		},
+		{
+			name: "setuid and sticky",
+
+			spec: block.UserMountSpec{
+				MountMode: new(block.UserVolumeMountMode(0o5777)),
+			},
+
+			expectedMode: fs.ModeSetuid | fs.ModeSticky | 0o777,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.expectedOwner, test.spec.Owner())
+			assert.Equal(t, test.expectedGroup, test.spec.Group())
+			assert.Equal(t, test.expectedMode, test.spec.Mode())
 		})
 	}
 }

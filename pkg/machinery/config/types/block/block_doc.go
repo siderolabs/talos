@@ -1154,6 +1154,8 @@ func (UserVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 
 	doc.AddExample("", exampleUserVolumeConfigV1Alpha1Tmpfs())
 
+	doc.AddExample("", exampleUserVolumeConfigV1Alpha1Owned())
+
 	return doc
 }
 
@@ -1183,8 +1185,32 @@ func (UserMountSpec) Doc() *encoder.Doc {
 				Description: "Enable secure mount options (nosuid, nodev, noexec).\n\nDefaults to true for better security.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable secure mount options (nosuid, nodev, noexec)." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "owner",
+				Type:        "uint32",
+				Note:        "",
+				Description: "The user ID owning the mount point of the volume (`/var/mnt/<name>`).\n\nOnly the mount point itself is changed, not the files and directories under it.\nContainers running as different users can share the volume through a common `group`.\n\nDefaults to `0` (root).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The user ID owning the mount point of the volume (`/var/mnt/<name>`)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "group",
+				Type:        "uint32",
+				Note:        "",
+				Description: "The group ID owning the mount point of the volume (`/var/mnt/<name>`).\n\nOnly the mount point itself is changed, not the files and directories under it.\n\nDefaults to `0` (root).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The group ID owning the mount point of the volume (`/var/mnt/<name>`)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "mode",
+				Type:        "UserVolumeMountMode",
+				Note:        "",
+				Description: "The permissions of the mount point of the volume (`/var/mnt/<name>`) in octal.\n\nThe value must be written in octal notation (`0o2770` or `02770`): an unprefixed\nnumber such as `2770` is rejected, as YAML would read it as decimal.\n\nThe setuid (`0o4000`), setgid (`0o2000`) and sticky (`0o1000`) bits may be set:\nwith setgid, files created in the volume inherit the group of the mount point.\n\nDefaults to `0o755`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The permissions of the mount point of the volume (`/var/mnt/<name>`) in octal." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
+
+	doc.Fields[2].AddExample("", 1000)
+	doc.Fields[3].AddExample("", 2000)
 
 	return doc
 }

@@ -9,10 +9,13 @@ package block
 import (
 	"errors"
 	"fmt"
+	"io/fs"
+	"strconv"
 	"strings"
 
 	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/go-pointer"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
@@ -69,6 +72,7 @@ type VolumeType = block.VolumeType
 //	  - value: exampleUserVolumeConfigV1Alpha1Disk()
 //	  - value: exampleUserVolumeConfigV1Alpha1Partition()
 //	  - value: exampleUserVolumeConfigV1Alpha1Tmpfs()
+//	  - value: exampleUserVolumeConfigV1Alpha1Owned()
 //	alias: UserVolumeConfig
 //	schemaRoot: true
 //	schemaMeta: v1alpha1/UserVolumeConfig
@@ -119,6 +123,124 @@ type UserMountSpec struct {
 	//
 	//     Defaults to true for better security.
 	MountSecure *bool `yaml:"secure,omitempty"`
+	//   description: |
+	//     The user ID owning the mount point of the volume (`/var/mnt/<name>`).
+	//
+	//     Only the mount point itself is changed, not the files and directories under it.
+	//     Containers running as different users can share the volume through a common `group`.
+	//
+	//     Defaults to `0` (root).
+	//   examples:
+	//     - value: 1000
+	//   schema:
+	//     type: integer
+	//     minimum: 0
+	//     maximum: 4294967294
+	MountOwner *uint32 `yaml:"owner,omitempty"`
+	//   description: |
+	//     The group ID owning the mount point of the volume (`/var/mnt/<name>`).
+	//
+	//     Only the mount point itself is changed, not the files and directories under it.
+	//
+	//     Defaults to `0` (root).
+	//   examples:
+	//     - value: 2000
+	//   schema:
+	//     type: integer
+	//     minimum: 0
+	//     maximum: 4294967294
+	MountGroup *uint32 `yaml:"group,omitempty"`
+	//   description: |
+	//     The permissions of the mount point of the volume (`/var/mnt/<name>`) in octal.
+	//
+	//     The value must be written in octal notation (`0o2770` or `02770`): an unprefixed
+	//     number such as `2770` is rejected, as YAML would read it as decimal.
+	//
+	//     The setuid (`0o4000`), setgid (`0o2000`) and sticky (`0o1000`) bits may be set:
+	//     with setgid, files created in the volume inherit the group of the mount point.
+	//
+	//     Defaults to `0o755`.
+	//   schema:
+	//     type: integer
+	//     minimum: 0
+	//     maximum: 4095 # 0o7777
+	MountMode *UserVolumeMountMode `yaml:"mode,omitempty"`
+}
+
+// userVolumeDefaultMountMode is the mode of the mount point of a user volume which does not set one.
+const userVolumeDefaultMountMode = 0o755
+
+// userVolumeMaxID is the highest user or group ID of a user volume mount point.
+//
+// 4294967295 ((uid_t)-1) is not a valid ID: chown reads it as "leave unchanged".
+const userVolumeMaxID = 4294967294
+
+// userVolumeMountModeMask is the mask of the bits allowed in the mode of the mount point of a user volume.
+const userVolumeMountModeMask = 0o7777
+
+// UserVolumeMountMode holds the Unix mode bits of a user volume mount point (e.g. 0o2770), not an fs.FileMode.
+type UserVolumeMountMode uint32
+
+// String converts the mode to an octal string.
+func (mode UserVolumeMountMode) String() string {
+	return "0o" + strconv.FormatUint(uint64(mode), 8)
+}
+
+// MarshalYAML encodes as an octal value.
+func (mode UserVolumeMountMode) MarshalYAML() (any, error) {
+	return &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!int",
+		Value: mode.String(),
+	}, nil
+}
+
+// UnmarshalYAML decodes the mode, which must be written in octal notation.
+//
+// YAML reads an unprefixed number such as 2770 as decimal, which would silently produce
+// unrelated permission bits, so only octal literals (0o2770 or 02770) are accepted.
+func (mode *UserVolumeMountMode) UnmarshalYAML(value *yaml.Node) error {
+	if value.Kind != yaml.ScalarNode || !isOctalLiteral(value.Value) {
+		return fmt.Errorf("mount.mode must be an octal number such as 0o2770, got %q", value.Value)
+	}
+
+	var v uint32
+
+	if err := value.Decode(&v); err != nil {
+		return fmt.Errorf("mount.mode must be an octal number such as 0o2770, got %q: %w", value.Value, err)
+	}
+
+	*mode = UserVolumeMountMode(v)
+
+	return nil
+}
+
+// isOctalLiteral reports whether s is written as an octal number: 0, 0o-prefixed or 0-prefixed (YAML 1.1).
+func isOctalLiteral(s string) bool {
+	if s == "0" || strings.HasPrefix(s, "0o") {
+		return true
+	}
+
+	return len(s) > 1 && s[0] == '0' && s[1] >= '0' && s[1] <= '7'
+}
+
+// FileMode converts the Unix mode bits to fs.FileMode.
+func (mode UserVolumeMountMode) FileMode() fs.FileMode {
+	fileMode := fs.FileMode(mode) & fs.ModePerm
+
+	if mode&0o4000 != 0 {
+		fileMode |= fs.ModeSetuid
+	}
+
+	if mode&0o2000 != 0 {
+		fileMode |= fs.ModeSetgid
+	}
+
+	if mode&0o1000 != 0 {
+		fileMode |= fs.ModeSticky
+	}
+
+	return fileMode
 }
 
 // NewUserVolumeConfigV1Alpha1 creates a new user volume config document.
@@ -169,6 +291,19 @@ func exampleUserVolumeConfigV1Alpha1Directory() *UserVolumeConfigV1Alpha1 {
 	cfg := NewUserVolumeConfigV1Alpha1()
 	cfg.MetaName = userVolumeName
 	cfg.VolumeType = new(block.VolumeTypeDirectory)
+
+	return cfg
+}
+
+func exampleUserVolumeConfigV1Alpha1Owned() *UserVolumeConfigV1Alpha1 {
+	cfg := NewUserVolumeConfigV1Alpha1()
+	cfg.MetaName = userVolumeName
+	cfg.VolumeType = new(block.VolumeTypeDirectory)
+	cfg.MountSpec = UserMountSpec{
+		MountOwner: new(uint32(1000)),
+		MountGroup: new(uint32(2000)),
+		MountMode:  new(UserVolumeMountMode(0o2770)),
+	}
 
 	return cfg
 }
@@ -310,6 +445,10 @@ func (s *UserVolumeConfigV1Alpha1) Validate(validation.RuntimeMode, ...validatio
 		validationErrors = errors.Join(validationErrors, fmt.Errorf("unsupported volume type %q", vtype))
 	}
 
+	if err := s.MountSpec.Validate(); err != nil {
+		validationErrors = errors.Join(validationErrors, err)
+	}
+
 	if err := s.TrimSpec.Validate(); err != nil {
 		validationErrors = errors.Join(validationErrors, err)
 	}
@@ -406,7 +545,7 @@ func (s *UserVolumeConfigV1Alpha1) Encryption() config.EncryptionConfig {
 }
 
 // Mount implements config.UserVolumeConfig interface.
-func (s *UserVolumeConfigV1Alpha1) Mount() config.VolumeMountConfig {
+func (s *UserVolumeConfigV1Alpha1) Mount() config.UserVolumeMountConfig {
 	return s.MountSpec
 }
 
@@ -531,7 +670,46 @@ func (s *XFSSpec) MinAllocationGroupSize() optional.Optional[uint64] {
 
 // IsZero checks if the mount spec is zero.
 func (s UserMountSpec) IsZero() bool {
-	return s.MountDisableAccessTime == nil && s.MountSecure == nil
+	return s.MountDisableAccessTime == nil && s.MountSecure == nil &&
+		s.MountOwner == nil && s.MountGroup == nil && s.MountMode == nil
+}
+
+// Owner implements config.UserVolumeMountConfig interface.
+func (s UserMountSpec) Owner() uint32 {
+	return pointer.SafeDeref(s.MountOwner)
+}
+
+// Group implements config.UserVolumeMountConfig interface.
+func (s UserMountSpec) Group() uint32 {
+	return pointer.SafeDeref(s.MountGroup)
+}
+
+// Mode implements config.UserVolumeMountConfig interface.
+func (s UserMountSpec) Mode() fs.FileMode {
+	if s.MountMode == nil {
+		return UserVolumeMountMode(userVolumeDefaultMountMode).FileMode()
+	}
+
+	return s.MountMode.FileMode()
+}
+
+// Validate validates the mount spec.
+func (s UserMountSpec) Validate() error {
+	var validationErrors error
+
+	if s.MountOwner != nil && *s.MountOwner > userVolumeMaxID {
+		validationErrors = errors.Join(validationErrors, fmt.Errorf("mount.owner must be at most %d, got %d", userVolumeMaxID, *s.MountOwner))
+	}
+
+	if s.MountGroup != nil && *s.MountGroup > userVolumeMaxID {
+		validationErrors = errors.Join(validationErrors, fmt.Errorf("mount.group must be at most %d, got %d", userVolumeMaxID, *s.MountGroup))
+	}
+
+	if s.MountMode != nil && *s.MountMode&^userVolumeMountModeMask != 0 {
+		validationErrors = errors.Join(validationErrors, fmt.Errorf("mount.mode %s may only contain permission, setuid, setgid and sticky bits", *s.MountMode))
+	}
+
+	return validationErrors
 }
 
 // DisableAccessTime implements config.UserVolumeMountConfig interface.

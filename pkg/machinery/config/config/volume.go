@@ -280,12 +280,20 @@ type VolumeMountConfig interface {
 	DisableAccessTime() bool
 }
 
-// UserVolumeMountConfig defines the interface to access volume mount configuration.
-type UserVolumeMountConfig = VolumeMountConfig
+// UserVolumeMountConfig defines the interface to access user volume mount configuration.
+type UserVolumeMountConfig interface {
+	VolumeMountConfig
+	// Owner returns the user ID owning the mount point of the volume.
+	Owner() uint32
+	// Group returns the group ID owning the mount point of the volume.
+	Group() uint32
+	// Mode returns the mode of the mount point of the volume.
+	Mode() fs.FileMode
+}
 
 // ExistingVolumeMountConfig defines the interface to access volume mount configuration.
 type ExistingVolumeMountConfig interface {
-	UserVolumeMountConfig
+	VolumeMountConfig
 	ReadOnly() bool
 }
 

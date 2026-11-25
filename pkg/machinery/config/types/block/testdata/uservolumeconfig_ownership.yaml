@@ -1,0 +1,8 @@
+apiVersion: v1alpha1
+kind: UserVolumeConfig
+name: shared
+volumeType: directory
+mount:
+    owner: 999
+    group: 2000
+    mode: 0o2770

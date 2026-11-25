@@ -65,6 +65,9 @@ type VolumeMount struct {
 	//     Name of the volume to mount.
 	//
 	//     The name of a `UserVolumeConfig`, `ExistingVolumeConfig`, `ExternalVolumeConfig` or `InlineDataVolumeConfig` document.
+	//
+	//     Ownership of a user volume is set by its `mount.owner`, `mount.group` and `mount.mode`.
+	//     With SELinux categories enabled, files written by one `restricted` container can't be read by another.
 	VolumeName string `yaml:"name"`
 	//   description: |
 	//     Absolute path inside the container's mount namespace.

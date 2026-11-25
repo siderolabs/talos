@@ -59,9 +59,9 @@ func UserVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) {
 					TargetPath:   userVolumeConfig.Name(),
 					ParentID:     constants.UserVolumeMountPoint,
 					SelinuxLabel: constants.EphemeralSelinuxLabel,
-					FileMode:     0o755,
-					UID:          0,
-					GID:          0,
+					FileMode:     userVolumeConfig.Mount().Mode(),
+					UID:          int(userVolumeConfig.Mount().Owner()),
+					GID:          int(userVolumeConfig.Mount().Group()),
 					BindTarget:   new(userVolumeConfig.Name()),
 				}).
 				WriterFunc()
@@ -88,9 +88,9 @@ func UserVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) {
 					TargetPath:          userVolumeConfig.Name(),
 					ParentID:            constants.UserVolumeMountPoint,
 					SelinuxLabel:        constants.EphemeralSelinuxLabel,
-					FileMode:            0o755,
-					UID:                 0,
-					GID:                 0,
+					FileMode:            userVolumeConfig.Mount().Mode(),
+					UID:                 int(userVolumeConfig.Mount().Owner()),
+					GID:                 int(userVolumeConfig.Mount().Group()),
 					ProjectQuotaSupport: userVolumeConfig.Filesystem().ProjectQuotaSupport(),
 				}).
 				WithTrim(c, userVolumeConfig).
@@ -125,9 +125,9 @@ func UserVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) {
 					TargetPath:          userVolumeConfig.Name(),
 					ParentID:            constants.UserVolumeMountPoint,
 					SelinuxLabel:        constants.EphemeralSelinuxLabel,
-					FileMode:            0o755,
-					UID:                 0,
-					GID:                 0,
+					FileMode:            userVolumeConfig.Mount().Mode(),
+					UID:                 int(userVolumeConfig.Mount().Owner()),
+					GID:                 int(userVolumeConfig.Mount().Group()),
 					ProjectQuotaSupport: userVolumeConfig.Filesystem().ProjectQuotaSupport(),
 				}).
 				WithTrim(c, userVolumeConfig).
@@ -142,9 +142,9 @@ func UserVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) {
 					TargetPath:   userVolumeConfig.Name(),
 					ParentID:     constants.UserVolumeMountPoint,
 					SelinuxLabel: constants.EphemeralSelinuxLabel,
-					FileMode:     0o755,
-					UID:          0,
-					GID:          0,
+					FileMode:     userVolumeConfig.Mount().Mode(),
+					UID:          int(userVolumeConfig.Mount().Owner()),
+					GID:          int(userVolumeConfig.Mount().Group()),
 					Parameters: []block.ParameterSpec{
 						block.NewStringParameter(block.TmpfsSizeParameter, tmpfsSize(userVolumeConfig.Provisioning())),
 					},

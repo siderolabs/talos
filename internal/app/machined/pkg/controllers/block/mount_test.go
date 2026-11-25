@@ -7,7 +7,9 @@ package block_test
 import (
 	"context"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"syscall"
 	"testing"
 	"time"
 
@@ -228,6 +230,48 @@ func (suite *MountSuite) TestUserVolumeMountPointCleanup() {
 	suite.Assert().NoDirExists(filepath.Join(dir, "empty"))
 	suite.Assert().FileExists(filepath.Join(dir, "data", "file"))
 	suite.Assert().FileExists(filepath.Join(dir, "file"))
+}
+
+// TestDirectoryReadOnlyKeepsSettings verifies that a directory volume keeps its metadata while it is only requested
+// read-only, and gets its settings once it is requested read-write.
+func (suite *MountSuite) TestDirectoryReadOnlyKeepsSettings() {
+	targetPath := filepath.Join(suite.T().TempDir(), "target")
+	suite.Require().NoError(os.Mkdir(targetPath, 0o700))
+
+	volumeStatus := block.NewVolumeStatus(block.NamespaceName, "dir-ro")
+	volumeStatus.TypedSpec().Type = block.VolumeTypeDirectory
+	volumeStatus.TypedSpec().MountSpec = block.MountSpec{
+		TargetPath: targetPath,
+		FileMode:   0o755,
+		UID:        os.Getuid(),
+		GID:        os.Getgid(),
+	}
+	volumeStatus.TypedSpec().Phase = block.VolumePhaseReady
+	suite.Create(volumeStatus)
+
+	mountRequest := block.NewMountRequest(block.NamespaceName, "dir-ro")
+	mountRequest.TypedSpec().RequesterIDs = []string{"requester1/dir-ro"}
+	mountRequest.TypedSpec().Requesters = []string{"requester1"}
+	mountRequest.TypedSpec().VolumeID = "dir-ro"
+	mountRequest.TypedSpec().ReadOnly = true
+	suite.Create(mountRequest)
+
+	ctest.AssertResource(suite, "dir-ro", func(*block.MountStatus, *assert.Assertions) {})
+
+	st, err := os.Stat(targetPath)
+	suite.Require().NoError(err)
+	suite.Assert().Equal(os.FileMode(0o700), st.Mode().Perm())
+
+	suite.setReadOnly("dir-ro", false)
+
+	suite.Assert().EventuallyWithT(func(collect *assert.CollectT) {
+		st, err := os.Stat(targetPath)
+		if !assert.NoError(collect, err) {
+			return
+		}
+
+		assert.Equal(collect, os.FileMode(0o755), st.Mode().Perm())
+	}, 10*time.Second, 50*time.Millisecond)
 }
 
 // TestUnmountBusy verifies that a busy unmount neither holds back the teardown of other mounts,
@@ -496,6 +540,113 @@ func (suite *MountSuite) TestTmpfsReadOnlyAppliesSettings() {
 	assertSettings()
 
 	suite.unmountVolume("tmpfs-ro-settings")
+}
+
+// TestOwnershipUpdatedInPlace verifies that a change of the mode or owner of a mounted volume is applied to the
+// mount target without a remount.
+func (suite *MountSuite) TestOwnershipUpdatedInPlace() {
+	if os.Getuid() != 0 {
+		suite.T().Skip("can't run the test as non-root")
+	}
+
+	targetPath := filepath.Join(suite.T().TempDir(), "tmpfs")
+
+	volumeStatus := suite.createTmpfsVolume("tmpfs-ownership", targetPath, block.NewStringParameter(block.TmpfsSizeParameter, "1048576"))
+
+	suite.mountVolume("tmpfs-ownership")
+
+	suite.assertOwnership(targetPath, 0o755, 0, 0)
+
+	// the content of the tmpfs survives the change, so it is not remounted
+	suite.Require().NoError(os.WriteFile(filepath.Join(targetPath, "file"), nil, 0o644))
+
+	ctest.UpdateWithConflicts(suite, volumeStatus, func(vs *block.VolumeStatus) error {
+		vs.TypedSpec().MountSpec.FileMode = os.ModeSetgid | 0o770
+		vs.TypedSpec().MountSpec.UID = 1234
+		vs.TypedSpec().MountSpec.GID = 5678
+
+		return nil
+	})
+
+	suite.assertOwnership(targetPath, os.ModeSetgid|0o770, 1234, 5678)
+
+	suite.Assert().FileExists(filepath.Join(targetPath, "file"))
+
+	suite.unmountVolume("tmpfs-ownership")
+}
+
+// assertOwnership waits for the path to have the given mode, owner and group.
+func (suite *MountSuite) assertOwnership(path string, mode os.FileMode, uid, gid uint32) {
+	suite.Assert().EventuallyWithT(func(collect *assert.CollectT) {
+		st, err := os.Stat(path)
+		if !assert.NoError(collect, err) {
+			return
+		}
+
+		assert.Equal(collect, mode, st.Mode()&^os.ModeDir)
+
+		sysStat := st.Sys().(*syscall.Stat_t) //nolint:forcetypeassert
+		assert.Equal(collect, uid, sysStat.Uid)
+		assert.Equal(collect, gid, sysStat.Gid)
+	}, 10*time.Second, 50*time.Millisecond)
+}
+
+// TestReadOnlyFirstMountGetsSettingsOnRemount verifies that a disk volume first mounted read-only keeps the metadata
+// of its filesystem, and gets its mode and owner once it is remounted read-write.
+func (suite *MountSuite) TestReadOnlyFirstMountGetsSettingsOnRemount() {
+	if os.Geteuid() != 0 {
+		suite.T().Skip("skipping test; must be root to use loop devices")
+	}
+
+	if _, err := exec.LookPath("mkfs.ext4"); err != nil {
+		suite.T().Skip("skipping test; mkfs.ext4 is not available")
+	}
+
+	loDev := attachLoopDevice(suite.T(), createRawImage(suite.T(), 64*1024*1024))
+
+	// the root of the filesystem starts with an owner the volume doesn't ask for
+	cmd := exec.CommandContext(suite.Ctx(), "mkfs.ext4", "-q", "-E", "root_owner=1000:2000", loDev.Path())
+	cmd.Stderr = os.Stderr
+	suite.Require().NoError(cmd.Run())
+
+	targetPath := filepath.Join(suite.T().TempDir(), "disk")
+
+	volumeStatus := block.NewVolumeStatus(block.NamespaceName, "disk-ro-first")
+	volumeStatus.TypedSpec().Type = block.VolumeTypePartition
+	volumeStatus.TypedSpec().Filesystem = block.FilesystemTypeEXT4
+	volumeStatus.TypedSpec().MountLocation = loDev.Path()
+	volumeStatus.TypedSpec().MountSpec = block.MountSpec{
+		TargetPath: targetPath,
+		FileMode:   os.ModeSetgid | 0o770,
+		UID:        1234,
+		GID:        5678,
+	}
+	volumeStatus.TypedSpec().Phase = block.VolumePhaseReady
+	suite.Create(volumeStatus)
+
+	mountRequest := block.NewMountRequest(block.NamespaceName, "disk-ro-first")
+	mountRequest.TypedSpec().RequesterIDs = []string{"requester1/disk-ro-first"}
+	mountRequest.TypedSpec().Requesters = []string{"requester1"}
+	mountRequest.TypedSpec().VolumeID = "disk-ro-first"
+	mountRequest.TypedSpec().ReadOnly = true
+	suite.Create(mountRequest)
+
+	ctest.AssertResource(suite, "disk-ro-first", func(mountStatus *block.MountStatus, asrt *assert.Assertions) {
+		asrt.True(mountStatus.TypedSpec().ReadOnly)
+	})
+
+	// a read-only mount keeps the metadata of the filesystem
+	suite.assertOwnership(targetPath, 0o755, 1000, 2000)
+
+	suite.setReadOnly("disk-ro-first", false)
+
+	ctest.AssertResource(suite, "disk-ro-first", func(mountStatus *block.MountStatus, asrt *assert.Assertions) {
+		asrt.False(mountStatus.TypedSpec().ReadOnly)
+	})
+
+	suite.assertOwnership(targetPath, os.ModeSetgid|0o770, 1234, 5678)
+
+	suite.unmountVolume("disk-ro-first")
 }
 
 // TestTmpfsParametersNotReconfigured verifies that a change of the parameters of a mounted tmpfs is not applied

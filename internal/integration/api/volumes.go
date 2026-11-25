@@ -1299,6 +1299,126 @@ func (suite *VolumesSuite) TestUserVolumesDirectory() {
 	}
 }
 
+// TestUserVolumesOwnership verifies that the owner, group and mode of the mount point of a user volume follow
+// mount.owner, mount.group and mount.mode, and that a change is applied to a mounted volume in place.
+func (suite *VolumesSuite) TestUserVolumesOwnership() {
+	if testing.Short() {
+		suite.T().Skip("skipping test in short mode.")
+	}
+
+	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
+		suite.T().Skip("skipping test for non-qemu provisioner")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	ctx := client.WithNode(suite.ctx, node)
+
+	prefix := fmt.Sprintf("%04x", rand.Int31())
+
+	// tmpfs takes the same mount path as disk and partition volumes
+	volumeIDs := []string{prefix + "-dir", prefix + "-tmpfs"}
+	userVolumeIDs := xslices.Map(volumeIDs, func(volumeID string) string { return constants.UserVolumePrefix + volumeID })
+
+	newDocs := func(owner, group uint32, mode blockcfg.UserVolumeMountMode) []any {
+		dirDoc := blockcfg.NewUserVolumeConfigV1Alpha1()
+		dirDoc.MetaName = volumeIDs[0]
+		dirDoc.VolumeType = new(block.VolumeTypeDirectory)
+
+		tmpfsDoc := blockcfg.NewUserVolumeConfigV1Alpha1()
+		tmpfsDoc.MetaName = volumeIDs[1]
+		tmpfsDoc.VolumeType = new(block.VolumeTypeTmpfs)
+		tmpfsDoc.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustSize("16MiB")
+
+		for _, doc := range []*blockcfg.UserVolumeConfigV1Alpha1{dirDoc, tmpfsDoc} {
+			doc.MountSpec.MountOwner = new(owner)
+			doc.MountSpec.MountGroup = new(group)
+			doc.MountSpec.MountMode = new(mode)
+		}
+
+		return []any{dirDoc, tmpfsDoc}
+	}
+
+	assertOwnership := func(uid, gid uint32, mode fs.FileMode) {
+		for _, volumeID := range volumeIDs {
+			suite.assertMountPointOwnership(ctx, filepath.Join(constants.UserVolumeMountPoint, volumeID), uid, gid, mode)
+		}
+	}
+
+	suite.PatchMachineConfig(ctx, newDocs(1000, 2000, 0o750)...)
+
+	rtestutils.AssertResources(
+		ctx, suite.T(), suite.Client.State(), userVolumeIDs,
+		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
+			asrt.Equalf(block.VolumePhaseReady, vs.TypedSpec().Phase, "Expected %q, but got %q (%s)", block.VolumePhaseReady, vs.TypedSpec().Phase, vs.Metadata().ID())
+		},
+	)
+
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.State(), userVolumeIDs,
+		func(*block.MountStatus, *assert.Assertions) {})
+
+	assertOwnership(1000, 2000, 0o750)
+
+	mountStatuses := make(map[resource.ID]time.Time, len(userVolumeIDs))
+
+	for _, userVolumeID := range userVolumeIDs {
+		mountStatus, err := safe.ReaderGetByID[*block.MountStatus](ctx, suite.Client.State(), userVolumeID)
+		suite.Require().NoError(err)
+
+		mountStatuses[userVolumeID] = mountStatus.Metadata().Created()
+	}
+
+	// change the ownership of the mounted volumes, which is applied in place
+	suite.PatchMachineConfig(ctx, newDocs(1100, 3000, 0o2770)...)
+
+	assertOwnership(1100, 3000, fs.ModeSetgid|0o770)
+
+	for _, userVolumeID := range userVolumeIDs {
+		mountStatus, err := safe.ReaderGetByID[*block.MountStatus](ctx, suite.Client.State(), userVolumeID)
+		suite.Require().NoError(err)
+
+		suite.Assert().Equal(mountStatuses[userVolumeID], mountStatus.Metadata().Created(), "volume %s was remounted", userVolumeID)
+	}
+
+	// clean up
+	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.UserVolumeConfigKind, volumeIDs...)
+
+	for _, userVolumeID := range userVolumeIDs {
+		rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.State(), userVolumeID)
+	}
+}
+
+// assertMountPointOwnership waits for the mount point on the node to have the given owner, group and mode.
+func (suite *VolumesSuite) assertMountPointOwnership(ctx context.Context, mountPoint string, uid, gid uint32, mode fs.FileMode) {
+	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+		stream, err := suite.Client.LS(ctx, &machineapi.ListRequest{
+			Root:           mountPoint,
+			RecursionDepth: 1,
+			Types:          []machineapi.ListRequest_Type{machineapi.ListRequest_DIRECTORY},
+		})
+		if !assert.NoError(collect, err) {
+			return
+		}
+
+		var found bool
+
+		assert.NoError(collect, helpers.ReadGRPCStream(stream, func(info *machineapi.FileInfo, _ string, _ bool) error {
+			if info.Name != mountPoint {
+				return nil
+			}
+
+			found = true
+
+			assert.Equal(collect, uid, info.Uid, mountPoint)
+			assert.Equal(collect, gid, info.Gid, mountPoint)
+			assert.Equal(collect, mode, fs.FileMode(info.Mode)&^fs.ModeDir, mountPoint)
+
+			return nil
+		}))
+
+		assert.True(collect, found, "expected %s to exist", mountPoint)
+	}, time.Minute, time.Second)
+}
+
 // TestUserVolumesTmpfs verifies memory-backed user volumes: from the config document through the volume manager
 // and the mount controller to a tmpfs mounted on the node, usable from a pod, and unmounted on removal.
 func (suite *VolumesSuite) TestUserVolumesTmpfs() {
@@ -2139,6 +2259,10 @@ func (suite *VolumesSuite) TestExistingVolumes() {
 	)
 	userVolumeDoc.ProvisioningSpec.ProvisioningMinSize = blockcfg.MustByteSize("100MiB")
 	userVolumeDoc.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustSize("1GiB")
+	// the root of the filesystem keeps this ownership, so the existing volume finds it on mount
+	userVolumeDoc.MountSpec.MountOwner = new(uint32(1000))
+	userVolumeDoc.MountSpec.MountGroup = new(uint32(2000))
+	userVolumeDoc.MountSpec.MountMode = new(blockcfg.UserVolumeMountMode(0o2770))
 
 	// create user volumes
 	suite.PatchMachineConfig(ctx, userVolumeDoc)
@@ -2185,6 +2309,11 @@ func (suite *VolumesSuite) TestExistingVolumes() {
 			asrt.True(vs.TypedSpec().ReadOnly)
 		})
 
+	existingMountPoint := filepath.Join(constants.UserVolumeMountPoint, volumeID)
+
+	// a read-only mount keeps the metadata of the volume
+	suite.assertMountPointOwnership(ctx, existingMountPoint, 1000, 2000, fs.ModeSetgid|0o770)
+
 	// switch the existing volume to read-write
 	existingVolumeDoc.MountSpec.MountReadOnly = new(false)
 	suite.PatchMachineConfig(ctx, existingVolumeDoc)
@@ -2193,6 +2322,9 @@ func (suite *VolumesSuite) TestExistingVolumes() {
 		func(vs *block.MountStatus, asrt *assert.Assertions) {
 			asrt.False(vs.TypedSpec().ReadOnly)
 		})
+
+	// the settings skipped by the read-only mount are applied once the volume is remounted read-write
+	suite.assertMountPointOwnership(ctx, existingMountPoint, 0, 0, 0o755)
 
 	// create a pod using existing volumes
 	podDef, err := suite.NewPod("existing-volume-test")

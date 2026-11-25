@@ -1030,6 +1030,33 @@
           "description": "Enable secure mount options (nosuid, nodev, noexec).\n\nDefaults to true for better security.\n",
           "markdownDescription": "Enable secure mount options (nosuid, nodev, noexec).\n\nDefaults to true for better security.",
           "x-intellij-html-description": "\u003cp\u003eEnable secure mount options (nosuid, nodev, noexec).\u003c/p\u003e\n\n\u003cp\u003eDefaults to true for better security.\u003c/p\u003e\n"
+        },
+        "owner": {
+          "type": "integer",
+          "maximum": 4294967294,
+          "minimum": 0,
+          "title": "owner",
+          "description": "The user ID owning the mount point of the volume (/var/mnt/\u0026lt;name\u0026gt;).\n\nOnly the mount point itself is changed, not the files and directories under it.\nContainers running as different users can share the volume through a common group.\n\nDefaults to 0 (root).\n",
+          "markdownDescription": "The user ID owning the mount point of the volume (`/var/mnt/\u003cname\u003e`).\n\nOnly the mount point itself is changed, not the files and directories under it.\nContainers running as different users can share the volume through a common `group`.\n\nDefaults to `0` (root).",
+          "x-intellij-html-description": "\u003cp\u003eThe user ID owning the mount point of the volume (\u003ccode\u003e/var/mnt/\u0026lt;name\u0026gt;\u003c/code\u003e).\u003c/p\u003e\n\n\u003cp\u003eOnly the mount point itself is changed, not the files and directories under it.\nContainers running as different users can share the volume through a common \u003ccode\u003egroup\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003eDefaults to \u003ccode\u003e0\u003c/code\u003e (root).\u003c/p\u003e\n"
+        },
+        "group": {
+          "type": "integer",
+          "maximum": 4294967294,
+          "minimum": 0,
+          "title": "group",
+          "description": "The group ID owning the mount point of the volume (/var/mnt/\u0026lt;name\u0026gt;).\n\nOnly the mount point itself is changed, not the files and directories under it.\n\nDefaults to 0 (root).\n",
+          "markdownDescription": "The group ID owning the mount point of the volume (`/var/mnt/\u003cname\u003e`).\n\nOnly the mount point itself is changed, not the files and directories under it.\n\nDefaults to `0` (root).",
+          "x-intellij-html-description": "\u003cp\u003eThe group ID owning the mount point of the volume (\u003ccode\u003e/var/mnt/\u0026lt;name\u0026gt;\u003c/code\u003e).\u003c/p\u003e\n\n\u003cp\u003eOnly the mount point itself is changed, not the files and directories under it.\u003c/p\u003e\n\n\u003cp\u003eDefaults to \u003ccode\u003e0\u003c/code\u003e (root).\u003c/p\u003e\n"
+        },
+        "mode": {
+          "type": "integer",
+          "maximum": 4095,
+          "minimum": 0,
+          "title": "mode",
+          "description": "The permissions of the mount point of the volume (/var/mnt/\u0026lt;name\u0026gt;) in octal.\n\nThe value must be written in octal notation (0o2770 or 02770): an unprefixed\nnumber such as 2770 is rejected, as YAML would read it as decimal.\n\nThe setuid (0o4000), setgid (0o2000) and sticky (0o1000) bits may be set:\nwith setgid, files created in the volume inherit the group of the mount point.\n\nDefaults to 0o755.\n",
+          "markdownDescription": "The permissions of the mount point of the volume (`/var/mnt/\u003cname\u003e`) in octal.\n\nThe value must be written in octal notation (`0o2770` or `02770`): an unprefixed\nnumber such as `2770` is rejected, as YAML would read it as decimal.\n\nThe setuid (`0o4000`), setgid (`0o2000`) and sticky (`0o1000`) bits may be set:\nwith setgid, files created in the volume inherit the group of the mount point.\n\nDefaults to `0o755`.",
+          "x-intellij-html-description": "\u003cp\u003eThe permissions of the mount point of the volume (\u003ccode\u003e/var/mnt/\u0026lt;name\u0026gt;\u003c/code\u003e) in octal.\u003c/p\u003e\n\n\u003cp\u003eThe value must be written in octal notation (\u003ccode\u003e0o2770\u003c/code\u003e or \u003ccode\u003e02770\u003c/code\u003e): an unprefixed\nnumber such as \u003ccode\u003e2770\u003c/code\u003e is rejected, as YAML would read it as decimal.\u003c/p\u003e\n\n\u003cp\u003eThe setuid (\u003ccode\u003e0o4000\u003c/code\u003e), setgid (\u003ccode\u003e0o2000\u003c/code\u003e) and sticky (\u003ccode\u003e0o1000\u003c/code\u003e) bits may be set:\nwith setgid, files created in the volume inherit the group of the mount point.\u003c/p\u003e\n\n\u003cp\u003eDefaults to \u003ccode\u003e0o755\u003c/code\u003e.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -2153,9 +2180,9 @@
         "name": {
           "type": "string",
           "title": "name",
-          "description": "Name of the volume to mount.\n\nThe name of a UserVolumeConfig, ExistingVolumeConfig, ExternalVolumeConfig or InlineDataVolumeConfig document.\n",
-          "markdownDescription": "Name of the volume to mount.\n\nThe name of a `UserVolumeConfig`, `ExistingVolumeConfig`, `ExternalVolumeConfig` or `InlineDataVolumeConfig` document.",
-          "x-intellij-html-description": "\u003cp\u003eName of the volume to mount.\u003c/p\u003e\n\n\u003cp\u003eThe name of a \u003ccode\u003eUserVolumeConfig\u003c/code\u003e, \u003ccode\u003eExistingVolumeConfig\u003c/code\u003e, \u003ccode\u003eExternalVolumeConfig\u003c/code\u003e or \u003ccode\u003eInlineDataVolumeConfig\u003c/code\u003e document.\u003c/p\u003e\n"
+          "description": "Name of the volume to mount.\n\nThe name of a UserVolumeConfig, ExistingVolumeConfig, ExternalVolumeConfig or InlineDataVolumeConfig document.\n\nOwnership of a user volume is set by its mount.owner, mount.group and mount.mode.\nWith SELinux categories enabled, files written by one restricted container can’t be read by another.\n",
+          "markdownDescription": "Name of the volume to mount.\n\nThe name of a `UserVolumeConfig`, `ExistingVolumeConfig`, `ExternalVolumeConfig` or `InlineDataVolumeConfig` document.\n\nOwnership of a user volume is set by its `mount.owner`, `mount.group` and `mount.mode`.\nWith SELinux categories enabled, files written by one `restricted` container can't be read by another.",
+          "x-intellij-html-description": "\u003cp\u003eName of the volume to mount.\u003c/p\u003e\n\n\u003cp\u003eThe name of a \u003ccode\u003eUserVolumeConfig\u003c/code\u003e, \u003ccode\u003eExistingVolumeConfig\u003c/code\u003e, \u003ccode\u003eExternalVolumeConfig\u003c/code\u003e or \u003ccode\u003eInlineDataVolumeConfig\u003c/code\u003e document.\u003c/p\u003e\n\n\u003cp\u003eOwnership of a user volume is set by its \u003ccode\u003emount.owner\u003c/code\u003e, \u003ccode\u003emount.group\u003c/code\u003e and \u003ccode\u003emount.mode\u003c/code\u003e.\nWith SELinux categories enabled, files written by one \u003ccode\u003erestricted\u003c/code\u003e container can\u0026rsquo;t be read by another.\u003c/p\u003e\n"
         },
         "destination": {
           "type": "string",

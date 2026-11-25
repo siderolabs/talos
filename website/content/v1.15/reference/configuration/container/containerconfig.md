@@ -168,7 +168,7 @@ VolumeMount mounts a volume by name.
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`name` |string |Name of the volume to mount.<br><br>The name of a `UserVolumeConfig`, `ExistingVolumeConfig`, `ExternalVolumeConfig` or `InlineDataVolumeConfig` document.  | |
+|`name` |string |Name of the volume to mount.<br><br>The name of a `UserVolumeConfig`, `ExistingVolumeConfig`, `ExternalVolumeConfig` or `InlineDataVolumeConfig` document.<br><br>Ownership of a user volume is set by its `mount.owner`, `mount.group` and `mount.mode`.<br>With SELinux categories enabled, files written by one `restricted` container can't be read by another.  | |
 |`destination` |string |Absolute path inside the container's mount namespace.  | |
 |`options` |[]string |Mount options. Volume mounts are writable by default (`rw`).<br><br>A volume whose `ExistingVolumeConfig` or `ExternalVolumeConfig` declares it<br>read-only must be mounted with `ro`.<br><br>An inline data volume is always mounted `ro`, `nosuid`, `nodev`, `noexec` and `rprivate`,<br>so `ro` may be omitted, and `rw` and `rshared` are rejected.  |`ro`<br />`rw`<br />`noexec`<br />`nosuid`<br />`nodev`<br />`noatime`<br />`rbind`<br />`rshared`<br /> |
 

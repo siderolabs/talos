@@ -454,7 +454,7 @@ func (VolumeMount) Doc() *encoder.Doc {
 				Name:        "name",
 				Type:        "string",
 				Note:        "",
-				Description: "Name of the volume to mount.\n\nThe name of a `UserVolumeConfig`, `ExistingVolumeConfig`, `ExternalVolumeConfig` or `InlineDataVolumeConfig` document.",
+				Description: "Name of the volume to mount.\n\nThe name of a `UserVolumeConfig`, `ExistingVolumeConfig`, `ExternalVolumeConfig` or `InlineDataVolumeConfig` document.\n\nOwnership of a user volume is set by its `mount.owner`, `mount.group` and `mount.mode`.\nWith SELinux categories enabled, files written by one `restricted` container can't be read by another.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the volume to mount." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
