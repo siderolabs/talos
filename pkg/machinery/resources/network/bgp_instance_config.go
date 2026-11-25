@@ -33,6 +33,13 @@ type BGPBFDConfigSpec struct {
 	DetectMultiplier uint8         `yaml:"detectMultiplier,omitempty" protobuf:"3"`
 }
 
+// BGPGracefulRestartConfigSpec contains BGP graceful restart helper parameters for a BGP neighbor.
+//
+//gotagsrewrite:gen
+type BGPGracefulRestartConfigSpec struct {
+	Notification bool `yaml:"notification,omitempty" protobuf:"1"`
+}
+
 // BGPNeighborConfigSpec contains the runtime configuration for a BGP neighbor.
 //
 //gotagsrewrite:gen
@@ -46,6 +53,8 @@ type BGPNeighborConfigSpec struct {
 	Passive      bool              `yaml:"passive,omitempty" protobuf:"7"`
 	AuthPassword string            `yaml:"authPassword,omitempty" protobuf:"8" redact:"replace"`
 	EBGPMultiHop uint32            `yaml:"eBgpMultiHop,omitempty" protobuf:"9"`
+	// GracefulRestart enables graceful restart helper mode when set.
+	GracefulRestart *BGPGracefulRestartConfigSpec `yaml:"gracefulRestart,omitempty" protobuf:"10"`
 }
 
 // BGPImportRouteSpec selects routes learned by another BGP instance for one-way import.

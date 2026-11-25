@@ -71,6 +71,26 @@ func TestBuildPeer(t *testing.T) {
 	}, false)
 
 	assert.False(t, singleHop.GetBfd().GetMultihop())
+	assert.Nil(t, singleHop.GetGracefulRestart(), "graceful restart must be opt-in")
+
+	for _, notification := range []bool{true, false} {
+		helper := internalbgp.BuildPeer(internalbgp.Peer{
+			Address: "192.0.2.1",
+			Config: network.BGPNeighborConfigSpec{
+				PeerASN:         65002,
+				GracefulRestart: &network.BGPGracefulRestartConfigSpec{Notification: notification},
+			},
+		}, false)
+
+		assert.True(t, helper.GetGracefulRestart().GetEnabled())
+		assert.True(t, helper.GetGracefulRestart().GetHelperOnly(), "Talos must not claim the restart capability itself")
+		assert.Equal(t, notification, helper.GetGracefulRestart().GetNotificationEnabled())
+		assert.Zero(t, helper.GetGracefulRestart().GetRestartTime())
+
+		for _, family := range helper.GetAfiSafis() {
+			assert.False(t, family.GetMpGracefulRestart().GetConfig().GetEnabled(), "helper-only mode advertises no families")
+		}
+	}
 }
 
 func TestBuildOriginatedPath(t *testing.T) {
@@ -264,6 +284,32 @@ func TestPeerStatus(t *testing.T) {
 	assert.Equal(t, uint32(10), status.Accepted)
 	assert.Equal(t, uint32(5), status.Advertised)
 	assert.Equal(t, "up", status.BFDState)
+	assert.False(t, status.GracefulRestart)
+	assert.False(t, status.PeerRestarting)
+
+	restarting := internalbgp.PeerStatus(&gobgpapi.Peer{
+		Conf:            &gobgpapi.PeerConf{NeighborAddress: "192.0.2.1"},
+		State:           &gobgpapi.PeerState{SessionState: gobgpapi.PeerState_SESSION_STATE_ACTIVE},
+		GracefulRestart: &gobgpapi.GracefulRestart{Enabled: true, HelperOnly: true, PeerRestarting: true},
+		AfiSafis: []*gobgpapi.AfiSafi{
+			{MpGracefulRestart: &gobgpapi.MpGracefulRestart{State: &gobgpapi.MpGracefulRestartState{}}},
+			{MpGracefulRestart: &gobgpapi.MpGracefulRestart{State: &gobgpapi.MpGracefulRestartState{Enabled: true}}},
+		},
+	}, 65001)
+
+	assert.True(t, restarting.GracefulRestart, "graceful restart is negotiated when the peer lists a family")
+	assert.True(t, restarting.PeerRestarting)
+
+	// the peer advertised the capability without families, so nothing would be retained
+	noFamilies := internalbgp.PeerStatus(&gobgpapi.Peer{
+		Conf:            &gobgpapi.PeerConf{NeighborAddress: "192.0.2.1"},
+		GracefulRestart: &gobgpapi.GracefulRestart{Enabled: true, HelperOnly: true, PeerRestartTime: 120},
+		AfiSafis: []*gobgpapi.AfiSafi{
+			{MpGracefulRestart: &gobgpapi.MpGracefulRestart{State: &gobgpapi.MpGracefulRestartState{}}},
+		},
+	}, 65001)
+
+	assert.False(t, noFamilies.GracefulRestart)
 }
 
 func TestKeys(t *testing.T) {
@@ -306,4 +352,14 @@ func TestKeys(t *testing.T) {
 	assert.NotEqual(t, internalbgp.PeerKey(peer), internalbgp.PeerKey(authenticated))
 	assert.NotEqual(t, internalbgp.PeerKey(authenticated), internalbgp.PeerKey(rotated))
 	assert.NotContains(t, internalbgp.PeerKey(authenticated), "secret")
+
+	// toggling graceful restart or the N-bit changes the OPEN capabilities, so it has to update the peer
+	gracefulRestart := peer
+	gracefulRestart.Config.GracefulRestart = &network.BGPGracefulRestartConfigSpec{Notification: true}
+
+	withoutNotification := peer
+	withoutNotification.Config.GracefulRestart = &network.BGPGracefulRestartConfigSpec{}
+
+	assert.NotEqual(t, internalbgp.PeerKey(peer), internalbgp.PeerKey(gracefulRestart))
+	assert.NotEqual(t, internalbgp.PeerKey(gracefulRestart), internalbgp.PeerKey(withoutNotification))
 }

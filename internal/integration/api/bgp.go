@@ -97,18 +97,24 @@ func (suite *BGPSuite) TestNumberedBGP() {
 		{
 			NeighborAddressConfig: meta.Addr{Addr: fabric},
 			NeighborPeerASN:       fabricASN,
+			// the fabric peer advertises graceful restart for both unicast families
+			NeighborGracefulRestartConfig: &network.BGPGracefulRestartConfig{
+				GracefulRestartEnabled: true,
+			},
 		},
 	}
 
 	suite.PatchMachineConfig(nodeCtx, lo, bgp)
 
-	// session should reach Established with the fabric peer.
+	// session should reach Established with the fabric peer, with graceful restart negotiated.
 	rtestutils.AssertResource(
 		nodeCtx, suite.T(), suite.Client.State(), "fabric/"+fabric.String(),
 		func(peer *networkres.BGPPeerStatus, asrt *assert.Assertions) {
 			asrt.Equal("fabric", peer.TypedSpec().Instance)
 			asrt.Equal(nethelpers.BGPSessionStateEstablished, peer.TypedSpec().State)
 			asrt.Equal(uint32(fabricASN), peer.TypedSpec().PeerASN)
+			asrt.True(peer.TypedSpec().GracefulRestart)
+			asrt.False(peer.TypedSpec().PeerRestarting)
 		},
 	)
 

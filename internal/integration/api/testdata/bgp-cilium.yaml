@@ -31,6 +31,9 @@ kind: CiliumBGPPeerConfig
 metadata:
   name: {{ .PeerConfigName }}
 spec:
+  gracefulRestart:
+    enabled: true
+    restartTimeSeconds: {{ .RestartTimeSeconds }}
   timers:
     connectRetryTimeSeconds: 3
     holdTimeSeconds: 9

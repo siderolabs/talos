@@ -706,6 +706,7 @@ description: Talos gRPC API reference.
     - [AddressSpecSpec](#talos.resource.definitions.network.AddressSpecSpec)
     - [AddressStatusSpec](#talos.resource.definitions.network.AddressStatusSpec)
     - [BGPBFDConfigSpec](#talos.resource.definitions.network.BGPBFDConfigSpec)
+    - [BGPGracefulRestartConfigSpec](#talos.resource.definitions.network.BGPGracefulRestartConfigSpec)
     - [BGPImportRouteSpec](#talos.resource.definitions.network.BGPImportRouteSpec)
     - [BGPInstanceConfigSpec](#talos.resource.definitions.network.BGPInstanceConfigSpec)
     - [BGPNeighborConfigSpec](#talos.resource.definitions.network.BGPNeighborConfigSpec)
@@ -12305,6 +12306,21 @@ BGPBFDConfigSpec contains BFD parameters for a BGP neighbor.
 
 
 
+<a name="talos.resource.definitions.network.BGPGracefulRestartConfigSpec"></a>
+
+### BGPGracefulRestartConfigSpec
+BGPGracefulRestartConfigSpec contains BGP graceful restart helper parameters for a BGP neighbor.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| notification | [bool](#bool) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.network.BGPImportRouteSpec"></a>
 
 ### BGPImportRouteSpec
@@ -12363,6 +12379,7 @@ BGPNeighborConfigSpec contains the runtime configuration for a BGP neighbor.
 | passive | [bool](#bool) |  |  |
 | auth_password | [string](#string) |  |  |
 | ebgp_multi_hop | [uint32](#uint32) |  |  |
+| graceful_restart | [BGPGracefulRestartConfigSpec](#talos.resource.definitions.network.BGPGracefulRestartConfigSpec) |  | GracefulRestart enables graceful restart helper mode when set. |
 
 
 
@@ -12388,6 +12405,8 @@ BGPPeerStatusSpec describes the status of a BGP peering session.
 | accepted | [uint32](#uint32) |  |  |
 | bfd_state | [string](#string) |  |  |
 | instance | [string](#string) |  |  |
+| graceful_restart | [bool](#bool) |  | GracefulRestart is true when graceful restart was negotiated for at least one address family. |
+| peer_restarting | [bool](#bool) |  | PeerRestarting is true while routes learned from the restarting peer are retained as stale. |
 
 
 

@@ -16,6 +16,8 @@ neighbors:
       peerASN: 65000
       passive: true
       holdTime: 9s
+      gracefulRestart:
+        enabled: true
     - link: enp0s1
       peerASN: 65000
       holdTime: 9s

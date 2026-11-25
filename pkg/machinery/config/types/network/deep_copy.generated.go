@@ -47,6 +47,14 @@ func (o *BGPInstanceConfigV1Alpha1) DeepCopy() *BGPInstanceConfigV1Alpha1 {
 				cp.BGPNeighborConfigs[i2].NeighborBFDConfig = new(BGPBFDConfig)
 				*cp.BGPNeighborConfigs[i2].NeighborBFDConfig = *o.BGPNeighborConfigs[i2].NeighborBFDConfig
 			}
+			if o.BGPNeighborConfigs[i2].NeighborGracefulRestartConfig != nil {
+				cp.BGPNeighborConfigs[i2].NeighborGracefulRestartConfig = new(BGPGracefulRestartConfig)
+				*cp.BGPNeighborConfigs[i2].NeighborGracefulRestartConfig = *o.BGPNeighborConfigs[i2].NeighborGracefulRestartConfig
+				if o.BGPNeighborConfigs[i2].NeighborGracefulRestartConfig.GracefulRestartNotification != nil {
+					cp.BGPNeighborConfigs[i2].NeighborGracefulRestartConfig.GracefulRestartNotification = new(bool)
+					*cp.BGPNeighborConfigs[i2].NeighborGracefulRestartConfig.GracefulRestartNotification = *o.BGPNeighborConfigs[i2].NeighborGracefulRestartConfig.GracefulRestartNotification
+				}
+			}
 		}
 	}
 	return &cp

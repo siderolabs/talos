@@ -70,6 +70,16 @@ func BuildPeer(peer Peer, multipath bool) *gobgpapi.Peer {
 		}
 	}
 
+	if peer.Config.GracefulRestart != nil {
+		// Helper-only mode: the paths of a restarting peer are retained as stale, but Talos does not
+		// claim the restart capability itself, so no per-family MpGracefulRestart is needed.
+		result.GracefulRestart = &gobgpapi.GracefulRestart{
+			Enabled:             true,
+			HelperOnly:          true,
+			NotificationEnabled: peer.Config.GracefulRestart.Notification,
+		}
+	}
+
 	if peer.Config.BFD != nil {
 		result.Bfd = &gobgpapi.BfdPeerConfig{
 			Enabled:                  true,
@@ -333,7 +343,13 @@ func PeerStatus(peer *gobgpapi.Peer, localASN uint32) network.BGPPeerStatusSpec 
 		spec.Received += uint32(family.GetState().GetReceived())
 		spec.Accepted += uint32(family.GetState().GetAccepted())
 		spec.Advertised += uint32(family.GetState().GetAdvertised())
+
+		// a family is retained across a restart only when graceful restart is enabled locally and the
+		// peer listed the family in its Graceful Restart Capability
+		spec.GracefulRestart = spec.GracefulRestart || family.GetMpGracefulRestart().GetState().GetEnabled()
 	}
+
+	spec.PeerRestarting = peer.GetGracefulRestart().GetPeerRestarting()
 
 	if bfd := state.GetBfdState(); bfd != nil && bfd.GetSessionState() != gobgpapi.BfdSessionState_BFD_SESSION_STATE_UNSPECIFIED {
 		spec.BFDState = strings.ToLower(strings.TrimPrefix(bfd.GetSessionState().String(), "BFD_SESSION_STATE_"))
@@ -396,6 +412,11 @@ func PeerKey(peer Peer) string {
 	if peer.Config.AuthPassword != "" {
 		// Track password changes without keeping the plaintext in the key.
 		fmt.Fprintf(&builder, "auth[%x]", sha256.Sum256([]byte(peer.Config.AuthPassword)))
+	}
+
+	if peer.Config.GracefulRestart != nil {
+		// GoBGP resets the session itself when the advertised capabilities change.
+		fmt.Fprintf(&builder, "gr[%t]", peer.Config.GracefulRestart.Notification)
 	}
 
 	if peer.Config.BFD != nil {

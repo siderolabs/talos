@@ -1204,6 +1204,36 @@ Routes with a metric below 20 for the same destination, including IPv4 routes in
 precedence over the learned ones.
 """
 
+    [notes.bgp_graceful_restart]
+        title = "BGP Graceful Restart Helper"
+        description = """\
+`BGPInstanceConfig` neighbors now accept a `gracefulRestart` block that enables BGP graceful restart (RFC 4724) in helper mode:
+
+```yaml
+apiVersion: v1alpha1
+kind: BGPInstanceConfig
+name: workload
+localASN: 4200000000
+neighbors:
+  - address: fda1:b2c3:d4e5:1::
+    peerASN: 4200000003
+    passive: true
+    gracefulRestart:
+      enabled: true
+```
+
+When a neighbor that also enables graceful restart (e.g. Cilium with `CiliumBGPPeerConfig.spec.gracefulRestart.enabled`) restarts,
+the routes learned from it are retained as stale, and stay installed and imported into other BGP instances, until the neighbor
+re-establishes the session and sends End-of-RIB, or until the restart time advertised by the neighbor expires.
+By default, sessions ended by a NOTIFICATION message other than a hard reset are also handled as a graceful restart (RFC 8538),
+when the neighbor supports it; set `notification: false` to disable that.
+A session torn down by BFD still withdraws the routes immediately.
+
+`BGPPeerStatus` now reports whether graceful restart was negotiated with the neighbor (`gracefulRestart`) and whether the neighbor is
+currently restarting (`peerRestarting`).
+Enabling or disabling graceful restart on a neighbor resets the session with it.
+"""
+
     [notes.image_layers_sync_fs]
         title = "Image Layers Synced to Disk"
         description = """\

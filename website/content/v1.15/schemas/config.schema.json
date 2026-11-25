@@ -5543,6 +5543,27 @@
       "type": "object",
       "description": "BGPBFDConfig configures BFD for a BGP neighbor."
     },
+    "network.BGPGracefulRestartConfig": {
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "enabled",
+          "description": "Enable graceful restart helper mode for this neighbor.\n",
+          "markdownDescription": "Enable graceful restart helper mode for this neighbor.",
+          "x-intellij-html-description": "\u003cp\u003eEnable graceful restart helper mode for this neighbor.\u003c/p\u003e\n"
+        },
+        "notification": {
+          "type": "boolean",
+          "title": "notification",
+          "description": "Also retain routes when the session ends with a BGP NOTIFICATION message other than a hard reset (RFC 8538).\nIt takes effect only when the neighbor supports it as well. Without it, routes are retained only when the\nTCP connection fails or the hold timer expires.\nA session torn down by BFD never triggers graceful restart, and routes are withdrawn immediately.\nDefaults to true.\n",
+          "markdownDescription": "Also retain routes when the session ends with a BGP NOTIFICATION message other than a hard reset (RFC 8538).\nIt takes effect only when the neighbor supports it as well. Without it, routes are retained only when the\nTCP connection fails or the hold timer expires.\nA session torn down by BFD never triggers graceful restart, and routes are withdrawn immediately.\nDefaults to true.",
+          "x-intellij-html-description": "\u003cp\u003eAlso retain routes when the session ends with a BGP NOTIFICATION message other than a hard reset (RFC 8538).\nIt takes effect only when the neighbor supports it as well. Without it, routes are retained only when the\nTCP connection fails or the hold timer expires.\nA session torn down by BFD never triggers graceful restart, and routes are withdrawn immediately.\nDefaults to true.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "BGPGracefulRestartConfig configures BGP graceful restart helper mode for a BGP neighbor."
+    },
     "network.BGPImportRoute": {
       "properties": {
         "bgpInstance": {
@@ -5755,6 +5776,13 @@
           "description": "TTL To be set on BGP packet for eBGPMultiHop feature.\nValue must be between 2 and 255.\n",
           "markdownDescription": "TTL To be set on BGP packet for eBGPMultiHop feature.\nValue must be between 2 and 255.",
           "x-intellij-html-description": "\u003cp\u003eTTL To be set on BGP packet for eBGPMultiHop feature.\nValue must be between 2 and 255.\u003c/p\u003e\n"
+        },
+        "gracefulRestart": {
+          "$ref": "#/$defs/network.BGPGracefulRestartConfig",
+          "title": "gracefulRestart",
+          "description": "BGP graceful restart (RFC 4724) settings for this neighbor.\nTalos acts as a helper only: when the session with a neighbor that advertised graceful restart ends\nwithout a hard reset, routes learned from it are retained as stale (they stay installed and imported into\nother instances) until the neighbor re-establishes the session and sends End-of-RIB, or until the restart time\nadvertised by the neighbor expires.\nTalos does not ask its neighbors to retain its own routes when it restarts (restarting speaker mode).\nThe neighbor must enable graceful restart too, and only the address families it lists are retained.\nChanging these settings resets the session with the neighbor.\n",
+          "markdownDescription": "BGP graceful restart (RFC 4724) settings for this neighbor.\nTalos acts as a helper only: when the session with a neighbor that advertised graceful restart ends\nwithout a hard reset, routes learned from it are retained as stale (they stay installed and imported into\nother instances) until the neighbor re-establishes the session and sends End-of-RIB, or until the restart time\nadvertised by the neighbor expires.\nTalos does not ask its neighbors to retain its own routes when it restarts (restarting speaker mode).\nThe neighbor must enable graceful restart too, and only the address families it lists are retained.\nChanging these settings resets the session with the neighbor.",
+          "x-intellij-html-description": "\u003cp\u003eBGP graceful restart (RFC 4724) settings for this neighbor.\nTalos acts as a helper only: when the session with a neighbor that advertised graceful restart ends\nwithout a hard reset, routes learned from it are retained as stale (they stay installed and imported into\nother instances) until the neighbor re-establishes the session and sends End-of-RIB, or until the restart time\nadvertised by the neighbor expires.\nTalos does not ask its neighbors to retain its own routes when it restarts (restarting speaker mode).\nThe neighbor must enable graceful restart too, and only the address families it lists are retained.\nChanging these settings resets the session with the neighbor.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

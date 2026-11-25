@@ -82,6 +82,8 @@ func (ctrl *BGPController) Outputs() []controller.Output {
 }
 
 // Run implements controller.Controller interface.
+//
+//nolint:gocyclo
 func (ctrl *BGPController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	ctrl.reconcileCh = make(chan struct{}, 1)
 	ctrl.instances = map[resource.ID]*internalbgp.Instance{}
@@ -100,7 +102,7 @@ func (ctrl *BGPController) Run(ctx context.Context, r controller.Runtime, logger
 
 	retryBackoff := backoff.NewExponentialBackOff()
 
-	var retryCh <-chan time.Time
+	var retryCh, refreshCh <-chan time.Time
 
 	for {
 		select {
@@ -110,12 +112,15 @@ func (ctrl *BGPController) Run(ctx context.Context, r controller.Runtime, logger
 		case <-ctrl.reconcileCh:
 		case <-retryCh:
 			retryCh = nil
+		case <-refreshCh:
 		}
 
-		failed, err := ctrl.reconcile(ctx, r, logger)
+		failed, restarting, err := ctrl.reconcile(ctx, r, logger)
 		if err != nil {
 			return err
 		}
+
+		refreshCh = restartRefresh(restarting)
 
 		// failed instances and peers are retried here: a controller restart would also stop the healthy ones
 		//
@@ -132,6 +137,21 @@ func (ctrl *BGPController) Run(ctx context.Context, r controller.Runtime, logger
 
 		r.ResetRestartBackoff()
 	}
+}
+
+// bgpRestartRefreshInterval is how often the peer status is refreshed while a peer is restarting.
+const bgpRestartRefreshInterval = 2 * time.Second
+
+// restartRefresh returns a channel which triggers a reconcile while a peer is gracefully restarting.
+//
+// GoBGP emits no event when a peer's graceful restart ends at End-of-RIB without a best path change,
+// so the peer status is refreshed until no peer is restarting.
+func restartRefresh(restarting bool) <-chan time.Time {
+	if !restarting {
+		return nil
+	}
+
+	return time.After(bgpRestartRefreshInterval)
 }
 
 // signal triggers a reconcile from a gobgp watch callback (non-blocking).
@@ -175,31 +195,29 @@ func instanceOutputs(ctx context.Context, name resource.ID, instance *internalbg
 	}
 }
 
-// reconcile reports whether an instance failed and needs a retry.
+// reconcile reports whether an instance failed and needs a retry, and whether a peer is gracefully restarting.
 //
 //nolint:gocyclo,cyclop
-func (ctrl *BGPController) reconcile(ctx context.Context, r controller.Runtime, logger *zap.Logger) (bool, error) {
+func (ctrl *BGPController) reconcile(ctx context.Context, r controller.Runtime, logger *zap.Logger) (failed, restarting bool, err error) {
 	configs, err := safe.ReaderListAll[*network.BGPInstanceConfig](ctx, r)
 	if err != nil {
-		return false, fmt.Errorf("error listing BGP instance configs: %w", err)
+		return false, false, fmt.Errorf("error listing BGP instance configs: %w", err)
 	}
 
 	linkStatuses, err := safe.ReaderListAll[*network.LinkStatus](ctx, r)
 	if err != nil {
-		return false, fmt.Errorf("error listing link statuses: %w", err)
+		return false, false, fmt.Errorf("error listing link statuses: %w", err)
 	}
 
 	addressStatuses, err := safe.ReaderListAll[*network.AddressStatus](ctx, r)
 	if err != nil {
-		return false, fmt.Errorf("error listing address statuses: %w", err)
+		return false, false, fmt.Errorf("error listing address statuses: %w", err)
 	}
 
 	runtimeState := internalbgp.NewRuntimeStateFromResources(linkStatuses.All(), addressStatuses.All())
 	neighborResolver := internalbgp.NewNeighborResolver(internalbgp.ReadNeighbors)
 
 	desired := map[resource.ID]struct{}{}
-
-	var failed bool
 
 	for configResource := range configs.All() {
 		name := configResource.Metadata().ID()
@@ -328,6 +346,10 @@ func (ctrl *BGPController) reconcile(ctx context.Context, r controller.Runtime, 
 		output := instanceOutputs(ctx, name, instance)
 		outputs = append(outputs, output)
 
+		restarting = restarting || slices.ContainsFunc(output.peerStatuses, func(status network.BGPPeerStatusSpec) bool {
+			return status.PeerRestarting
+		})
+
 		logger.Debug(
 			"prepared BGP instance outputs",
 			zap.String("instance", name),
@@ -338,7 +360,7 @@ func (ctrl *BGPController) reconcile(ctx context.Context, r controller.Runtime, 
 		)
 	}
 
-	return failed, ctrl.writeOutputs(ctx, r, outputs)
+	return failed, restarting, ctrl.writeOutputs(ctx, r, outputs)
 }
 
 func (ctrl *BGPController) effectiveListenPort() int32 {

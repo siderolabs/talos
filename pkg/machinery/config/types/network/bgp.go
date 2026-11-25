@@ -191,6 +191,30 @@ type BGPNeighborConfig struct {
 	//     TTL To be set on BGP packet for eBGPMultiHop feature.
 	//     Value must be between 2 and 255.
 	NeighborEBGPMultiHop uint32 `yaml:"ebgpMultiHop,omitempty"`
+	//   description: |
+	//     BGP graceful restart (RFC 4724) settings for this neighbor.
+	//     Talos acts as a helper only: when the session with a neighbor that advertised graceful restart ends
+	//     without a hard reset, routes learned from it are retained as stale (they stay installed and imported into
+	//     other instances) until the neighbor re-establishes the session and sends End-of-RIB, or until the restart time
+	//     advertised by the neighbor expires.
+	//     Talos does not ask its neighbors to retain its own routes when it restarts (restarting speaker mode).
+	//     The neighbor must enable graceful restart too, and only the address families it lists are retained.
+	//     Changing these settings resets the session with the neighbor.
+	NeighborGracefulRestartConfig *BGPGracefulRestartConfig `yaml:"gracefulRestart,omitempty"`
+}
+
+// BGPGracefulRestartConfig configures BGP graceful restart helper mode for a BGP neighbor.
+type BGPGracefulRestartConfig struct {
+	//   description: |
+	//     Enable graceful restart helper mode for this neighbor.
+	GracefulRestartEnabled bool `yaml:"enabled,omitempty"`
+	//   description: |
+	//     Also retain routes when the session ends with a BGP NOTIFICATION message other than a hard reset (RFC 8538).
+	//     It takes effect only when the neighbor supports it as well. Without it, routes are retained only when the
+	//     TCP connection fails or the hold timer expires.
+	//     A session torn down by BFD never triggers graceful restart, and routes are withdrawn immediately.
+	//     Defaults to true.
+	GracefulRestartNotification *bool `yaml:"notification,omitempty"`
 }
 
 // BGPBFDConfig configures BFD for a BGP neighbor.
@@ -533,6 +557,10 @@ func validateBGPNeighborBehavior(index int, neighbor BGPNeighborConfig, vrf stri
 		errs = errors.Join(errs, fmt.Errorf("neighbor[%d]: ebgpMultiHop must be above 1 and not exceed %d", index, ebgpMultiHopMax))
 	}
 
+	if gr := neighbor.NeighborGracefulRestartConfig; gr != nil && !gr.GracefulRestartEnabled && gr.GracefulRestartNotification != nil {
+		errs = errors.Join(errs, fmt.Errorf("neighbor[%d]: gracefulRestart.notification requires gracefulRestart.enabled", index))
+	}
+
 	if neighbor.NeighborBFDConfig == nil {
 		return errs
 	}
@@ -585,6 +613,15 @@ func (n BGPNeighborConfig) AuthPassword() string { return n.NeighborAuthPassword
 // EBGPMultiHop implements config.NetworkBGPNeighbor interface.
 func (n BGPNeighborConfig) EBGPMultiHop() uint32 { return n.NeighborEBGPMultiHop }
 
+// GracefulRestart implements config.NetworkBGPNeighbor interface.
+func (n BGPNeighborConfig) GracefulRestart() config.NetworkBGPGracefulRestart {
+	if n.NeighborGracefulRestartConfig == nil || !n.NeighborGracefulRestartConfig.GracefulRestartEnabled {
+		return nil
+	}
+
+	return n.NeighborGracefulRestartConfig
+}
+
 // BGPInstance implements config.NetworkBGPImportRoute interface.
 func (route BGPImportRoute) BGPInstance() string { return route.ImportBGPInstance }
 
@@ -601,3 +638,12 @@ func (b *BGPBFDConfig) ReceiveInterval() time.Duration { return b.BFDReceiveInte
 
 // DetectMultiplier implements config.NetworkBGPBFD interface.
 func (b *BGPBFDConfig) DetectMultiplier() uint8 { return b.BFDDetectMultiplier }
+
+// Notification implements config.NetworkBGPGracefulRestart interface.
+func (g *BGPGracefulRestartConfig) Notification() bool {
+	if g.GracefulRestartNotification == nil {
+		return true
+	}
+
+	return *g.GracefulRestartNotification
+}

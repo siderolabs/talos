@@ -83,6 +83,9 @@ func TestBGPInstanceConfigProtobufRoundTrip(t *testing.T) {
 				PeerASN:      65003,
 				AuthPassword: "secret",
 				EBGPMultiHop: 2,
+				GracefulRestart: &network.BGPGracefulRestartConfigSpec{
+					Notification: true,
+				},
 			},
 		},
 	}

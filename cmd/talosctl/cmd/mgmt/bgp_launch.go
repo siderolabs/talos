@@ -95,6 +95,7 @@ var bgpLaunchCmd = &cobra.Command{
 					bgpLaunchAfiSafi(gobgpapi.Family_AFI_IP),
 					bgpLaunchAfiSafi(gobgpapi.Family_AFI_IP6),
 				},
+				GracefulRestart: bgpLaunchGracefulRestart(),
 			},
 		}); err != nil {
 			return fmt.Errorf("error adding peer group: %w", err)
@@ -203,6 +204,7 @@ func runUnnumberedFabricPeer(ctx context.Context) error {
 				bgpLaunchAfiSafi(gobgpapi.Family_AFI_IP),
 				bgpLaunchAfiSafi(gobgpapi.Family_AFI_IP6),
 			},
+			GracefulRestart: bgpLaunchGracefulRestart(),
 			// enable BFD so the node's BFD-enabled neighbor brings up a session (BFD needs both ends).
 			// 300ms tx/rx, multiplier 3 — matches the node-side test config; BFD negotiates the rest.
 			Bfd: &gobgpapi.BfdPeerConfig{
@@ -259,6 +261,21 @@ func bgpLaunchAfiSafi(afi gobgpapi.Family_Afi) *gobgpapi.AfiSafi {
 			Family:  &gobgpapi.Family{Afi: afi, Safi: gobgpapi.Family_SAFI_UNICAST},
 			Enabled: true,
 		},
+		// list the family in the Graceful Restart Capability, so a Talos neighbor in helper mode retains its routes
+		MpGracefulRestart: &gobgpapi.MpGracefulRestart{
+			Config: &gobgpapi.MpGracefulRestartConfig{Enabled: true},
+		},
+	}
+}
+
+// bgpLaunchGracefulRestart advertises graceful restart like a GR-capable fabric router, with the N-bit (RFC 8538).
+//
+// It has no effect on Talos neighbors that do not enable graceful restart themselves.
+func bgpLaunchGracefulRestart() *gobgpapi.GracefulRestart {
+	return &gobgpapi.GracefulRestart{
+		Enabled:             true,
+		RestartTime:         120,
+		NotificationEnabled: true,
 	}
 }
 
@@ -272,6 +289,7 @@ func bgpLaunchActivePeer(address netip.Addr, peerASN uint32) *gobgpapi.Peer {
 			bgpLaunchAfiSafi(gobgpapi.Family_AFI_IP),
 			bgpLaunchAfiSafi(gobgpapi.Family_AFI_IP6),
 		},
+		GracefulRestart: bgpLaunchGracefulRestart(),
 		Timers: &gobgpapi.Timers{
 			Config: &gobgpapi.TimersConfig{
 				// The peer starts before the integration test configures the reserved guest address.

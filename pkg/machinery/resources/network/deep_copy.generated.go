@@ -38,6 +38,10 @@ func (o BGPNeighborConfigSpec) DeepCopy() BGPNeighborConfigSpec {
 		retV := o.BFD.DeepCopy()
 		cp.BFD = &retV
 	}
+	if o.GracefulRestart != nil {
+		cp.GracefulRestart = new(BGPGracefulRestartConfigSpec)
+		*cp.GracefulRestart = *o.GracefulRestart
+	}
 	return cp
 }
 

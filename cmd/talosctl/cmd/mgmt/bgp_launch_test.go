@@ -26,6 +26,13 @@ func TestBGPLaunchActivePeer(t *testing.T) {
 	require.Len(t, peer.GetAfiSafis(), 2)
 	assert.Equal(t, api.Family_AFI_IP, peer.GetAfiSafis()[0].GetConfig().GetFamily().GetAfi())
 	assert.Equal(t, api.Family_AFI_IP6, peer.GetAfiSafis()[1].GetConfig().GetFamily().GetAfi())
+	assert.True(t, peer.GetGracefulRestart().GetEnabled())
+	assert.False(t, peer.GetGracefulRestart().GetHelperOnly(), "the fabric must list its families for Talos to retain them")
+	assert.True(t, peer.GetGracefulRestart().GetNotificationEnabled())
+
+	for _, family := range peer.GetAfiSafis() {
+		assert.True(t, family.GetMpGracefulRestart().GetConfig().GetEnabled())
+	}
 }
 
 func TestBGPLaunchHostRouteEligible(t *testing.T) {

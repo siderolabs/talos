@@ -38,6 +38,10 @@ type BGPPeerStatusSpec struct {
 	Accepted   uint32                     `yaml:"accepted" protobuf:"9"`
 	BFDState   string                     `yaml:"bfdState,omitempty" protobuf:"10"`
 	Instance   string                     `yaml:"instance" protobuf:"11"`
+	// GracefulRestart is true when graceful restart was negotiated for at least one address family.
+	GracefulRestart bool `yaml:"gracefulRestart,omitempty" protobuf:"12"`
+	// PeerRestarting is true while routes learned from the restarting peer are retained as stale.
+	PeerRestarting bool `yaml:"peerRestarting,omitempty" protobuf:"13"`
 }
 
 // NewBGPPeerStatus initializes a BGPPeerStatus resource.

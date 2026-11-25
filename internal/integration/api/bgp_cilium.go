@@ -13,6 +13,8 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
+	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -52,6 +54,9 @@ const (
 	ciliumAdvertisementLabel = "bgp.talos.dev/advertisement"
 	ciliumServiceLabel       = "bgp.talos.dev/service"
 	ciliumTestLabelValue     = "cilium-fabric"
+
+	// ciliumRestartTime is the graceful restart time advertised by Cilium: long enough for the agent to restart in CI.
+	ciliumRestartTime = 300 * time.Second
 )
 
 const ciliumWorkloadVRFTable = nethelpers.RoutingTable(89)
@@ -81,6 +86,7 @@ type ciliumManifestData struct {
 	LabelValue         string
 	TalosASN           uint32
 	SpeakerASN         uint32
+	RestartTimeSeconds uint32
 }
 
 // BGPCiliumSuite verifies that the real Cilium BGP Control Plane can feed service and PodCIDR
@@ -191,6 +197,9 @@ func (suite *BGPCiliumSuite) TestCiliumVRFBGP() { //nolint:gocyclo
 		NeighborPeerASN:       ciliumSpeakerASN,
 		NeighborPassive:       true,
 		NeighborHoldTime:      9 * time.Second,
+		NeighborGracefulRestartConfig: &network.BGPGracefulRestartConfig{
+			GracefulRestartEnabled: true,
+		},
 	}}
 
 	fabricPatch.BGPImportRoutes = append(fabricPatch.BGPImportRoutes, network.BGPImportRoute{
@@ -248,6 +257,11 @@ func (suite *BGPCiliumSuite) TestCiliumVRFBGP() { //nolint:gocyclo
 	httpProbe.assert(suite.ctx, true)
 	workloadHelper.assertFabricSessions(nodeCtx, fabricSessions)
 
+	suite.assertCiliumGracefulRestart(nodeCtx, clientNodeCtx, workloadHelper, k8sNode.Name, peerID, podCIDR, httpProbe)
+	workloadHelper.assertFabricSessions(nodeCtx, fabricSessions)
+
+	// with the RFC 8538 N-bit negotiated, Cilium sends the Cease of a removed advertisement or peer as a Hard Reset,
+	// so the routes below are withdrawn at once instead of being retained as stale
 	suite.DeleteManifests(suite.ctx, ciliumObjects[1:2])
 	workloadHelper.assertNoRouteInTable(clientNodeCtx, ciliumVIPPrefix, nethelpers.TableMain)
 	workloadHelper.assertNoRouteSpecInTable(clientNodeCtx, podCIDR, nethelpers.TableMain)
@@ -277,6 +291,74 @@ func (suite *BGPCiliumSuite) TestCiliumVRFBGP() { //nolint:gocyclo
 	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.State(), ciliumVethPeerName)
 	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.State(), ciliumWorkloadVRF)
 	workloadHelper.assertFabricSessions(nodeCtx, fabricSessions)
+}
+
+// assertCiliumGracefulRestart restarts the Cilium agent on the worker and verifies that Talos, as a graceful restart
+// helper, retains the Cilium routes while the agent is down: the fabric never withdraws them, and the VIP stays reachable.
+func (suite *BGPCiliumSuite) assertCiliumGracefulRestart(
+	nodeCtx, clientNodeCtx context.Context,
+	helper bgpWorkloadHelper,
+	nodeName, peerID string,
+	podCIDR netip.Prefix,
+	httpProbe *bgpFabricHTTPProbe,
+) {
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), peerID,
+		func(peer *networkres.BGPPeerStatus, asrt *assert.Assertions) {
+			asrt.Equal(nethelpers.BGPSessionStateEstablished, peer.TypedSpec().State)
+			asrt.True(peer.TypedSpec().GracefulRestart, "graceful restart was not negotiated with Cilium")
+			asrt.False(peer.TypedSpec().PeerRestarting)
+		},
+	)
+
+	vipCreated := helper.fabricRouteSpecCreated(clientNodeCtx, ciliumVIPPrefix)
+	podCIDRCreated := helper.fabricRouteSpecCreated(clientNodeCtx, podCIDR)
+
+	pods, err := suite.Clientset.CoreV1().Pods(ciliumNamespace).List(suite.ctx, metav1.ListOptions{
+		LabelSelector: "k8s-app=cilium",
+		FieldSelector: "spec.nodeName=" + nodeName,
+	})
+	suite.Require().NoError(err)
+	suite.Require().Len(pods.Items, 1, "expected one Cilium agent on node %q", nodeName)
+
+	agent := pods.Items[0].Name
+
+	suite.T().Logf("restarting Cilium agent %q", agent)
+
+	// on shutdown, the Cilium agent stops its BGP instance without a NOTIFICATION, which starts a graceful restart
+	suite.Require().NoError(suite.Clientset.CoreV1().Pods(ciliumNamespace).Delete(suite.ctx, agent, metav1.DeleteOptions{}))
+
+	peerStatus := func() *networkres.BGPPeerStatusSpec {
+		peer, getErr := safe.StateGetByID[*networkres.BGPPeerStatus](nodeCtx, suite.Client.State(), peerID)
+		if getErr != nil {
+			return nil
+		}
+
+		return peer.TypedSpec()
+	}
+
+	suite.Require().Eventually(func() bool {
+		spec := peerStatus()
+
+		return spec != nil && spec.PeerRestarting
+	}, 2*time.Minute, time.Second, "Talos did not detect the Cilium agent restart")
+
+	// the stale routes stay in the fabric, and the Cilium datapath keeps serving the VIP while the agent restarts
+	helper.waitForFabricRoute(clientNodeCtx, ciliumVIPPrefix)
+	helper.waitForFabricRouteSpec(clientNodeCtx, podCIDR)
+	httpProbe.assert(suite.ctx, true)
+
+	// the restarted agent re-advertises its routes and sends End-of-RIB, which ends the restart
+	suite.Require().Eventually(func() bool {
+		spec := peerStatus()
+
+		return spec != nil && spec.State == nethelpers.BGPSessionStateEstablished && !spec.PeerRestarting
+	}, ciliumRestartTime, time.Second, "the Cilium graceful restart did not complete")
+
+	suite.Require().NoError(suite.WaitForDaemonSetReady(suite.ctx, 5*time.Minute, ciliumNamespace, "k8s-app=cilium"))
+
+	suite.Equal(vipCreated, helper.fabricRouteSpecCreated(clientNodeCtx, ciliumVIPPrefix), "the VIP route was withdrawn from the fabric during the restart")
+	suite.Equal(podCIDRCreated, helper.fabricRouteSpecCreated(clientNodeCtx, podCIDR), "the PodCIDR route was withdrawn from the fabric during the restart")
+	httpProbe.assert(suite.ctx, true)
 }
 
 func (suite *BGPCiliumSuite) assertStrictKubeProxyReplacement() {
@@ -312,6 +394,7 @@ func (suite *BGPCiliumSuite) ciliumBGPObjects(nodeName string) []unstructured.Un
 		LabelValue:         ciliumTestLabelValue,
 		TalosASN:           ciliumTalosASN,
 		SpeakerASN:         ciliumSpeakerASN,
+		RestartTimeSeconds: uint32(ciliumRestartTime.Seconds()),
 	})
 
 	suite.Require().Len(objects, 4)

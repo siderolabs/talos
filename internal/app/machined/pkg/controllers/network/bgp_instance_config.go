@@ -296,6 +296,12 @@ func buildBGPInstanceConfigSpec(cfg talosconfig.NetworkBGPInstanceConfig) networ
 			}
 		}
 
+		if gr := neighbor.GracefulRestart(); gr != nil {
+			neighborSpec.GracefulRestart = &network.BGPGracefulRestartConfigSpec{
+				Notification: gr.Notification(),
+			}
+		}
+
 		spec.Neighbors = append(spec.Neighbors, neighborSpec)
 	}
 

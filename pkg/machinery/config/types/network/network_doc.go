@@ -223,6 +223,45 @@ func (BGPNeighborConfig) Doc() *encoder.Doc {
 				Description: "TTL To be set on BGP packet for eBGPMultiHop feature.\nValue must be between 2 and 255.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "TTL To be set on BGP packet for eBGPMultiHop feature." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "gracefulRestart",
+				Type:        "BGPGracefulRestartConfig",
+				Note:        "",
+				Description: "BGP graceful restart (RFC 4724) settings for this neighbor.\nTalos acts as a helper only: when the session with a neighbor that advertised graceful restart ends\nwithout a hard reset, routes learned from it are retained as stale (they stay installed and imported into\nother instances) until the neighbor re-establishes the session and sends End-of-RIB, or until the restart time\nadvertised by the neighbor expires.\nTalos does not ask its neighbors to retain its own routes when it restarts (restarting speaker mode).\nThe neighbor must enable graceful restart too, and only the address families it lists are retained.\nChanging these settings resets the session with the neighbor.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "BGP graceful restart (RFC 4724) settings for this neighbor." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (BGPGracefulRestartConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "BGPGracefulRestartConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "BGPGracefulRestartConfig configures BGP graceful restart helper mode for a BGP neighbor." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "BGPGracefulRestartConfig configures BGP graceful restart helper mode for a BGP neighbor.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "BGPNeighborConfig",
+				FieldName: "gracefulRestart",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "enabled",
+				Type:        "bool",
+				Note:        "",
+				Description: "Enable graceful restart helper mode for this neighbor.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable graceful restart helper mode for this neighbor." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "notification",
+				Type:        "bool",
+				Note:        "",
+				Description: "Also retain routes when the session ends with a BGP NOTIFICATION message other than a hard reset (RFC 8538).\nIt takes effect only when the neighbor supports it as well. Without it, routes are retained only when the\nTCP connection fails or the hold timer expires.\nA session torn down by BFD never triggers graceful restart, and routes are withdrawn immediately.\nDefaults to true.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Also retain routes when the session ends with a BGP NOTIFICATION message other than a hard reset (RFC 8538)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
@@ -2875,6 +2914,7 @@ func GetFileDoc() *encoder.FileDoc {
 			BGPInstanceConfigV1Alpha1{}.Doc(),
 			BGPImportRoute{}.Doc(),
 			BGPNeighborConfig{}.Doc(),
+			BGPGracefulRestartConfig{}.Doc(),
 			BGPBFDConfig{}.Doc(),
 			BlackholeRouteConfigV1Alpha1{}.Doc(),
 			BondConfigV1Alpha1{}.Doc(),

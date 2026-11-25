@@ -523,6 +523,14 @@ type NetworkBGPNeighbor interface {
 	AuthPassword() string
 	// EBGPMultiHop will enable eBGP with multi hope feature (setting the TTL of the BGP packet to higher than 1).
 	EBGPMultiHop() uint32
+	// GracefulRestart returns this neighbor's graceful restart helper configuration, or nil when graceful restart is disabled.
+	GracefulRestart() NetworkBGPGracefulRestart
+}
+
+// NetworkBGPGracefulRestart defines BGP graceful restart helper parameters for a BGP neighbor.
+type NetworkBGPGracefulRestart interface {
+	// Notification reports whether routes are also retained when the session ends with a NOTIFICATION message (RFC 8538 N-bit).
+	Notification() bool
 }
 
 // NetworkBGPBFD defines BFD parameters for a BGP neighbor.

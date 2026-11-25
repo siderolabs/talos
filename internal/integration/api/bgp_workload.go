@@ -226,6 +226,24 @@ func (helper bgpWorkloadHelper) waitForFabricRouteSpec(nodeCtx context.Context, 
 	}, 2*time.Minute, time.Second, "fabric RouteSpec %s was not published on the client node", destination)
 }
 
+// fabricRouteSpecCreated returns when the fabric RouteSpec for the destination was created: a withdrawn and
+// re-advertised route gets a new RouteSpec.
+func (helper bgpWorkloadHelper) fabricRouteSpecCreated(nodeCtx context.Context, destination netip.Prefix) time.Time {
+	routes, err := safe.StateListAll[*networkres.RouteSpec](nodeCtx, helper.suite.Client.State())
+	helper.suite.Require().NoError(err)
+
+	for route := range routes.All() {
+		spec := route.TypedSpec()
+		if spec.Destination == destination && spec.Table == nethelpers.TableMain && spec.Protocol == nethelpers.ProtocolBGP {
+			return route.Metadata().Created()
+		}
+	}
+
+	helper.suite.Require().Failf("fabric RouteSpec not found", "fabric RouteSpec %s is not published", destination)
+
+	return time.Time{}
+}
+
 func (helper bgpWorkloadHelper) fabricSessions(nodeCtx context.Context) map[resource.ID]time.Time {
 	peers, err := safe.StateListAll[*networkres.BGPPeerStatus](nodeCtx, helper.suite.Client.State())
 	helper.suite.Require().NoError(err)

@@ -45,6 +45,11 @@ message BGPBFDConfigSpec {
   uint32 detect_multiplier = 3;
 }
 
+// BGPGracefulRestartConfigSpec contains BGP graceful restart helper parameters for a BGP neighbor.
+message BGPGracefulRestartConfigSpec {
+  bool notification = 1;
+}
+
 // BGPImportRouteSpec selects routes learned by another BGP instance for one-way import.
 message BGPImportRouteSpec {
   string bgp_instance = 1;
@@ -77,6 +82,8 @@ message BGPNeighborConfigSpec {
   bool passive = 7;
   string auth_password = 8;
   uint32 ebgp_multi_hop = 9;
+  // GracefulRestart enables graceful restart helper mode when set.
+  BGPGracefulRestartConfigSpec graceful_restart = 10;
 }
 
 // BGPPeerStatusSpec describes the status of a BGP peering session.
@@ -92,6 +99,10 @@ message BGPPeerStatusSpec {
   uint32 accepted = 9;
   string bfd_state = 10;
   string instance = 11;
+  // GracefulRestart is true when graceful restart was negotiated for at least one address family.
+  bool graceful_restart = 12;
+  // PeerRestarting is true while routes learned from the restarting peer are retained as stale.
+  bool peer_restarting = 13;
 }
 
 // BondMasterSpec describes bond settings if Kind == "bond".

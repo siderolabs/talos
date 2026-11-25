@@ -118,6 +118,7 @@ BGPNeighborConfig configures a concrete BGP neighbor.
 |`bfd` |<a href="#BGPInstanceConfig.neighbors..bfd">BGPBFDConfig</a> |BFD (Bidirectional Forwarding Detection) settings for this neighbor.<br>The presence of this block enables BFD; an empty block uses the implementation defaults.<br>BFD is supported only when the BGP instance uses the default routing domain, not a VRF.  | |
 |`authPassword` |string |Password for TCP MD5 signature authentication (RFC 2385) of the BGP session.<br>The same password must be configured on the neighbor. Supported for VRF-bound BGP instances as well.<br>The password must not exceed 80 bytes. If unset, the session is not authenticated.<br>The kernel matches the password by peer address (and VRF, if any), so unnumbered neighbors<br>sharing the same link-local address on different links must all use the same password (or none).  | |
 |`ebgpMultiHop` |uint32 |TTL To be set on BGP packet for eBGPMultiHop feature.<br>Value must be between 2 and 255.  | |
+|`gracefulRestart` |<a href="#BGPInstanceConfig.neighbors..gracefulRestart">BGPGracefulRestartConfig</a> |BGP graceful restart (RFC 4724) settings for this neighbor.<br>Talos acts as a helper only: when the session with a neighbor that advertised graceful restart ends<br>without a hard reset, routes learned from it are retained as stale (they stay installed and imported into<br>other instances) until the neighbor re-establishes the session and sends End-of-RIB, or until the restart time<br>advertised by the neighbor expires.<br>Talos does not ask its neighbors to retain its own routes when it restarts (restarting speaker mode).<br>The neighbor must enable graceful restart too, and only the address families it lists are retained.<br>Changing these settings resets the session with the neighbor.  | |
 
 
 
@@ -134,6 +135,23 @@ BGPBFDConfig configures BFD for a BGP neighbor.
 |`transmitInterval` |Duration |Desired minimum transmit interval. Zero uses the implementation default.  | |
 |`receiveInterval` |Duration |Required minimum receive interval. Zero uses the implementation default.  | |
 |`detectMultiplier` |uint8 |BFD detection multiplier. Zero uses the implementation default.  | |
+
+
+
+
+
+
+### gracefulRestart {#BGPInstanceConfig.neighbors..gracefulRestart}
+
+BGPGracefulRestartConfig configures BGP graceful restart helper mode for a BGP neighbor.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`enabled` |bool |Enable graceful restart helper mode for this neighbor.  | |
+|`notification` |bool |Also retain routes when the session ends with a BGP NOTIFICATION message other than a hard reset (RFC 8538).<br>It takes effect only when the neighbor supports it as well. Without it, routes are retained only when the<br>TCP connection fails or the hold timer expires.<br>A session torn down by BFD never triggers graceful restart, and routes are withdrawn immediately.<br>Defaults to true.  | |
 
 
 

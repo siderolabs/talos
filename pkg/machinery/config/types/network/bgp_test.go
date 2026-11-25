@@ -41,6 +41,9 @@ func bgpInstanceTestConfig() *network.BGPInstanceConfigV1Alpha1 {
 			NeighborPeerASN:       65000,
 			NeighborPassive:       true,
 			NeighborHoldTime:      9 * time.Second,
+			NeighborGracefulRestartConfig: &network.BGPGracefulRestartConfig{
+				GracefulRestartEnabled: true,
+			},
 		},
 		{
 			NeighborLinkConfig: "enp0s1",
@@ -98,6 +101,30 @@ neighbors:
 	require.True(t, ok)
 	require.Len(t, cfg.BGPNeighborConfigs, 1)
 	assert.NotNil(t, cfg.BGPNeighborConfigs[0].NeighborBFDConfig)
+}
+
+func TestBGPNeighborGracefulRestart(t *testing.T) {
+	t.Parallel()
+
+	assert.Nil(t, network.BGPNeighborConfig{}.GracefulRestart())
+	assert.Nil(t, network.BGPNeighborConfig{
+		NeighborGracefulRestartConfig: &network.BGPGracefulRestartConfig{},
+	}.GracefulRestart(), "a disabled block must not enable graceful restart")
+
+	enabled := network.BGPNeighborConfig{
+		NeighborGracefulRestartConfig: &network.BGPGracefulRestartConfig{GracefulRestartEnabled: true},
+	}.GracefulRestart()
+	require.NotNil(t, enabled)
+	assert.True(t, enabled.Notification(), "notification defaults to true")
+
+	withoutNotification := network.BGPNeighborConfig{
+		NeighborGracefulRestartConfig: &network.BGPGracefulRestartConfig{
+			GracefulRestartEnabled:      true,
+			GracefulRestartNotification: new(false),
+		},
+	}.GracefulRestart()
+	require.NotNil(t, withoutNotification)
+	assert.False(t, withoutNotification.Notification())
 }
 
 func TestBGPInstanceConfigMerge(t *testing.T) {
@@ -342,6 +369,39 @@ func TestBGPInstanceConfigValidate(t *testing.T) {
 				return cfg
 			},
 			expectedError: "neighbor[0]: bfd is not supported for VRF-bound BGP instances",
+		},
+		{
+			name: "graceful restart notification without enabled",
+			cfg: func() *network.BGPInstanceConfigV1Alpha1 {
+				cfg := network.NewBGPInstanceConfigV1Alpha1("fabric")
+				cfg.BGPLocalASN = 65001
+				cfg.BGPNeighborConfigs = []network.BGPNeighborConfig{{
+					NeighborLinkConfig: "enp0s1",
+					NeighborGracefulRestartConfig: &network.BGPGracefulRestartConfig{
+						GracefulRestartNotification: new(true),
+					},
+				}}
+
+				return cfg
+			},
+			expectedError: "neighbor[0]: gracefulRestart.notification requires gracefulRestart.enabled",
+		},
+		{
+			name: "graceful restart in VRF",
+			cfg: func() *network.BGPInstanceConfigV1Alpha1 {
+				cfg := network.NewBGPInstanceConfigV1Alpha1("workload")
+				cfg.BGPVRF = "vrf-workload"
+				cfg.BGPLocalASN = 65001
+				cfg.BGPNeighborConfigs = []network.BGPNeighborConfig{{
+					NeighborAddressConfig: meta.Addr{Addr: netip.MustParseAddr("192.0.2.1")},
+					NeighborGracefulRestartConfig: &network.BGPGracefulRestartConfig{
+						GracefulRestartEnabled:      true,
+						GracefulRestartNotification: new(false),
+					},
+				}}
+
+				return cfg
+			},
 		},
 		{
 			name: "empty BFD uses defaults",

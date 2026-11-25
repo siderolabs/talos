@@ -56,6 +56,10 @@ func newFabricConfig(holdTime time.Duration) *networkcfg.BGPInstanceConfigV1Alph
 			NeighborHoldTime:      15 * time.Second,
 			NeighborAuthPassword:  "secret",
 			NeighborEBGPMultiHop:  2,
+			NeighborGracefulRestartConfig: &networkcfg.BGPGracefulRestartConfig{
+				GracefulRestartEnabled:      true,
+				GracefulRestartNotification: new(false),
+			},
 		},
 	}
 
@@ -93,6 +97,8 @@ func (suite *BGPInstanceConfigSuite) TestRenderInlineBehaviorAndPreserveConfigur
 		assertions.Equal("secret", spec.Neighbors[1].AuthPassword)
 		assertions.Empty(spec.Neighbors[0].EBGPMultiHop)
 		assertions.Equal(uint32(2), spec.Neighbors[1].EBGPMultiHop)
+		assertions.Nil(spec.Neighbors[0].GracefulRestart)
+		assertions.Equal(&network.BGPGracefulRestartConfigSpec{Notification: false}, spec.Neighbors[1].GracefulRestart)
 	}, rtestutils.WithNamespace(network.NamespaceName))
 
 	updatedInstance := newFabricConfig(12 * time.Second)
