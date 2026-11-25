@@ -37,19 +37,19 @@ const (
 
 	// busyRetryTimeout bounds the retries of a sync_min write which is refused with EBUSY.
 	busyRetryTimeout = 5 * time.Second
+
+	// repairPollInterval is how often the sync progress is polled.
+	repairPollInterval = 100 * time.Millisecond
 )
 
-// repairPollInterval is how often the sync progress is polled.
-var repairPollInterval = 100 * time.Millisecond
-
 // IsArray reports whether the device (which might be a symlink, e.g. a by-id path) is an MD array.
-func IsArray(device string) (bool, error) {
+func (md *MD) IsArray(device string) (bool, error) {
 	resolved, err := filepath.EvalSymlinks(device)
 	if err != nil {
 		return false, fmt.Errorf("failed to resolve %s: %w", device, err)
 	}
 
-	_, err = os.Stat(filepath.Join(sysBlockDir, filepath.Base(resolved), "md"))
+	_, err = os.Stat(filepath.Join(md.sysBlockDir, filepath.Base(resolved), "md"))
 
 	switch {
 	case err == nil:
@@ -79,7 +79,7 @@ func IsArray(device string) (bool, error) {
 // before stopping it: that one is stopped, and the sync window is reset to the defaults.
 //
 //nolint:gocyclo,cyclop
-func RepairRange(ctx context.Context, device string, offset, length uint64) (mismatches uint64, err error) {
+func (md *MD) RepairRange(ctx context.Context, device string, offset, length uint64) (mismatches uint64, err error) {
 	if device == "" || length == 0 {
 		return 0, fmt.Errorf("%w: device and a non-empty range must be set", ErrInvalidArgument)
 	}
@@ -90,7 +90,7 @@ func RepairRange(ctx context.Context, device string, offset, length uint64) (mis
 	}
 
 	name := filepath.Base(resolved)
-	attrs := mdAttrs(filepath.Join(sysBlockDir, name, "md"))
+	attrs := mdAttrs(filepath.Join(md.sysBlockDir, name, "md"))
 
 	level, err := attrs.read("level")
 	if err != nil {
@@ -128,7 +128,7 @@ func RepairRange(ctx context.Context, device string, offset, length uint64) (mis
 		return 0, fmt.Errorf("%w: %s is busy with %q", ErrResync, name, action)
 	}
 
-	sizeRaw, err := os.ReadFile(filepath.Join(sysBlockDir, name, "size"))
+	sizeRaw, err := os.ReadFile(filepath.Join(md.sysBlockDir, name, "size"))
 	if err != nil {
 		return 0, fmt.Errorf("failed to read size of %s: %w", name, err)
 	}

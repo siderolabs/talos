@@ -84,7 +84,12 @@ func isMDBootDisk(opts options.InstallOptions) (bool, error) {
 		return false, nil
 	}
 
-	isArray, err := md.IsArray(opts.BootDisk)
+	mdManager, err := md.New()
+	if err != nil {
+		return false, err
+	}
+
+	isArray, err := mdManager.IsArray(opts.BootDisk)
 	if err != nil {
 		return false, fmt.Errorf("failed to check whether %s is an MD array: %w", opts.BootDisk, err)
 	}
@@ -171,7 +176,12 @@ func setFATReadOnly(path string) error {
 // The copies only diverge in the files written before Linux (random seed, boot secret mixin), so it doesn't
 // matter which member the repair picks the data from, as long as all of them end up with the same one.
 func repairESPMirror(opts options.InstallOptions, info *blkid.Info) error {
-	members, err := md.InSyncMembers(opts.BootDisk)
+	mdManager, err := md.New()
+	if err != nil {
+		return err
+	}
+
+	members, err := mdManager.InSyncMembers(opts.BootDisk)
 	if err != nil {
 		return fmt.Errorf("failed to list members of %s: %w", opts.BootDisk, err)
 	}
@@ -201,7 +211,7 @@ func repairESPMirror(opts options.InstallOptions, info *blkid.Info) error {
 	ctx, cancel := context.WithTimeout(context.Background(), espRepairTimeout)
 	defer cancel()
 
-	mismatches, err := md.RepairRange(ctx, opts.BootDisk, esp.PartitionOffset, esp.PartitionSize)
+	mismatches, err := mdManager.RepairRange(ctx, opts.BootDisk, esp.PartitionOffset, esp.PartitionSize)
 	if err != nil {
 		return err
 	}

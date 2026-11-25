@@ -2,8 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//nolint:testpackage
-package md
+package md_test
 
 import (
 	"context"
@@ -15,20 +14,22 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/siderolabs/talos/internal/pkg/md"
 )
 
-// fakeArray lays out the sysfs attributes of an idle RAID1 array md0 of 1GiB, and returns the device path.
-func fakeArray(t *testing.T, attrs map[string]string) (device, mdDir string) {
+// repairSpeedMin is the sync_speed_min set for the duration of a range repair.
+const repairSpeedMin = "100000"
+
+// fakeArray lays out the sysfs attributes of an idle RAID1 array md0 of 1GiB, and returns the MD instance
+// which reads them, and the device path.
+func fakeArray(t *testing.T, attrs map[string]string) (m *md.MD, device, mdDir string) {
 	t.Helper()
 
-	oldSysBlockDir := sysBlockDir
-	sysBlockDir = t.TempDir()
-	t.Cleanup(func() { sysBlockDir = oldSysBlockDir })
+	sysBlockDir := t.TempDir()
 
-	oldPollInterval := repairPollInterval
-	repairPollInterval = time.Millisecond
-
-	t.Cleanup(func() { repairPollInterval = oldPollInterval })
+	m, err := md.New(md.WithSysBlockDir(sysBlockDir))
+	require.NoError(t, err)
 
 	mdDir = filepath.Join(sysBlockDir, "md0", "md")
 	require.NoError(t, os.MkdirAll(mdDir, 0o755))
@@ -58,7 +59,7 @@ func fakeArray(t *testing.T, attrs map[string]string) (device, mdDir string) {
 	byID := filepath.Join(devDir, "md-name-talos:boot")
 	require.NoError(t, os.Symlink(device, byID))
 
-	return byID, mdDir
+	return m, byID, mdDir
 }
 
 // writeAttr replaces the attribute atomically, so that the concurrent reader never sees it empty.
@@ -112,7 +113,9 @@ func fakeKernel(t *testing.T, mdDir string, progress func()) <-chan map[string]s
 }
 
 func TestRepairRange(t *testing.T) {
-	device, mdDir := fakeArray(t, nil)
+	t.Parallel()
+
+	m, device, mdDir := fakeArray(t, nil)
 
 	// 1MiB offset is sector 2048; the end (1MiB + 100MiB + 1 byte) rounds up to the next 4KiB, sector 206856
 	const (
@@ -127,7 +130,7 @@ func TestRepairRange(t *testing.T) {
 		writeAttr(t, mdDir, "sync_completed", "206856 / 2097152")
 	})
 
-	mismatches, err := RepairRange(t.Context(), device, offset, length)
+	mismatches, err := m.RepairRange(t.Context(), device, offset, length)
 	require.NoError(t, err)
 	assert.EqualValues(t, 16, mismatches)
 
@@ -141,34 +144,40 @@ func TestRepairRange(t *testing.T) {
 }
 
 func TestRepairRangeRestoresLocalSpeedMin(t *testing.T) {
-	device, mdDir := fakeArray(t, map[string]string{"sync_speed_min": "5000 (local)"})
+	t.Parallel()
+
+	m, device, mdDir := fakeArray(t, map[string]string{"sync_speed_min": "5000 (local)"})
 
 	fakeKernel(t, mdDir, func() {
 		writeAttr(t, mdDir, "sync_completed", "4096 / 2097152")
 	})
 
-	_, err := RepairRange(t.Context(), device, 0, 4096*512)
+	_, err := m.RepairRange(t.Context(), device, 0, 4096*512)
 	require.NoError(t, err)
 
 	assert.Equal(t, "5000", readAttr(t, mdDir, "sync_speed_min"))
 }
 
 func TestRepairRangeStopped(t *testing.T) {
-	device, mdDir := fakeArray(t, nil)
+	t.Parallel()
+
+	m, device, mdDir := fakeArray(t, nil)
 
 	// something else stops the repair before it reaches the end of the range
 	fakeKernel(t, mdDir, func() {
 		writeAttr(t, mdDir, "sync_action", "idle")
 	})
 
-	_, err := RepairRange(t.Context(), device, 0, 4096*512)
+	_, err := m.RepairRange(t.Context(), device, 0, 4096*512)
 	require.ErrorContains(t, err, "stopped before reaching sector 4096")
 
 	assertRestored(t, mdDir)
 }
 
 func TestRepairRangeReplaced(t *testing.T) {
-	device, mdDir := fakeArray(t, nil)
+	t.Parallel()
+
+	m, device, mdDir := fakeArray(t, nil)
 
 	// a member was added just before the repair was requested, so the kernel runs a recovery instead,
 	// which pauses at sync_max as well
@@ -177,16 +186,18 @@ func TestRepairRangeReplaced(t *testing.T) {
 		writeAttr(t, mdDir, "sync_completed", "4096 / 2097152")
 	})
 
-	_, err := RepairRange(t.Context(), device, 0, 4096*512)
-	require.ErrorIs(t, err, ErrResync)
+	_, err := m.RepairRange(t.Context(), device, 0, 4096*512)
+	require.ErrorIs(t, err, md.ErrResync)
 	require.ErrorContains(t, err, `replaced with "recover"`)
 
 	assertRestored(t, mdDir)
 }
 
 func TestRepairRangeStale(t *testing.T) {
+	t.Parallel()
+
 	// a range repair was left paused at sync_max, with the speed floor raised
-	device, mdDir := fakeArray(t, map[string]string{
+	m, device, mdDir := fakeArray(t, map[string]string{
 		"sync_action":    "repair",
 		"sync_completed": "1024 / 2097152",
 		"sync_min":       "512",
@@ -205,7 +216,7 @@ func TestRepairRangeStale(t *testing.T) {
 		writeAttr(t, mdDir, "sync_completed", "4096 / 2097152")
 	}()
 
-	mismatches, err := RepairRange(t.Context(), device, 0, 4096*512)
+	mismatches, err := m.RepairRange(t.Context(), device, 0, 4096*512)
 	require.NoError(t, err)
 	assert.EqualValues(t, 8, mismatches)
 
@@ -214,7 +225,9 @@ func TestRepairRangeStale(t *testing.T) {
 }
 
 func TestRepairRangeTimeout(t *testing.T) {
-	device, mdDir := fakeArray(t, nil)
+	t.Parallel()
+
+	m, device, mdDir := fakeArray(t, nil)
 
 	// the repair never makes progress
 	fakeKernel(t, mdDir, func() {})
@@ -222,13 +235,15 @@ func TestRepairRangeTimeout(t *testing.T) {
 	ctx, cancel := context.WithTimeout(t.Context(), 100*time.Millisecond)
 	defer cancel()
 
-	_, err := RepairRange(ctx, device, 0, 4096*512)
+	_, err := m.RepairRange(ctx, device, 0, 4096*512)
 	require.ErrorIs(t, err, context.DeadlineExceeded)
 
 	assertRestored(t, mdDir)
 }
 
 func TestRepairRangeRefused(t *testing.T) {
+	t.Parallel()
+
 	for _, test := range []struct {
 		name   string
 		attrs  map[string]string
@@ -241,35 +256,37 @@ func TestRepairRangeRefused(t *testing.T) {
 			name:     "busy",
 			attrs:    map[string]string{"sync_action": "resync"},
 			length:   4096,
-			expected: ErrResync,
+			expected: md.ErrResync,
 		},
 		{
 			name:     "repair of the whole array",
 			attrs:    map[string]string{"sync_action": "repair", "sync_completed": "4096 / 2097152"},
 			length:   4096,
-			expected: ErrResync,
+			expected: md.ErrResync,
 		},
 		{
 			name:     "not raid1",
 			attrs:    map[string]string{"level": "raid0"},
 			length:   4096,
-			expected: ErrInvalidArgument,
+			expected: md.ErrInvalidArgument,
 		},
 		{
 			name:     "empty range",
-			expected: ErrInvalidArgument,
+			expected: md.ErrInvalidArgument,
 		},
 		{
 			name:     "range reaches the end of the array",
 			offset:   1<<30 - 4096,
 			length:   4096,
-			expected: ErrInvalidArgument,
+			expected: md.ErrInvalidArgument,
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			device, mdDir := fakeArray(t, test.attrs)
+			t.Parallel()
 
-			_, err := RepairRange(t.Context(), device, test.offset, test.length)
+			m, device, mdDir := fakeArray(t, test.attrs)
+
+			_, err := m.RepairRange(t.Context(), device, test.offset, test.length)
 			require.ErrorIs(t, err, test.expected)
 
 			// nothing was touched
@@ -281,20 +298,22 @@ func TestRepairRangeRefused(t *testing.T) {
 }
 
 func TestIsArray(t *testing.T) {
-	device, _ := fakeArray(t, nil)
+	t.Parallel()
 
-	isArray, err := IsArray(device)
+	m, device, mdDir := fakeArray(t, nil)
+
+	isArray, err := m.IsArray(device)
 	require.NoError(t, err)
 	assert.True(t, isArray)
 
 	disk := filepath.Join(t.TempDir(), "sda")
 	require.NoError(t, os.WriteFile(disk, nil, 0o644))
-	require.NoError(t, os.MkdirAll(filepath.Join(sysBlockDir, "sda"), 0o755))
+	require.NoError(t, os.MkdirAll(filepath.Join(mdDir, "..", "..", "sda"), 0o755))
 
-	isArray, err = IsArray(disk)
+	isArray, err = m.IsArray(disk)
 	require.NoError(t, err)
 	assert.False(t, isArray)
 
-	_, err = IsArray(filepath.Join(t.TempDir(), "missing"))
+	_, err = m.IsArray(filepath.Join(t.TempDir(), "missing"))
 	assert.Error(t, err)
 }

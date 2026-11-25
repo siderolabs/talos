@@ -383,7 +383,12 @@ func installDevices(platform string, opts options.InstallOptions) ([]string, err
 		return []string{opts.BootDisk}, nil
 	}
 
-	members, err := md.InSyncMembers(opts.BootDisk)
+	mdManager, err := md.New()
+	if err != nil {
+		return nil, err
+	}
+
+	members, err := mdManager.InSyncMembers(opts.BootDisk)
 	if err != nil {
 		if errors.Is(err, md.ErrNotFound) {
 			// not an md array

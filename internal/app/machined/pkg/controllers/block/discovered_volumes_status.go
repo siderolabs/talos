@@ -36,7 +36,7 @@ type DiscoveredVolumesStatusController struct {
 	// META/STATE missing.
 	WaitForDevices func(ctx context.Context, logger *zap.Logger) error
 
-	// InactiveMDArrays lists assembled but inactive MD arrays, defaults to md.InactiveArrays.
+	// InactiveMDArrays lists assembled but inactive MD arrays, defaults to (*md.MD).InactiveArrays.
 	//
 	// A degraded array stays inactive until storage.MDLastResortController force-runs it after a
 	// grace period. Volumes on it (META/STATE on a mirrored system disk) must not be declared
@@ -192,7 +192,12 @@ func (ctrl *DiscoveredVolumesStatusController) waitForMDArrays(ctx context.Conte
 
 	inactiveArrays := ctrl.InactiveMDArrays
 	if inactiveArrays == nil {
-		inactiveArrays = md.InactiveArrays
+		mdManager, err := md.New()
+		if err != nil {
+			return err
+		}
+
+		inactiveArrays = mdManager.InactiveArrays
 	}
 
 	timeout := ctrl.MDArrayWaitTimeout

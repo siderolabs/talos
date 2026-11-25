@@ -2,12 +2,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//nolint:testpackage
-package md
+package md_test
 
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -17,10 +17,30 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sys/unix"
+
+	"github.com/siderolabs/talos/internal/pkg/md"
 )
 
-func TestParseDetailExport(t *testing.T) {
-	detail := parseDetailExport(`MD_LEVEL=raid1
+// detailFromExport returns the detail of an array, for which mdadm prints export.
+func detailFromExport(t *testing.T, export string) md.Detail {
+	t.Helper()
+
+	dir := t.TempDir()
+	exportPath := filepath.Join(dir, "export")
+	require.NoError(t, os.WriteFile(exportPath, []byte(export), 0o644))
+
+	m := newScriptMD(t, fmt.Sprintf(`[ "$*" = "--detail --export /dev/md0" ] || exit 2
+cat '%s'
+`, exportPath))
+
+	detail, err := m.DetailDevice(t.Context(), "/dev/md0")
+	require.NoError(t, err)
+
+	return detail
+}
+
+func TestDetailDevice(t *testing.T) {
+	detail := detailFromExport(t, `MD_LEVEL=raid1
 MD_DEVICES=2
 MD_METADATA=1.2
 MD_UUID=8d84d1c8:95d9e5bc:dc9fdd7d:51f91234
@@ -44,8 +64,8 @@ MD_DEVICE_dev_sdb_DEV=/dev/sdb
 	assert.Equal(t, map[string]string{"/dev/sda": "0", "/dev/sdb": "1"}, detail.MemberRoles)
 }
 
-func TestParseDetailExportDegradedMirrorRetainsConfiguredSlots(t *testing.T) {
-	detail := parseDetailExport(`MD_LEVEL=raid1
+func TestDetailDeviceDegradedMirrorRetainsConfiguredSlots(t *testing.T) {
+	detail := detailFromExport(t, `MD_LEVEL=raid1
 MD_DEVICES=2
 MD_METADATA=1.0
 MD_UUID=8d84d1c8:95d9e5bc:dc9fdd7d:51f91234
@@ -65,9 +85,12 @@ MD_DEVICE_dev_vda_DEV=/dev/vda
 }
 
 func TestSysfsHelpers(t *testing.T) {
-	oldSysBlockDir := sysBlockDir
-	sysBlockDir = t.TempDir()
-	t.Cleanup(func() { sysBlockDir = oldSysBlockDir })
+	t.Parallel()
+
+	sysBlockDir := t.TempDir()
+
+	m, err := md.New(md.WithSysBlockDir(sysBlockDir))
+	require.NoError(t, err)
 
 	require.NoError(t, os.MkdirAll(filepath.Join(sysBlockDir, "md0", "md", "dev-sda"), 0o755))
 	require.NoError(t, os.WriteFile(filepath.Join(sysBlockDir, "md0", "md", "array_state"), []byte("inactive\n"), 0o644))
@@ -78,35 +101,38 @@ func TestSysfsHelpers(t *testing.T) {
 	require.NoError(t, os.MkdirAll(filepath.Join(sysBlockDir, "md1", "md"), 0o755))
 	require.NoError(t, os.WriteFile(filepath.Join(sysBlockDir, "md1", "md", "array_state"), []byte("clean\n"), 0o644))
 
-	dev, err := FindDeviceByMember("/dev/sda")
+	dev, err := m.FindDeviceByMember("/dev/sda")
 	require.NoError(t, err)
 	assert.Equal(t, "/dev/md0", dev)
 
-	inactive, err := InactiveArrays()
+	inactive, err := m.InactiveArrays()
 	require.NoError(t, err)
 	assert.Equal(t, []string{"/dev/md0"}, inactive)
 
-	arrays, err := ListArrays()
+	arrays, err := m.ListArrays()
 	require.NoError(t, err)
 	assert.Equal(t, []string{"/dev/md0", "/dev/md1"}, arrays)
 
-	state, err := ArrayStateForDevice("/dev/md0")
+	state, err := m.ArrayStateForDevice("/dev/md0")
 	require.NoError(t, err)
 	assert.Equal(t, "inactive", state)
 
-	action, err := SyncActionForDevice("/dev/md0")
+	action, err := m.SyncActionForDevice("/dev/md0")
 	require.NoError(t, err)
-	assert.Equal(t, SyncActionResync, action)
+	assert.Equal(t, md.SyncActionResync, action)
 
-	syncing, err := IsSyncing("/dev/md0")
+	syncing, err := m.IsSyncing("/dev/md0")
 	require.NoError(t, err)
 	assert.True(t, syncing)
 }
 
 func TestInSyncMembers(t *testing.T) {
-	oldSysBlockDir := sysBlockDir
-	sysBlockDir = t.TempDir()
-	t.Cleanup(func() { sysBlockDir = oldSysBlockDir })
+	t.Parallel()
+
+	sysBlockDir := t.TempDir()
+
+	m, err := md.New(md.WithSysBlockDir(sysBlockDir))
+	require.NoError(t, err)
 
 	mdDir := filepath.Join(sysBlockDir, "md0", "md")
 
@@ -128,17 +154,17 @@ func TestInSyncMembers(t *testing.T) {
 	require.NoError(t, os.Symlink(filepath.Join(devDir, "md0"), filepath.Join(devDir, "md-name-talos:boot")))
 
 	for _, device := range []string{filepath.Join(devDir, "md0"), filepath.Join(devDir, "md-name-talos:boot")} {
-		members, err := InSyncMembers(device)
+		members, err := m.InSyncMembers(device)
 		require.NoError(t, err)
 		assert.Equal(t, []string{"/dev/sda", "/dev/sdb"}, members)
 	}
 
 	require.NoError(t, os.WriteFile(filepath.Join(devDir, "sda"), nil, 0o644))
 
-	_, err := InSyncMembers(filepath.Join(devDir, "sda"))
-	assert.ErrorIs(t, err, ErrNotFound)
+	_, err = m.InSyncMembers(filepath.Join(devDir, "sda"))
+	assert.ErrorIs(t, err, md.ErrNotFound)
 
-	_, err = InSyncMembers(filepath.Join(devDir, "missing"))
+	_, err = m.InSyncMembers(filepath.Join(devDir, "missing"))
 	assert.Error(t, err)
 }
 
@@ -154,7 +180,7 @@ printf 'mdadm: RebuildFinished event detected on md device /dev/md0\n'
 	require.NoError(t, os.WriteFile(script, []byte(scriptBody), 0o755))
 	t.Setenv("MDADM_ARGS", log)
 
-	m, err := New(WithMdadmPath(script))
+	m, err := md.New(md.WithMdadmPath(script))
 	require.NoError(t, err)
 
 	var events []string
@@ -227,7 +253,7 @@ func startStderrMonitor(t *testing.T) *stderrMonitorRun {
 	script := filepath.Join(run.dir, "mdadm")
 	require.NoError(t, os.WriteFile(script, []byte(stderrMonitorScript), 0o700))
 
-	monitor, err := New(WithMdadmPath(script))
+	monitor, err := md.New(md.WithMdadmPath(script))
 	require.NoError(t, err)
 
 	var ctx context.Context
@@ -304,9 +330,9 @@ func TestMonitorStreamsStderrBeforeExit(t *testing.T) {
 			run.release(t, terminal)
 
 			if terminal == "command-error" {
-				require.ErrorIs(t, run.err, ErrInvalidArgument)
+				require.ErrorIs(t, run.err, md.ErrInvalidArgument)
 
-				var classified *ExecError
+				var classified *md.ExecError
 
 				require.ErrorAs(t, run.err, &classified)
 				assert.Equal(t, 17, classified.ExitCode)
@@ -329,7 +355,7 @@ exit 1
 `
 	require.NoError(t, os.WriteFile(script, []byte(scriptBody), 0o755))
 
-	m, err := New(WithMdadmPath(script))
+	m, err := md.New(md.WithMdadmPath(script))
 	require.NoError(t, err)
 
 	// the "no array" condition must surface only via the return value; the
@@ -338,17 +364,17 @@ exit 1
 	called := false
 	err = m.Monitor(context.Background(), func(string) { called = true })
 	require.Error(t, err)
-	assert.True(t, errors.Is(err, ErrNotFound))
+	assert.True(t, errors.Is(err, md.ErrNotFound))
 	assert.False(t, called, "callback must not fire for the no-array condition")
 }
 
-func newScriptMonitor(t *testing.T, body string) *MD {
+func newScriptMD(t *testing.T, body string) *md.MD {
 	t.Helper()
 
 	script := filepath.Join(t.TempDir(), "mdadm")
 	require.NoError(t, os.WriteFile(script, []byte("#!/bin/sh\n"+body), 0o700))
 
-	m, err := New(WithMdadmPath(script))
+	m, err := md.New(md.WithMdadmPath(script))
 	require.NoError(t, err)
 
 	return m
@@ -359,7 +385,7 @@ func TestMonitorIgnoresMalformedStderr(t *testing.T) {
 
 	// Only the well-formed DegradedArray line is an event. The overlong line
 	// carries the token past the line limit, so it must not count either.
-	m := newScriptMonitor(t, `
+	m := newScriptMD(t, `
 printf '\n' >&2
 printf '\001\377\376garbage\033[0m\n' >&2
 printf 'mdadm: event detected\n' >&2
@@ -384,7 +410,7 @@ printf 'unterminated garbage' >&2
 func TestMonitorStderrTailIsBounded(t *testing.T) {
 	t.Setenv("MDADM_LONG", strings.Repeat("y", 1023))
 
-	m := newScriptMonitor(t, `
+	m := newScriptMD(t, `
 printf 'mdadm: PRIVATE_FIRST_LINE\n' >&2
 i=0
 while [ $i -lt 256 ]; do printf 'filler %s\n' "$MDADM_LONG" >&2; i=$((i+1)); done
@@ -394,10 +420,10 @@ exit 1
 
 	called := false
 	err := m.Monitor(context.Background(), func(string) { called = true })
-	require.ErrorIs(t, err, ErrNotFound)
+	require.ErrorIs(t, err, md.ErrNotFound)
 	assert.False(t, called)
 
-	var classified *ExecError
+	var classified *md.ExecError
 
 	require.ErrorAs(t, err, &classified)
 	assert.Equal(t, 1, classified.ExitCode)
@@ -412,7 +438,7 @@ func TestMonitorRestartDoesNotRepeatEvents(t *testing.T) {
 
 	// The first run ends inside a line. The second run must neither replay the
 	// first run's events nor complete its partial line.
-	m := newScriptMonitor(t, `
+	m := newScriptMD(t, `
 if [ ! -e "$MDADM_STARTED" ]; then
   : > "$MDADM_STARTED"
   printf 'mdadm: RebuildStarted event detected on md device /dev/md0\n' >&2
@@ -437,10 +463,6 @@ printf 'mdadm: RebuildFinished event detected on md device /dev/md0\n' >&2
 }
 
 func TestCommandArguments(t *testing.T) {
-	oldSysBlockDir := sysBlockDir
-	sysBlockDir = t.TempDir()
-	t.Cleanup(func() { sysBlockDir = oldSysBlockDir })
-
 	log := filepath.Join(t.TempDir(), "args")
 	script := filepath.Join(t.TempDir(), "mdadm")
 	scriptBody := `#!/bin/sh
@@ -450,11 +472,11 @@ case "$*" in *--detail*) printf 'MD_DEVICES=2\nMD_DEVICE_dev_sda_DEV=/dev/sda\nM
 	require.NoError(t, os.WriteFile(script, []byte(scriptBody), 0o755))
 	t.Setenv("MDADM_ARGS", log)
 
-	m, err := New(WithMdadmPath(script))
+	m, err := md.New(md.WithMdadmPath(script), md.WithSysBlockDir(t.TempDir()))
 	require.NoError(t, err)
 	require.NoError(t, m.Add(context.Background(), "/dev/md0", "/dev/sdc"))
 	require.NoError(t, m.Grow(context.Background(), "/dev/md0", 3))
-	_, err = m.Create(context.Background(), "data", CreateOptions{Level: 1, RaidDevices: 2, Devices: []string{"/dev/sda", "/dev/sdb"}})
+	_, err = m.Create(context.Background(), "data", md.CreateOptions{Level: 1, RaidDevices: 2, Devices: []string{"/dev/sda", "/dev/sdb"}})
 	require.NoError(t, err)
 
 	out, err := os.ReadFile(log)

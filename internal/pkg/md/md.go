@@ -19,13 +19,15 @@ import (
 
 // MD provides methods for managing MD (software RAID) arrays.
 type MD struct {
-	mdadm string
+	mdadm       string
+	sysBlockDir string
 }
 
 // New creates a new MD instance, resolving the mdadm binary.
 func New(opts ...Option) (*MD, error) {
 	md := &MD{
-		mdadm: "/sbin/mdadm",
+		mdadm:       "/sbin/mdadm",
+		sysBlockDir: "/sys/block",
 	}
 
 	for _, opt := range opts {
@@ -42,6 +44,14 @@ type Option func(*MD)
 func WithMdadmPath(path string) Option {
 	return func(md *MD) {
 		md.mdadm = path
+	}
+}
+
+// WithSysBlockDir sets an explicit path to the sysfs block directory (/sys/block), which the state of
+// the arrays is read from.
+func WithSysBlockDir(path string) Option {
+	return func(md *MD) {
+		md.sysBlockDir = path
 	}
 }
 

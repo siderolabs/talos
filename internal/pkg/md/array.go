@@ -20,10 +20,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/partition"
 )
 
-var (
-	sysBlockDir = "/sys/block"
-	byIDDir     = "/dev/disk/by-id"
-)
+const byIDDir = "/dev/disk/by-id"
 
 const mdHomeHost = "talos"
 
@@ -73,17 +70,12 @@ func ByIDPath(detail Detail) string {
 }
 
 // FindDeviceByMember returns the /dev/mdN node that contains member.
-func (*MD) FindDeviceByMember(member string) (string, error) {
-	return FindDeviceByMember(member)
-}
-
-// FindDeviceByMember returns the /dev/mdN node that contains member.
-func FindDeviceByMember(member string) (string, error) {
+func (md *MD) FindDeviceByMember(member string) (string, error) {
 	base := filepath.Base(member)
 
-	entries, err := os.ReadDir(sysBlockDir)
+	entries, err := os.ReadDir(md.sysBlockDir)
 	if err != nil {
-		return "", fmt.Errorf("failed to read %s: %w", sysBlockDir, err)
+		return "", fmt.Errorf("failed to read %s: %w", md.sysBlockDir, err)
 	}
 
 	for _, e := range entries {
@@ -92,7 +84,7 @@ func FindDeviceByMember(member string) (string, error) {
 			continue
 		}
 
-		if _, err := os.Stat(filepath.Join(sysBlockDir, dev, "md", "dev-"+base)); err == nil {
+		if _, err := os.Stat(filepath.Join(md.sysBlockDir, dev, "md", "dev-"+base)); err == nil {
 			return filepath.Join("/dev", dev), nil
 		}
 	}
@@ -104,7 +96,7 @@ func FindDeviceByMember(member string) (string, error) {
 //
 // Spare, faulty and recovering members are left out: they do not carry the array data yet (or anymore).
 // The device path may be a symlink (e.g. the by-id path) to the /dev/mdN node.
-func InSyncMembers(device string) ([]string, error) {
+func (md *MD) InSyncMembers(device string) ([]string, error) {
 	if device == "" {
 		return nil, fmt.Errorf("%w: device must be set", ErrInvalidArgument)
 	}
@@ -114,7 +106,7 @@ func InSyncMembers(device string) ([]string, error) {
 		return nil, fmt.Errorf("failed to resolve %s: %w", device, err)
 	}
 
-	mdDir := filepath.Join(sysBlockDir, filepath.Base(resolved), "md")
+	mdDir := filepath.Join(md.sysBlockDir, filepath.Base(resolved), "md")
 
 	entries, err := os.ReadDir(mdDir)
 	if err != nil {
@@ -150,11 +142,11 @@ func InSyncMembers(device string) ([]string, error) {
 	return members, nil
 }
 
-func freeMDNode() string {
+func (md *MD) freeMDNode() string {
 	for n := range 128 {
 		name := fmt.Sprintf("md%d", n)
 
-		if _, err := os.Stat(filepath.Join(sysBlockDir, name)); os.IsNotExist(err) {
+		if _, err := os.Stat(filepath.Join(md.sysBlockDir, name)); os.IsNotExist(err) {
 			return "/dev/" + name
 		}
 	}
@@ -185,15 +177,10 @@ type Detail struct {
 }
 
 // InactiveArrays returns assembled MD arrays whose sysfs state is inactive.
-func (*MD) InactiveArrays() ([]string, error) {
-	return InactiveArrays()
-}
-
-// InactiveArrays returns assembled MD arrays whose sysfs state is inactive.
-func InactiveArrays() ([]string, error) {
-	entries, err := os.ReadDir(sysBlockDir)
+func (md *MD) InactiveArrays() ([]string, error) {
+	entries, err := os.ReadDir(md.sysBlockDir)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read %s: %w", sysBlockDir, err)
+		return nil, fmt.Errorf("failed to read %s: %w", md.sysBlockDir, err)
 	}
 
 	var inactive []string
@@ -204,7 +191,7 @@ func InactiveArrays() ([]string, error) {
 			continue
 		}
 
-		state, err := os.ReadFile(filepath.Join(sysBlockDir, name, "md", "array_state"))
+		state, err := os.ReadFile(filepath.Join(md.sysBlockDir, name, "md", "array_state"))
 		if err != nil {
 			continue
 		}
@@ -218,15 +205,10 @@ func InactiveArrays() ([]string, error) {
 }
 
 // ListArrays returns the /dev/mdN device paths for all present MD arrays, regardless of state.
-func (*MD) ListArrays() ([]string, error) {
-	return ListArrays()
-}
-
-// ListArrays returns the /dev/mdN device paths for all present MD arrays, regardless of state.
-func ListArrays() ([]string, error) {
-	entries, err := os.ReadDir(sysBlockDir)
+func (md *MD) ListArrays() ([]string, error) {
+	entries, err := os.ReadDir(md.sysBlockDir)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read %s: %w", sysBlockDir, err)
+		return nil, fmt.Errorf("failed to read %s: %w", md.sysBlockDir, err)
 	}
 
 	var arrays []string
@@ -237,7 +219,7 @@ func ListArrays() ([]string, error) {
 			continue
 		}
 
-		if _, err := os.Stat(filepath.Join(sysBlockDir, name, "md")); err != nil {
+		if _, err := os.Stat(filepath.Join(md.sysBlockDir, name, "md")); err != nil {
 			continue
 		}
 
@@ -248,27 +230,17 @@ func ListArrays() ([]string, error) {
 }
 
 // ArrayStateForDevice returns the current array state for an MD device.
-func (*MD) ArrayStateForDevice(device string) (string, error) {
-	return ArrayStateForDevice(device)
-}
-
-// ArrayStateForDevice returns the current array state for an MD device.
-func ArrayStateForDevice(device string) (string, error) {
-	return readMDAttribute(device, "array_state")
+func (md *MD) ArrayStateForDevice(device string) (string, error) {
+	return md.readMDAttribute(device, "array_state")
 }
 
 // SyncActionForDevice returns the current sync action for an MD device.
-func (*MD) SyncActionForDevice(device string) (SyncAction, error) {
-	return SyncActionForDevice(device)
-}
-
-// SyncActionForDevice returns the current sync action for an MD device.
-func SyncActionForDevice(device string) (SyncAction, error) {
+func (md *MD) SyncActionForDevice(device string) (SyncAction, error) {
 	if device == "" {
 		return "", fmt.Errorf("%w: device must be set", ErrInvalidArgument)
 	}
 
-	action, err := readMDAttribute(device, "sync_action")
+	action, err := md.readMDAttribute(device, "sync_action")
 	if err != nil {
 		return "", err
 	}
@@ -276,12 +248,12 @@ func SyncActionForDevice(device string) (SyncAction, error) {
 	return SyncAction(action), nil
 }
 
-func readMDAttribute(device, attr string) (string, error) {
+func (md *MD) readMDAttribute(device, attr string) (string, error) {
 	if device == "" {
 		return "", fmt.Errorf("%w: device must be set", ErrInvalidArgument)
 	}
 
-	out, err := os.ReadFile(filepath.Join(sysBlockDir, filepath.Base(device), "md", attr))
+	out, err := os.ReadFile(filepath.Join(md.sysBlockDir, filepath.Base(device), "md", attr))
 	if err != nil {
 		if os.IsNotExist(err) {
 			return "", ErrNotFound
@@ -294,13 +266,8 @@ func readMDAttribute(device, attr string) (string, error) {
 }
 
 // IsSyncing reports whether an MD device is currently doing sync work.
-func (*MD) IsSyncing(device string) (bool, error) {
-	return IsSyncing(device)
-}
-
-// IsSyncing reports whether an MD device is currently doing sync work.
-func IsSyncing(device string) (bool, error) {
-	action, err := SyncActionForDevice(device)
+func (md *MD) IsSyncing(device string) (bool, error) {
+	action, err := md.SyncActionForDevice(device)
 	if err != nil {
 		return false, err
 	}
@@ -341,7 +308,7 @@ func (md *MD) Create(ctx context.Context, name string, opts CreateOptions) (stri
 		return "", fmt.Errorf("%w: at least one device is required", ErrInvalidArgument)
 	}
 
-	node := freeMDNode()
+	node := md.freeMDNode()
 	args := make([]string, 0, 8+len(opts.Devices))
 	args = append(
 		args,

@@ -2,8 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//nolint:testpackage
-package md
+package md_test
 
 import (
 	"bytes"
@@ -20,6 +19,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sys/unix"
+
+	"github.com/siderolabs/talos/internal/pkg/md"
 )
 
 // attachLoop returns the loop device and its backing file.
@@ -113,10 +114,10 @@ func TestRepairRangeKernel(t *testing.T) {
 	member0, image0 := attachLoop(t, 64*mib)
 	member1, image1 := attachLoop(t, 64*mib)
 
-	m, err := New(WithMdadmPath(mdadm))
+	m, err := md.New(md.WithMdadmPath(mdadm))
 	require.NoError(t, err)
 
-	device, err := m.Create(t.Context(), fmt.Sprintf("repair-test-%d", os.Getpid()), CreateOptions{
+	device, err := m.Create(t.Context(), fmt.Sprintf("repair-test-%d", os.Getpid()), md.CreateOptions{
 		Level:       1,
 		Metadata:    "1.0",
 		RaidDevices: 2,
@@ -142,7 +143,7 @@ func TestRepairRangeKernel(t *testing.T) {
 
 	require.NotEqual(t, readAt(t, image0, rangeOffset, rangeLength), readAt(t, image1, rangeOffset, rangeLength))
 
-	mismatches, err := RepairRange(t.Context(), device, rangeOffset, rangeLength)
+	mismatches, err := m.RepairRange(t.Context(), device, rangeOffset, rangeLength)
 	require.NoError(t, err)
 	assert.NotZero(t, mismatches)
 
@@ -153,24 +154,20 @@ func TestRepairRangeKernel(t *testing.T) {
 	// the divergence outside of the range is left alone
 	assert.Equal(t, diverged, readAt(t, image1, 4*mib, len(diverged)))
 
-	attrs := mdAttrs(filepath.Join(sysBlockDir, filepath.Base(device), "md"))
+	mdDir := filepath.Join("/sys/block", filepath.Base(device), "md")
 
 	for attr, expected := range map[string]string{
 		"sync_action": "idle",
 		"sync_min":    "0",
 		"sync_max":    "max",
 	} {
-		actual, err := attrs.read(attr)
-		require.NoError(t, err)
-		assert.Equal(t, expected, actual, attr)
+		assert.Equal(t, expected, readAttr(t, mdDir, attr), attr)
 	}
 
-	speedMin, err := attrs.read("sync_speed_min")
-	require.NoError(t, err)
-	assert.Contains(t, speedMin, "(system)")
+	assert.Contains(t, readAttr(t, mdDir, "sync_speed_min"), "(system)")
 
 	// nothing to repair anymore
-	mismatches, err = RepairRange(t.Context(), device, rangeOffset, rangeLength)
+	mismatches, err = m.RepairRange(t.Context(), device, rangeOffset, rangeLength)
 	require.NoError(t, err)
 	assert.Zero(t, mismatches)
 }
