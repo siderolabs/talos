@@ -103,9 +103,6 @@ require (
 	github.com/Microsoft/go-winio v0.6.4 // indirect
 	github.com/Microsoft/hcsshim v0.15.0-rc.4 // indirect
 	github.com/MirrexOne/unqueryvet v1.5.4 // indirect
-	github.com/ONSdigital/dp-api-clients-go/v2 v2.282.0 // indirect
-	github.com/ONSdigital/dp-net/v3 v3.11.0 // indirect
-	github.com/ONSdigital/log.go/v2 v2.6.0 // indirect
 	github.com/OneOfOne/xxhash v1.2.8 // indirect
 	github.com/OpenPeeDeeP/depguard/v2 v2.2.1 // indirect
 	github.com/ProtonMail/go-crypto v1.5.2 // indirect
@@ -338,7 +335,6 @@ require (
 	github.com/hashicorp/hcl/v2 v2.25.0 // indirect
 	github.com/henvic/httpretty v0.1.4 // indirect
 	github.com/hexops/gotextdiff v1.0.3 // indirect
-	github.com/hokaccha/go-prettyjson v0.0.0-20211117102719-0474bc63780f // indirect
 	github.com/huandu/xstrings v1.5.0 // indirect
 	github.com/iancoleman/strcase v0.3.0 // indirect
 	github.com/imdario/mergo v0.3.16 // indirect
@@ -486,7 +482,7 @@ require (
 	github.com/segmentio/asm v1.2.1 // indirect
 	github.com/segmentio/encoding v0.5.4 // indirect
 	github.com/sergi/go-diff v1.4.0 // indirect
-	github.com/shanduur/dis-vulncheck v0.0.0-20261117175657-ec6f5ad907fc // indirect
+	github.com/shanduur/dis-vulncheck v0.0.0-20261125101115-22f75d7796f5 // indirect
 	github.com/shopspring/decimal v1.6.0 // indirect
 	github.com/siderolabs/deep-copy v0.5.8 // indirect
 	github.com/siderolabs/gen v0.8.8 // indirect
