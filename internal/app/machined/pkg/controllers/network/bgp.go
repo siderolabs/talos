@@ -109,6 +109,7 @@ func (ctrl *BGPController) Run(ctx context.Context, r controller.Runtime, logger
 		case <-r.EventCh():
 		case <-ctrl.reconcileCh:
 		case <-retryCh:
+			retryCh = nil
 		}
 
 		failed, err := ctrl.reconcile(ctx, r, logger)
@@ -117,8 +118,12 @@ func (ctrl *BGPController) Run(ctx context.Context, r controller.Runtime, logger
 		}
 
 		// failed instances and peers are retried here: a controller restart would also stop the healthy ones
+		//
+		// Other wakeups reconcile a failed instance too, so only a fired retry may advance the backoff.
 		if failed {
-			retryCh = time.After(retryBackoff.NextBackOff())
+			if retryCh == nil {
+				retryCh = time.After(retryBackoff.NextBackOff())
+			}
 		} else {
 			retryBackoff.Reset()
 

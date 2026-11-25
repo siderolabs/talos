@@ -556,6 +556,10 @@ func TestDerivedRouterIDIsKeptWhilePeerIsEstablished(t *testing.T) {
 
 			if test.openOnly {
 				// a peer which sends its OPEN but never a KEEPALIVE holds the session in OpenConfirm
+				//
+				// The peer closes connections accepted before its FSM leaves Idle, and this one is never redialed.
+				require.Eventually(t, inState(gobgpapi.PeerState_SESSION_STATE_ACTIVE), 5*time.Second, 10*time.Millisecond, "BGP peer did not become active")
+
 				conn, err := (&net.Dialer{LocalAddr: &net.TCPAddr{IP: net.ParseIP("127.0.0.2")}}).DialContext(ctx, "tcp", net.JoinHostPort("127.0.0.1", strconv.Itoa(int(instancePort))))
 				require.NoError(t, err)
 				t.Cleanup(func() { conn.Close() }) //nolint:errcheck

@@ -5,6 +5,7 @@
 package network_test
 
 import (
+	"fmt"
 	"net"
 	"net/netip"
 	"testing"
@@ -276,8 +277,13 @@ func (suite *BGPControllerRetrySuite) TestFailedInstanceIsRetried() {
 
 	suite.Create(fabric)
 
-	// the server can not start while the listen port is taken
-	time.Sleep(time.Second)
+	// the server can not start while the listen port is taken, and unrelated wakeups (here input
+	// events, on a busy host also neighbor table churn) keep reconciling the failed instance meanwhile
+	for i := range 20 {
+		suite.Create(network.NewLinkStatus(network.NamespaceName, fmt.Sprintf("churn%d", i)))
+
+		time.Sleep(50 * time.Millisecond)
+	}
 
 	rtestutils.AssertNoResource[*network.BGPPeerStatus](suite.Ctx(), suite.T(), suite.State(), "fabric/192.0.2.1", rtestutils.WithNamespace(network.NamespaceName))
 
