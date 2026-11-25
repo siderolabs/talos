@@ -101,12 +101,17 @@ func (vip *VIP) AddressSpecs() []network.AddressSpecSpec {
 		return nil
 	}
 
-	family := nethelpers.FamilyInet6
-	gratuitousARP := false
+	family := nethelpers.FamilyInet4
+	flags := nethelpers.AddressFlags(nethelpers.AddressPermanent)
 
-	if vip.sharedIP.Is4() {
-		family = nethelpers.FamilyInet4
-		gratuitousARP = vip.gratuitousARP
+	if vip.sharedIP.Is6() {
+		family = nethelpers.FamilyInet6
+
+		// the VIP is guaranteed to be unique by the election, so skip duplicate address detection:
+		// * the address is usable (and can be announced) immediately after the failover
+		// * if the previous leader still holds the address for a moment, DAD would fail, and the address
+		//   would stay in the 'dadfailed' state on the new leader
+		flags |= nethelpers.AddressFlags(nethelpers.AddressNoDAD)
 	}
 
 	return []network.AddressSpecSpec{
@@ -115,8 +120,8 @@ func (vip *VIP) AddressSpecs() []network.AddressSpecSpec {
 			LinkName:        vip.linkName,
 			Family:          family,
 			Scope:           nethelpers.ScopeGlobal,
-			Flags:           nethelpers.AddressFlags(nethelpers.AddressPermanent),
-			AnnounceWithARP: gratuitousARP,
+			Flags:           flags,
+			AnnounceWithARP: vip.gratuitousARP,
 			ConfigLayer:     network.ConfigOperator,
 		},
 	}

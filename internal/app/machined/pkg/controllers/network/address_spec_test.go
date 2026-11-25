@@ -6,6 +6,8 @@
 package network_test
 
 import (
+	"fmt"
+	"math/rand/v2"
 	"net"
 	"net/netip"
 	"os"
@@ -15,11 +17,14 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/jsimonetti/rtnetlink/v2"
+	"github.com/mdlayher/ndp"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"golang.org/x/net/ipv6"
 	"golang.org/x/sys/unix"
 
+	networkadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/network"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -346,6 +351,113 @@ func (suite *AddressSpecSuite) TestDummyAlias() {
 	suite.Assert().EventuallyWithT(func(collect *assert.CollectT) {
 		assertLinkAddress(assert.New(collect), dummyInterface, "10.0.0.5/8")
 	}, 3*time.Second, 10*time.Millisecond)
+}
+
+// TestAnnounceIPv6 verifies that an IPv6 address with AnnounceWithARP set is announced with an unsolicited
+// Neighbor Advertisement, as it happens for the IPv6 VIP on failover.
+func (suite *AddressSpecSuite) TestAnnounceIPv6() {
+	vethName := uniqueDummyInterface()
+	peerName := uniqueDummyInterface()
+
+	conn, err := rtnetlink.Dial(nil)
+	suite.Require().NoError(err)
+
+	defer conn.Close() //nolint:errcheck
+
+	data, err := networkadapter.VethSpec(&network.VethSpec{PeerName: peerName}).Encode()
+	suite.Require().NoError(err)
+	suite.Require().NoError(conn.Link.New(&rtnetlink.LinkMessage{
+		Type: unix.ARPHRD_ETHER,
+		Attributes: &rtnetlink.LinkAttributes{
+			Name: vethName,
+			Info: &rtnetlink.LinkInfo{
+				Kind: network.LinkKindVeth,
+				Data: &rtnetlink.LinkData{Name: network.LinkKindVeth, Data: data},
+			},
+		},
+	}))
+
+	vethIface, err := net.InterfaceByName(vethName)
+	suite.Require().NoError(err)
+
+	defer conn.Link.Delete(uint32(vethIface.Index)) //nolint:errcheck
+
+	peerIface, err := net.InterfaceByName(peerName)
+	suite.Require().NoError(err)
+
+	for _, iface := range []*net.Interface{vethIface, peerIface} {
+		suite.Require().NoError(conn.Link.Set(&rtnetlink.LinkMessage{
+			Index:  uint32(iface.Index),
+			Flags:  unix.IFF_UP,
+			Change: unix.IFF_UP,
+		}))
+	}
+
+	// listen for the advertisement on the other end of the veth pair
+	listener, _, err := ndp.Listen(peerIface, ndp.Unspecified)
+	suite.Require().NoError(err)
+
+	defer listener.Close() //nolint:errcheck
+
+	suite.Require().NoError(listener.SetControlMessage(ipv6.FlagInterface, true))
+	suite.Require().NoError(listener.SetReadDeadline(time.Now().Add(5 * time.Second)))
+
+	// unit tests from concurrent CI jobs might share the network namespace, so use a unique address
+	vip := netip.MustParseAddr(fmt.Sprintf("fd00:%x:%x::1", rand.Uint32N(0x10000), rand.Uint32N(0x10000)))
+
+	address := network.NewAddressSpec(network.NamespaceName, vethName+"/"+vip.String()+"/128")
+	*address.TypedSpec() = network.AddressSpecSpec{
+		Address:         netip.PrefixFrom(vip, vip.BitLen()),
+		LinkName:        vethName,
+		Family:          nethelpers.FamilyInet6,
+		Scope:           nethelpers.ScopeGlobal,
+		ConfigLayer:     network.ConfigOperator,
+		Flags:           nethelpers.AddressFlags(nethelpers.AddressPermanent | nethelpers.AddressNoDAD),
+		AnnounceWithARP: true,
+	}
+
+	suite.Create(address)
+
+	for {
+		msg, cm, from, err := listener.ReadFrom()
+		suite.Require().NoError(err, "no neighbor advertisement received")
+
+		na, ok := msg.(*ndp.NeighborAdvertisement)
+		if !ok || na.TargetAddress != vip || cm == nil || cm.IfIndex != peerIface.Index {
+			continue
+		}
+
+		suite.Assert().Equal(vip, from.WithZone(""))
+		suite.Assert().True(na.Override)
+		suite.Assert().False(na.Solicited)
+		suite.Assert().False(na.Router)
+
+		suite.Require().Len(na.Options, 1)
+
+		lla, ok := na.Options[0].(*ndp.LinkLayerAddress)
+		suite.Require().True(ok)
+		suite.Assert().Equal(ndp.Target, lla.Direction)
+		suite.Assert().Equal(vethIface.HardwareAddr, lla.Addr)
+
+		break
+	}
+
+	suite.Assert().EventuallyWithT(func(collect *assert.CollectT) {
+		asrt := assert.New(collect)
+
+		existing := findLinkAddress(asrt, vethName, netip.PrefixFrom(vip, vip.BitLen()).String())
+		if asrt.NotNil(existing) {
+			asrt.NotZero(existing.Attributes.Flags&unix.IFA_F_NODAD, "expected nodad flag")
+		}
+	}, 3*time.Second, 10*time.Millisecond)
+
+	_, err = suite.State().Teardown(suite.Ctx(), address.Metadata())
+	suite.Require().NoError(err)
+
+	_, err = suite.State().WatchFor(suite.Ctx(), address.Metadata(), state.WithFinalizerEmpty())
+	suite.Require().NoError(err)
+
+	suite.Destroy(address)
 }
 
 func TestAddressSpecSuite(t *testing.T) {

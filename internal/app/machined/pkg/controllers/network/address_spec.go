@@ -18,6 +18,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/jsimonetti/rtnetlink/v2"
 	"github.com/mdlayher/arp"
+	"github.com/mdlayher/ndp"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
@@ -267,8 +268,8 @@ func (ctrl *AddressSpecController) syncAddress(ctx context.Context, r controller
 		logger.Info("assigned address", zap.Stringer("address", address.TypedSpec().Address), zap.String("link", address.TypedSpec().LinkName))
 
 		if address.TypedSpec().AnnounceWithARP {
-			if err := ctrl.gratuitousARP(logger, linkIndex, address.TypedSpec().Address.Addr()); err != nil {
-				logger.Warn("failure sending gratuitous ARP", zap.Stringer("address", address.TypedSpec().Address), zap.String("link", address.TypedSpec().LinkName), zap.Error(err))
+			if err := ctrl.announce(logger, linkIndex, address.TypedSpec().Address.Addr()); err != nil {
+				logger.Warn("failure announcing address", zap.Stringer("address", address.TypedSpec().Address), zap.String("link", address.TypedSpec().LinkName), zap.Error(err))
 			}
 		}
 	}
@@ -276,13 +277,10 @@ func (ctrl *AddressSpecController) syncAddress(ctx context.Context, r controller
 	return nil
 }
 
-func (ctrl *AddressSpecController) gratuitousARP(logger *zap.Logger, linkIndex uint32, ip netip.Addr) error {
-	etherBroadcast := net.HardwareAddr{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
-
-	if !ip.Is4() {
-		return nil
-	}
-
+// announce the address on the link, so that the neighbors update their caches with the link's hardware address.
+//
+// IPv4 addresses are announced with gratuitous ARP, IPv6 addresses with unsolicited Neighbor Advertisement.
+func (ctrl *AddressSpecController) announce(logger *zap.Logger, linkIndex uint32, ip netip.Addr) error {
 	iface, err := net.InterfaceByIndex(int(linkIndex))
 	if err != nil {
 		return err
@@ -292,6 +290,16 @@ func (ctrl *AddressSpecController) gratuitousARP(logger *zap.Logger, linkIndex u
 		// not ethernet
 		return nil
 	}
+
+	if ip.Is4() {
+		return ctrl.gratuitousARP(logger, iface, ip)
+	}
+
+	return ctrl.unsolicitedNA(logger, iface, ip)
+}
+
+func (ctrl *AddressSpecController) gratuitousARP(logger *zap.Logger, iface *net.Interface, ip netip.Addr) error {
+	etherBroadcast := net.HardwareAddr{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
 
 	cli, err := arp.Dial(iface)
 	if err != nil {
@@ -310,6 +318,40 @@ func (ctrl *AddressSpecController) gratuitousARP(logger *zap.Logger, linkIndex u
 	}
 
 	logger.Info("sent gratuitous ARP", zap.Stringer("address", ip), zap.String("link", iface.Name))
+
+	return nil
+}
+
+// unsolicitedNA sends an unsolicited Neighbor Advertisement for the address (RFC 4861, section 7.2.6).
+//
+// The Override flag makes the neighbors replace the link-layer address in the existing neighbor cache entries,
+// and as the advertisement is not solicited, the entries go to the STALE state, so that they get re-confirmed.
+func (ctrl *AddressSpecController) unsolicitedNA(logger *zap.Logger, iface *net.Interface, ip netip.Addr) error {
+	// use the announced address as the source address, as the Linux kernel does for unsolicited advertisements:
+	// it works even if the link has no link-local address
+	conn, _, err := ndp.Listen(iface, ndp.Addr(ip.String()))
+	if err != nil {
+		return fmt.Errorf("error creating NDP connection: %w", err)
+	}
+
+	defer conn.Close() //nolint:errcheck
+
+	na := &ndp.NeighborAdvertisement{
+		Override:      true,
+		TargetAddress: ip,
+		Options: []ndp.Option{
+			&ndp.LinkLayerAddress{
+				Direction: ndp.Target,
+				Addr:      iface.HardwareAddr,
+			},
+		},
+	}
+
+	if err = conn.WriteTo(na, nil, allNodesMulticast); err != nil {
+		return fmt.Errorf("error sending unsolicited neighbor advertisement: %w", err)
+	}
+
+	logger.Info("sent unsolicited neighbor advertisement", zap.Stringer("address", ip), zap.String("link", iface.Name))
 
 	return nil
 }
