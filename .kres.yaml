@@ -2762,7 +2762,7 @@ spec:
         - name: checkout contrib
           checkoutStep:
             repository: siderolabs/contrib
-            ref: main
+            ref: 06d38ea349ff0881f10e9a771c451c3f32a3580b
             path: _out/contrib
         - name: setup tf
           terraformStep: true
