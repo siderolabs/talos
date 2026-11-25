@@ -73,3 +73,72 @@ func TestPlatformFor(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, arm64.RequiresUEFI())
 }
+
+func TestBuildDiskSources(t *testing.T) {
+	platform, err := domain.PlatformFor(constants.ArchAmd64)
+	require.NoError(t, err)
+
+	empty := hypervisor.VirtualMachineDiskSpec{
+		Name: "spare", Bus: "sata", Type: "cdrom",
+		Provision: hypervisor.VirtualMachineDiskProvisionSpec{Blank: true},
+	}
+	loaded := hypervisor.VirtualMachineDiskSpec{
+		Name: "install", Pool: "pool1", Format: "raw", Bus: "sata", Type: "cdrom",
+		Provision: hypervisor.VirtualMachineDiskProvisionSpec{
+			FromImage: &hypervisor.VirtualMachineDiskFromImageSpec{Library: "lib", File: "talos.iso"},
+		},
+	}
+	writable := hypervisor.VirtualMachineDiskSpec{
+		Name: "system", Pool: "pool1", Format: "raw", Bus: "virtio", Type: "disk", Size: 1 << 30,
+		Provision: hypervisor.VirtualMachineDiskProvisionSpec{Blank: true},
+	}
+
+	build := func(disk hypervisor.VirtualMachineDiskSpec, sourcePath string) domain.Inputs {
+		inputs := testInputs(platform)
+		inputs.SeedPath = ""
+		inputs.Spec.Disks = []hypervisor.VirtualMachineDiskSpec{disk}
+		inputs.Disks = map[string]hypervisor.VirtualMachineDiskStatusSpec{
+			hypervisor.VirtualMachineDiskStatusID(inputs.Name, disk): {
+				VirtualMachine: inputs.Name,
+				Name:           disk.Name,
+				SourcePath:     sourcePath,
+				Format:         "raw",
+				ReadOnly:       disk.Type == "cdrom",
+				Phase:          hypervisor.VirtualMachineDiskPhaseReady,
+			},
+		}
+
+		return inputs
+	}
+
+	for _, tc := range []struct {
+		name   string
+		disk   hypervisor.VirtualMachineDiskSpec
+		source string
+	}{
+		{name: "empty drive", disk: empty},
+		{name: "loaded drive", disk: loaded, source: "/lib/talos.iso"},
+		{name: "writable disk", disk: writable, source: "/pool/system.raw"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			definition, _, err := domain.Build(build(tc.disk, tc.source))
+			require.NoError(t, err)
+			require.Len(t, definition.Devices.Disks, 1)
+
+			rendered := definition.Devices.Disks[0]
+			if tc.source == "" {
+				require.Nil(t, rendered.Source)
+			} else {
+				require.Equal(t, tc.source, rendered.Source.File.File)
+			}
+		})
+	}
+
+	// A ready status without a source path is only valid for an empty drive.
+	for _, disk := range []hypervisor.VirtualMachineDiskSpec{loaded, writable} {
+		t.Run(disk.Name+" without source", func(t *testing.T) {
+			_, _, err := domain.Build(build(disk, ""))
+			require.ErrorIs(t, err, domain.ErrDiskNotReady)
+		})
+	}
+}

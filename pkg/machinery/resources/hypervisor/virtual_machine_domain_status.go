@@ -34,6 +34,10 @@ type VirtualMachineDomainStatusSpec struct {
 	MemoryKiB    uint64                                     `yaml:"memoryKiB" protobuf:"6"`
 	VCPUs        uint32                                     `yaml:"vCPUs" protobuf:"7"`
 	Interfaces   []VirtualMachineGuestInterfaceSpec         `yaml:"interfaces,omitempty" protobuf:"8"`
+	// DefinitionDigest is the digest of the definition the domain records it runs; empty if not Talos-owned.
+	DefinitionDigest string `yaml:"definitionDigest,omitempty" protobuf:"9"`
+	// ConfigurationDigest is the same digest excluding hardware profile fields.
+	ConfigurationDigest string `yaml:"configurationDigest,omitempty" protobuf:"10"`
 }
 
 // VirtualMachineGuestInterfaceSpec is one guest interface reported by the qemu-guest-agent.

@@ -343,7 +343,7 @@ VirtualMachineDisk describes a single disk attached to a virtual machine.
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`name` |string |Name of the disk, unique within the virtual machine.<br><br>Must be between 1 and 63 characters long, and can only contain ASCII letters,<br>digits and hyphens. It names the volume created in the storage pool.  | |
-|`pool` |string |Name of the `StoragePoolConfig` document this disk's volume lives in.<br><br>The pool is declared separately and is not provisioned by this document, but it must be<br>declared: a disk naming a pool no `StoragePoolConfig` document declares is a configuration<br>error.<br><br>The volume is named after this virtual machine and this disk, so a volume of that name<br>already in the pool is adopted with its existing contents. Removing the disk from the<br>configuration never deletes the volume, so re-declaring the same virtual machine and disk<br>names in the same pool reattaches the same data.<br><br>Required for both `disk` and `cdrom`. CD-ROM media is copied from the content library<br>into an independent volume in this pool, not attached directly from the library. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`pool` |string |Name of the `StoragePoolConfig` document this disk's volume lives in.<br><br>The pool is declared separately and is not provisioned by this document, but it must be<br>declared: a disk naming a pool no `StoragePoolConfig` document declares is a configuration<br>error.<br><br>The volume is named after this virtual machine and this disk, so a volume of that name<br>already in the pool is adopted with its existing contents. Removing the disk from the<br>configuration never deletes the volume, so re-declaring the same virtual machine and disk<br>names in the same pool reattaches the same data.<br><br>Required except on an empty `cdrom` (provisioned `blank`). CD-ROM media is copied from<br>the content library into a volume in this pool. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 pool: pool1
 {{< /highlight >}}</details> | |
 |`size` |ByteSize |Size of the volume.<br><br>Size is specified in bytes, but can be expressed in human readable format, e.g. 20GiB.<br><br>Required for a `disk`, and not allowed on a `cdrom`, whose size is that of its image.  | |
@@ -368,7 +368,7 @@ Exactly one source must be set.
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`blank` |<a href="#VirtualMachineConfig.disks..provision.blank">VirtualMachineDiskBlank</a> |Create an empty volume, formatted per `format`.<br><br>Not allowed on a `cdrom`, which has no meaningful empty contents.  | |
+|`blank` |<a href="#VirtualMachineConfig.disks..provision.blank">VirtualMachineDiskBlank</a> |Create an empty volume, formatted per `format`.<br><br>On a `cdrom`, an empty drive with no volume; `pool` may be omitted. Switching between<br>`blank` and `fromImage` loads or ejects media without restarting the virtual machine.  | |
 |`fromImage` |<a href="#VirtualMachineConfig.disks..provision.fromImage">VirtualMachineDiskFromImage</a> |Initialize an independent volume from a content library image.<br><br>Set `type: cdrom`, `pool` to a declared storage pool, and `library` and `file` here.<br>Talos copies the image into an independent read-only CD-ROM volume in the pool. Omit<br>`size` and `format`.<br>For a writable `disk`, set `size` and `pool`. The source must be a self-contained,<br>uncompressed raw or qcow2 image (no backing or external data files); it can<br>initialize a raw or qcow2 disk (default qcow2). A file without the qcow2 signature<br>is copied byte for byte as raw, so decompress `.zst`/`.xz`/`.gz` images and convert<br>VMDK, VHDX or VDI images first; common compressed and foreign formats are rejected.<br><br>`size` must be at least the source virtual size; qcow2 disks are rounded up to a<br>multiple of 512 bytes. The pool filesystem must support `user.*` extended attributes,<br>which record which image a disk was created from.<br><br>Existing disks only grow and are never reimaged when the source selector or alias<br>changes. Guest data survives source deletion and configuration removal. Deleting<br>the disk file from the pool triggers a fresh import from the source. Expanding the<br>guest filesystem is the guest's responsibility.  | |
 
 
@@ -376,7 +376,7 @@ Exactly one source must be set.
 
 #### blank {#VirtualMachineConfig.disks..provision.blank}
 
-VirtualMachineDiskBlank provisions an empty volume.
+VirtualMachineDiskBlank provisions an empty volume, or an empty cdrom drive.
 
 
 

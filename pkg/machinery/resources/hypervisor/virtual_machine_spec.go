@@ -13,6 +13,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 
+	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 	"github.com/siderolabs/talos/pkg/machinery/redactable"
 )
@@ -264,6 +265,16 @@ func init() {
 // IsWritableImage reports whether the disk owns an independently initialized writable image.
 func (disk VirtualMachineDiskSpec) IsWritableImage() bool {
 	return disk.Type == "disk" && disk.Provision.FromImage != nil
+}
+
+// IsEmptyDrive reports whether the disk is a cdrom provisioned blank: a drive with no medium.
+func (disk VirtualMachineDiskSpec) IsEmptyDrive() bool {
+	return disk.Type == hypervisorhelpers.VirtualMachineDiskTypeCDROM.String() && disk.Provision.Blank
+}
+
+// ProvisionsVolume reports whether the disk is backed by a blank volume in a storage pool.
+func (disk VirtualMachineDiskSpec) ProvisionsVolume() bool {
+	return disk.Provision.Blank && !disk.IsEmptyDrive()
 }
 
 // ImageBindingKey identifies persisted copy ownership independently of runtime reconstruction.

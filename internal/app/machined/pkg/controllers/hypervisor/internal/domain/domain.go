@@ -13,6 +13,7 @@ import (
 	"libvirt.org/go/libvirtxml"
 
 	diskhelpers "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor/internal/disks"
+	libvirtdomain "github.com/siderolabs/talos/internal/pkg/libvirt/domain"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
@@ -396,6 +397,10 @@ func renderVirtualMachineDisks(
 			return nil, fmt.Errorf("virtual machine %q: disk %q is %w: no disk status yet", name, disk.Name, ErrDiskNotReady)
 		case resolved.Phase != hypervisor.VirtualMachineDiskPhaseReady:
 			return nil, fmt.Errorf("virtual machine %q: disk %q is %w: %s", name, disk.Name, ErrDiskNotReady, resolved.Error)
+		case resolved.SourcePath == "" && !disk.IsEmptyDrive():
+			// Only an empty drive goes without a source; anything else would be handed to the
+			// guest missing.
+			return nil, fmt.Errorf("virtual machine %q: disk %q is %w: ready without a source path", name, disk.Name, ErrDiskNotReady)
 		}
 
 		attached = append(attached, id)
@@ -425,19 +430,25 @@ func appendVirtualMachineDisk(
 
 	rendered := libvirtxml.DomainDisk{
 		Device: device,
+		// The alias marks a configured device whose medium may be changed on a running domain.
+		Alias: &libvirtxml.DomainAlias{Name: libvirtdomain.DeviceAlias("disk", disk.Name)},
 		Driver: &libvirtxml.DomainDiskDriver{
 			Name: "qemu",
 			Type: resolved.Format,
-		},
-		Source: &libvirtxml.DomainDiskSource{
-			File: &libvirtxml.DomainDiskSourceFile{
-				File: resolved.SourcePath,
-			},
 		},
 		Target: &libvirtxml.DomainDiskTarget{
 			Dev: dev,
 			Bus: disk.Bus,
 		},
+	}
+
+	// No source: an empty cdrom. Only this element differs from a loaded drive.
+	if !disk.IsEmptyDrive() {
+		rendered.Source = &libvirtxml.DomainDiskSource{
+			File: &libvirtxml.DomainDiskSourceFile{
+				File: resolved.SourcePath,
+			},
+		}
 	}
 
 	if resolved.ReadOnly {

@@ -413,16 +413,17 @@ func stampDiskStatus(
 		status.Image = *image
 	}
 
-	if disk.Provision.Blank || disk.Provision.FromImage != nil {
-		status.Pool = disk.Pool
-		if disk.Provision.Blank {
-			status.Blank = true
-		}
+	volume := disk.ProvisionsVolume()
 
-		if disk.Provision.Blank {
-			if volumeName, err := blankVolumeName(name, disk); err == nil {
-				status.Volume = volumeName
-			}
+	if volume || disk.Provision.FromImage != nil {
+		status.Pool = disk.Pool
+	}
+
+	if volume {
+		status.Blank = true
+
+		if volumeName, err := blankVolumeName(name, disk); err == nil {
+			status.Volume = volumeName
 		}
 	}
 
@@ -490,7 +491,12 @@ func (ctrl *Reconciler) progressDisk(
 		}, err
 	}
 
-	if disk.Provision.Blank {
+	// An empty drive has no source, library or volume to look up.
+	if disk.IsEmptyDrive() {
+		return ObserveEmptyDrive(), nil
+	}
+
+	if disk.ProvisionsVolume() {
 		request, err := ctrl.requestBlankVolume(ctx, r, name, disk, pass)
 		if err != nil {
 			return hypervisor.VirtualMachineDiskStatusSpec{
@@ -1057,6 +1063,10 @@ func CheckSupported(disk hypervisor.VirtualMachineDiskSpec) error {
 
 	switch disk.Type {
 	case hypervisorhelpers.VirtualMachineDiskTypeCDROM.String():
+		if disk.IsEmptyDrive() {
+			return nil
+		}
+
 		return checkCDROMDiskSupported(disk)
 	case hypervisorhelpers.VirtualMachineDiskTypeDisk.String():
 		if !disk.Provision.Blank && disk.Provision.FromImage == nil {
@@ -1167,8 +1177,9 @@ func writableImageNeedsSource(ctx context.Context, r controller.Reader, request 
 }
 
 func checkCDROMDiskSupported(disk hypervisor.VirtualMachineDiskSpec) error {
-	if disk.Provision.FromImage == nil || disk.Provision.Blank {
-		return fmt.Errorf("%w: a cdrom requires provision.fromImage", ErrDiskUnsupported)
+	if disk.Provision.FromImage == nil {
+		// Config validation already requires this; checked anyway.
+		return fmt.Errorf("%w: a cdrom requires provision.fromImage or provision.blank", ErrDiskUnsupported)
 	}
 
 	if err := storagehelpers.ValidateStoragePoolName(disk.Pool); err != nil {
