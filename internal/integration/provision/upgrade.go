@@ -18,6 +18,7 @@ import (
 	"github.com/siderolabs/talos/pkg/images"
 	talosclient "github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/configpatcher"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
@@ -60,6 +61,10 @@ type upgradeSpec struct {
 	WithApplyConfig         bool
 	WithSkipInjectingConfig bool
 	WithEnforcing           bool
+	// WithMDBootArray installs to a RAID1 MD array over two primary disks, and verifies that the ESP
+	// copies on the members stay identical: an out-of-band write to one copy before the upgrade has to
+	// be repaired by the upgrade, and the firmware boot after the upgrade must not make them diverge.
+	WithMDBootArray bool
 
 	// TestRollback specifies whether to test rollback after the upgrade.
 	TestRollback bool
@@ -235,6 +240,46 @@ func upgradeCurrentToCurrentEnforcing() upgradeSpec {
 	}
 }
 
+// upgradeCurrentToCurrentMDBootArray upgrades the current version to itself on a RAID1 MD boot array.
+//
+// The upgraded node is rebooted via a power cycle, so that it goes through the firmware and sd-boot, which
+// is when the ESP copies on the members of the array might diverge.
+func upgradeCurrentToCurrentMDBootArray() upgradeSpec {
+	installerImage := fmt.Sprintf(
+		"%s/%s:%s",
+		DefaultSettings.TargetInstallImageRegistry,
+		images.DefaultInstallerImageName, //nolint:staticcheck // legacy is only used in tests
+		DefaultSettings.CurrentVersion,
+	)
+
+	return upgradeSpec{
+		// we need to keep name short due to socket path length limit
+		ShortName: fmt.Sprintf("%s-sver-sd-md", DefaultSettings.CurrentVersion),
+
+		SourceISOPath:        helpers.ArtifactPath("metal-amd64.iso"),
+		SourceInstallerImage: installerImage,
+		SourceVersion:        DefaultSettings.CurrentVersion,
+		SourceK8sVersion:     currentK8sVersion,
+
+		VersionContract: config.TalosVersionCurrent.DisableEtcd().DisableKubernetes(),
+
+		// a different target image, so that an upgrade reverted on a failed reboot sequence is detected
+		TargetInstallerImage: installerImage + "-extra-cmdline",
+		TargetVersion:        DefaultSettings.CurrentVersion,
+		TargetK8sVersion:     currentK8sVersion,
+
+		ControlplaneNodes: 1,
+		WorkerNodes:       0,
+
+		TargetCmdlineContains: "talos.extra_cmdline=extra-super-cmdline",
+
+		UpgradeRebootPowercyle: true,
+
+		WithApplyConfig: true,
+		WithMDBootArray: true,
+	}
+}
+
 // upgradeStableToCurrentTrustedBoot upgrades the stable Talos release to the current version
 // with TPM-backed disk encryption (trustedboot). Both the source ISO and the source
 // installer are produced from the upstream-tagged imager at the stable release, signed with
@@ -323,8 +368,18 @@ func (suite *UpgradeSuite) runE2E(k8sVersion string) {
 
 // TestRolling performs rolling upgrade starting with master nodes.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (suite *UpgradeSuite) TestRolling() {
+	var (
+		primaryDisks int
+		mdPatches    []configpatcher.Patch
+	)
+
+	if suite.spec.WithMDBootArray {
+		primaryDisks = mdBootArrayMembers
+		mdPatches = suite.mdBootArrayPatches()
+	}
+
 	suite.setupCluster(clusterOptions{
 		ClusterName: suite.spec.ShortName,
 
@@ -348,6 +403,10 @@ func (suite *UpgradeSuite) TestRolling() {
 		WithBios:                suite.spec.WithBios,
 		WithApplyConfig:         suite.spec.WithApplyConfig,
 		WithSkipInjectingConfig: suite.spec.WithSkipInjectingConfig,
+
+		PrimaryDisks:              primaryDisks,
+		ConfigPatchesControlPlane: mdPatches,
+		ConfigPatchesWorker:       mdPatches,
 	})
 
 	client, err := suite.clusterAccess.Client()
@@ -355,6 +414,16 @@ func (suite *UpgradeSuite) TestRolling() {
 
 	// verify initial cluster version
 	suite.assertSameVersionCluster(client, suite.spec.SourceVersion)
+
+	if suite.spec.WithMDBootArray {
+		for _, node := range suite.Cluster.Info().Nodes {
+			// the node booted from the array, nothing wrote to a single copy of the ESP
+			suite.assertESPMirrored(node)
+
+			// simulate a write to a single copy, as done by older versions of sd-boot, or the firmware
+			suite.divergeESPMirror(node)
+		}
+	}
 
 	// verify enforcing state
 	for _, node := range suite.Cluster.Info().Nodes {
@@ -413,6 +482,17 @@ func (suite *UpgradeSuite) TestRolling() {
 	if suite.spec.TargetCmdlineContains != "" {
 		for _, node := range suite.Cluster.Info().Nodes {
 			suite.assertCmdlineContains(client, node.IPs[0].String(), suite.spec.TargetCmdlineContains)
+		}
+	}
+
+	if suite.spec.WithMDBootArray {
+		for _, node := range suite.Cluster.Info().Nodes {
+			// sd-boot reports the boot partition via an EFI variable, the kernel argument is only set on kexec:
+			// the node went through the firmware and sd-boot, which is when the ESP copies might diverge
+			suite.assertCmdlineNotContains(client, node.IPs[0].String(), constants.KernelParamBootPartitionUUID+"=")
+
+			// the upgrade repaired the ESP copies, and the boot after it didn't make them diverge again
+			suite.assertESPMirrored(node)
 		}
 	}
 
@@ -478,6 +558,7 @@ func init() {
 		&UpgradeSuite{specGen: upgradeCurrentToCurrent(true, false, true), track: 0},
 		&UpgradeSuite{specGen: upgradeCurrentToCurrent(true, true, true), track: 0},
 		&UpgradeSuite{specGen: upgradeCurrentToCurrentEnforcing, track: 0},
+		&UpgradeSuite{specGen: upgradeCurrentToCurrentMDBootArray, track: 0},
 		&UpgradeSuite{specGen: upgradeStableToCurrentTrustedBoot, track: 1},
 		&UpgradeSuite{specGen: upgradeStableToCurrent, track: 1},
 		&UpgradeSuite{specGen: upgradePreviousToStable, track: 1},

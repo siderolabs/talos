@@ -799,6 +799,11 @@ type clusterOptions struct {
 	ConfigPatchesControlPlane []configpatcher.Patch
 	ConfigPatchesWorker       []configpatcher.Patch
 
+	// PrimaryDisks is the number of primary (virtio) disks to attach to each node, defaults to 1.
+	//
+	// More than one lets the node build an MD array across its primary disks (e.g. a RAID1 boot drive).
+	PrimaryDisks int
+
 	// ExtraDisks is the number of extra disks to attach to each node,
 	// the disks will be added by default with the default disk size with SCSI driver.
 	ExtraDisks int
@@ -1041,9 +1046,16 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 	suite.Require().NoError(err)
 
 	nodeDisks := func() []*provision.Disk {
-		result := make([]*provision.Disk, 1, 1+options.ExtraDisks)
-		result[0] = &provision.Disk{
-			Size: DefaultSettings.DiskGB * 1024 * 1024 * 1024,
+		primaryDisks := max(options.PrimaryDisks, 1)
+
+		result := make([]*provision.Disk, 0, primaryDisks+options.ExtraDisks)
+
+		for range primaryDisks {
+			result = append(result, &provision.Disk{
+				Size: DefaultSettings.DiskGB * 1024 * 1024 * 1024,
+				// the provisioner defaults to IDE for all disks but the first one
+				Driver: "virtio",
+			})
 		}
 
 		for range options.ExtraDisks {
