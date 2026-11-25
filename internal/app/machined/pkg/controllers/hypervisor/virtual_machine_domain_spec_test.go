@@ -2024,25 +2024,58 @@ func (suite *VirtualMachineStaleDiskSuite) TestObservationOutageRejectsMediaInAn
 	f := completedCDROM(&suite.DefaultSuite, "media-in-empty", spare)
 	loseCopyObservation(&suite.DefaultSuite, f)
 
-	domain, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](suite.Ctx(), suite.State(), "media-in-empty")
-	suite.Require().NoError(err)
-
-	const emptyDrive = "<disk device=\"cdrom\">\n"
-
-	suite.Require().Contains(domain.TypedSpec().DomainXML, emptyDrive)
-	ctest.UpdateWithConflicts(suite, domain, func(current *hypervisor.VirtualMachineDomainSpec) error {
-		current.TypedSpec().DomainXML = strings.Replace(current.TypedSpec().DomainXML, emptyDrive,
-			"<disk type=\"block\" device=\"cdrom\">\n      <source dev=\"/dev/sr0\"></source>\n", 1)
-
-		return nil
-	}, state.WithUpdateOwner("hypervisor.VirtualMachineDomainSpecController"))
+	const (
+		emptyDrive = "<disk device=\"cdrom\">\n"
+		mediaDrive = "<disk type=\"block\" device=\"cdrom\">\n      <source dev=\"/dev/sr0\"></source>\n"
+	)
 
 	spareStatus := hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, hypervisor.VirtualMachineDiskStatusID("media-in-empty", spare))
-	ctest.UpdateWithConflicts(suite, spareStatus, func(current *hypervisor.VirtualMachineDiskStatus) error {
-		current.TypedSpec().Size++ // only to wake the controller
+	errNotCleanRender := errors.New("domain spec is not the running render with an empty drive")
 
-		return nil
-	})
+	// A reconcile in flight when the outage began renders from ready disks and may overwrite the
+	// edit; the next one sees the outage. Put the media back until the controller acts on it.
+	deadline := time.Now().Add(10 * time.Second)
+
+	for {
+		domain, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](suite.Ctx(), suite.State(), "media-in-empty")
+		suite.Require().NoError(err)
+
+		if domain.TypedSpec().PowerState == "stopped" {
+			// The stop keeps the definition it refused, so the media must still be there.
+			suite.Require().Contains(domain.TypedSpec().DomainXML, mediaDrive, "virtual machine stopped without media in its empty drive")
+
+			break
+		}
+
+		suite.Require().True(time.Now().Before(deadline), "virtual machine was not stopped with media in its empty drive")
+
+		if !strings.Contains(domain.TypedSpec().DomainXML, mediaDrive) {
+			suite.Require().Contains(domain.TypedSpec().DomainXML, emptyDrive)
+
+			_, err = safe.StateUpdateWithConflicts(suite.Ctx(), suite.State(), domain.Metadata(), func(current *hypervisor.VirtualMachineDomainSpec) error {
+				if current.TypedSpec().PowerState != "running" || !strings.Contains(current.TypedSpec().DomainXML, emptyDrive) {
+					return errNotCleanRender
+				}
+
+				current.TypedSpec().DomainXML = strings.Replace(current.TypedSpec().DomainXML, emptyDrive, mediaDrive, 1)
+
+				return nil
+			}, state.WithUpdateOwner("hypervisor.VirtualMachineDomainSpecController"))
+			if errors.Is(err, errNotCleanRender) {
+				continue // a newer revision landed; reread it
+			}
+
+			suite.Require().NoError(err)
+
+			ctest.UpdateWithConflicts(suite, spareStatus, func(current *hypervisor.VirtualMachineDiskStatus) error {
+				current.TypedSpec().Size++ // only to wake the controller
+
+				return nil
+			})
+		}
+
+		time.Sleep(10 * time.Millisecond)
+	}
 
 	ctest.AssertResource(suite, "media-in-empty", func(domain *hypervisor.VirtualMachineDomainSpec, a *assert.Assertions) {
 		a.Equal("stopped", domain.TypedSpec().PowerState)
