@@ -8,10 +8,13 @@ package network
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/siderolabs/gen/value"
 	"github.com/siderolabs/go-pointer"
 
+	"github.com/siderolabs/talos/pkg/machinery/cel"
+	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
@@ -44,6 +47,7 @@ var (
 //
 //	examples:
 //	  - value: exampleEthernetConfigV1Alpha1()
+//	  - value: exampleEthernetConfigV1Alpha1BySelector()
 //	alias: EthernetConfig
 //	schemaRoot: true
 //	schemaMeta: v1alpha1/EthernetConfig
@@ -51,9 +55,19 @@ type EthernetConfigV1Alpha1 struct {
 	meta.Meta `yaml:",inline"`
 
 	//   description: |
-	//     Name of the link (interface).
+	//     Name or alias of the link to configure.
+	//
+	//     If `selector` is set, a descriptive name of the config instead.
 	//   schemaRequired: true
 	MetaName string `yaml:"name"`
+	//   description: |
+	//     Selector to match the links to configure.
+	//     If omitted, the link is matched by `name`.
+	//
+	//     Only physical links are matched.
+	//     If several configs match the same link, their settings are merged in this order, later ones overriding earlier ones:
+	//     configs matching by a selector, then by link alias, then by exact link name.
+	Selector LinkSelector `yaml:"selector,omitempty"`
 	//   description: |
 	//     Configuration for Ethernet features.
 	//
@@ -197,6 +211,16 @@ func exampleEthernetConfigV1Alpha1() *EthernetConfigV1Alpha1 {
 	return cfg
 }
 
+func exampleEthernetConfigV1Alpha1BySelector() *EthernetConfigV1Alpha1 {
+	cfg := NewEthernetConfigV1Alpha1("virtio-features")
+	cfg.Selector.Match = cel.MustExpression(cel.ParseBooleanExpression(`link.driver == "virtio_net"`, celenv.LinkLocator()))
+	cfg.FeaturesConfig = map[string]bool{
+		"tx-nocache-copy": true,
+	}
+
+	return cfg
+}
+
 // Clone implements config.Document interface.
 func (s *EthernetConfigV1Alpha1) Clone() config.Document {
 	return s.DeepCopy()
@@ -205,6 +229,11 @@ func (s *EthernetConfigV1Alpha1) Clone() config.Document {
 // Name implements config.NamedDocument interface.
 func (s *EthernetConfigV1Alpha1) Name() string {
 	return s.MetaName
+}
+
+// LinkSelector implements config.EthernetConfig interface.
+func (s *EthernetConfigV1Alpha1) LinkSelector() cel.Expression {
+	return s.Selector.Match
 }
 
 // Rings implements config.EthernetConfig interface.
@@ -240,6 +269,12 @@ func (s *EthernetConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.
 
 	if s.FlowControlConfig != nil && value.IsZero(*s.FlowControlConfig) {
 		return nil, errors.New("flowControl must set at least one of rx, tx or autoneg")
+	}
+
+	if !s.Selector.Match.IsZero() {
+		if err := s.Selector.Match.ParseBool(celenv.LinkLocator()); err != nil {
+			return nil, fmt.Errorf("link selector is invalid: %w", err)
+		}
 	}
 
 	return nil, nil

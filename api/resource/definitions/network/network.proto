@@ -313,6 +313,8 @@ message EthernetSpecSpec {
   EthernetChannelsSpec channels = 3;
   repeated talos.resource.definitions.enums.NethelpersWOLMode wake_on_lan = 4;
   EthernetFlowControlSpec flow_control = 5;
+  string link_name = 6;
+  bool from_selector = 7;
 }
 
 // EthernetStatusSpec describes status of rendered secrets.

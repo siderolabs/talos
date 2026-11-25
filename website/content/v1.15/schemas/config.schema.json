@@ -6717,9 +6717,16 @@
         "name": {
           "type": "string",
           "title": "name",
-          "description": "Name of the link (interface).\n",
-          "markdownDescription": "Name of the link (interface).",
-          "x-intellij-html-description": "\u003cp\u003eName of the link (interface).\u003c/p\u003e\n"
+          "description": "Name or alias of the link to configure.\n\nIf selector is set, a descriptive name of the config instead.\n",
+          "markdownDescription": "Name or alias of the link to configure.\n\nIf `selector` is set, a descriptive name of the config instead.",
+          "x-intellij-html-description": "\u003cp\u003eName or alias of the link to configure.\u003c/p\u003e\n\n\u003cp\u003eIf \u003ccode\u003eselector\u003c/code\u003e is set, a descriptive name of the config instead.\u003c/p\u003e\n"
+        },
+        "selector": {
+          "$ref": "#/$defs/network.LinkSelector",
+          "title": "selector",
+          "description": "Selector to match the links to configure.\nIf omitted, the link is matched by name.\n\nOnly physical links are matched.\nIf several configs match the same link, their settings are merged in this order, later ones overriding earlier ones:\nconfigs matching by a selector, then by link alias, then by exact link name.\n",
+          "markdownDescription": "Selector to match the links to configure.\nIf omitted, the link is matched by `name`.\n\nOnly physical links are matched.\nIf several configs match the same link, their settings are merged in this order, later ones overriding earlier ones:\nconfigs matching by a selector, then by link alias, then by exact link name.",
+          "x-intellij-html-description": "\u003cp\u003eSelector to match the links to configure.\nIf omitted, the link is matched by \u003ccode\u003ename\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003eOnly physical links are matched.\nIf several configs match the same link, their settings are merged in this order, later ones overriding earlier ones:\nconfigs matching by a selector, then by link alias, then by exact link name.\u003c/p\u003e\n"
         },
         "features": {
           "patternProperties": {
@@ -7482,7 +7489,7 @@
       },
       "additionalProperties": false,
       "type": "object",
-      "description": "LinkSelector selects a link to alias."
+      "description": "LinkSelector selects links using a CEL expression."
     },
     "network.MacVLANConfigV1Alpha1": {
       "properties": {

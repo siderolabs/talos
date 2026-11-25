@@ -84,7 +84,7 @@ type LinkAliasConfigV1Alpha1 struct {
 	Selector LinkSelector `yaml:"selector,omitempty"`
 }
 
-// LinkSelector selects a link to alias.
+// LinkSelector selects links using a CEL expression.
 type LinkSelector struct {
 	//   description: |
 	//     The Common Expression Language (CEL) expression to match the link.

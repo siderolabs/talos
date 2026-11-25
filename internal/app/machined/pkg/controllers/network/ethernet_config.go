@@ -9,12 +9,16 @@ import (
 	"fmt"
 
 	"github.com/cosi-project/runtime/pkg/controller"
+	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
+	networkpb "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/network"
+	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	configtypes "github.com/siderolabs/talos/pkg/machinery/config/config"
+	"github.com/siderolabs/talos/pkg/machinery/proto"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
@@ -75,35 +79,115 @@ func (ctrl *EthernetConfigController) Run(ctx context.Context, r controller.Runt
 			return fmt.Errorf("error listing link statuses: %w", err)
 		}
 
-		linkNameResolver := network.NewLinkResolver(linkStatuses.All)
-
 		if cfg != nil {
-			if err = ctrl.apply(ctx, r, cfg.Config().EthernetConfigs(), linkNameResolver); err != nil {
+			if err = ctrl.apply(ctx, r, logger, cfg.Config().EthernetConfigs(), linkStatuses); err != nil {
 				return fmt.Errorf("error applying EthernetSpec: %w", err)
 			}
 		}
 
-		if err = safe.CleanupOutputs[*network.EthernetSpec](ctx, r); err != nil {
+		if err = r.CleanupOutputs(ctx, resource.NewMetadata(network.ConfigNamespaceName, network.EthernetSpecType, "", resource.VersionUndefined)); err != nil {
 			return fmt.Errorf("error cleaning up EthernetSpec: %w", err)
 		}
 	}
 }
 
 func (ctrl *EthernetConfigController) apply(
-	ctx context.Context, r controller.Runtime, configs []configtypes.EthernetConfig, linkNameResolver *network.LinkResolver,
+	ctx context.Context,
+	r controller.Runtime,
+	logger *zap.Logger,
+	configs []configtypes.EthernetConfig,
+	linkStatuses safe.List[*network.LinkStatus],
 ) error {
-	for _, cfg := range configs {
-		if err := safe.WriterModify(ctx, r, network.NewEthernetSpec(network.NamespaceName, linkNameResolver.Resolve(cfg.Name())), func(spec *network.EthernetSpec) error {
-			spec.TypedSpec().Rings = network.EthernetRingsSpec(cfg.Rings())
-			spec.TypedSpec().Channels = network.EthernetChannelsSpec(cfg.Channels())
-			spec.TypedSpec().Features = cfg.Features()
-			spec.TypedSpec().WakeOnLAN = cfg.WakeOnLAN()
-			spec.TypedSpec().FlowControl = network.EthernetFlowControlSpec(cfg.FlowControl())
+	linkNameResolver := network.NewLinkResolver(linkStatuses.All)
 
-			return nil
-		}); err != nil {
-			return fmt.Errorf("error writing EthernetSpec: %w", err)
+	// built lazily, as it's only needed by configs with a selector
+	var physicalLinks map[string]*networkpb.LinkStatusSpec
+
+	for _, ethCfg := range configs {
+		if ethCfg.LinkSelector().IsZero() {
+			if err := writeEthernetSpec(ctx, r, ethCfg.Name(), linkNameResolver.Resolve(ethCfg.Name()), false, ethCfg); err != nil {
+				return err
+			}
+
+			continue
 		}
+
+		if physicalLinks == nil {
+			var err error
+
+			if physicalLinks, err = getPhysicalLinks(linkStatuses); err != nil {
+				return err
+			}
+		}
+
+		for name, link := range physicalLinks {
+			matches, err := ethCfg.LinkSelector().EvalBool(celenv.LinkLocator(), map[string]any{
+				"link": link,
+			})
+			if err != nil {
+				// don't fail the whole reconcile, as it would block other configs and the cleanup
+				logger.Error("error evaluating link selector, skipping link",
+					zap.String("config", ethCfg.Name()),
+					zap.String("link", name),
+					zap.Error(err),
+				)
+
+				continue
+			}
+
+			if !matches {
+				continue
+			}
+
+			// specs matched by a selector are IDed "<config-name>/<link-name>"
+			if err := writeEthernetSpec(ctx, r, ethCfg.Name()+"/"+name, name, true, ethCfg); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func getPhysicalLinks(linkStatuses safe.List[*network.LinkStatus]) (map[string]*networkpb.LinkStatusSpec, error) {
+	physicalLinks := map[string]*networkpb.LinkStatusSpec{}
+
+	for link := range linkStatuses.All() {
+		if !link.TypedSpec().Physical() {
+			continue
+		}
+
+		var spec networkpb.LinkStatusSpec
+
+		if err := proto.ResourceSpecToProto(link, &spec); err != nil {
+			return nil, fmt.Errorf("error converting link spec (%s) to proto: %w", link.Metadata().ID(), err)
+		}
+
+		physicalLinks[link.Metadata().ID()] = &spec
+	}
+
+	return physicalLinks, nil
+}
+
+func writeEthernetSpec(
+	ctx context.Context,
+	r controller.Runtime,
+	id, linkName string,
+	fromSelector bool,
+	cfg configtypes.EthernetConfig,
+) error {
+	if err := safe.WriterModify(ctx, r, network.NewEthernetSpec(network.ConfigNamespaceName, id), func(spec *network.EthernetSpec) error {
+		spec.TypedSpec().Rings = network.EthernetRingsSpec(cfg.Rings())
+		spec.TypedSpec().Channels = network.EthernetChannelsSpec(cfg.Channels())
+		spec.TypedSpec().Features = cfg.Features()
+		spec.TypedSpec().WakeOnLAN = cfg.WakeOnLAN()
+		spec.TypedSpec().FlowControl = network.EthernetFlowControlSpec(cfg.FlowControl())
+		spec.TypedSpec().LinkName = linkName
+		spec.TypedSpec().FromSelector = fromSelector
+
+		return nil
+	}); err != nil {
+		return fmt.Errorf("error writing EthernetSpec %q: %w", id, err)
 	}
 
 	return nil

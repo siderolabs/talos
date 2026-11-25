@@ -5,6 +5,9 @@
 package network
 
 import (
+	"maps"
+	"slices"
+
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
@@ -23,12 +26,15 @@ type EthernetSpec = typed.Resource[EthernetSpecSpec, EthernetSpecExtension]
 // EthernetSpecSpec describes config of Ethernet link.
 //
 //gotagsrewrite:gen
+//redactgen:gen
 type EthernetSpecSpec struct {
-	Rings       EthernetRingsSpec       `yaml:"rings,omitempty" protobuf:"1"`
-	Features    map[string]bool         `yaml:"features,omitempty" protobuf:"2"`
-	Channels    EthernetChannelsSpec    `yaml:"channels,omitempty" protobuf:"3"`
-	WakeOnLAN   []nethelpers.WOLMode    `yaml:"wakeOnLan,omitempty" protobuf:"4"`
-	FlowControl EthernetFlowControlSpec `yaml:"flowControl,omitempty" protobuf:"5"`
+	Rings        EthernetRingsSpec       `yaml:"rings,omitempty" protobuf:"1"`
+	Features     map[string]bool         `yaml:"features,omitempty" protobuf:"2"`
+	Channels     EthernetChannelsSpec    `yaml:"channels,omitempty" protobuf:"3"`
+	WakeOnLAN    []nethelpers.WOLMode    `yaml:"wakeOnLan,omitempty" protobuf:"4"`
+	FlowControl  EthernetFlowControlSpec `yaml:"flowControl,omitempty" protobuf:"5"`
+	LinkName     string                  `yaml:"linkName,omitempty" protobuf:"6"`
+	FromSelector bool                    `yaml:"fromSelector,omitempty" protobuf:"7"`
 }
 
 // EthernetRingsSpec describes config of Ethernet rings.
@@ -66,6 +72,47 @@ type EthernetChannelsSpec struct {
 	Combined *uint32 `yaml:"combined,omitempty" protobuf:"4"`
 }
 
+// Merge with other, overwriting fields from other if set.
+func (spec *EthernetSpecSpec) Merge(other *EthernetSpecSpec) {
+	updateIfNotNil(&spec.Rings.RX, other.Rings.RX)
+	updateIfNotNil(&spec.Rings.TX, other.Rings.TX)
+	updateIfNotNil(&spec.Rings.RXMini, other.Rings.RXMini)
+	updateIfNotNil(&spec.Rings.RXJumbo, other.Rings.RXJumbo)
+	updateIfNotNil(&spec.Rings.RXBufLen, other.Rings.RXBufLen)
+	updateIfNotNil(&spec.Rings.CQESize, other.Rings.CQESize)
+	updateIfNotNil(&spec.Rings.TXPush, other.Rings.TXPush)
+	updateIfNotNil(&spec.Rings.RXPush, other.Rings.RXPush)
+	updateIfNotNil(&spec.Rings.TXPushBufLen, other.Rings.TXPushBufLen)
+	updateIfNotNil(&spec.Rings.TCPDataSplit, other.Rings.TCPDataSplit)
+
+	updateIfNotNil(&spec.Channels.RX, other.Channels.RX)
+	updateIfNotNil(&spec.Channels.TX, other.Channels.TX)
+	updateIfNotNil(&spec.Channels.Other, other.Channels.Other)
+	updateIfNotNil(&spec.Channels.Combined, other.Channels.Combined)
+
+	updateIfNotNil(&spec.FlowControl.RX, other.FlowControl.RX)
+	updateIfNotNil(&spec.FlowControl.TX, other.FlowControl.TX)
+	updateIfNotNil(&spec.FlowControl.Autoneg, other.FlowControl.Autoneg)
+
+	if other.Features != nil {
+		if spec.Features == nil {
+			spec.Features = make(map[string]bool, len(other.Features))
+		}
+
+		maps.Copy(spec.Features, other.Features)
+	}
+
+	if other.WakeOnLAN != nil {
+		spec.WakeOnLAN = slices.Clone(other.WakeOnLAN)
+	}
+}
+
+func updateIfNotNil[T any](target **T, source *T) {
+	if source != nil {
+		*target = new(*source)
+	}
+}
+
 // NewEthernetSpec initializes a EthernetSpec resource.
 func NewEthernetSpec(namespace resource.Namespace, id resource.ID) *EthernetSpec {
 	return typed.NewResource[EthernetSpecSpec, EthernetSpecExtension](
@@ -89,7 +136,7 @@ func (EthernetSpecExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 func init() {
 	proto.RegisterDefaultTypes()
 
-	err := protobuf.RegisterDynamic[EthernetSpecSpec](EthernetSpecType, &EthernetSpec{})
+	err := protobuf.RegisterDynamic(EthernetSpecType, &EthernetSpec{})
 	if err != nil {
 		panic(err)
 	}

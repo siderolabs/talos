@@ -1305,6 +1305,29 @@ Config files are now stored on a dedicated 1 MiB tmpfs, which limits the total s
 Addresses in link configuration documents (`LinkConfig`, `DummyLinkConfig`, `VLANConfig`, etc.) support an optional `scope` field: `global` (default), `link` or `host`.
 The kernel doesn't use `link` or `host` scope addresses as a source address for traffic leaving the host, which is useful for helper addresses used only for local communication.
 Non-global scope is supported only for IPv4 addresses.
+||||||| parent of c42e95573 (feat: add link selector to EthernetConfig)
+"""
+
+    [notes.ethernet_config_selector]
+        title = "EthernetConfig Link Selectors"
+        description = """\
+The `EthernetConfig` document supports a new `selector` field to configure all physical links that match a CEL expression,
+instead of a single link by name:
+
+```yaml
+apiVersion: v1alpha1
+kind: EthernetConfig
+name: virtio-features # describes the config when a selector is used
+selector:
+  match: link.driver == "virtio_net"
+features:
+  tx-nocache-copy: true
+```
+
+When several configs match the same link, their settings are merged.
+They are merged in this order, later ones overriding earlier ones: configs matching by a selector, then by link alias, then by exact link name.
+Avoid selectors that set the same setting of a link to different values.
+>>>>>>> c42e95573 (feat: add link selector to EthernetConfig)
 """
 
 [make_deps]

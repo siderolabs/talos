@@ -2166,6 +2166,8 @@ type EthernetSpecSpec struct {
 	Channels      *EthernetChannelsSpec     `protobuf:"bytes,3,opt,name=channels,proto3" json:"channels,omitempty"`
 	WakeOnLan     []enums.NethelpersWOLMode `protobuf:"varint,4,rep,packed,name=wake_on_lan,json=wakeOnLan,proto3,enum=talos.resource.definitions.enums.NethelpersWOLMode" json:"wake_on_lan,omitempty"`
 	FlowControl   *EthernetFlowControlSpec  `protobuf:"bytes,5,opt,name=flow_control,json=flowControl,proto3" json:"flow_control,omitempty"`
+	LinkName      string                    `protobuf:"bytes,6,opt,name=link_name,json=linkName,proto3" json:"link_name,omitempty"`
+	FromSelector  bool                      `protobuf:"varint,7,opt,name=from_selector,json=fromSelector,proto3" json:"from_selector,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2233,6 +2235,20 @@ func (x *EthernetSpecSpec) GetFlowControl() *EthernetFlowControlSpec {
 		return x.FlowControl
 	}
 	return nil
+}
+
+func (x *EthernetSpecSpec) GetLinkName() string {
+	if x != nil {
+		return x.LinkName
+	}
+	return ""
+}
+
+func (x *EthernetSpecSpec) GetFromSelector() bool {
+	if x != nil {
+		return x.FromSelector
+	}
+	return false
 }
 
 // EthernetStatusSpec describes status of rendered secrets.
@@ -6877,13 +6893,15 @@ const file_resource_definitions_network_network_proto_rawDesc = "" +
 	"\atx_push\x18\f \x01(\bR\x06txPush\x12\x17\n" +
 	"\arx_push\x18\r \x01(\bR\x06rxPush\x12%\n" +
 	"\x0ftx_push_buf_len\x18\x0e \x01(\rR\ftxPushBufLen\x12$\n" +
-	"\x0etcp_data_split\x18\x0f \x01(\bR\ftcpDataSplit\"\x87\x04\n" +
+	"\x0etcp_data_split\x18\x0f \x01(\bR\ftcpDataSplit\"\xc9\x04\n" +
 	"\x10EthernetSpecSpec\x12K\n" +
 	"\x05rings\x18\x01 \x01(\v25.talos.resource.definitions.network.EthernetRingsSpecR\x05rings\x12^\n" +
 	"\bfeatures\x18\x02 \x03(\v2B.talos.resource.definitions.network.EthernetSpecSpec.FeaturesEntryR\bfeatures\x12T\n" +
 	"\bchannels\x18\x03 \x01(\v28.talos.resource.definitions.network.EthernetChannelsSpecR\bchannels\x12S\n" +
 	"\vwake_on_lan\x18\x04 \x03(\x0e23.talos.resource.definitions.enums.NethelpersWOLModeR\twakeOnLan\x12^\n" +
-	"\fflow_control\x18\x05 \x01(\v2;.talos.resource.definitions.network.EthernetFlowControlSpecR\vflowControl\x1a;\n" +
+	"\fflow_control\x18\x05 \x01(\v2;.talos.resource.definitions.network.EthernetFlowControlSpecR\vflowControl\x12\x1b\n" +
+	"\tlink_name\x18\x06 \x01(\tR\blinkName\x12#\n" +
+	"\rfrom_selector\x18\a \x01(\bR\ffromSelector\x1a;\n" +
 	"\rFeaturesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\bR\x05value:\x028\x01\"\xdd\x05\n" +

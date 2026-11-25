@@ -12756,6 +12756,8 @@ EthernetSpecSpec describes config of Ethernet link.
 | channels | [EthernetChannelsSpec](#talos.resource.definitions.network.EthernetChannelsSpec) |  |  |
 | wake_on_lan | [talos.resource.definitions.enums.NethelpersWOLMode](#talos.resource.definitions.enums.NethelpersWOLMode) | repeated |  |
 | flow_control | [EthernetFlowControlSpec](#talos.resource.definitions.network.EthernetFlowControlSpec) |  |  |
+| link_name | [string](#string) |  |  |
+| from_selector | [bool](#bool) |  |  |
 
 
 

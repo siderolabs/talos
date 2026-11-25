@@ -1186,8 +1186,15 @@ func (EthernetConfigV1Alpha1) Doc() *encoder.Doc {
 				Name:        "name",
 				Type:        "string",
 				Note:        "",
-				Description: "Name of the link (interface).",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the link (interface)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "Name or alias of the link to configure.\n\nIf `selector` is set, a descriptive name of the config instead.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name or alias of the link to configure." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "selector",
+				Type:        "LinkSelector",
+				Note:        "",
+				Description: "Selector to match the links to configure.\nIf omitted, the link is matched by `name`.\n\nOnly physical links are matched.\nIf several configs match the same link, their settings are merged in this order, later ones overriding earlier ones:\nconfigs matching by a selector, then by link alias, then by exact link name.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Selector to match the links to configure." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
 				Name:        "features",
@@ -1239,7 +1246,9 @@ func (EthernetConfigV1Alpha1) Doc() *encoder.Doc {
 
 	doc.AddExample("", exampleEthernetConfigV1Alpha1())
 
-	doc.Fields[5].AddExample("", []nethelpers.WOLMode{nethelpers.WOLModeUnicast, nethelpers.WOLModeMagic})
+	doc.AddExample("", exampleEthernetConfigV1Alpha1BySelector())
+
+	doc.Fields[6].AddExample("", []nethelpers.WOLMode{nethelpers.WOLModeUnicast, nethelpers.WOLModeMagic})
 
 	return doc
 }
@@ -1987,9 +1996,13 @@ func (LinkAliasConfigV1Alpha1) Doc() *encoder.Doc {
 func (LinkSelector) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "LinkSelector",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "LinkSelector selects a link to alias." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "LinkSelector selects a link to alias.",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "LinkSelector selects links using a CEL expression." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "LinkSelector selects links using a CEL expression.",
 		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "EthernetConfigV1Alpha1",
+				FieldName: "selector",
+			},
 			{
 				TypeName:  "LinkAliasConfigV1Alpha1",
 				FieldName: "selector",

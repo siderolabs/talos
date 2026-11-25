@@ -8,14 +8,18 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
+	"github.com/siderolabs/talos/pkg/machinery/cel"
+	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	networkcfg "github.com/siderolabs/talos/pkg/machinery/config/types/network"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
@@ -44,7 +48,7 @@ func (suite *EthernetConfigSuite) TestReconcile() {
 		asrt.Equal(uint32(4), pointer.SafeDeref(spec.TypedSpec().Channels.RX))
 		asrt.True(pointer.SafeDeref(spec.TypedSpec().FlowControl.RX))
 		asrt.False(pointer.SafeDeref(spec.TypedSpec().FlowControl.TX))
-	})
+	}, rtestutils.WithNamespace(network.ConfigNamespaceName))
 
 	cfg2 := networkcfg.NewEthernetConfigV1Alpha1("enp0s2")
 	cfg2.FeaturesConfig = map[string]bool{
@@ -65,16 +69,16 @@ func (suite *EthernetConfigSuite) TestReconcile() {
 		asrt.Equal(uint32(4), pointer.SafeDeref(spec.TypedSpec().Channels.RX))
 		asrt.True(pointer.SafeDeref(spec.TypedSpec().FlowControl.RX))
 		asrt.False(pointer.SafeDeref(spec.TypedSpec().FlowControl.TX))
-	})
+	}, rtestutils.WithNamespace(network.ConfigNamespaceName))
 	ctest.AssertResource(suite, "enp0s2", func(spec *network.EthernetSpec, asrt *assert.Assertions) {
 		asrt.Equal(uint32(16), pointer.SafeDeref(spec.TypedSpec().Rings.RX))
 		asrt.Equal(true, spec.TypedSpec().Features["tx-checksum-ipv4"])
-	})
+	}, rtestutils.WithNamespace(network.ConfigNamespaceName))
 
 	suite.Destroy(cfgNew)
 
-	ctest.AssertNoResource[*network.EthernetSpec](suite, "enp0s1")
-	ctest.AssertNoResource[*network.EthernetSpec](suite, "enp0s2")
+	ctest.AssertNoResource[*network.EthernetSpec](suite, "enp0s1", rtestutils.WithNamespace(network.ConfigNamespaceName))
+	ctest.AssertNoResource[*network.EthernetSpec](suite, "enp0s2", rtestutils.WithNamespace(network.ConfigNamespaceName))
 }
 
 func (suite *EthernetConfigSuite) TestReconcileAlias() {
@@ -92,10 +96,42 @@ func (suite *EthernetConfigSuite) TestReconcileAlias() {
 
 	suite.Create(config.NewMachineConfig(ctr))
 
-	ctest.AssertResource(suite, "enp0s3", func(spec *network.EthernetSpec, asrt *assert.Assertions) {
+	ctest.AssertResource(suite, "net0", func(spec *network.EthernetSpec, asrt *assert.Assertions) {
+		asrt.Equal("enp0s3", spec.TypedSpec().LinkName)
 		asrt.Equal(uint32(16), pointer.SafeDeref(spec.TypedSpec().Rings.RX))
-	})
-	ctest.AssertNoResource[*network.EthernetSpec](suite, "net0")
+	}, rtestutils.WithNamespace(network.ConfigNamespaceName))
+}
+
+func (suite *EthernetConfigSuite) TestReconcileSelector() {
+	physical := network.NewLinkStatus(network.NamespaceName, "enp0s4")
+	physical.TypedSpec().Type = nethelpers.LinkEther
+	physical.TypedSpec().Driver = "e1000"
+	suite.Create(physical)
+
+	// matches the selector, but it's not a physical link
+	bond := network.NewLinkStatus(network.NamespaceName, "bond0")
+	bond.TypedSpec().Type = nethelpers.LinkEther
+	bond.TypedSpec().Kind = "bond"
+	bond.TypedSpec().Driver = "e1000"
+	suite.Create(bond)
+
+	ethCfg := networkcfg.NewEthernetConfigV1Alpha1("e1000-rings")
+	ethCfg.Selector.Match = cel.MustExpression(cel.ParseBooleanExpression(`link.driver == "e1000"`, celenv.LinkLocator()))
+	ethCfg.RingsConfig = &networkcfg.EthernetRingsConfig{
+		RX: new(uint32(16)),
+	}
+
+	ctr, err := container.New(ethCfg)
+	suite.Require().NoError(err)
+
+	suite.Create(config.NewMachineConfig(ctr))
+
+	ctest.AssertResource(suite, "e1000-rings/enp0s4", func(spec *network.EthernetSpec, asrt *assert.Assertions) {
+		asrt.Equal("enp0s4", spec.TypedSpec().LinkName)
+		asrt.True(spec.TypedSpec().FromSelector)
+		asrt.Equal(uint32(16), pointer.SafeDeref(spec.TypedSpec().Rings.RX))
+	}, rtestutils.WithNamespace(network.ConfigNamespaceName))
+	ctest.AssertNoResource[*network.EthernetSpec](suite, "e1000-rings/bond0", rtestutils.WithNamespace(network.ConfigNamespaceName))
 }
 
 func TestEthernetConfigSuite(t *testing.T) {

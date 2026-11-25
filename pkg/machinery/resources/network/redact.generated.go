@@ -18,6 +18,7 @@ import (
 var (
 	_ redactable.Spec = &AddressSpecSpec{}
 	_ redactable.Spec = &BGPInstanceConfigSpec{}
+	_ redactable.Spec = &EthernetSpecSpec{}
 	_ redactable.Spec = &HostnameSpecSpec{}
 	_ redactable.Spec = &LinkSpecSpec{}
 	_ redactable.Spec = &OperatorSpecSpec{}
@@ -48,6 +49,17 @@ func (spec *BGPInstanceConfigSpec) HasSecrets(resource.Metadata) bool {
 // RedactSecrets implements redactable.Spec interface.
 func (spec *BGPInstanceConfigSpec) RedactSecrets(resource.Metadata) {
 	redactBGPInstanceConfigSpec(spec)
+}
+
+// HasSecrets implements redactable.Spec interface.
+func (*EthernetSpecSpec) HasSecrets(resource.Metadata) bool {
+	// no sensitive fields
+	return false
+}
+
+// RedactSecrets implements redactable.Spec interface.
+func (*EthernetSpecSpec) RedactSecrets(resource.Metadata) {
+	// no sensitive fields
 }
 
 // HasSecrets implements redactable.Spec interface.

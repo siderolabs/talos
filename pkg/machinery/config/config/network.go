@@ -84,6 +84,7 @@ type EthernetConfig interface {
 	Features() map[string]bool
 	WakeOnLAN() []nethelpers.WOLMode
 	FlowControl() EthernetFlowControlConfig
+	LinkSelector() cel.Expression
 }
 
 // EthernetRingsConfig defines a configuration for Ethernet link rings.

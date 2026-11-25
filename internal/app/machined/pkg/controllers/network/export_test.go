@@ -7,6 +7,7 @@ package network
 // Test exports for unexported network helpers (consumed by the external network_test package).
 var (
 	BuildMultipathForTest     = buildMultipath
+	MergeEthernetSpecsForTest = mergeEthernetSpecs
 	MultipathEqualForTest     = multipathEqual
 	ResolveBondPrimaryForTest = resolveBondPrimary
 	SubnetBroadcastsForTest   = subnetBroadcasts

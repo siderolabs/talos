@@ -16,7 +16,7 @@ title: EthernetConfig
 {{< highlight yaml >}}
 apiVersion: v1alpha1
 kind: EthernetConfig
-name: enp0s2 # Name of the link (interface).
+name: enp0s2 # Name or alias of the link to configure.
 # Configuration for Ethernet features.
 features:
     tx-tcp-segmentation: false
@@ -37,10 +37,28 @@ flowControl:
 #     - magic
 {{< /highlight >}}
 
+{{< highlight yaml >}}
+apiVersion: v1alpha1
+kind: EthernetConfig
+name: virtio-features # Name or alias of the link to configure.
+# Selector to match the links to configure.
+selector:
+    match: link.driver == "virtio_net" # The Common Expression Language (CEL) expression to match the link.
+# Configuration for Ethernet features.
+features:
+    tx-nocache-copy: true
+
+# # Wake-on-LAN modes to enable.
+# wakeOnLan:
+#     - unicast
+#     - magic
+{{< /highlight >}}
+
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`name` |string |Name of the link (interface).  | |
+|`name` |string |Name or alias of the link to configure.<br><br>If `selector` is set, a descriptive name of the config instead.  | |
+|`selector` |<a href="#EthernetConfig.selector">LinkSelector</a> |Selector to match the links to configure.<br>If omitted, the link is matched by `name`.<br><br>Only physical links are matched.<br>If several configs match the same link, their settings are merged in this order, later ones overriding earlier ones:<br>configs matching by a selector, then by link alias, then by exact link name.  | |
 |`features` |map[string]bool |Configuration for Ethernet features.<br><br>Set of features available and whether they can be enabled or disabled is driver specific.<br>Use `talosctl get ethernetstatus <link> -o yaml` to get the list of available features and<br>their current status.  | |
 |`rings` |<a href="#EthernetConfig.rings">EthernetRingsConfig</a> |Configuration for Ethernet link rings.<br><br>This is similar to `ethtool -G` command.  | |
 |`channels` |<a href="#EthernetConfig.channels">EthernetChannelsConfig</a> |Configuration for Ethernet link channels.<br><br>This is similar to `ethtool -L` command.  | |
@@ -50,6 +68,28 @@ wakeOnLan:
     - magic
 {{< /highlight >}}</details> |`phy`<br />`unicast`<br />`multicast`<br />`broadcast`<br />`arp`<br />`magic`<br />`magicsecure`<br />`filter`<br /> |
 |`flowControl` |<a href="#EthernetConfig.flowControl">EthernetFlowControlConfig</a> |Configuration for Ethernet link flow control (802.3x pause frames).<br><br>If this field is omitted, flow control configuration is not changed.<br><br>This is similar to `ethtool -A <link>` command.  | |
+
+
+
+
+## selector {#EthernetConfig.selector}
+
+LinkSelector selects links using a CEL expression.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`match` |Expression |The Common Expression Language (CEL) expression to match the link. <details><summary>Show example(s)</summary>match links with a specific MAC address:{{< highlight yaml >}}
+match: mac(link.permanent_addr) == "00:1a:2b:3c:4d:5e"
+{{< /highlight >}}match links by MAC address prefix:{{< highlight yaml >}}
+match: glob("00:1a:2b:*", mac(link.permanent_addr))
+{{< /highlight >}}match links by driver name:{{< highlight yaml >}}
+match: link.driver == "e1000"
+{{< /highlight >}}</details> | |
+
+
 
 
 

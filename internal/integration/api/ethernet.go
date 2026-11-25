@@ -23,6 +23,8 @@ import (
 	"go.yaml.in/yaml/v4"
 
 	"github.com/siderolabs/talos/internal/integration/base"
+	"github.com/siderolabs/talos/pkg/machinery/cel"
+	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	networkconfig "github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -57,6 +59,7 @@ func (suite *EthernetSuite) TearDownTest() {
 	}
 }
 
+//nolint:unparam
 func getFeatureStatus(t *testing.T, features network.EthernetFeatureStatusList, name string) bool {
 	t.Helper()
 
@@ -119,6 +122,9 @@ func (suite *EthernetSuite) TestEthernetConfig() {
 	suite.Require().NotEmpty(linkName, "no link provides RX rings")
 	suite.Require().NotEmpty(prevFeatures, "no link provides features")
 
+	// software only feature, so it can be toggled regardless of the driver
+	const featureName = "tx-nocache-copy"
+
 	suite.Run("Rings", func() {
 		if os.Getenv("CI") != "" {
 			suite.T().Skip("skipping ethtool test in CI, as QEMU version doesn't support updating RX rings for virtio")
@@ -161,8 +167,6 @@ func (suite *EthernetSuite) TestEthernetConfig() {
 	})
 
 	suite.Run("Features", func() {
-		const featureName = "tx-tcp-segmentation"
-
 		// get the initial state
 		initialState := getFeatureStatus(suite.T(), prevFeatures, featureName)
 
@@ -197,6 +201,49 @@ func (suite *EthernetSuite) TestEthernetConfig() {
 
 		// remove the config document
 		suite.RemoveMachineConfigDocuments(nodeCtx, cfgDocument.MetaKind)
+	})
+
+	suite.Run("Selector", func() {
+		initialState := getFeatureStatus(suite.T(), prevFeatures, featureName)
+
+		link, err := safe.StateGetByID[*network.LinkStatus](nodeCtx, suite.Client.State(), linkName)
+		suite.Require().NoError(err)
+
+		suite.T().Logf("testing feature %s on link %s via selector: %v -> %v", featureName, linkName, initialState, !initialState)
+
+		// the config matched by a selector should be applied to the link
+		selectorCfg := networkconfig.NewEthernetConfigV1Alpha1("test-selector")
+		selectorCfg.Selector.Match = cel.MustExpression(cel.ParseBooleanExpression(
+			"mac(link.permanent_addr) == '"+link.TypedSpec().PermanentAddr.String()+"'", celenv.LinkLocator(),
+		))
+		selectorCfg.FeaturesConfig = map[string]bool{
+			featureName: !initialState,
+		}
+		suite.PatchMachineConfig(nodeCtx, selectorCfg)
+
+		rtestutils.AssertResource(
+			nodeCtx, suite.T(), suite.Client.State(), linkName,
+			func(ethStatus *network.EthernetStatus, asrt *assert.Assertions) {
+				asrt.Equal(!initialState, getFeatureStatus(suite.T(), ethStatus.TypedSpec().Features, featureName))
+			},
+		)
+
+		// the config matched by link name should override the selector based one, reverting the feature
+		nameCfg := networkconfig.NewEthernetConfigV1Alpha1(linkName)
+		nameCfg.FeaturesConfig = map[string]bool{
+			featureName: initialState,
+		}
+		suite.PatchMachineConfig(nodeCtx, nameCfg)
+
+		rtestutils.AssertResource(
+			nodeCtx, suite.T(), suite.Client.State(), linkName,
+			func(ethStatus *network.EthernetStatus, asrt *assert.Assertions) {
+				asrt.Equal(initialState, getFeatureStatus(suite.T(), ethStatus.TypedSpec().Features, featureName))
+			},
+		)
+
+		// remove the config documents
+		suite.RemoveMachineConfigDocuments(nodeCtx, selectorCfg.MetaKind)
 	})
 
 	suite.Run("Channels", func() {

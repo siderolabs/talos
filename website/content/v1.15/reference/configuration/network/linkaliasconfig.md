@@ -49,7 +49,7 @@ name: net%d
 
 ## selector {#LinkAliasConfig.selector}
 
-LinkSelector selects a link to alias.
+LinkSelector selects links using a CEL expression.
 
 
 

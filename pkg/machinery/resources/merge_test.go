@@ -30,6 +30,15 @@ func TestMergeCoversAllFields(t *testing.T) {
 		)
 	})
 
+	t.Run("EthernetSpecSpec", func(t *testing.T) {
+		t.Parallel()
+
+		testMergeCoversAllFields(t, func(dst, src *network.EthernetSpecSpec) { dst.Merge(src) },
+			"LinkName",     // merge key
+			"FromSelector", // describes the source spec, only used to order the merge
+		)
+	})
+
 	t.Run("LinkSpecSpec", func(t *testing.T) {
 		t.Parallel()
 

@@ -134,6 +134,29 @@ func TestEthernetValidate(t *testing.T) {
 
 			expectedError: "flowControl must set at least one of rx, tx or autoneg",
 		},
+		{
+			name: "invalid link selector",
+			cfg: func() *network.EthernetConfigV1Alpha1 {
+				cfg := network.NewEthernetConfigV1Alpha1("e1000-rings")
+				require.NoError(t, cfg.Selector.Match.UnmarshalText([]byte(`disk.size > 120`)))
+
+				return cfg
+			},
+
+			expectedError: "link selector is invalid: ERROR: <input>:1:1: undeclared reference to 'disk'\n | disk.size > 120\n | ^",
+		},
+		{
+			name: "valid with link selector",
+			cfg: func() *network.EthernetConfigV1Alpha1 {
+				cfg := network.NewEthernetConfigV1Alpha1("e1000-rings")
+				require.NoError(t, cfg.Selector.Match.UnmarshalText([]byte(`link.driver == "e1000"`)))
+				cfg.RingsConfig = &network.EthernetRingsConfig{
+					RX: new(uint32(4096)),
+				}
+
+				return cfg
+			},
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
