@@ -39,6 +39,7 @@ func NewFromPath(path string) *FS {
 // NewBeneath creates a new FS rooted at the directory name beneath dirfd.
 //
 // Resolving name fails with EXDEV if it leaves dirfd, through ".." or a symlink.
+// An inner ".." may fail with EAGAIN instead, whenever a rename or mount races the lookup.
 func NewBeneath(dirfd int, name string) *FS {
 	return &FS{
 		dirfd:   dirfd,
