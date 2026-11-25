@@ -2,7 +2,21 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package sdboot
+// Package espmirror keeps the ESP copies on the members of an MD RAID1 boot disk identical.
+//
+// When the boot disk is an MD array (RAID1 with the metadata at the end, so that the firmware sees a plain
+// ESP on every member), anything written to the ESP before Linux assembles the array lands on a single
+// member, behind the back of MD: the copies diverge, and the array can't tell. Reads through the array
+// are balanced across the members, so a FAT whose copies differ might be read as a mix of both.
+//
+// Talos itself only writes to the ESP through the array. The writes before Linux come from systemd-boot
+// (the random seed) and systemd-stub (the boot secret mixin): both treat a file which carries the FAT
+// read-only attribute as one they must not update, and both create the file when it is missing, so the
+// installer provides both files, marked read-only.
+//
+// Installs which predate that already have diverged copies, so the upgrade repairs the ESP range of the
+// array before mounting it.
+package espmirror
 
 import (
 	"context"
@@ -22,19 +36,6 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/md"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
-
-// When the boot disk is an MD array (RAID1 with the metadata at the end, so that the firmware sees a plain
-// ESP on every member), anything written to the ESP before Linux assembles the array lands on a single
-// member, behind the back of MD: the copies diverge, and the array can't tell. Reads through the array
-// are balanced across the members, so a FAT whose copies differ might be read as a mix of both.
-//
-// Talos itself only writes to the ESP through the array. The writes before Linux come from systemd-boot
-// (the random seed) and systemd-stub (the boot secret mixin): both treat a file which carries the FAT
-// read-only attribute as one they must not update, and both create the file when it is missing, so the
-// installer provides both files, marked read-only.
-//
-// Installs which predate that already have diverged copies, so the upgrade repairs the ESP range of the
-// array before mounting it.
 
 const (
 	// pinnedFileSize is the size of the files placed on the ESP, which matches what systemd-boot and
@@ -78,8 +79,8 @@ var pinnedFiles = []pinnedFile{
 	},
 }
 
-// isMDBootDisk returns true if the boot disk is an MD array.
-func isMDBootDisk(opts options.InstallOptions) (bool, error) {
+// IsMDBootDisk returns true if the boot disk is an MD array.
+func IsMDBootDisk(opts options.InstallOptions) (bool, error) {
 	if opts.ImageMode {
 		return false, nil
 	}
@@ -97,12 +98,12 @@ func isMDBootDisk(opts options.InstallOptions) (bool, error) {
 	return isArray, nil
 }
 
-// pinESPFiles places the files systemd-boot and systemd-stub would otherwise create or update on the ESP,
+// PinFiles places the files systemd-boot and systemd-stub would otherwise create or update on the ESP,
 // marked read-only.
 //
 // Existing files are kept if they are long enough to be used: their contents don't matter for the random
 // seed, and keep the boot secret stable for the mixin.
-func pinESPFiles(espDir string, printf func(format string, v ...any)) error {
+func PinFiles(espDir string, printf func(format string, v ...any)) error {
 	for _, file := range pinnedFiles {
 		path := filepath.Join(espDir, file.path)
 
@@ -170,12 +171,12 @@ func setFATReadOnly(path string) error {
 	return nil
 }
 
-// repairESPMirror makes the copies of the ESP identical on all members of the MD array, by running an MD
+// Repair makes the copies of the ESP identical on all members of the MD array, by running an MD
 // repair over the ESP range of the array.
 //
 // The copies only diverge in the files written before Linux (random seed, boot secret mixin), so it doesn't
 // matter which member the repair picks the data from, as long as all of them end up with the same one.
-func repairESPMirror(opts options.InstallOptions, info *blkid.Info) error {
+func Repair(opts options.InstallOptions, info *blkid.Info) error {
 	mdManager, err := md.New()
 	if err != nil {
 		return err

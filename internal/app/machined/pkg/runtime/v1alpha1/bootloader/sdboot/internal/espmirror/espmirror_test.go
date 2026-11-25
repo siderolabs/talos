@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package sdboot_test
+package espmirror_test
 
 import (
 	"bytes"
@@ -18,7 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sys/unix"
 
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/sdboot"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/sdboot/internal/espmirror"
 )
 
 const fatIoctlGetAttributes = 0x80047210
@@ -116,7 +116,7 @@ func TestPinESPFiles(t *testing.T) {
 	require.NoError(t, os.WriteFile(mixinPath, mixin, 0o644))
 	require.NoError(t, os.WriteFile(seedPath, []byte("short"), 0o644))
 
-	require.NoError(t, sdboot.PinESPFiles(dir, t.Logf))
+	require.NoError(t, espmirror.PinFiles(dir, t.Logf))
 
 	// make sure the attribute made it to the disk
 	remount()
@@ -134,7 +134,7 @@ func TestPinESPFiles(t *testing.T) {
 	}
 
 	// running again on read-only files is a no-op
-	require.NoError(t, sdboot.PinESPFiles(dir, t.Logf))
+	require.NoError(t, espmirror.PinFiles(dir, t.Logf))
 
 	actualMixin, err = os.ReadFile(mixinPath)
 	require.NoError(t, err)
@@ -144,7 +144,7 @@ func TestPinESPFiles(t *testing.T) {
 	require.NoError(t, os.Remove(seedPath))
 	require.NoError(t, os.Remove(mixinPath))
 
-	require.NoError(t, sdboot.PinESPFiles(dir, t.Logf))
+	require.NoError(t, espmirror.PinFiles(dir, t.Logf))
 
 	remount()
 

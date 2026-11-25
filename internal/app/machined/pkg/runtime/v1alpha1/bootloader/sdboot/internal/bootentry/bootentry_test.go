@@ -2,17 +2,17 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package sdboot_test
+package bootentry_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/sdboot"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/sdboot/internal/bootentry"
 )
 
-func TestGenerateNextUKIFileName(t *testing.T) {
+func TestNextUKIName(t *testing.T) {
 	t.Parallel()
 
 	for _, testData := range []struct {
@@ -97,7 +97,7 @@ func TestGenerateNextUKIFileName(t *testing.T) {
 		t.Run(testData.name, func(t *testing.T) {
 			t.Parallel()
 
-			ukiPath, err := sdboot.GenerateNextUKIName(testData.version, testData.existingFiles)
+			ukiPath, err := bootentry.NextUKIName(testData.version, testData.existingFiles)
 			require.NoError(t, err)
 
 			require.Equal(t, testData.expectedFileName, ukiPath)
@@ -105,7 +105,7 @@ func TestGenerateNextUKIFileName(t *testing.T) {
 	}
 }
 
-func TestFindMatchingUKIFile(t *testing.T) {
+func TestMatch(t *testing.T) {
 	t.Parallel()
 
 	existingFiles := []string{
@@ -159,14 +159,14 @@ func TestFindMatchingUKIFile(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		foundFile, found := sdboot.FindMatchingUKIFile(test.existingFiles, test.entry)
+		foundFile, found := bootentry.Match(test.existingFiles, test.entry)
 
 		require.Equal(t, test.expectingFound, found)
 		require.Equal(t, test.expectedFile, foundFile)
 	}
 }
 
-func TestFindBootedUKIFile(t *testing.T) {
+func TestBooted(t *testing.T) {
 	t.Parallel()
 
 	existingFiles := []string{
@@ -234,7 +234,7 @@ func TestFindBootedUKIFile(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			entry, found := sdboot.FindBootedUKIFile(
+			entry, found := bootentry.Booted(
 				existingFiles,
 				test.defaultEntry,
 				test.selectedEntry,
@@ -248,7 +248,7 @@ func TestFindBootedUKIFile(t *testing.T) {
 	}
 }
 
-func TestFindNextBootUKIFile(t *testing.T) {
+func TestNextBoot(t *testing.T) {
 	t.Parallel()
 
 	existingFiles := []string{
@@ -296,7 +296,7 @@ func TestFindNextBootUKIFile(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			entry, found := sdboot.FindNextBootUKIFile(existingFiles, test.defaultEntry, test.selectedEntry)
+			entry, found := bootentry.NextBoot(existingFiles, test.defaultEntry, test.selectedEntry)
 
 			require.Equal(t, test.expectedFound, found)
 			require.Equal(t, test.expectedEntry, entry)

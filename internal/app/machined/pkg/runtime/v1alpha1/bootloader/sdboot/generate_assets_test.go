@@ -26,7 +26,8 @@ func TestGenerateAssets(t *testing.T) {
 		pkContents     = "fake-pk-auth"
 		kekContents    = "fake-kek-auth"
 		dbContents     = "fake-db-auth"
-		ukiFileName    = "Talos-1.13.0.efi"
+		version        = "1.13.0"
+		ukiFileName    = "Talos-" + version + ".efi"
 	)
 
 	for _, tc := range []struct {
@@ -73,6 +74,8 @@ func TestGenerateAssets(t *testing.T) {
 			require.NoError(t, os.WriteFile(dbPath, []byte(dbContents), 0o644))
 
 			opts := options.InstallOptions{
+				ImageMode:   true,
+				Version:     version,
 				Arch:        constants.ArchAmd64,
 				MountPrefix: mountPrefix,
 				BootAssets: options.BootAssets{
@@ -86,9 +89,18 @@ func TestGenerateAssets(t *testing.T) {
 				Printf:               func(string, ...any) {},
 			}
 
-			require.NoError(t, sdboot.CopyAssets(&sdboot.Config{}, opts, ukiFileName))
+			partitions, err := sdboot.New().PrepareBootPartitions(opts)
+			require.NoError(t, err)
 
-			loaderDir := filepath.Join(mountPrefix, constants.EFIMountPoint, "loader")
+			// in image mode, the ESP is formatted with the assets laid out in the EFI directory
+			espDir := filepath.Join(mountPrefix, "EFI")
+
+			require.Len(t, partitions, 1)
+			require.Equal(t, constants.EFIPartitionLabel, partitions[0].Label)
+			require.Equal(t, espDir, partitions[0].SourceDirectory)
+			require.True(t, partitions[0].Reproducible)
+
+			loaderDir := filepath.Join(espDir, "loader")
 
 			confBytes, err := os.ReadFile(filepath.Join(loaderDir, "loader.conf"))
 			require.NoError(t, err)
@@ -112,12 +124,12 @@ func TestGenerateAssets(t *testing.T) {
 			}
 
 			// UKI is copied to EFI/Linux/<ukiFileName>
-			gotUKI, err := os.ReadFile(filepath.Join(mountPrefix, constants.EFIMountPoint, "EFI", "Linux", ukiFileName))
+			gotUKI, err := os.ReadFile(filepath.Join(espDir, "EFI", "Linux", ukiFileName))
 			require.NoError(t, err)
 			require.Equal(t, ukiContents, string(gotUKI))
 
 			// sd-boot is copied to EFI/boot/BOOTX64.efi (amd64)
-			gotSDBoot, err := os.ReadFile(filepath.Join(mountPrefix, constants.EFIMountPoint, "EFI", "boot", "BOOTX64.efi"))
+			gotSDBoot, err := os.ReadFile(filepath.Join(espDir, "EFI", "boot", "BOOTX64.efi"))
 			require.NoError(t, err)
 			require.Equal(t, sdBootContents, string(gotSDBoot))
 		})
