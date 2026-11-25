@@ -93,7 +93,7 @@ func (c *Containerd) Runner(r runtime.Runtime) (runner.Runner, error) {
 			"--address",
 			constants.SystemContainerdAddress,
 			"--state",
-			filepath.Join(constants.SystemRunPath, "containerd"),
+			constants.SystemContainerdRunPath,
 			"--root",
 			filepath.Join(constants.SystemVarPath, "lib", "containerd"),
 		},

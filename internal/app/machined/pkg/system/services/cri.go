@@ -192,6 +192,10 @@ func (c *CRI) Runner(r runtime.Runtime) (runner.Runner, error) {
 	// isolation is disabled/absent (or in container mode) CRI runs on the host.
 	if sandboxd.IsolationEnabled(r) {
 		opts = append(opts, runner.WithSandbox(r.Sandbox))
+
+		if securityProfile := r.Config().SecurityProfileConfig(); securityProfile != nil && securityProfile.SystemContainerdIsolation() {
+			opts = append(opts, runner.WithSandboxDetachedMounts(constants.SystemContainerdRunPath, constants.SystemVarPath))
+		}
 	}
 
 	var debug bool

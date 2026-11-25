@@ -75,3 +75,26 @@ func TestSecurityProfileConfigSELinuxCategories(t *testing.T) {
 	cfg.SELinuxCategoriesEnabled = new(false)
 	assert.False(t, cfg.SELinuxCategories())
 }
+
+func TestSecurityProfileConfigSystemContainerdIsolation(t *testing.T) {
+	t.Parallel()
+
+	// absent field -> the sandbox namespace keeps the system containerd socket
+	assert.False(t, runtime.NewSecurityProfileConfigV1Alpha1().SystemContainerdIsolation())
+
+	cfg := runtime.NewSecurityProfileConfigV1Alpha1()
+	cfg.SystemContainerdIsolationEnabled = new(true)
+	assert.True(t, cfg.SystemContainerdIsolation())
+
+	_, err := cfg.Validate(validationMode{})
+	assert.EqualError(t, err, "systemContainerdIsolation requires workloadIsolation")
+
+	cfg.WorkloadIsolationEnabled = new(true)
+
+	warnings, err := cfg.Validate(validationMode{})
+	assert.NoError(t, err)
+	assert.Empty(t, warnings)
+
+	cfg.SystemContainerdIsolationEnabled = new(false)
+	assert.False(t, cfg.SystemContainerdIsolation())
+}

@@ -24,6 +24,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
+	"github.com/siderolabs/talos/pkg/xfs/fsopen"
 )
 
 // LogMode prints the current mode.
@@ -36,6 +37,8 @@ func LogMode(ctx context.Context, log *zap.Logger, rt runtime.Runtime, next Next
 
 // SetupSystemDirectories creates system default directories.
 func SetupSystemDirectories(ctx context.Context, log *zap.Logger, rt runtime.Runtime, next NextTaskFunc) error {
+	const systemContainerdRunLabel = "system_u:object_r:sys_containerd_run_t:s0"
+
 	for _, dir := range []struct {
 		path  string
 		perm  os.FileMode
@@ -45,7 +48,7 @@ func SetupSystemDirectories(ctx context.Context, log *zap.Logger, rt runtime.Run
 		{constants.SystemVarPath, 0o700, constants.SystemVarSelinuxLabel},
 		{constants.StateMountPoint, 0o700, ""},
 		{constants.SystemRunPath, 0o751, "system_u:object_r:system_run_t:s0"},
-		{"/system/run/containerd", 0o711, "system_u:object_r:sys_containerd_run_t:s0"},
+		{constants.SystemContainerdRunPath, 0o711, systemContainerdRunLabel},
 		{"/run/containerd", 0o711, "system_u:object_r:pod_containerd_run_t:s0"},
 	} {
 		if err := os.MkdirAll(dir.path, dir.perm); err != nil {
@@ -55,6 +58,36 @@ func SetupSystemDirectories(ctx context.Context, log *zap.Logger, rt runtime.Run
 		if dir.label != "" {
 			if err := selinux.SetLabel(dir.path, dir.label); err != nil {
 				return fmt.Errorf("setupSystemDirectories: %w", err)
+			}
+		}
+	}
+
+	// The system containerd state and root (/system/var) are tmpfs of their own, so that the sandbox namespace
+	// can detach them and keep only the empty directories under them. They are mounted like /system, so that
+	// their files are labeled as before. They are private: the container mounts made under them do not reach
+	// the sandbox namespace.
+	if !rt.State().Platform().Mode().InContainer() {
+		for _, dir := range []struct {
+			path  string
+			mode  string
+			label string
+		}{
+			{constants.SystemContainerdRunPath, "0711", systemContainerdRunLabel},
+			{constants.SystemVarPath, "0700", constants.SystemVarSelinuxLabel},
+		} {
+			if _, err := mount.NewManager(
+				mount.WithTarget(dir.path),
+				mount.WithSecure(),
+				mount.WithNoExec(),
+				mount.WithSelinuxLabel(dir.label),
+				mount.WithFsopen("tmpfs", fsopen.WithStringParameter("mode", dir.mode)),
+				mount.WithPrinter(log.Sugar().Infof),
+			).Mount(); err != nil {
+				return fmt.Errorf("setupSystemDirectories: %w", err)
+			}
+
+			if err := unix.MountSetattr(unix.AT_FDCWD, dir.path, 0, &unix.MountAttr{Propagation: unix.MS_PRIVATE}); err != nil {
+				return fmt.Errorf("setupSystemDirectories: make %s private: %w", dir.path, err)
 			}
 		}
 	}
