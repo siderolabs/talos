@@ -389,6 +389,11 @@ func (c *Config) Install(opts options.InstallOptions) (*options.InstallResult, e
 		return nil, err
 	}
 
+	mdBootDisk, err := isMDBootDisk(opts)
+	if err != nil {
+		return nil, err
+	}
+
 	var installResult *options.InstallResult
 
 	err = mount.PartitionOp(
@@ -403,6 +408,12 @@ func (c *Config) Install(opts options.InstallOptions) (*options.InstallResult, e
 		func() error {
 			if err := c.copyAssets(opts, ukiFileName); err != nil {
 				return err
+			}
+
+			if mdBootDisk {
+				if err := pinESPFiles(filepath.Join(opts.MountPrefix, constants.EFIMountPoint), opts.Printf); err != nil {
+					return err
+				}
 			}
 
 			var err error
@@ -433,7 +444,31 @@ func (c *Config) Install(opts options.InstallOptions) (*options.InstallResult, e
 func (c *Config) Upgrade(opts options.InstallOptions) (*options.InstallResult, error) {
 	var installResult *options.InstallResult
 
-	err := mount.PartitionOp(
+	mdBootDisk, err := isMDBootDisk(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	blkidInfo := opts.BlkidInfo
+
+	if mdBootDisk {
+		if blkidInfo == nil {
+			if blkidInfo, err = blkid.ProbePath(opts.BootDisk, blkid.WithSkipLocking(true)); err != nil {
+				return nil, fmt.Errorf("failed to probe %s: %w", opts.BootDisk, err)
+			}
+		}
+
+		// make the ESP copies identical before writing to the ESP through the array.
+		//
+		// A failure is not fatal: the upgrade does what it did before the repair existed. E.g. the
+		// running SELinux policy (from the version being upgraded from) might not allow the installer
+		// to write to sysfs yet.
+		if err = repairESPMirror(opts, blkidInfo); err != nil {
+			opts.Printf("sd-boot: WARNING: failed to repair ESP copies on %s, continuing: %s", opts.BootDisk, err)
+		}
+	}
+
+	err = mount.PartitionOp(
 		opts.BootDisk,
 		[]mount.Spec{
 			{
@@ -489,6 +524,12 @@ func (c *Config) Upgrade(opts options.InstallOptions) (*options.InstallResult, e
 				return err
 			}
 
+			if mdBootDisk {
+				if err := pinESPFiles(filepath.Join(opts.MountPrefix, constants.EFIMountPoint), opts.Printf); err != nil {
+					return err
+				}
+			}
+
 			installResult, err = c.setup(opts, ukiPath)
 			if err != nil {
 				return err
@@ -502,7 +543,7 @@ func (c *Config) Upgrade(opts options.InstallOptions) (*options.InstallResult, e
 		},
 		nil,
 		nil,
-		opts.BlkidInfo,
+		blkidInfo,
 	)
 
 	return installResult, err

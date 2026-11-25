@@ -11,4 +11,5 @@ var (
 	FindMatchingUKIFile = findMatchingUKIFile
 	GenerateNextUKIName = generateNextUKIName
 	CopyAssets          = (*Config).copyAssets
+	PinESPFiles         = pinESPFiles
 )

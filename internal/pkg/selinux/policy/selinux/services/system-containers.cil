@@ -51,6 +51,9 @@
 ; efibootmgr used for installing in UEFI mode
 (allow installer_t efivarfs_t (fs_classes (rw)))
 
+; repair of the ESP range of an MD boot array on upgrade (/sys/block/mdN/md/sync_*)
+(allow installer_t sysfs_t (fs_classes (rw)))
+
 ; Talk to machined
 (allow installer_t machine_socket_t (sock_file (write)))
 (allow installer_t init_t (unix_stream_socket (connectto)))
