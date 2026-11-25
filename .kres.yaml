@@ -443,15 +443,9 @@ spec:
         - name: set variables
           nonMakeStep: true
           command: cat _out/talos-metadata >> "$GITHUB_ENV"
-        - name: build extensions
-          command: libvirtd extensions-metadata
-          arguments:
-            - -C
-            - _out/extensions
-          environment:
-            PLATFORM: linux/amd64
-            PUSH: true
-            REGISTRY: registry.dev.siderolabs.io
+        - name: extensions metadata
+          nonMakeStep: true
+          command: hack/test/extensions-metadata.sh
         - name: installer extensions
           command: installer-with-extensions
           environment:
@@ -1593,15 +1587,9 @@ spec:
         - name: set variables
           nonMakeStep: true
           command: cat _out/talos-metadata >> "$GITHUB_ENV"
-        - name: build extensions
-          command: libvirtd extensions-metadata
-          arguments:
-            - -C
-            - _out/extensions
-          environment:
-            PLATFORM: linux/amd64
-            PUSH: true
-            REGISTRY: registry.dev.siderolabs.io
+        - name: extensions metadata
+          nonMakeStep: true
+          command: hack/test/extensions-metadata.sh
         - name: installer extensions
           command: installer-with-extensions
           environment:
@@ -2628,15 +2616,9 @@ spec:
         - name: set variables
           nonMakeStep: true
           command: cat _out/talos-metadata >> "$GITHUB_ENV"
-        - name: build extensions
-          command: libvirtd extensions-metadata
-          arguments:
-            - -C
-            - _out/extensions
-          environment:
-            PLATFORM: linux/arm64
-            PUSH: true
-            REGISTRY: registry.dev.siderolabs.io
+        - name: extensions metadata
+          nonMakeStep: true
+          command: hack/test/extensions-metadata.sh
         - name: e2e-aws-prepare
           environment:
             EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
