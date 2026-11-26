@@ -56,7 +56,9 @@ var ErrClosed = errors.New("proxy is closed")
 type Proxy struct {
 	tlsConfig *tls.Config
 
-	stop chan struct{}
+	// stop is canceled by Close, also interrupting a health check in progress.
+	stop       context.Context //nolint:containedctx
+	cancelStop context.CancelFunc
 
 	idle   map[string][]*idleConn
 	addr   string
@@ -78,11 +80,14 @@ type idleConn struct {
 // If tlsConfig is not nil, the queries are sent over DNS-over-TLS, otherwise over plain DNS
 // using the protocol the query was received over (UDP or TCP).
 func New(addr string, tlsConfig *tls.Config) *Proxy {
+	stop, cancelStop := context.WithCancel(context.Background())
+
 	return &Proxy{
-		addr:      addr,
-		tlsConfig: tlsConfig,
-		idle:      map[string][]*idleConn{},
-		stop:      make(chan struct{}),
+		addr:       addr,
+		tlsConfig:  tlsConfig,
+		idle:       map[string][]*idleConn{},
+		stop:       stop,
+		cancelStop: cancelStop,
 	}
 }
 
@@ -121,7 +126,7 @@ func (p *Proxy) Close() {
 	}
 
 	p.closed = true
-	close(p.stop)
+	p.cancelStop()
 
 	idle := p.idle
 	p.idle = nil
@@ -370,7 +375,7 @@ func (p *Proxy) cleanupLoop() {
 
 	for {
 		select {
-		case <-p.stop:
+		case <-p.stop.Done():
 			return
 		case <-ticker.C:
 			p.cleanup()
@@ -444,7 +449,18 @@ func (p *Proxy) healthcheck() error {
 	ping := new(dns.Msg)
 	ping.SetQuestion(".", dns.TypeNS)
 
-	resp, _, err := client.Exchange(ping, p.addr)
+	conn, err := client.DialContext(p.stop, p.addr)
+	if err != nil {
+		return err
+	}
+
+	defer conn.Close() //nolint:errcheck
+
+	// the read deadline ignores cancellation, so close the connection to end a check stuck on a dead upstream
+	stopClose := context.AfterFunc(p.stop, func() { conn.Close() }) //nolint:errcheck
+	defer stopClose()
+
+	resp, _, err := client.ExchangeWithConnContext(p.stop, ping, conn)
 	if err != nil && resp != nil && (resp.Response || resp.Opcode == dns.OpcodeQuery) {
 		// any response from the upstream means it's alive
 		err = nil

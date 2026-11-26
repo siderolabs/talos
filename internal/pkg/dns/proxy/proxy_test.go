@@ -24,7 +24,6 @@ import (
 	"go.uber.org/goleak"
 
 	"github.com/siderolabs/talos/internal/pkg/dns/proxy"
-	"github.com/siderolabs/talos/internal/pkg/testport"
 )
 
 // testServer is a DNS server answering with A records, counting the queries and connections.
@@ -347,16 +346,38 @@ func TestHealthcheck(t *testing.T) {
 	assert.Zero(t, healthy.Fails())
 
 	// nothing answers on the port: the health check times out and fails
-	dead := proxy.New(testport.UnansweredUDPAddress(t), nil)
+	silent, err := (&net.ListenConfig{}).ListenPacket(t.Context(), "udp4", "127.0.0.1:0")
+	require.NoError(t, err)
+
+	t.Cleanup(func() { silent.Close() }) //nolint:errcheck
+
+	var queries atomic.Int32
+
+	go func() {
+		buf := make([]byte, dns.MinMsgSize)
+
+		for {
+			if _, _, err := silent.ReadFrom(buf); err != nil {
+				return
+			}
+
+			queries.Add(1)
+		}
+	}()
+
+	dead := proxy.New(silent.LocalAddr().String(), nil)
 	dead.Start(10 * time.Millisecond)
 
 	dead.Healthcheck()
 
+	// the third query waits for the read timeout
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		assert.GreaterOrEqual(collect, dead.Fails(), uint32(2))
+		assert.GreaterOrEqual(collect, queries.Load(), int32(3))
 	}, 10*time.Second, 10*time.Millisecond)
 
-	// the health check is retried until it succeeds, stopped by Close
+	assert.GreaterOrEqual(t, dead.Fails(), uint32(2))
+
+	// the health check is retried until it succeeds, stopped by Close even in the middle of a query
 	dead.Close()
 }
 

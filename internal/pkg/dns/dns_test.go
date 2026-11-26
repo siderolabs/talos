@@ -34,8 +34,8 @@ import (
 
 func TestDNS(t *testing.T) {
 	t.Cleanup(func() {
-		// Failed upstreams kick off health checks: stopping the proxy doesn't abort
-		// the health check in flight, so wait for it to terminate on its own.
+		// Failed upstreams kick off health checks: the probe loop notices the stopped
+		// proxy only after its sleep between checks, so wait for it to terminate.
 		for range 50 {
 			if goleak.Find() == nil {
 				break

@@ -46,19 +46,6 @@ func ClosedAddress(t *testing.T) string {
 	return net.JoinHostPort("127.0.0.1", strconv.FormatUint(uint64(Closed(t)), 10))
 }
 
-// UnansweredUDPAddress returns a loopback UDP address, as host:port, which nothing answers on until
-// the test ends.
-func UnansweredUDPAddress(t *testing.T) string {
-	t.Helper()
-
-	conn, err := (&net.ListenConfig{}).ListenPacket(t.Context(), "udp4", "127.0.0.1:0")
-	require.NoError(t, err)
-
-	t.Cleanup(func() { conn.Close() }) //nolint:errcheck
-
-	return conn.LocalAddr().String()
-}
-
 // Listenable returns a port which the code under test can listen on for TCP, on any address, and
 // which stays reserved until the test ends.
 //
