@@ -8,6 +8,7 @@ import (
 	"maps"
 	"net/netip"
 
+	gobgpapi "github.com/osrg/gobgp/v4/api"
 	"github.com/osrg/gobgp/v4/pkg/apiutil"
 	bgppacket "github.com/osrg/gobgp/v4/pkg/packet/bgp"
 	gobgpsrv "github.com/osrg/gobgp/v4/pkg/server"
@@ -29,7 +30,7 @@ func InstanceMapsInitializedForTest(instance *Instance) bool {
 }
 
 // InstancePeerKeysForTest returns the reconciled peer-key snapshot.
-func InstancePeerKeysForTest(instance *Instance) map[string]string {
+func InstancePeerKeysForTest(instance *Instance) map[string]*gobgpapi.Peer {
 	return maps.Clone(instance.peers)
 }
 
@@ -54,7 +55,7 @@ func InstanceImportedForTest(instance *Instance, prefix netip.Prefix) bool {
 
 // ImportFamiliesForTest exposes import selector family selection.
 func ImportFamiliesForTest(selectors []netip.Prefix) []bgppacket.Family {
-	return importFamilies(selectors)
+	return ImportFamilies(selectors)
 }
 
 // ListImportCandidatesForTest exposes candidate selection for lifecycle tests.

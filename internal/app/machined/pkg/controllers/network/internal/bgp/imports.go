@@ -10,7 +10,6 @@ import (
 	"slices"
 
 	"github.com/google/uuid"
-	gobgpapi "github.com/osrg/gobgp/v4/api"
 	"github.com/osrg/gobgp/v4/pkg/apiutil"
 	bgppacket "github.com/osrg/gobgp/v4/pkg/packet/bgp"
 
@@ -117,14 +116,12 @@ func (instance *Instance) ImportedCount() int {
 func (instance *Instance) listImportCandidates(selectors []netip.Prefix) (map[netip.Prefix]*apiutil.Path, error) {
 	candidates := map[netip.Prefix]*apiutil.Path{}
 
-	for _, family := range importFamilies(selectors) {
-		err := instance.server.ListPath(apiutil.ListPathRequest{
-			TableType: gobgpapi.TableType_TABLE_TYPE_GLOBAL,
-			Family:    family,
-		}, func(prefix bgppacket.NLRI, paths []*apiutil.Path) {
-			addImportCandidates(candidates, selectors, prefix, paths)
-		})
-		if err != nil {
+	for _, family := range ImportFamilies(selectors) {
+		if err := instance.listPaths(family, func(prefix netip.Prefix, paths []*apiutil.Path) {
+			if candidate := ImportCandidate(prefix, paths, selectors); candidate != nil {
+				candidates[prefix] = candidate
+			}
+		}); err != nil {
 			return nil, fmt.Errorf("error listing %s paths: %w", family, err)
 		}
 	}
@@ -185,7 +182,8 @@ func cloneImportRoutes(imports []network.BGPImportRouteSpec) []network.BGPImport
 	return result
 }
 
-func importFamilies(selectors []netip.Prefix) []bgppacket.Family {
+// ImportFamilies returns the address families to list for import selectors.
+func ImportFamilies(selectors []netip.Prefix) []bgppacket.Family {
 	var hasIPv4, hasIPv6 bool
 
 	for _, selector := range selectors {
@@ -208,27 +206,27 @@ func importFamilies(selectors []netip.Prefix) []bgppacket.Family {
 	return families
 }
 
-func addImportCandidates(
-	candidates map[netip.Prefix]*apiutil.Path,
-	selectors []netip.Prefix,
-	prefix bgppacket.NLRI,
-	paths []*apiutil.Path,
-) {
-	dst, err := netip.ParsePrefix(prefix.String())
-	if err != nil || !matchesImportSelector(dst, selectors) {
-		return
+// ImportCandidate returns the path of a destination to import, or nil if the prefix does not match the selectors:
+// the best path learned from a neighbor, from the lowest peer address among several. Local paths, originated
+// or imported themselves, are never candidates, so imports do not chain.
+func ImportCandidate(prefix netip.Prefix, paths []*apiutil.Path, selectors []netip.Prefix) *apiutil.Path {
+	if !matchesImportSelector(prefix, selectors) {
+		return nil
 	}
+
+	var candidate *apiutil.Path
 
 	for _, path := range paths {
 		if !path.Best || path.Withdrawal || !path.PeerAddress.IsValid() {
 			continue
 		}
 
-		current := candidates[dst]
-		if current == nil || path.PeerAddress.Compare(current.PeerAddress) < 0 {
-			candidates[dst] = path
+		if candidate == nil || path.PeerAddress.Compare(candidate.PeerAddress) < 0 {
+			candidate = path
 		}
 	}
+
+	return candidate
 }
 
 func matchesImportSelector(prefix netip.Prefix, selectors []netip.Prefix) bool {

@@ -7,7 +7,6 @@ package bgp
 import (
 	"fmt"
 	"iter"
-	"maps"
 	"net/netip"
 	"slices"
 
@@ -38,7 +37,7 @@ type ResolvedConfig struct {
 
 // RuntimeState is an indexed snapshot of network link and address status.
 type RuntimeState struct {
-	linkNames        map[string]string
+	linkResolver     *network.LinkResolver
 	linksByName      map[string]network.LinkStatusSpec
 	linkNamesByIndex map[uint32]string
 	addressLinks     map[netip.Addr][]string
@@ -46,63 +45,29 @@ type RuntimeState struct {
 	addresses        []network.AddressStatusSpec
 }
 
-// NewRuntimeStateFromResources builds an indexed network runtime snapshot from status resources.
-func NewRuntimeStateFromResources(
-	links iter.Seq[*network.LinkStatus],
-	addresses iter.Seq[*network.AddressStatus],
-) *RuntimeState {
-	linkSpecs := map[string]network.LinkStatusSpec{}
-
-	for status := range links {
-		linkSpecs[status.Metadata().ID()] = *status.TypedSpec()
-	}
-
-	var addressSpecs []network.AddressStatusSpec
-
-	for status := range addresses {
-		addressSpecs = append(addressSpecs, *status.TypedSpec())
-	}
-
-	return NewRuntimeState(linkSpecs, addressSpecs)
-}
-
-// NewRuntimeState builds an indexed network runtime snapshot.
-func NewRuntimeState(links map[string]network.LinkStatusSpec, addresses []network.AddressStatusSpec) *RuntimeState {
+// NewRuntimeState builds an indexed network runtime snapshot from status resources.
+func NewRuntimeState(links func() iter.Seq[*network.LinkStatus], addresses iter.Seq[*network.AddressStatus]) *RuntimeState {
 	state := &RuntimeState{
-		linkNames:        map[string]string{},
-		linksByName:      maps.Clone(links),
+		linkResolver:     network.NewLinkResolver(links),
+		linksByName:      map[string]network.LinkStatusSpec{},
 		linkNamesByIndex: map[uint32]string{},
 		addressLinks:     map[netip.Addr][]string{},
 		addressesByLink:  map[uint32]map[netip.Addr]struct{}{},
-		addresses:        slices.Clone(addresses),
 	}
 
-	// Match network.LinkResolver's two-pass behavior: collect aliases first, then make canonical
-	// names win over conflicting aliases. Sort names because the input is a map.
-	linkNames := slices.Sorted(maps.Keys(links))
+	for status := range links() {
+		name := status.Metadata().ID()
 
-	for _, name := range linkNames {
-		spec := links[name]
-
-		if spec.Alias != "" {
-			state.linkNames[spec.Alias] = name
-		}
-
-		for _, altName := range spec.AltNames {
-			state.linkNames[altName] = name
-		}
+		state.linksByName[name] = *status.TypedSpec()
+		state.linkNamesByIndex[status.TypedSpec().Index] = name
 	}
 
-	for _, name := range linkNames {
-		spec := links[name]
+	for status := range addresses {
+		spec := *status.TypedSpec()
+		state.addresses = append(state.addresses, spec)
 
-		state.linkNames[name] = name
-		state.linkNamesByIndex[spec.Index] = name
-	}
-
-	for _, spec := range addresses {
 		address := spec.Address.Addr()
-		linkName := state.resolveLinkName(spec.LinkName)
+		linkName := state.linkResolver.Resolve(spec.LinkName)
 
 		state.addressLinks[address] = append(state.addressLinks[address], linkName)
 
@@ -119,7 +84,7 @@ func NewRuntimeState(links map[string]network.LinkStatusSpec, addresses []networ
 // Resolve resolves a BGP instance configuration and its derived runtime values.
 func (state *RuntimeState) Resolve(spec network.BGPInstanceConfigSpec) (ResolvedConfig, error) {
 	resolved := spec
-	resolved.VRF = state.resolveLinkName(spec.VRF)
+	resolved.VRF = state.linkResolver.Resolve(spec.VRF)
 	resolved.AdvertiseLinks = slices.Clone(spec.AdvertiseLinks)
 	resolved.Neighbors = slices.Clone(spec.Neighbors)
 
@@ -173,17 +138,9 @@ func (state *RuntimeState) OwnAddresses(index uint32) map[netip.Addr]struct{} {
 	return state.addressesByLink[index]
 }
 
-func (state *RuntimeState) resolveLinkName(name string) string {
-	if resolved, ok := state.linkNames[name]; ok {
-		return resolved
-	}
-
-	return name
-}
-
 func (state *RuntimeState) resolveLinks(resolved *network.BGPInstanceConfigSpec) error {
 	for i, link := range resolved.AdvertiseLinks {
-		resolved.AdvertiseLinks[i] = state.resolveLinkName(link)
+		resolved.AdvertiseLinks[i] = state.linkResolver.Resolve(link)
 
 		if err := state.validateLinkDomain(resolved.AdvertiseLinks[i], resolved.VRF); err != nil {
 			return fmt.Errorf("advertised link: %w", err)
@@ -195,7 +152,7 @@ func (state *RuntimeState) resolveLinks(resolved *network.BGPInstanceConfigSpec)
 			continue
 		}
 
-		resolved.Neighbors[i].Link = state.resolveLinkName(resolved.Neighbors[i].Link)
+		resolved.Neighbors[i].Link = state.linkResolver.Resolve(resolved.Neighbors[i].Link)
 
 		if err := state.validateLinkDomain(resolved.Neighbors[i].Link, resolved.VRF); err != nil {
 			return fmt.Errorf("neighbor link: %w", err)
@@ -317,7 +274,7 @@ func (state *RuntimeState) domainAddresses(vrf string) []netip.Prefix {
 	var addresses []netip.Prefix
 
 	for _, address := range state.addresses {
-		linkName := state.resolveLinkName(address.LinkName)
+		linkName := state.linkResolver.Resolve(address.LinkName)
 
 		status, exists := state.linksByName[linkName]
 		if !exists {

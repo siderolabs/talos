@@ -214,7 +214,7 @@ func (ctrl *BGPController) reconcile(ctx context.Context, r controller.Runtime, 
 		return false, false, fmt.Errorf("error listing address statuses: %w", err)
 	}
 
-	runtimeState := internalbgp.NewRuntimeStateFromResources(linkStatuses.All(), addressStatuses.All())
+	runtimeState := internalbgp.NewRuntimeState(linkStatuses.All, addressStatuses.All())
 	neighborResolver := internalbgp.NewNeighborResolver(internalbgp.ReadNeighbors)
 
 	desired := map[resource.ID]struct{}{}

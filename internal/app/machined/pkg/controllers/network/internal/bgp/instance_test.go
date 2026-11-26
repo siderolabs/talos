@@ -23,6 +23,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest/observer"
 	"golang.org/x/sys/unix"
+	"google.golang.org/protobuf/proto"
 
 	internalbgp "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/internal/bgp"
 	"github.com/siderolabs/talos/internal/pkg/testport"
@@ -385,7 +386,7 @@ func TestChangedPeerIsUpdatedInPlace(t *testing.T) {
 
 	ensure()
 
-	assert.Equal(t, internalbgp.PeerKey(peer), internalbgp.InstancePeerKeysForTest(instance)[peer.Address])
+	assert.True(t, proto.Equal(internalbgp.BuildPeer(peer, false), internalbgp.InstancePeerKeysForTest(instance)[peer.Address]))
 
 	updated := peerState()
 	assert.EqualValues(t, 30, updated.GetTimers().GetConfig().GetHoldTime())

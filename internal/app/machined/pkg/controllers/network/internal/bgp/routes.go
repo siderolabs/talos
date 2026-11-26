@@ -39,7 +39,6 @@ func (instance *Instance) Snapshot(ctx context.Context) Snapshot {
 	}
 }
 
-//nolint:gocyclo
 func (instance *Instance) learnedRoutes() map[netip.Prefix][]network.RouteNextHop {
 	learned := map[netip.Prefix][]network.RouteNextHop{}
 
@@ -53,50 +52,62 @@ func (instance *Instance) learnedRoutes() map[netip.Prefix][]network.RouteNextHo
 	}
 
 	for _, family := range []bgppacket.Family{bgppacket.RF_IPv4_UC, bgppacket.RF_IPv6_UC} {
-		err := instance.server.ListPath(apiutil.ListPathRequest{
-			TableType: gobgpapi.TableType_TABLE_TYPE_GLOBAL,
-			Family:    family,
-		}, func(prefix bgppacket.NLRI, paths []*apiutil.Path) {
-			dst, parseErr := netip.ParsePrefix(prefix.String())
-			if parseErr != nil {
+		// Best-effort: ListPath may fail for a not-yet-active family.
+		instance.listPaths(family, func(prefix netip.Prefix, paths []*apiutil.Path) { //nolint:errcheck
+			if _, local := localSet[prefix]; local {
 				return
 			}
 
-			if _, ok := localSet[dst]; ok {
-				return
-			}
-
-			for _, path := range paths {
-				if !path.Best || path.Withdrawal {
-					continue
-				}
-
-				if nh, ok := LearnedNexthop(path, instance.peerIfaces); ok {
-					learned[dst] = append(learned[dst], nh)
-				}
+			if nexthops := LearnedNexthops(paths, instance.peerIfaces, instance.maxPaths); len(nexthops) > 0 {
+				learned[prefix] = nexthops
 			}
 		})
-		if err != nil {
-			// Best-effort: ListPath may fail for a not-yet-active family.
+	}
+
+	return learned
+}
+
+// listPaths calls fn with the paths of each destination of a family in the global RIB.
+func (instance *Instance) listPaths(family bgppacket.Family, fn func(netip.Prefix, []*apiutil.Path)) error {
+	return instance.server.ListPath(apiutil.ListPathRequest{
+		TableType: gobgpapi.TableType_TABLE_TYPE_GLOBAL,
+		Family:    family,
+	}, func(nlri bgppacket.NLRI, paths []*apiutil.Path) {
+		if prefix, err := netip.ParsePrefix(nlri.String()); err == nil {
+			fn(prefix, paths)
+		}
+	})
+}
+
+// LearnedNexthops returns the next-hops to install for the best paths of a destination.
+func LearnedNexthops(paths []*apiutil.Path, peerIfaces map[netip.Addr]string, maxPaths uint8) []network.RouteNextHop {
+	var nexthops []network.RouteNextHop
+
+	for _, path := range paths {
+		if !path.Best || path.Withdrawal {
 			continue
 		}
+
+		if nh, ok := LearnedNexthop(path, peerIfaces); ok {
+			nexthops = append(nexthops, nh)
+		}
+	}
+
+	if len(nexthops) == 0 {
+		return nil
 	}
 
 	// GoBGP yields the paths of a destination in its own order, which is not guaranteed to be stable
 	// across calls, and several best paths may share a next-hop (e.g. the same route reflected by two
 	// route reflectors): canonicalize the ECMP set so that the RouteSpec is stable across reconciles.
 	// The canonical order also makes the maxPaths cut stable.
-	for dst, nexthops := range learned {
-		nexthops = network.NormalizeNextHops(nexthops)
+	nexthops = network.NormalizeNextHops(nexthops)
 
-		if instance.maxPaths > 0 && len(nexthops) > int(instance.maxPaths) {
-			nexthops = nexthops[:instance.maxPaths]
-		}
-
-		learned[dst] = nexthops
+	if maxPaths > 0 && len(nexthops) > int(maxPaths) {
+		nexthops = nexthops[:maxPaths]
 	}
 
-	return learned
+	return nexthops
 }
 
 // LearnedNexthop returns the next-hop to install for a learned path.

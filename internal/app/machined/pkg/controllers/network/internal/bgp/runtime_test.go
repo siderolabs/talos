@@ -5,6 +5,8 @@
 package bgp_test
 
 import (
+	"iter"
+	"maps"
 	"net/netip"
 	"slices"
 	"testing"
@@ -20,40 +22,28 @@ import (
 func TestRuntimeStateResolve(t *testing.T) {
 	t.Parallel()
 
-	linkStatuses := []*network.LinkStatus{
-		network.NewLinkStatus(network.NamespaceName, "vrf-blue"),
-		network.NewLinkStatus(network.NamespaceName, "dummy0"),
-		network.NewLinkStatus(network.NamespaceName, "eth1"),
-		network.NewLinkStatus(network.NamespaceName, "eth0"),
-	}
-	*linkStatuses[0].TypedSpec() = network.LinkStatusSpec{Index: 10, Kind: network.LinkKindVRF}
-	*linkStatuses[1].TypedSpec() = network.LinkStatusSpec{Index: 11, MasterIndex: 10, Alias: "node-ip"}
-	*linkStatuses[2].TypedSpec() = network.LinkStatusSpec{Index: 12, MasterIndex: 10, AltNames: []string{"fabric0"}}
-	*linkStatuses[3].TypedSpec() = network.LinkStatusSpec{Index: 13}
-
-	addressSpecs := []network.AddressStatusSpec{
-		{Address: netip.MustParsePrefix("2001:db8::2/64"), LinkName: "dummy0", LinkIndex: 11},
-		{Address: netip.MustParsePrefix("2001:db8::3/64"), LinkName: "dummy0", LinkIndex: 11},
-		{Address: netip.MustParsePrefix("2001:db8:1::5/128"), LinkName: "dummy0", LinkIndex: 11},
-		{Address: netip.MustParsePrefix("10.0.0.2/24"), LinkName: "dummy0", LinkIndex: 11},
-		{Address: netip.MustParsePrefix("10.0.0.3/24"), LinkName: "dummy0", LinkIndex: 11},
-		{Address: netip.MustParsePrefix("192.0.2.5/32"), LinkName: "dummy0", LinkIndex: 11},
-		{Address: netip.MustParsePrefix("127.0.0.1/8"), LinkName: "dummy0", LinkIndex: 11},
-		{Address: netip.MustParsePrefix("::1/128"), LinkName: "dummy0", LinkIndex: 11},
-		{Address: netip.MustParsePrefix("fe80::1/64"), LinkName: "dummy0", LinkIndex: 11},
-		{Address: netip.MustParsePrefix("ff02::1/16"), LinkName: "dummy0", LinkIndex: 11},
-		{Address: netip.MustParsePrefix("198.51.100.1/24"), LinkName: "fabric0", LinkIndex: 12},
-		{Address: netip.MustParsePrefix("172.16.0.2/24"), LinkName: "eth0", LinkIndex: 13},
-	}
-	addressStatuses := make([]*network.AddressStatus, 0, len(addressSpecs))
-
-	for _, spec := range addressSpecs {
-		status := network.NewAddressStatus(network.NamespaceName, spec.LinkName+"/"+spec.Address.String())
-		*status.TypedSpec() = spec
-		addressStatuses = append(addressStatuses, status)
-	}
-
-	state := internalbgp.NewRuntimeStateFromResources(slices.Values(linkStatuses), slices.Values(addressStatuses))
+	state := newRuntimeState(
+		map[string]network.LinkStatusSpec{
+			"vrf-blue": {Index: 10, Kind: network.LinkKindVRF},
+			"dummy0":   {Index: 11, MasterIndex: 10, Alias: "node-ip"},
+			"eth1":     {Index: 12, MasterIndex: 10, AltNames: []string{"fabric0"}},
+			"eth0":     {Index: 13},
+		},
+		[]network.AddressStatusSpec{
+			{Address: netip.MustParsePrefix("2001:db8::2/64"), LinkName: "dummy0", LinkIndex: 11},
+			{Address: netip.MustParsePrefix("2001:db8::3/64"), LinkName: "dummy0", LinkIndex: 11},
+			{Address: netip.MustParsePrefix("2001:db8:1::5/128"), LinkName: "dummy0", LinkIndex: 11},
+			{Address: netip.MustParsePrefix("10.0.0.2/24"), LinkName: "dummy0", LinkIndex: 11},
+			{Address: netip.MustParsePrefix("10.0.0.3/24"), LinkName: "dummy0", LinkIndex: 11},
+			{Address: netip.MustParsePrefix("192.0.2.5/32"), LinkName: "dummy0", LinkIndex: 11},
+			{Address: netip.MustParsePrefix("127.0.0.1/8"), LinkName: "dummy0", LinkIndex: 11},
+			{Address: netip.MustParsePrefix("::1/128"), LinkName: "dummy0", LinkIndex: 11},
+			{Address: netip.MustParsePrefix("fe80::1/64"), LinkName: "dummy0", LinkIndex: 11},
+			{Address: netip.MustParsePrefix("ff02::1/16"), LinkName: "dummy0", LinkIndex: 11},
+			{Address: netip.MustParsePrefix("198.51.100.1/24"), LinkName: "fabric0", LinkIndex: 12},
+			{Address: netip.MustParsePrefix("172.16.0.2/24"), LinkName: "eth0", LinkIndex: 13},
+		},
+	)
 
 	input := network.BGPInstanceConfigSpec{
 		LocalASN:       65001,
@@ -154,7 +144,7 @@ func TestRuntimeStateValidation(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			_, err := internalbgp.NewRuntimeState(test.links, nil).Resolve(test.spec)
+			_, err := newRuntimeState(test.links, nil).Resolve(test.spec)
 			require.ErrorContains(t, err, test.error)
 		})
 	}
@@ -163,7 +153,7 @@ func TestRuntimeStateValidation(t *testing.T) {
 func TestRuntimeStateRouterID(t *testing.T) {
 	t.Parallel()
 
-	state := internalbgp.NewRuntimeState(
+	state := newRuntimeState(
 		map[string]network.LinkStatusSpec{"dummy0": {Index: 1}},
 		[]network.AddressStatusSpec{
 			{Address: netip.MustParsePrefix("10.0.0.9/24"), LinkName: "dummy0", LinkIndex: 1},
@@ -185,7 +175,27 @@ func TestRuntimeStateRouterID(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, netip.MustParseAddr("192.0.2.1"), configured.RouterID)
 
-	missing, err := internalbgp.NewRuntimeState(nil, nil).Resolve(network.BGPInstanceConfigSpec{})
+	missing, err := newRuntimeState(nil, nil).Resolve(network.BGPInstanceConfigSpec{})
 	require.NoError(t, err)
 	assert.False(t, missing.RouterID.IsValid())
+}
+
+func newRuntimeState(links map[string]network.LinkStatusSpec, addresses []network.AddressStatusSpec) *internalbgp.RuntimeState {
+	linkStatuses := make([]*network.LinkStatus, 0, len(links))
+
+	for _, name := range slices.Sorted(maps.Keys(links)) {
+		status := network.NewLinkStatus(network.NamespaceName, name)
+		*status.TypedSpec() = links[name]
+		linkStatuses = append(linkStatuses, status)
+	}
+
+	addressStatuses := make([]*network.AddressStatus, 0, len(addresses))
+
+	for _, spec := range addresses {
+		status := network.NewAddressStatus(network.NamespaceName, spec.LinkName+"/"+spec.Address.String())
+		*status.TypedSpec() = spec
+		addressStatuses = append(addressStatuses, status)
+	}
+
+	return internalbgp.NewRuntimeState(func() iter.Seq[*network.LinkStatus] { return slices.Values(linkStatuses) }, slices.Values(addressStatuses))
 }

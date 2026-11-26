@@ -58,7 +58,7 @@ func TestLinkLocalNeighbor(t *testing.T) {
 func TestNeighborResolver(t *testing.T) {
 	t.Parallel()
 
-	runtimeState := internalbgp.NewRuntimeState(
+	runtimeState := newRuntimeState(
 		map[string]network.LinkStatusSpec{
 			"vrf-blue": {Index: 20, Kind: network.LinkKindVRF},
 			"eth0":     {Index: 10, MasterIndex: 20},
@@ -93,7 +93,7 @@ func TestNeighborResolver(t *testing.T) {
 func TestNeighborResolverAuthPasswordConflict(t *testing.T) {
 	t.Parallel()
 
-	runtimeState := internalbgp.NewRuntimeState(
+	runtimeState := newRuntimeState(
 		map[string]network.LinkStatusSpec{
 			"eth0": {Index: 10},
 			"eth1": {Index: 11},
@@ -170,13 +170,13 @@ func TestNeighborResolverNumberedPeerSkipsRtnetlink(t *testing.T) {
 		Neighbors: []network.BGPNeighborConfigSpec{
 			{Address: netip.MustParseAddr("192.0.2.2"), PeerASN: 65002},
 		},
-	}, internalbgp.NewRuntimeState(nil, nil), nil, zap.NewNop())
+	}, newRuntimeState(nil, nil), nil, zap.NewNop())
 
 	require.NoError(t, err)
 	require.Len(t, peers, 1)
 	assert.Equal(t, "192.0.2.2", peers[0].Address)
 
-	_, ok := internalbgp.ResolvePeer(network.BGPNeighborConfigSpec{}, internalbgp.NewRuntimeState(nil, nil), nil, zap.NewNop())
+	_, ok := internalbgp.ResolvePeer(network.BGPNeighborConfigSpec{}, newRuntimeState(nil, nil), nil, zap.NewNop())
 	assert.False(t, ok)
 }
 
@@ -196,7 +196,7 @@ func TestNeighborResolverReadError(t *testing.T) {
 			{Link: "eth1", PeerASN: 65002},
 			{Link: "eth2", PeerASN: 65002},
 		},
-	}, internalbgp.NewRuntimeState(map[string]network.LinkStatusSpec{"eth0": {Index: 10}, "eth1": {Index: 11}, "eth2": {Index: 12}}, nil),
+	}, newRuntimeState(map[string]network.LinkStatusSpec{"eth0": {Index: 10}, "eth1": {Index: 11}, "eth2": {Index: 12}}, nil),
 		map[string]netip.Addr{
 			"eth0": netip.MustParseAddr("fe80::1"),
 			"eth1": netip.MustParseAddr("fe80::1"),
