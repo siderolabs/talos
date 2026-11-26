@@ -173,7 +173,7 @@ const userVolumeDefaultMountMode = 0o755
 // userVolumeMaxID is the highest user or group ID of a user volume mount point.
 //
 // 4294967295 ((uid_t)-1) is not a valid ID: chown reads it as "leave unchanged".
-const userVolumeMaxID = 4294967294
+const userVolumeMaxID uint32 = 4294967294
 
 // userVolumeMountModeMask is the mask of the bits allowed in the mode of the mount point of a user volume.
 const userVolumeMountModeMask = 0o7777
