@@ -8,6 +8,7 @@ import (
 	"errors"
 	"net"
 	"net/netip"
+	"slices"
 	"strconv"
 	"syscall"
 	"testing"
@@ -16,56 +17,56 @@ import (
 	"github.com/gopacket/gopacket"
 	"github.com/gopacket/gopacket/layers"
 	gobgpapi "github.com/osrg/gobgp/v4/api"
+	"github.com/osrg/gobgp/v4/pkg/apiutil"
 	bgppacket "github.com/osrg/gobgp/v4/pkg/packet/bgp"
+	gobgpsrv "github.com/osrg/gobgp/v4/pkg/server"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zaptest/observer"
 	"golang.org/x/sys/unix"
-	"google.golang.org/protobuf/proto"
 
 	internalbgp "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/internal/bgp"
 	"github.com/siderolabs/talos/internal/pkg/testport"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
-func TestOriginatedPathWithdrawalPropagates(t *testing.T) {
-	ctx := t.Context()
-	fabricPort := int32(testport.Listenable(t))
-	originServer := startBGPImportTestServer(t, ctx, 65001, "192.0.2.1", -1, false)
-	fabricServer := startBGPImportTestServer(t, ctx, 65000, "192.0.2.2", fabricPort, false)
-	connectBGPImportTestFabric(t, ctx, originServer, fabricServer, fabricPort)
+var testRouterID = []netip.Addr{netip.MustParseAddr("10.0.0.1")}
 
-	instance := internalbgp.NewInstance()
-	internalbgp.SetInstanceServerForTest(instance, originServer)
+func TestOriginatedPaths(t *testing.T) {
+	t.Parallel()
 
-	prefixes := []netip.Prefix{
-		netip.MustParsePrefix("198.51.100.0/24"),
-		netip.MustParsePrefix("2001:db8:1234::/48"),
+	instance := newTestInstance(t)
+	instance.ensure(t, network.BGPInstanceConfigSpec{LocalASN: 65001}, testRouterID, testPeer("127.0.0.2", 65000))
+
+	fabric := instance.startSpeaker(t, "127.0.0.2", 65000, 65001)
+	instance.waitState(t, "127.0.0.2", nethelpers.BGPSessionStateEstablished)
+
+	stale := netip.MustParsePrefix("192.0.2.128/25")
+	retained := netip.MustParsePrefix("2001:db8:1234::/48")
+	added := netip.MustParsePrefix("198.51.100.0/24")
+
+	advertised := func(expected ...netip.Prefix) func() bool {
+		return func() bool {
+			for _, prefix := range []netip.Prefix{stale, retained, added} {
+				if (listBGPImportTestPath(t, fabric, prefix) != nil) != slices.Contains(expected, prefix) {
+					return false
+				}
+			}
+
+			return true
+		}
 	}
 
-	require.NoError(t, instance.ReconcileOriginated(prefixes))
-	require.Eventually(t, func() bool {
-		for _, prefix := range prefixes {
-			if listBGPImportTestPath(t, fabricServer, prefix) == nil {
-				return false
-			}
-		}
+	require.NoError(t, instance.ReconcileOriginated([]netip.Prefix{stale, retained}))
+	require.Eventually(t, advertised(stale, retained), 5*time.Second, 10*time.Millisecond, "originated paths were not advertised")
 
-		return true
-	}, 5*time.Second, 10*time.Millisecond, "originated paths were not advertised to the fabric peer")
+	require.NoError(t, instance.ReconcileOriginated([]netip.Prefix{retained, added}))
+	require.Eventually(t, advertised(retained, added), 5*time.Second, 10*time.Millisecond, "a stale originated path was not withdrawn")
 
 	require.NoError(t, instance.ReconcileOriginated(nil))
-	require.Eventually(t, func() bool {
-		for _, prefix := range prefixes {
-			if listBGPImportTestPath(t, fabricServer, prefix) != nil {
-				return false
-			}
-		}
-
-		return true
-	}, 5*time.Second, 10*time.Millisecond, "originated paths were not withdrawn from the fabric peer")
+	require.Eventually(t, advertised(), 5*time.Second, 10*time.Millisecond, "originated paths were not withdrawn")
 }
 
 func TestNewInstance(t *testing.T) {
@@ -74,12 +75,10 @@ func TestNewInstance(t *testing.T) {
 	instance := internalbgp.NewInstance()
 
 	assert.False(t, instance.Running())
-	assert.True(t, internalbgp.InstanceMapsInitializedForTest(instance))
 
 	instance.Stop()
 
 	assert.False(t, instance.Running())
-	assert.True(t, internalbgp.InstanceMapsInitializedForTest(instance))
 }
 
 func TestInstanceAuthPasswordListenerKey(t *testing.T) {
@@ -87,34 +86,11 @@ func TestInstanceAuthPasswordListenerKey(t *testing.T) {
 
 	skipWithoutTCPMD5(t)
 
-	instance := internalbgp.NewInstance()
-	t.Cleanup(instance.Stop)
+	instance := newTestInstance(t)
 
-	port := int32(testport.Listenable(t))
 	config := network.BGPInstanceConfigSpec{LocalASN: 65001}
-	peer := internalbgp.Peer{
-		Address: "127.0.0.2",
-		Config: network.BGPNeighborConfigSpec{
-			Address:      netip.MustParseAddr("127.0.0.2"),
-			PeerASN:      65002,
-			Passive:      true,
-			AuthPassword: "secret",
-		},
-	}
-
-	ensure := func() {
-		require.NoError(t, instance.EnsureServer(
-			t.Context(),
-			zap.NewNop(),
-			config,
-			[]netip.Addr{netip.MustParseAddr("10.0.0.1")},
-			0,
-			[]internalbgp.Peer{peer},
-			nil,
-			port,
-			func() {},
-		))
-	}
+	peer := testPeer("127.0.0.2", 65002)
+	peer.Config.AuthPassword = "secret"
 
 	// connect dials the listener from the peer address, signing the connection with the password if set.
 	connect := func(password string) error {
@@ -137,7 +113,7 @@ func TestInstanceAuthPasswordListenerKey(t *testing.T) {
 			}
 		}
 
-		conn, err := dialer.DialContext(t.Context(), "tcp4", net.JoinHostPort("127.0.0.1", strconv.Itoa(int(port))))
+		conn, err := dialer.DialContext(t.Context(), "tcp4", net.JoinHostPort("127.0.0.1", strconv.Itoa(int(instance.port))))
 		if err != nil {
 			return err
 		}
@@ -155,9 +131,7 @@ func TestInstanceAuthPasswordListenerKey(t *testing.T) {
 		require.True(t, netErr.Timeout(), "SYN with password %q must be dropped, got %v", password, err)
 	}
 
-	ensure()
-
-	server := internalbgp.InstanceServerForTest(instance)
+	instance.ensure(t, config, testRouterID, peer)
 
 	requireDropped("")
 	require.NoError(t, connect("secret"))
@@ -165,8 +139,8 @@ func TestInstanceAuthPasswordListenerKey(t *testing.T) {
 	// Rotating the password must replace the listener key in place.
 	peer.Config.AuthPassword = "rotated"
 
-	ensure()
-	require.Same(t, server, internalbgp.InstanceServerForTest(instance), "rotating the password must not restart GoBGP")
+	instance.ensure(t, config, testRouterID, peer)
+	require.Equal(t, 1, instance.starts(), "rotating the password must not restart GoBGP")
 	require.Eventually(t, func() bool {
 		return connect("rotated") == nil
 	}, 5*time.Second, 100*time.Millisecond, "the listener key must be replaced together with the password")
@@ -175,8 +149,8 @@ func TestInstanceAuthPasswordListenerKey(t *testing.T) {
 
 	peer.Config.AuthPassword = ""
 
-	ensure()
-	require.Same(t, server, internalbgp.InstanceServerForTest(instance), "removing the password must not restart GoBGP")
+	instance.ensure(t, config, testRouterID, peer)
+	require.Equal(t, 1, instance.starts(), "removing the password must not restart GoBGP")
 	require.Eventually(t, func() bool {
 		return connect("") == nil
 	}, 5*time.Second, 100*time.Millisecond, "the listener key must be removed together with the password")
@@ -213,204 +187,141 @@ func skipWithoutTCPMD5(t *testing.T) {
 func TestInstanceServerLifecycleAndReconciliation(t *testing.T) {
 	t.Parallel()
 
-	instance := internalbgp.NewInstance()
-	t.Cleanup(instance.Stop)
+	instance := newTestInstance(t)
 
-	config := network.BGPInstanceConfigSpec{
-		LocalASN: 65001,
-		Neighbors: []network.BGPNeighborConfigSpec{
-			{Address: netip.MustParseAddr("192.0.2.2"), PeerASN: 65002, Passive: true},
-		},
-	}
-	peer := internalbgp.Peer{Address: "192.0.2.2", Config: config.Neighbors[0]}
-	peerIfaces := map[netip.Addr]string{netip.MustParseAddr("fe80::2"): "eth0"}
+	config := network.BGPInstanceConfigSpec{LocalASN: 65001}
+	peer := testPeer("192.0.2.2", 65002)
 
-	require.NoError(t, instance.EnsureServer(
-		t.Context(),
-		zap.NewNop(),
-		config,
-		[]netip.Addr{netip.MustParseAddr("10.0.0.1")},
-		0,
-		[]internalbgp.Peer{peer},
-		peerIfaces,
-		-1,
-		func() {},
-	))
+	instance.ensure(t, config, testRouterID, peer)
 	require.True(t, instance.Running())
-	require.Len(t, internalbgp.InstancePeerKeysForTest(instance), 1)
-	assert.Equal(t, peerIfaces, internalbgp.InstancePeerIfacesForTest(instance), "initial server creation must retain peer interfaces")
+	assert.Equal(t, uint32(65002), instance.peerStatus(t, peer.Address).PeerASN)
 
-	server := internalbgp.InstanceServerForTest(instance)
-	peerHash := internalbgp.InstancePeerKeysForTest(instance)[peer.Address]
-
-	require.NoError(t, instance.EnsureServer(
-		t.Context(),
-		zap.NewNop(),
-		config,
-		[]netip.Addr{netip.MustParseAddr("10.0.0.1")},
-		0,
-		[]internalbgp.Peer{peer},
-		peerIfaces,
-		-1,
-		func() {},
-	))
-	assert.Same(t, server, internalbgp.InstanceServerForTest(instance), "an unchanged server key must not restart GoBGP")
+	instance.ensure(t, config, testRouterID, peer)
+	assert.Equal(t, 1, instance.starts(), "an unchanged configuration must not restart GoBGP")
 
 	peer.Config.PeerASN = 65003
-	require.NoError(t, instance.EnsureServer(
-		t.Context(),
-		zap.NewNop(),
-		config,
-		[]netip.Addr{netip.MustParseAddr("10.0.0.1")},
-		0,
-		[]internalbgp.Peer{peer},
-		peerIfaces,
-		-1,
-		func() {},
-	))
-	assert.NotEqual(t, peerHash, internalbgp.InstancePeerKeysForTest(instance)[peer.Address], "a changed peer must be replaced incrementally")
-	assert.Same(t, server, internalbgp.InstanceServerForTest(instance), "a peer-only change must not restart GoBGP")
 
-	require.NoError(t, instance.EnsureServer(
-		t.Context(),
-		zap.NewNop(),
-		config,
-		[]netip.Addr{netip.MustParseAddr("10.0.0.1")},
-		0,
-		nil,
-		peerIfaces,
-		-1,
-		func() {},
-	))
-	assert.Empty(t, internalbgp.InstancePeerKeysForTest(instance))
+	instance.ensure(t, config, testRouterID, peer)
+	assert.Equal(t, uint32(65003), instance.peerStatus(t, peer.Address).PeerASN, "a changed peer must be updated")
+	assert.Equal(t, 1, instance.starts(), "a peer-only change must not restart GoBGP")
 
-	stalePrefix := netip.MustParsePrefix("192.0.2.128/25")
-	retainedPrefix := netip.MustParsePrefix("2001:db8:1234::/48")
-	newPrefix := netip.MustParsePrefix("198.51.100.0/24")
+	instance.ensure(t, config, testRouterID)
+	assert.Empty(t, instance.Snapshot(t.Context()).PeerStatuses, "a removed peer must be deleted")
 
-	require.NoError(t, instance.ReconcileOriginated([]netip.Prefix{stalePrefix, retainedPrefix}))
-	assert.True(t, internalbgp.InstanceOriginatedForTest(instance, stalePrefix))
-	assert.True(t, internalbgp.InstanceOriginatedForTest(instance, retainedPrefix))
-	require.NotNil(t, listBGPImportTestPath(t, server, stalePrefix))
-	require.NotNil(t, listBGPImportTestPath(t, server, retainedPrefix))
+	instance.ensure(t, config, []netip.Addr{netip.MustParseAddr("10.0.0.9")})
+	assert.Equal(t, 2, instance.starts(), "a changed router ID must restart GoBGP")
+	assert.Equal(t, "10.0.0.9", instance.routerID(t))
 
-	require.NoError(t, instance.ReconcileOriginated([]netip.Prefix{retainedPrefix, newPrefix}))
-	assert.False(t, internalbgp.InstanceOriginatedForTest(instance, stalePrefix))
-	assert.True(t, internalbgp.InstanceOriginatedForTest(instance, retainedPrefix))
-	assert.True(t, internalbgp.InstanceOriginatedForTest(instance, newPrefix))
-	assert.Nil(t, listBGPImportTestPath(t, server, stalePrefix))
-	require.NotNil(t, listBGPImportTestPath(t, server, retainedPrefix))
-	require.NotNil(t, listBGPImportTestPath(t, server, newPrefix))
+	// the listener is bound to the VRF device: a VRF recreated under the same name gets a new index
+	require.NoError(t, instance.EnsureServer(t.Context(), instance.logger, config, []netip.Addr{netip.MustParseAddr("10.0.0.9")}, 7, nil, nil, instance.port, func() {}))
+	assert.Equal(t, 3, instance.starts(), "a changed VRF index must restart GoBGP")
 
-	require.NoError(t, instance.ReconcileOriginated(nil))
-	assert.False(t, internalbgp.InstanceOriginatedForTest(instance, retainedPrefix))
-	assert.False(t, internalbgp.InstanceOriginatedForTest(instance, newPrefix))
-	assert.Nil(t, listBGPImportTestPath(t, server, retainedPrefix))
-	assert.Nil(t, listBGPImportTestPath(t, server, newPrefix))
+	instance.Stop()
+	assert.False(t, instance.Running())
+}
 
-	require.NoError(t, instance.EnsureServer(
-		t.Context(),
-		zap.NewNop(),
-		config,
-		[]netip.Addr{netip.MustParseAddr("10.0.0.9")},
-		0,
-		nil,
-		peerIfaces,
-		-1,
-		func() {},
-	))
-	assert.NotSame(t, server, internalbgp.InstanceServerForTest(instance), "a changed server key must restart GoBGP")
-	assert.Equal(t, peerIfaces, internalbgp.InstancePeerIfacesForTest(instance), "server restart must retain peer interfaces")
+// TestLinkLocalNexthopAfterRestart asserts that a link-local next-hop from an unnumbered peer still resolves to
+// the peer interface after GoBGP is rebuilt: without it the route is dropped, see LearnedNexthop.
+func TestLinkLocalNexthopAfterRestart(t *testing.T) {
+	t.Parallel()
+
+	instance := newTestInstance(t)
+	instance.peerIfaces = map[netip.Addr]string{netip.MustParseAddr("127.0.0.2"): "lo"}
+
+	peer := testPeer("127.0.0.2", 65001)
+	prefix := netip.MustParsePrefix("2001:db8:1::/64")
+	expected := []network.RouteNextHop{{Gateway: netip.MustParseAddr("fe80::2"), OutLinkName: "lo"}}
+
+	// iBGP keeps the advertised next-hop
+	speaker := instance.startSpeaker(t, peer.Address, 65001, 65001)
+
+	nlri, err := bgppacket.NewIPAddrPrefix(prefix)
+	require.NoError(t, err)
+
+	mpReach, err := bgppacket.NewPathAttributeMpReachNLRI(bgppacket.RF_IPv6_UC, []bgppacket.PathNLRI{{NLRI: nlri}}, netip.MustParseAddr("fe80::2"))
+	require.NoError(t, err)
+
+	responses, err := speaker.AddPath(apiutil.AddPathRequest{Paths: []*apiutil.Path{{
+		Family: bgppacket.RF_IPv6_UC,
+		Nlri:   nlri,
+		Attrs:  []bgppacket.PathAttributeInterface{bgppacket.NewPathAttributeOrigin(0), mpReach},
+	}}})
+	require.NoError(t, err)
+	require.Len(t, responses, 1)
+	require.NoError(t, responses[0].Error)
+
+	// a configured router ID change restarts GoBGP even with the session established
+	for i, routerID := range []string{"10.0.0.1", "10.0.0.9"} {
+		config := network.BGPInstanceConfigSpec{LocalASN: 65001, RouterID: netip.MustParseAddr(routerID), InstallRoutes: true}
+
+		instance.ensure(t, config, nil, peer)
+		instance.SetOutputState(nil, config)
+
+		assert.EventuallyWithT(t, func(collect *assert.CollectT) {
+			assert.Equal(collect, expected, instance.Snapshot(t.Context()).Learned[prefix])
+		}, 15*time.Second, 10*time.Millisecond, "a link-local next-hop must resolve to the peer interface after %d restarts", i)
+	}
+
+	assert.Equal(t, 2, instance.starts())
 }
 
 func TestChangedPeerIsUpdatedInPlace(t *testing.T) {
 	t.Parallel()
 
-	ctx := t.Context()
-	instancePort := int32(testport.Listenable(t))
+	instance := newTestInstance(t)
 
-	instance := internalbgp.NewInstance()
-	t.Cleanup(instance.Stop)
+	config := network.BGPInstanceConfigSpec{LocalASN: 65001}
+	peer := testPeer("127.0.0.2", 65000)
 
-	peer := internalbgp.Peer{
-		Address: "127.0.0.2",
-		Config:  network.BGPNeighborConfigSpec{Address: netip.MustParseAddr("127.0.0.2"), PeerASN: 65000, Passive: true},
-	}
+	instance.ensure(t, config, testRouterID, peer)
+	speaker := instance.startSpeaker(t, peer.Address, 65000, 65001)
+	instance.waitState(t, peer.Address, nethelpers.BGPSessionStateEstablished)
 
-	ensure := func() {
-		t.Helper()
-
-		require.NoError(t, instance.EnsureServer(
-			ctx,
-			zap.NewNop(),
-			network.BGPInstanceConfigSpec{LocalASN: 65001, Neighbors: []network.BGPNeighborConfigSpec{peer.Config}},
-			[]netip.Addr{netip.MustParseAddr("10.0.0.1")},
-			0,
-			[]internalbgp.Peer{peer},
-			nil,
-			instancePort,
-			func() {},
-		))
-	}
-
-	ensure()
-
-	fabric := startBGPImportTestServer(t, ctx, 65000, "10.0.0.2", -1, false)
-	require.NoError(t, fabric.AddPeer(ctx, &gobgpapi.AddPeerRequest{Peer: &gobgpapi.Peer{
-		Conf:      &gobgpapi.PeerConf{NeighborAddress: "127.0.0.1", PeerAsn: 65001},
-		Transport: &gobgpapi.Transport{LocalAddress: "127.0.0.2", RemotePort: uint32(instancePort)},
-	}}))
-
-	peerState := func() *gobgpapi.Peer {
-		t.Helper()
-
-		var result *gobgpapi.Peer
-
-		require.NoError(t, internalbgp.InstanceServerForTest(instance).ListPeer(ctx, &gobgpapi.ListPeerRequest{Address: peer.Address}, func(p *gobgpapi.Peer) {
-			result = p
-		}))
-		require.NotNil(t, result)
-
-		return result
-	}
-
-	require.Eventually(t, func() bool {
-		return peerState().GetState().GetSessionState() == gobgpapi.PeerState_SESSION_STATE_ESTABLISHED
-	}, 5*time.Second, 10*time.Millisecond, "BGP session did not establish")
-
-	uptime := peerState().GetTimers().GetState().GetUptime().AsTime()
+	since := instance.peerStatus(t, peer.Address).Since
 
 	// BFD and hold time changes must not reset the session
 	peer.Config.HoldTime = 30 * time.Second
 	peer.Config.BFD = &network.BGPBFDConfigSpec{TransmitInterval: 300 * time.Millisecond, ReceiveInterval: 300 * time.Millisecond, DetectMultiplier: 3}
 
-	ensure()
+	instance.ensure(t, config, testRouterID, peer)
 
-	assert.True(t, proto.Equal(internalbgp.BuildPeer(peer, false), internalbgp.InstancePeerKeysForTest(instance)[peer.Address]))
-
-	updated := peerState()
-	assert.EqualValues(t, 30, updated.GetTimers().GetConfig().GetHoldTime())
-	assert.True(t, updated.GetBfd().GetEnabled())
+	assert.NotEmpty(t, instance.peerStatus(t, peer.Address).BFDState, "the BFD change must be applied")
 
 	for deadline := time.Now().Add(time.Second); time.Now().Before(deadline); time.Sleep(10 * time.Millisecond) {
-		state := peerState()
+		status := instance.peerStatus(t, peer.Address)
 
-		require.Equal(t, gobgpapi.PeerState_SESSION_STATE_ESTABLISHED, state.GetState().GetSessionState(), "BGP session must stay up through an in-place update")
-		require.Equal(t, uptime, state.GetTimers().GetState().GetUptime().AsTime(), "BGP session must not be reset by an in-place update")
+		require.Equal(t, nethelpers.BGPSessionStateEstablished, status.State, "BGP session must stay up through an in-place update")
+		require.Equal(t, since, status.Since, "BGP session must not be reset by an in-place update")
 	}
 
-	for _, ttl := range []uint32{2, 255, 0} {
-		peer.Config.EBGPMultiHop = ttl
+	// the hold time is only negotiated in OPEN: the live session keeps the old one
+	assert.NotEqual(t, uint64(30), negotiatedHoldTime(t, speaker))
 
-		ensure()
+	// GoBGP resets the session for a multihop change, and the new OPEN carries the updated hold time
+	peer.Config.EBGPMultiHop = 2
 
-		multihop := peerState().GetEbgpMultihop()
-		assert.Equal(t, ttl > 0, multihop.GetEnabled())
+	instance.ensure(t, config, testRouterID, peer)
 
-		if ttl > 0 {
-			assert.Equal(t, ttl, multihop.GetMultihopTtl())
+	require.Eventually(t, func() bool {
+		return negotiatedHoldTime(t, speaker) == 30
+	}, 15*time.Second, 10*time.Millisecond, "the multihop and hold time changes must reach GoBGP")
+
+	assert.Equal(t, 1, instance.starts())
+}
+
+// negotiatedHoldTime returns the hold time of the speaker's established session with its only peer, or zero.
+func negotiatedHoldTime(t *testing.T, speaker *gobgpsrv.BgpServer) uint64 {
+	t.Helper()
+
+	var holdTime uint64
+
+	require.NoError(t, speaker.ListPeer(t.Context(), &gobgpapi.ListPeerRequest{}, func(peer *gobgpapi.Peer) {
+		if peer.GetState().GetSessionState() == gobgpapi.PeerState_SESSION_STATE_ESTABLISHED {
+			holdTime = peer.GetTimers().GetState().GetNegotiatedHoldTime()
 		}
-	}
+	}))
+
+	return holdTime
 }
 
 func TestDerivedRouterIDIsKeptWhilePeerIsEstablished(t *testing.T) {
@@ -505,64 +416,32 @@ func TestDerivedRouterIDIsKeptWhilePeerIsEstablished(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			ctx := t.Context()
-			instancePort := int32(testport.Listenable(t))
+			instance := newTestInstance(t)
+			peer := testPeer("127.0.0.2", 65000)
 
-			instance := internalbgp.NewInstance()
-			t.Cleanup(instance.Stop)
-
-			peer := internalbgp.Peer{
-				Address: "127.0.0.2",
-				Config:  network.BGPNeighborConfigSpec{Address: netip.MustParseAddr("127.0.0.2"), PeerASN: 65000, Passive: true},
-			}
-
-			core, logs := observer.New(zap.DebugLevel)
-
-			ensure := func(config network.BGPInstanceConfigSpec, candidates []netip.Addr, peers []internalbgp.Peer) {
+			ensure := func(config network.BGPInstanceConfigSpec, candidates []netip.Addr, peers ...internalbgp.Peer) {
 				t.Helper()
 
 				config.LocalASN = 65001
-				config.Neighbors = xslices.Map(peers, func(peer internalbgp.Peer) network.BGPNeighborConfigSpec { return peer.Config })
 
-				require.NoError(t, instance.EnsureServer(
-					ctx,
-					zap.New(core),
-					config,
-					candidates,
-					0,
-					peers,
-					nil,
-					instancePort,
-					func() {},
-				))
+				instance.ensure(t, config, candidates, peers...)
 			}
 
-			inState := func(state gobgpapi.PeerState_SessionState) func() bool {
-				return func() bool {
-					var matches bool
-
-					require.NoError(t, internalbgp.InstanceServerForTest(instance).ListPeer(ctx, &gobgpapi.ListPeerRequest{}, func(p *gobgpapi.Peer) {
-						matches = p.GetState().GetSessionState() == state
-					}))
-
-					return matches
-				}
-			}
-			established := inState(gobgpapi.PeerState_SESSION_STATE_ESTABLISHED)
-
-			ensure(test.initial, addrs(test.initialID), []internalbgp.Peer{peer})
+			ensure(test.initial, addrs(test.initialID), peer)
 
 			if test.deriveSame {
-				ensure(derived, addrs(test.initialID), []internalbgp.Peer{peer})
+				ensure(derived, addrs(test.initialID), peer)
 			}
 
 			if test.openOnly {
 				// a peer which sends its OPEN but never a KEEPALIVE holds the session in OpenConfirm
 				//
 				// The peer closes connections accepted before its FSM leaves Idle, and this one is never redialed.
-				require.Eventually(t, inState(gobgpapi.PeerState_SESSION_STATE_ACTIVE), 5*time.Second, 10*time.Millisecond, "BGP peer did not become active")
+				instance.waitState(t, peer.Address, nethelpers.BGPSessionStateActive)
 
-				conn, err := (&net.Dialer{LocalAddr: &net.TCPAddr{IP: net.ParseIP("127.0.0.2")}}).DialContext(ctx, "tcp", net.JoinHostPort("127.0.0.1", strconv.Itoa(int(instancePort))))
+				conn, err := (&net.Dialer{LocalAddr: &net.TCPAddr{IP: net.ParseIP(peer.Address)}}).DialContext(
+					t.Context(), "tcp", net.JoinHostPort("127.0.0.1", strconv.Itoa(int(instance.port))),
+				)
 				require.NoError(t, err)
 				t.Cleanup(func() { conn.Close() }) //nolint:errcheck
 
@@ -575,29 +454,23 @@ func TestDerivedRouterIDIsKeptWhilePeerIsEstablished(t *testing.T) {
 				_, err = conn.Write(openBytes)
 				require.NoError(t, err)
 
-				require.Eventually(t, inState(gobgpapi.PeerState_SESSION_STATE_OPENCONFIRM), 5*time.Second, 10*time.Millisecond, "BGP session did not reach OpenConfirm")
+				instance.waitState(t, peer.Address, nethelpers.BGPSessionStateOpenConfirm)
 
-				ensure(test.next, test.candidates, []internalbgp.Peer{peer})
+				ensure(test.next, test.candidates, peer)
 
-				bgp, err := internalbgp.InstanceServerForTest(instance).GetBgp(ctx, &gobgpapi.GetBgpRequest{})
-				require.NoError(t, err)
-				assert.Equal(t, test.expectedID, bgp.GetGlobal().GetRouterId())
+				assert.Equal(t, test.expectedID, instance.routerID(t))
 
 				return
 			}
 
-			fabricPeer := &gobgpapi.Peer{
-				Conf:      &gobgpapi.PeerConf{NeighborAddress: "127.0.0.1", PeerAsn: 65001},
-				Transport: &gobgpapi.Transport{LocalAddress: "127.0.0.2", RemotePort: uint32(instancePort)},
-			}
-
-			fabric := startBGPImportTestServer(t, ctx, 65000, "10.0.0.2", -1, false)
-			require.NoError(t, fabric.AddPeer(ctx, &gobgpapi.AddPeerRequest{Peer: fabricPeer}))
-			require.Eventually(t, established, 5*time.Second, 10*time.Millisecond, "BGP session did not establish")
+			speaker := instance.startSpeaker(t, peer.Address, 65000, 65001)
+			instance.waitState(t, peer.Address, nethelpers.BGPSessionStateEstablished)
 
 			if test.dropPeer {
-				require.NoError(t, fabric.DeletePeer(ctx, &gobgpapi.DeletePeerRequest{Address: fabricPeer.Conf.NeighborAddress}))
-				require.Eventually(t, func() bool { return !established() }, 5*time.Second, 10*time.Millisecond, "BGP session did not go down")
+				require.NoError(t, speaker.DeletePeer(t.Context(), &gobgpapi.DeletePeerRequest{Address: "127.0.0.1"}))
+				require.Eventually(t, func() bool {
+					return instance.peerStatus(t, peer.Address).State != nethelpers.BGPSessionStateEstablished
+				}, 5*time.Second, 10*time.Millisecond, "BGP session did not go down")
 			}
 
 			nextPeers := []internalbgp.Peer{peer}
@@ -606,19 +479,16 @@ func TestDerivedRouterIDIsKeptWhilePeerIsEstablished(t *testing.T) {
 			}
 
 			// the decision to keep the router ID is logged once, not on every reconcile
-			ensure(test.next, test.candidates, nextPeers)
-			ensure(test.next, test.candidates, nextPeers)
+			ensure(test.next, test.candidates, nextPeers...)
+			ensure(test.next, test.candidates, nextPeers...)
 
 			kept := 0
 			if test.expectedID == test.initialID {
 				kept = 1
 			}
 
-			assert.Equal(t, kept, logs.FilterMessageSnippet("keeping the BGP router ID").Len())
-
-			bgp, err := internalbgp.InstanceServerForTest(instance).GetBgp(ctx, &gobgpapi.GetBgpRequest{})
-			require.NoError(t, err)
-			assert.Equal(t, test.expectedID, bgp.GetGlobal().GetRouterId())
+			assert.Equal(t, kept, instance.logs.FilterMessageSnippet("keeping the BGP router ID").Len())
+			assert.Equal(t, test.expectedID, instance.routerID(t))
 		})
 	}
 }
@@ -656,7 +526,7 @@ func testEBGPPacketTTL(t *testing.T, ttl uint32) {
 		t.Context(),
 		zap.NewNop(),
 		network.BGPInstanceConfigSpec{LocalASN: 65001},
-		[]netip.Addr{netip.MustParseAddr("10.0.0.1")},
+		testRouterID,
 		0,
 		[]internalbgp.Peer{{
 			Address: "127.0.0.2",

@@ -17,6 +17,15 @@ import (
 	resourcenetwork "github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
+// best marks paths as the best paths of their destination, as GoBGP reports them.
+func best(paths ...*apiutil.Path) []*apiutil.Path {
+	for _, path := range paths {
+		path.Best = true
+	}
+
+	return paths
+}
+
 // TestLearnedRouteOutLinks pins the out-link contract of learned routes: only a link-local
 // (unnumbered) next-hop resolves to the peer interface, a numbered next-hop leaves the egress device
 // to the kernel, which resolves it from the gateway.
@@ -27,8 +36,7 @@ import (
 // A link-local next-hop whose peer interface is unknown is dropped: the kernel can't install a
 // link-local gateway without a device, so such a route would fail on every reconcile instead.
 func TestLearnedRouteOutLinks(t *testing.T) {
-	ctx := t.Context()
-	server := startBGPImportTestServer(t, ctx, 65000, "192.0.2.1", -1, false)
+	t.Parallel()
 
 	numbered := netip.MustParsePrefix("198.51.100.0/24")
 	numberedNexthop := netip.MustParseAddr("192.0.2.10")
@@ -37,40 +45,27 @@ func TestLearnedRouteOutLinks(t *testing.T) {
 	unresolvable := netip.MustParsePrefix("2001:db8:2::/64")
 	unresolvableNexthop := netip.MustParseAddr("fe80::3")
 
-	responses, err := server.AddPath(apiutil.AddPathRequest{Paths: []*apiutil.Path{
-		newBGPImportTestPath(t, numbered, 50),
-		newBGPLinkLocalTestPath(t, unnumbered, unnumberedNexthop),
-		newBGPLinkLocalTestPath(t, unresolvable, unresolvableNexthop),
-	}})
-	require.NoError(t, err)
-	require.Len(t, responses, 3)
-
-	for _, response := range responses {
-		require.NoError(t, response.Error)
-	}
-
-	instance := internalbgp.NewInstance()
-	internalbgp.SetInstanceServerForTest(instance, server)
-	internalbgp.SetInstancePeerIfacesForTest(instance, map[netip.Addr]string{unnumberedNexthop: "eth0"})
-	instance.SetOutputState(nil, resourcenetwork.BGPInstanceConfigSpec{InstallRoutes: true})
-
-	learned := instance.Snapshot(ctx).Learned
+	peerIfaces := map[netip.Addr]string{unnumberedNexthop: "eth0"}
 
 	assert.Equal(
 		t,
 		[]resourcenetwork.RouteNextHop{{Gateway: numberedNexthop}},
-		learned[numbered],
+		internalbgp.LearnedNexthops(best(newBGPImportTestPath(t, numbered)), peerIfaces, 0),
 		"a numbered next-hop must not carry an out-link",
 	)
 
 	assert.Equal(
 		t,
 		[]resourcenetwork.RouteNextHop{{Gateway: unnumberedNexthop, OutLinkName: "eth0"}},
-		learned[unnumbered],
+		internalbgp.LearnedNexthops(best(newBGPLinkLocalTestPath(t, unnumbered, unnumberedNexthop)), peerIfaces, 0),
 		"a link-local next-hop must resolve to the peer interface",
 	)
 
-	assert.NotContains(t, learned, unresolvable, "a link-local next-hop without a known peer interface must be dropped")
+	assert.Empty(
+		t,
+		internalbgp.LearnedNexthops(best(newBGPLinkLocalTestPath(t, unresolvable, unresolvableNexthop)), peerIfaces, 0),
+		"a link-local next-hop without a known peer interface must be dropped",
+	)
 }
 
 // newBGPLinkLocalTestPath builds a path as advertised by an unnumbered peer: both the next-hop and
@@ -109,87 +104,66 @@ func newBGPLinkLocalTestPath(t *testing.T, prefix netip.Prefix, linkLocal netip.
 // order: GoBGP doesn't promise a stable path order, and the kernel keeps a multipath route's
 // next-hops as installed, so an unstable order would rewrite the route on every reconcile.
 func TestLearnedRouteNextHopOrder(t *testing.T) {
-	ctx := t.Context()
-	server := startBGPImportTestServer(t, ctx, 65000, "192.0.2.1", -1, true)
+	t.Parallel()
 
 	prefix := netip.MustParsePrefix("203.0.113.0/24")
 	high := netip.MustParseAddr("192.0.2.20")
 	low := netip.MustParseAddr("192.0.2.10")
 
-	// GoBGP breaks the best-path tie on the peer address, so a peer order opposite to the next-hop
-	// order is what the sorting has to undo
-	responses, err := server.AddPath(apiutil.AddPathRequest{Paths: []*apiutil.Path{
-		newBGPNumberedTestPath(t, prefix, netip.MustParseAddr("192.0.2.5"), high),
-		newBGPNumberedTestPath(t, prefix, netip.MustParseAddr("192.0.2.6"), low),
-	}})
-	require.NoError(t, err)
-	require.Len(t, responses, 2)
-
-	for _, response := range responses {
-		require.NoError(t, response.Error)
+	learned := func(maxPaths uint8) []resourcenetwork.RouteNextHop {
+		return internalbgp.LearnedNexthops(best(
+			newBGPNumberedTestPath(t, prefix, netip.MustParseAddr("192.0.2.5"), high),
+			newBGPNumberedTestPath(t, prefix, netip.MustParseAddr("192.0.2.6"), low),
+		), nil, maxPaths)
 	}
 
-	instance := internalbgp.NewInstance()
-	internalbgp.SetInstanceServerForTest(instance, server)
-	instance.SetOutputState(nil, resourcenetwork.BGPInstanceConfigSpec{InstallRoutes: true})
-
-	assert.Equal(
-		t,
-		[]resourcenetwork.RouteNextHop{{Gateway: low}, {Gateway: high}},
-		instance.Snapshot(ctx).Learned[prefix],
-		"ECMP next-hops must be reported in a canonical order",
-	)
-
-	instance.SetOutputState(nil, resourcenetwork.BGPInstanceConfigSpec{InstallRoutes: true, MaxPaths: 1})
-
-	assert.Equal(
-		t,
-		[]resourcenetwork.RouteNextHop{{Gateway: low}},
-		instance.Snapshot(ctx).Learned[prefix],
-		"maxPaths must cap the installed ECMP next-hops",
-	)
-
-	instance.SetOutputState(nil, resourcenetwork.BGPInstanceConfigSpec{InstallRoutes: true, MaxPaths: 2})
-
-	assert.Equal(
-		t,
-		[]resourcenetwork.RouteNextHop{{Gateway: low}, {Gateway: high}},
-		instance.Snapshot(ctx).Learned[prefix],
-		"maxPaths equal to the next-hop count must keep all of them",
-	)
+	assert.Equal(t, []resourcenetwork.RouteNextHop{{Gateway: low}, {Gateway: high}}, learned(0), "ECMP next-hops must be reported in a canonical order")
+	assert.Equal(t, []resourcenetwork.RouteNextHop{{Gateway: low}}, learned(1), "maxPaths must cap the installed ECMP next-hops")
+	assert.Equal(t, []resourcenetwork.RouteNextHop{{Gateway: low}, {Gateway: high}}, learned(2), "maxPaths equal to the next-hop count must keep all of them")
 }
 
 // TestLearnedRouteDuplicateNextHops asserts that best paths sharing a next-hop (e.g. the same route
 // reflected by two route reflectors with the next-hop unchanged) collapse into a single next-hop: the
 // kernel rejects a duplicate IPv6 next-hop and double-weights a duplicate IPv4 one.
 func TestLearnedRouteDuplicateNextHops(t *testing.T) {
-	ctx := t.Context()
-	server := startBGPImportTestServer(t, ctx, 65000, "192.0.2.1", -1, true)
+	t.Parallel()
 
 	prefix := netip.MustParsePrefix("203.0.113.0/24")
 	gateway := netip.MustParseAddr("192.0.2.10")
 
-	responses, err := server.AddPath(apiutil.AddPathRequest{Paths: []*apiutil.Path{
-		newBGPNumberedTestPath(t, prefix, netip.MustParseAddr("192.0.2.5"), gateway),
-		newBGPNumberedTestPath(t, prefix, netip.MustParseAddr("192.0.2.6"), gateway),
-	}})
-	require.NoError(t, err)
-	require.Len(t, responses, 2)
+	assert.Equal(
+		t,
+		[]resourcenetwork.RouteNextHop{{Gateway: gateway}},
+		internalbgp.LearnedNexthops(best(
+			newBGPNumberedTestPath(t, prefix, netip.MustParseAddr("192.0.2.5"), gateway),
+			newBGPNumberedTestPath(t, prefix, netip.MustParseAddr("192.0.2.6"), gateway),
+		), nil, 0),
+		"best paths sharing a next-hop must collapse into one",
+	)
+}
 
-	for _, response := range responses {
-		require.NoError(t, response.Error)
-	}
+// TestLearnedRouteBestPaths asserts that only best paths become routes.
+func TestLearnedRouteBestPaths(t *testing.T) {
+	t.Parallel()
 
-	instance := internalbgp.NewInstance()
-	internalbgp.SetInstanceServerForTest(instance, server)
-	instance.SetOutputState(nil, resourcenetwork.BGPInstanceConfigSpec{InstallRoutes: true})
+	prefix := netip.MustParsePrefix("203.0.113.0/24")
+	gateway := netip.MustParseAddr("192.0.2.10")
+
+	withdrawn := best(newBGPNumberedTestPath(t, prefix, netip.MustParseAddr("192.0.2.6"), netip.MustParseAddr("192.0.2.20")))[0]
+	withdrawn.Withdrawal = true
 
 	assert.Equal(
 		t,
 		[]resourcenetwork.RouteNextHop{{Gateway: gateway}},
-		instance.Snapshot(ctx).Learned[prefix],
-		"best paths sharing a next-hop must collapse into one",
+		internalbgp.LearnedNexthops(append(
+			best(newBGPNumberedTestPath(t, prefix, netip.MustParseAddr("192.0.2.5"), gateway)),
+			newBGPNumberedTestPath(t, prefix, netip.MustParseAddr("192.0.2.7"), netip.MustParseAddr("192.0.2.30")),
+			withdrawn,
+		), nil, 0),
+		"paths which are not best and withdrawn paths must not become routes",
 	)
+
+	assert.Empty(t, internalbgp.LearnedNexthops([]*apiutil.Path{newBGPImportTestPath(t, prefix)}, nil, 0))
 }
 
 func TestLearnedNexthop(t *testing.T) {

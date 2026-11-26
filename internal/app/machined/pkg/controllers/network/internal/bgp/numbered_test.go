@@ -139,7 +139,7 @@ func testNumberedBFDSource(t *testing.T, ipv6, outgoing bool) {
 	ctx, cancel := context.WithTimeout(t.Context(), 15*time.Second)
 	defer cancel()
 
-	server := startBGPImportTestServer(t, ctx, 65001, "192.0.2.1", 179, false)
+	server := startBGPTestServer(t, 65001, "192.0.2.1", 179)
 	peer := internalbgp.BuildPeer(internalbgp.Peer{Address: remoteIP, Config: network.BGPNeighborConfigSpec{
 		Address: netip.MustParseAddr(remoteIP), PeerASN: 65002, Passive: !outgoing, BFD: &network.BGPBFDConfigSpec{},
 	}}, false)

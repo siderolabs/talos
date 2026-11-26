@@ -5,7 +5,6 @@
 package bgp_test
 
 import (
-	"context"
 	"net/netip"
 	"sync/atomic"
 	"testing"
@@ -15,293 +14,128 @@ import (
 	"github.com/osrg/gobgp/v4/pkg/apiutil"
 	bgppacket "github.com/osrg/gobgp/v4/pkg/packet/bgp"
 	gobgpsrv "github.com/osrg/gobgp/v4/pkg/server"
-	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	internalbgp "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/internal/bgp"
-	"github.com/siderolabs/talos/internal/pkg/testport"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	resourcenetwork "github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
-func TestBGPRouteImportLifecycle(t *testing.T) {
-	ctx := t.Context()
-	fabricPort := int32(testport.Listenable(t))
-	sourceServer := startBGPImportTestServer(t, ctx, 4200000000, "192.0.2.1", -1, false)
-	targetServer := startBGPImportTestServer(t, ctx, 65001, "192.0.2.2", -1, false)
-	fabricServer := startBGPImportTestServer(t, ctx, 65000, "192.0.2.3", fabricPort, false)
-	connectBGPImportTestFabric(t, ctx, targetServer, fabricServer, fabricPort)
+const (
+	workloadASN            = 4200000000
+	workloadSpeakerASN     = 4200000001
+	workloadSpeakerAddress = "127.0.0.2"
+	fabricASN              = 65001
+	fabricSpeakerASN       = 65000
+	fabricSpeakerAddress   = "127.0.0.3"
+)
 
-	prefix := netip.MustParsePrefix("198.51.100.100/32")
-	sourcePath := newBGPImportTestPath(t, prefix, 50)
-	originatedPrefix := netip.MustParsePrefix("198.51.100.101/32")
-	originatedSourcePath := newBGPImportTestPath(t, originatedPrefix, 60)
+var importSelector = netip.MustParsePrefix("198.51.100.0/24")
 
-	responses, err := sourceServer.AddPath(apiutil.AddPathRequest{Paths: []*apiutil.Path{sourcePath, originatedSourcePath}})
-	require.NoError(t, err)
-	require.Len(t, responses, 2)
+// importFixture is a Talos "workload" instance whose routes are imported into a Talos "fabric" instance,
+// which advertises them to a fabric speaker.
+type importFixture struct {
+	workload *testInstance
+	fabric   *testInstance
 
-	for _, response := range responses {
-		require.NoError(t, response.Error)
-	}
+	fabricSpeaker *gobgpsrv.BgpServer
 
-	source := internalbgp.NewInstance()
-	internalbgp.SetInstanceServerForTest(source, sourceServer)
-	source.SetOutputState(nil, resourcenetwork.BGPInstanceConfigSpec{})
-	assert.Empty(t, source.Snapshot(ctx).Learned, "installRoutes=false must suppress FIB output")
-
-	source.SetOutputState(nil, resourcenetwork.BGPInstanceConfigSpec{InstallRoutes: true})
-	assert.Contains(t, source.Snapshot(ctx).Learned, prefix, "installRoutes=true must restore FIB output")
-
-	source.SetOutputState(nil, resourcenetwork.BGPInstanceConfigSpec{})
-	candidates, err := internalbgp.ListImportCandidatesForTest(
-		source,
-		[]netip.Prefix{netip.MustParsePrefix("198.51.100.0/24")},
-	)
-	require.NoError(t, err)
-	require.Contains(t, candidates, prefix, "installRoutes=false must retain routes in the source BGP RIB")
-
-	target := internalbgp.NewInstance()
-	internalbgp.SetInstanceServerForTest(target, targetServer)
-	require.NoError(t, target.ReconcileOriginated([]netip.Prefix{originatedPrefix}))
-	target.SetOutputState([]netip.Prefix{originatedPrefix}, resourcenetwork.BGPInstanceConfigSpec{
-		ImportRoutes: []resourcenetwork.BGPImportRouteSpec{{
-			BGPInstance: "workload",
-			Prefixes:    []netip.Prefix{netip.MustParsePrefix("198.51.100.0/24")},
-		}},
-		InstallRoutes: true,
-	})
-
-	instances := map[string]*internalbgp.Instance{
-		"fabric":   target,
-		"workload": source,
-	}
-	desiredInstances := map[string]struct{}{"fabric": {}, "workload": {}}
-
-	desiredCount, ready, err := internalbgp.ReconcileImportedPaths("fabric", target, instances, desiredInstances)
-	require.NoError(t, err)
-	require.True(t, ready)
-	require.Equal(t, 1, desiredCount, "a prefix originated by the target must not be imported")
-	require.True(t, internalbgp.InstanceImportedForTest(target, prefix))
-	require.False(t, internalbgp.InstanceImportedForTest(target, originatedPrefix))
-	assert.Empty(t, target.Snapshot(ctx).Learned, "an imported path must not become a target RouteSpec")
-
-	echoCandidates, err := internalbgp.ListImportCandidatesForTest(
-		target,
-		[]netip.Prefix{netip.MustParsePrefix("198.51.100.0/24")},
-	)
-	require.NoError(t, err)
-	assert.Empty(t, echoCandidates, "locally originated and imported paths must not be import candidates")
-
-	imported := listBGPImportTestPath(t, targetServer, prefix)
-	require.NotNil(t, imported)
-	assert.False(t, imported.PeerAddress.IsValid(), "the imported path must be local to the target server")
-	assert.Equal(t, netip.IPv4Unspecified(), internalbgp.PathNexthop(imported))
-	assert.Equal(t, uint32(50), importedAttribute[*bgppacket.PathAttributeMultiExitDisc](t, imported).Value)
-	assert.Equal(t, []uint32{65000<<16 | 100}, importedAttribute[*bgppacket.PathAttributeCommunities](t, imported).Value)
-	require.Eventually(t, func() bool {
-		return listBGPImportTestPath(t, fabricServer, prefix) != nil
-	}, 5*time.Second, 10*time.Millisecond, "target did not advertise the imported path to its fabric peer")
-
-	updatedPath := newBGPImportTestPath(t, prefix, 75)
-	responses, err = sourceServer.AddPath(apiutil.AddPathRequest{Paths: []*apiutil.Path{updatedPath}})
-	require.NoError(t, err)
-	require.Len(t, responses, 1)
-	require.NoError(t, responses[0].Error)
-
-	desiredCount, ready, err = internalbgp.ReconcileImportedPaths("fabric", target, instances, desiredInstances)
-	require.NoError(t, err)
-	require.True(t, ready)
-	require.Equal(t, 1, desiredCount)
-
-	imported = listBGPImportTestPath(t, targetServer, prefix)
-	require.NotNil(t, imported)
-	assert.Equal(t, uint32(75), importedAttribute[*bgppacket.PathAttributeMultiExitDisc](t, imported).Value)
-
-	internalbgp.SetInstanceServerForTest(source, nil)
-
-	_, ready, err = internalbgp.ReconcileImportedPaths("fabric", target, instances, desiredInstances)
-	require.NoError(t, err)
-	require.False(t, ready, "a configured but temporarily unavailable source must preserve imports")
-	require.True(t, internalbgp.InstanceImportedForTest(target, prefix))
-
-	internalbgp.SetInstanceServerForTest(source, sourceServer)
-
-	delete(instances, "workload")
-	desiredCount, ready, err = internalbgp.ReconcileImportedPaths(
-		"fabric",
-		target,
-		instances,
-		map[string]struct{}{"fabric": {}},
-	)
-	require.NoError(t, err)
-	require.True(t, ready, "a deliberately removed source must withdraw imports")
-	require.Zero(t, desiredCount)
-	assert.Zero(t, target.ImportedCount())
-	assert.Nil(t, listBGPImportTestPath(t, targetServer, prefix))
-
-	instances["workload"] = source
-	desiredCount, ready, err = internalbgp.ReconcileImportedPaths("fabric", target, instances, desiredInstances)
-	require.NoError(t, err)
-	require.True(t, ready)
-	require.Equal(t, 1, desiredCount)
-	require.True(t, internalbgp.InstanceImportedForTest(target, prefix))
-
-	require.NoError(t, sourceServer.DeletePath(apiutil.DeletePathRequest{Paths: []*apiutil.Path{updatedPath}}))
-
-	desiredCount, ready, err = internalbgp.ReconcileImportedPaths("fabric", target, instances, desiredInstances)
-	require.NoError(t, err)
-	require.True(t, ready)
-	require.Zero(t, desiredCount)
-	assert.Zero(t, target.ImportedCount())
-	assert.Nil(t, listBGPImportTestPath(t, targetServer, prefix))
+	instances map[string]*internalbgp.Instance
+	desired   map[string]struct{}
 }
 
-func TestImportedPrefixBecomesOriginated(t *testing.T) {
-	ctx := t.Context()
-	sourceServer := startBGPImportTestServer(t, ctx, 4200000000, "192.0.2.1", -1, false)
-	targetServer := startBGPImportTestServer(t, ctx, 65001, "192.0.2.2", -1, false)
-
-	prefix := netip.MustParsePrefix("198.51.100.100/32")
-	other := netip.MustParsePrefix("198.51.100.101/32")
-
-	_, err := sourceServer.AddPath(apiutil.AddPathRequest{Paths: []*apiutil.Path{newBGPImportTestPath(t, prefix, 50), newBGPImportTestPath(t, other, 50)}})
-	require.NoError(t, err)
-
-	source := internalbgp.NewInstance()
-	internalbgp.SetInstanceServerForTest(source, sourceServer)
-
-	target := internalbgp.NewInstance()
-	internalbgp.SetInstanceServerForTest(target, targetServer)
-	target.SetOutputState(nil, resourcenetwork.BGPInstanceConfigSpec{
-		ImportRoutes: []resourcenetwork.BGPImportRouteSpec{{
-			BGPInstance: "workload",
-			Prefixes:    []netip.Prefix{netip.MustParsePrefix("198.51.100.0/24")},
-		}},
-		InstallRoutes: true,
-	})
-
-	instances := map[string]*internalbgp.Instance{"fabric": target, "workload": source}
-	desiredInstances := map[string]struct{}{"fabric": {}, "workload": {}}
-
-	_, _, err = internalbgp.ReconcileImportedPaths("fabric", target, instances, desiredInstances)
-	require.NoError(t, err)
-	require.True(t, internalbgp.InstanceImportedForTest(target, prefix))
-
-	// an address on an advertised link makes the target originate the imported prefix: the originated path
-	// replaces the imported one in GoBGP
-	require.NoError(t, target.ReconcileOriginated([]netip.Prefix{prefix}))
-
-	_, err = sourceServer.AddPath(apiutil.AddPathRequest{Paths: []*apiutil.Path{newBGPImportTestPath(t, other, 75)}})
-	require.NoError(t, err)
-
-	_, _, err = internalbgp.ReconcileImportedPaths("fabric", target, instances, desiredInstances)
-	require.NoError(t, err)
-	assert.False(t, internalbgp.InstanceImportedForTest(target, prefix))
-
-	originated, err := internalbgp.BuildOriginatedPath(prefix)
-	require.NoError(t, err)
-
-	path := listBGPImportTestPath(t, targetServer, prefix)
-	require.NotNil(t, path)
-
-	attrType := func(attr bgppacket.PathAttributeInterface) bgppacket.BGPAttrType { return attr.GetType() }
-	assert.Equal(t, xslices.Map(originated.Attrs, attrType), xslices.Map(path.Attrs, attrType),
-		"the target must hold the originated path, not the imported one")
-	assert.Equal(t, uint32(75), importedAttribute[*bgppacket.PathAttributeMultiExitDisc](t, listBGPImportTestPath(t, targetServer, other)).Value,
-		"the other imports must still be reconciled")
-
-	// once the target stops originating it, the prefix is imported again
-	require.NoError(t, target.ReconcileOriginated(nil))
-
-	_, _, err = internalbgp.ReconcileImportedPaths("fabric", target, instances, desiredInstances)
-	require.NoError(t, err)
-	assert.True(t, internalbgp.InstanceImportedForTest(target, prefix))
-	assert.Equal(t, uint32(50), importedAttribute[*bgppacket.PathAttributeMultiExitDisc](t, listBGPImportTestPath(t, targetServer, prefix)).Value)
-}
-
-func TestBGPImportFamilies(t *testing.T) {
-	t.Parallel()
-
-	assert.Equal(
-		t,
-		[]bgppacket.Family{bgppacket.RF_IPv4_UC},
-		internalbgp.ImportFamiliesForTest([]netip.Prefix{
-			netip.MustParsePrefix("198.51.100.0/24"),
-			netip.MustParsePrefix("203.0.113.0/24"),
-		}),
-	)
-	assert.Equal(
-		t,
-		[]bgppacket.Family{bgppacket.RF_IPv6_UC},
-		internalbgp.ImportFamiliesForTest([]netip.Prefix{netip.MustParsePrefix("2001:db8::/32")}),
-	)
-	assert.Equal(
-		t,
-		[]bgppacket.Family{bgppacket.RF_IPv4_UC, bgppacket.RF_IPv6_UC},
-		internalbgp.ImportFamiliesForTest([]netip.Prefix{
-			netip.MustParsePrefix("198.51.100.0/24"),
-			netip.MustParsePrefix("2001:db8::/32"),
-		}),
-	)
-	assert.Empty(t, internalbgp.ImportFamiliesForTest(nil))
-}
-
-// startBGPImportTestServer starts a GoBGP server; with multipath enabled it keeps all equal-cost paths as best.
-func startBGPImportTestServer(t *testing.T, ctx context.Context, asn uint32, routerID string, listenPort int32, multipath bool) *gobgpsrv.BgpServer {
+// newImportFixture starts both instances: the workload instance peers with workloadPeer, the fabric speaker is
+// connected to the fabric instance.
+func newImportFixture(t *testing.T, workloadPeer internalbgp.Peer) *importFixture {
 	t.Helper()
 
-	server := gobgpsrv.NewBgpServer()
-	go server.Serve()
+	fixture := &importFixture{
+		workload: newTestInstance(t),
+		fabric:   newTestInstance(t),
+	}
 
-	require.NoError(t, server.StartBgp(ctx, &gobgpapi.StartBgpRequest{Global: &gobgpapi.Global{
-		Asn:              asn,
-		RouterId:         routerID,
-		ListenPort:       listenPort,
-		UseMultiplePaths: multipath,
-	}}))
+	fixture.workload.ensure(t, resourcenetwork.BGPInstanceConfigSpec{LocalASN: workloadASN}, []netip.Addr{netip.MustParseAddr("192.0.2.1")}, workloadPeer)
+	fixture.workload.SetOutputState(nil, resourcenetwork.BGPInstanceConfigSpec{InstallRoutes: true})
 
-	t.Cleanup(server.Stop)
-
-	return server
-}
-
-func TestImportedPathChangeIsReplacedInPlace(t *testing.T) {
-	ctx := t.Context()
-	fabricPort := int32(testport.Listenable(t))
-	sourceServer := startBGPImportTestServer(t, ctx, 4200000000, "192.0.2.1", -1, false)
-	targetServer := startBGPImportTestServer(t, ctx, 65001, "192.0.2.2", -1, false)
-	fabricServer := startBGPImportTestServer(t, ctx, 65000, "192.0.2.3", fabricPort, false)
-	connectBGPImportTestFabric(t, ctx, targetServer, fabricServer, fabricPort)
-
-	prefix := netip.MustParsePrefix("198.51.100.100/32")
-
-	_, err := sourceServer.AddPath(apiutil.AddPathRequest{Paths: []*apiutil.Path{newBGPImportTestPath(t, prefix, 50)}})
-	require.NoError(t, err)
-
-	source := internalbgp.NewInstance()
-	internalbgp.SetInstanceServerForTest(source, sourceServer)
-
-	target := internalbgp.NewInstance()
-	internalbgp.SetInstanceServerForTest(target, targetServer)
-	target.SetOutputState(nil, resourcenetwork.BGPInstanceConfigSpec{
-		ImportRoutes: []resourcenetwork.BGPImportRouteSpec{{
-			BGPInstance: "workload",
-			Prefixes:    []netip.Prefix{netip.MustParsePrefix("198.51.100.0/24")},
-		}},
+	fixture.fabric.ensure(t, resourcenetwork.BGPInstanceConfigSpec{LocalASN: fabricASN}, []netip.Addr{netip.MustParseAddr("192.0.2.2")},
+		testPeer(fabricSpeakerAddress, fabricSpeakerASN))
+	fixture.fabric.SetOutputState(nil, resourcenetwork.BGPInstanceConfigSpec{
+		ImportRoutes:  []resourcenetwork.BGPImportRouteSpec{{BGPInstance: "workload", Prefixes: []netip.Prefix{importSelector}}},
 		InstallRoutes: true,
 	})
 
-	instances := map[string]*internalbgp.Instance{"fabric": target, "workload": source}
-	desired := map[string]struct{}{"fabric": {}, "workload": {}}
+	fixture.fabricSpeaker = fixture.fabric.startSpeaker(t, fabricSpeakerAddress, fabricSpeakerASN, fabricASN)
+	fixture.fabric.waitState(t, fabricSpeakerAddress, nethelpers.BGPSessionStateEstablished)
 
-	_, _, err = internalbgp.ReconcileImportedPaths("fabric", target, instances, desired)
+	fixture.instances = map[string]*internalbgp.Instance{"fabric": fixture.fabric.Instance, "workload": fixture.workload.Instance}
+	fixture.desired = map[string]struct{}{"fabric": {}, "workload": {}}
+
+	return fixture
+}
+
+// startWorkloadSpeaker starts a plain workload speaker for the workload instance.
+func (fixture *importFixture) startWorkloadSpeaker(t *testing.T) *gobgpsrv.BgpServer {
+	t.Helper()
+
+	speaker := fixture.workload.startSpeaker(t, workloadSpeakerAddress, workloadSpeakerASN, workloadASN)
+	fixture.workload.waitState(t, workloadSpeakerAddress, nethelpers.BGPSessionStateEstablished)
+
+	return speaker
+}
+
+func (fixture *importFixture) reconcile(t *testing.T) (int, bool) {
+	t.Helper()
+
+	count, ready, err := internalbgp.ReconcileImportedPaths("fabric", fixture.fabric.Instance, fixture.instances, fixture.desired)
 	require.NoError(t, err)
-	require.Eventually(t, func() bool { return listBGPImportTestPath(t, fabricServer, prefix) != nil }, 5*time.Second, 10*time.Millisecond)
+
+	return count, ready
+}
+
+// fabricPath returns the fabric speaker's best path for the prefix, or nil.
+func (fixture *importFixture) fabricPath(t *testing.T, prefix netip.Prefix) *apiutil.Path {
+	t.Helper()
+
+	return listBGPImportTestPath(t, fixture.fabricSpeaker, prefix)
+}
+
+// waitFabricMED waits until the fabric speaker has the prefix with the MED, imported from the workload instance.
+func (fixture *importFixture) waitFabricMED(t *testing.T, prefix netip.Prefix, med uint32) {
+	t.Helper()
+
+	require.Eventually(t, func() bool {
+		fixture.reconcile(t)
+
+		path := fixture.fabricPath(t, prefix)
+
+		if path == nil {
+			return false
+		}
+
+		attr, ok := findAttribute[*bgppacket.PathAttributeMultiExitDisc](path)
+
+		return ok && attr.Value == med
+	}, 15*time.Second, 10*time.Millisecond, "fabric speaker did not get %s with MED %d", prefix, med)
+}
+
+func (fixture *importFixture) waitFabricWithdrawn(t *testing.T, prefix netip.Prefix) {
+	t.Helper()
+
+	require.Eventually(t, func() bool {
+		fixture.reconcile(t)
+
+		return fixture.fabricPath(t, prefix) == nil
+	}, 15*time.Second, 10*time.Millisecond, "fabric speaker did not withdraw %s", prefix)
+}
+
+// watchFabricWithdrawals counts the withdrawals of the prefix seen by the fabric speaker.
+func (fixture *importFixture) watchFabricWithdrawals(t *testing.T, prefix netip.Prefix) *atomic.Int32 {
+	t.Helper()
 
 	var withdrawals atomic.Int32
 
-	require.NoError(t, fabricServer.WatchEvent(ctx, gobgpsrv.WatchEventMessageCallbacks{
+	require.NoError(t, fixture.fabricSpeaker.WatchEvent(t.Context(), gobgpsrv.WatchEventMessageCallbacks{
 		OnBestPath: func(paths []*apiutil.Path, _ time.Time) {
 			for _, path := range paths {
 				if path.Withdrawal && path.Nlri.String() == prefix.String() {
@@ -311,96 +145,257 @@ func TestImportedPathChangeIsReplacedInPlace(t *testing.T) {
 		},
 	}, gobgpsrv.WatchBestPath(false)))
 
-	updatedPath := newBGPImportTestPath(t, prefix, 75)
+	return &withdrawals
+}
 
-	_, err = sourceServer.AddPath(apiutil.AddPathRequest{Paths: []*apiutil.Path{updatedPath}})
+// advertise originates the prefix from a speaker with the MED and a community.
+func advertise(t *testing.T, speaker *gobgpsrv.BgpServer, prefix netip.Prefix, med uint32) *apiutil.Path {
+	t.Helper()
+
+	path, err := internalbgp.BuildOriginatedPath(prefix)
 	require.NoError(t, err)
 
-	_, _, err = internalbgp.ReconcileImportedPaths("fabric", target, instances, desired)
+	path.Attrs = append(path.Attrs,
+		bgppacket.NewPathAttributeMultiExitDisc(med),
+		bgppacket.NewPathAttributeCommunities([]uint32{65000<<16 | 100}),
+	)
+
+	responses, err := speaker.AddPath(apiutil.AddPathRequest{Paths: []*apiutil.Path{path}})
 	require.NoError(t, err)
+	require.Len(t, responses, 1)
+	require.NoError(t, responses[0].Error)
+
+	return path
+}
+
+func TestBGPRouteImportLifecycle(t *testing.T) {
+	t.Parallel()
+
+	fixture := newImportFixture(t, testPeer(workloadSpeakerAddress, workloadSpeakerASN))
+	workloadSpeaker := fixture.startWorkloadSpeaker(t)
+
+	prefix := netip.MustParsePrefix("198.51.100.100/32")
+	originatedPrefix := netip.MustParsePrefix("198.51.100.101/32")
+
+	advertise(t, workloadSpeaker, prefix, 50)
+	advertise(t, workloadSpeaker, originatedPrefix, 60)
 
 	require.Eventually(t, func() bool {
-		path := listBGPImportTestPath(t, fabricServer, prefix)
+		return len(fixture.workload.Snapshot(t.Context()).Learned) == 2
+	}, 5*time.Second, 10*time.Millisecond, "workload instance did not learn the speaker's paths")
 
-		return path != nil && importedAttribute[*bgppacket.PathAttributeMultiExitDisc](t, path).Value == 75
-	}, 5*time.Second, 10*time.Millisecond)
+	fixture.workload.SetOutputState(nil, resourcenetwork.BGPInstanceConfigSpec{})
+	assert.Empty(t, fixture.workload.Snapshot(t.Context()).Learned, "installRoutes=false must suppress FIB output")
+
+	// the fabric instance originates one of the prefixes itself
+	require.NoError(t, fixture.fabric.ReconcileOriginated([]netip.Prefix{originatedPrefix}))
+	fixture.fabric.SetOutputState([]netip.Prefix{originatedPrefix}, resourcenetwork.BGPInstanceConfigSpec{
+		ImportRoutes:  []resourcenetwork.BGPImportRouteSpec{{BGPInstance: "workload", Prefixes: []netip.Prefix{importSelector}}},
+		InstallRoutes: true,
+	})
+
+	count, ready := fixture.reconcile(t)
+	require.True(t, ready)
+	require.Equal(t, 1, count, "a prefix originated by the target must not be imported, installRoutes=false must retain routes in the RIB")
+	assert.Equal(t, 1, fixture.fabric.ImportedCount())
+	assert.Empty(t, fixture.fabric.Snapshot(t.Context()).Learned, "an imported path must not become a target RouteSpec")
+
+	fixture.waitFabricMED(t, prefix, 50)
+	assert.Equal(t, []uint32{65000<<16 | 100}, importedAttribute[*bgppacket.PathAttributeCommunities](t, fixture.fabricPath(t, prefix)).Value)
+
+	var originated *apiutil.Path
+
+	require.Eventually(t, func() bool {
+		originated = fixture.fabricPath(t, originatedPrefix)
+
+		return originated != nil
+	}, 5*time.Second, 10*time.Millisecond, "fabric speaker did not receive the originated path")
+
+	_, imported := findAttribute[*bgppacket.PathAttributeMultiExitDisc](originated)
+	assert.False(t, imported, "the fabric must get the originated path, not the imported one")
+
+	advertise(t, workloadSpeaker, prefix, 75)
+	fixture.waitFabricMED(t, prefix, 75)
+
+	// a configured but temporarily unavailable source preserves imports
+	delete(fixture.instances, "workload")
+
+	_, ready = fixture.reconcile(t)
+	require.False(t, ready, "a configured but temporarily unavailable source must preserve imports")
+	assert.Equal(t, 1, fixture.fabric.ImportedCount())
+
+	// a deliberately removed source withdraws them
+	delete(fixture.desired, "workload")
+
+	count, ready = fixture.reconcile(t)
+	require.True(t, ready, "a deliberately removed source must withdraw imports")
+	require.Zero(t, count)
+	assert.Zero(t, fixture.fabric.ImportedCount())
+	fixture.waitFabricWithdrawn(t, prefix)
+
+	fixture.instances["workload"] = fixture.workload.Instance
+	fixture.desired["workload"] = struct{}{}
+
+	fixture.waitFabricMED(t, prefix, 75)
+
+	// the source withdraws the path
+	path, err := internalbgp.BuildOriginatedPath(prefix)
+	require.NoError(t, err)
+	require.NoError(t, workloadSpeaker.DeletePath(apiutil.DeletePathRequest{Paths: []*apiutil.Path{path}}))
+
+	fixture.waitFabricWithdrawn(t, prefix)
+	assert.Zero(t, fixture.fabric.ImportedCount())
+}
+
+func TestImportedPrefixBecomesOriginated(t *testing.T) {
+	t.Parallel()
+
+	fixture := newImportFixture(t, testPeer(workloadSpeakerAddress, workloadSpeakerASN))
+	workloadSpeaker := fixture.startWorkloadSpeaker(t)
+
+	prefix := netip.MustParsePrefix("198.51.100.100/32")
+	other := netip.MustParsePrefix("198.51.100.101/32")
+
+	advertise(t, workloadSpeaker, prefix, 50)
+	advertise(t, workloadSpeaker, other, 50)
+
+	fixture.waitFabricMED(t, prefix, 50)
+	fixture.waitFabricMED(t, other, 50)
+
+	// an address on an advertised link makes the target originate the imported prefix: the originated path
+	// replaces the imported one in GoBGP
+	require.NoError(t, fixture.fabric.ReconcileOriginated([]netip.Prefix{prefix}))
+
+	advertise(t, workloadSpeaker, other, 75)
+	fixture.waitFabricMED(t, other, 75)
+
+	assert.Equal(t, 1, fixture.fabric.ImportedCount(), "the originated prefix must not be imported")
+	require.Eventually(t, func() bool {
+		path := fixture.fabricPath(t, prefix)
+
+		if path == nil {
+			return false
+		}
+
+		_, imported := findAttribute[*bgppacket.PathAttributeMultiExitDisc](path)
+
+		return !imported
+	}, 5*time.Second, 10*time.Millisecond, "the fabric must get the originated path, not the imported one")
+
+	// once the target stops originating it, the prefix is imported again
+	require.NoError(t, fixture.fabric.ReconcileOriginated(nil))
+
+	fixture.waitFabricMED(t, prefix, 50)
+	assert.Equal(t, 2, fixture.fabric.ImportedCount())
+}
+
+func TestImportedPathChangeIsReplacedInPlace(t *testing.T) {
+	t.Parallel()
+
+	fixture := newImportFixture(t, testPeer(workloadSpeakerAddress, workloadSpeakerASN))
+	workloadSpeaker := fixture.startWorkloadSpeaker(t)
+
+	prefix := netip.MustParsePrefix("198.51.100.100/32")
+
+	advertise(t, workloadSpeaker, prefix, 50)
+	fixture.waitFabricMED(t, prefix, 50)
+
+	withdrawals := fixture.watchFabricWithdrawals(t, prefix)
+
+	advertise(t, workloadSpeaker, prefix, 75)
+	fixture.waitFabricMED(t, prefix, 75)
 
 	assert.Zero(t, withdrawals.Load(), "a changed imported path must replace the old one without a withdrawal")
 
 	// the replacement must still be removable once the source withdraws it
-	require.NoError(t, sourceServer.DeletePath(apiutil.DeletePathRequest{Paths: []*apiutil.Path{updatedPath}}))
+	path, err := internalbgp.BuildOriginatedPath(prefix)
+	require.NoError(t, err)
+	require.NoError(t, workloadSpeaker.DeletePath(apiutil.DeletePathRequest{Paths: []*apiutil.Path{path}}))
 
-	_, _, err = internalbgp.ReconcileImportedPaths("fabric", target, instances, desired)
+	fixture.waitFabricWithdrawn(t, prefix)
+}
+
+func TestImportCandidate(t *testing.T) {
+	t.Parallel()
+
+	selected := netip.MustParsePrefix("198.51.100.100/32")
+	local := netip.MustParsePrefix("198.51.100.101/32")
+	unselected := netip.MustParsePrefix("203.0.113.0/24")
+	shorter := netip.MustParsePrefix("198.51.0.0/16")
+
+	lower := newBGPNumberedTestPath(t, selected, netip.MustParseAddr("192.0.2.5"), netip.MustParseAddr("192.0.2.5"))
+	higher := newBGPNumberedTestPath(t, selected, netip.MustParseAddr("192.0.2.6"), netip.MustParseAddr("192.0.2.6"))
+	notBest := newBGPNumberedTestPath(t, selected, netip.MustParseAddr("192.0.2.4"), netip.MustParseAddr("192.0.2.4"))
+
+	// originated and imported paths are local, without a peer address
+	localPath, err := internalbgp.BuildOriginatedPath(local)
 	require.NoError(t, err)
 
-	require.Eventually(t, func() bool { return listBGPImportTestPath(t, fabricServer, prefix) == nil }, 5*time.Second, 10*time.Millisecond)
+	selectors := []netip.Prefix{importSelector, netip.MustParsePrefix("2001:db8::/32")}
+
+	assert.Same(t, lower, internalbgp.ImportCandidate(selected, append(best(higher, lower), notBest), selectors),
+		"the best path from the lowest peer address must be selected")
+	assert.Nil(t, internalbgp.ImportCandidate(local, best(localPath), selectors), "a local path must not be selected")
+	assert.Nil(t, internalbgp.ImportCandidate(unselected, best(newBGPImportTestPath(t, unselected)), selectors),
+		"a prefix outside the selectors must not be selected")
+	assert.Nil(t, internalbgp.ImportCandidate(shorter, best(newBGPImportTestPath(t, shorter)), selectors),
+		"a prefix shorter than its selector must not be selected")
 }
 
-func connectBGPImportTestFabric(
-	t *testing.T,
-	ctx context.Context,
-	targetServer *gobgpsrv.BgpServer,
-	fabricServer *gobgpsrv.BgpServer,
-	fabricPort int32,
-) {
+func TestBGPImportFamilies(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(
+		t,
+		[]bgppacket.Family{bgppacket.RF_IPv4_UC},
+		internalbgp.ImportFamilies([]netip.Prefix{
+			netip.MustParsePrefix("198.51.100.0/24"),
+			netip.MustParsePrefix("203.0.113.0/24"),
+		}),
+	)
+	assert.Equal(
+		t,
+		[]bgppacket.Family{bgppacket.RF_IPv6_UC},
+		internalbgp.ImportFamilies([]netip.Prefix{netip.MustParsePrefix("2001:db8::/32")}),
+	)
+	assert.Equal(
+		t,
+		[]bgppacket.Family{bgppacket.RF_IPv4_UC, bgppacket.RF_IPv6_UC},
+		internalbgp.ImportFamilies([]netip.Prefix{
+			netip.MustParsePrefix("198.51.100.0/24"),
+			netip.MustParsePrefix("2001:db8::/32"),
+		}),
+	)
+	assert.Empty(t, internalbgp.ImportFamilies(nil))
+}
+
+// startBGPTestServer starts a GoBGP server, which does not listen with a negative port.
+func startBGPTestServer(t *testing.T, asn uint32, routerID string, listenPort int32) *gobgpsrv.BgpServer {
 	t.Helper()
 
-	afiSafis := func() []*gobgpapi.AfiSafi {
-		return []*gobgpapi.AfiSafi{
-			{Config: &gobgpapi.AfiSafiConfig{Family: &gobgpapi.Family{
-				Afi:  gobgpapi.Family_AFI_IP,
-				Safi: gobgpapi.Family_SAFI_UNICAST,
-			}, Enabled: true}},
-			{Config: &gobgpapi.AfiSafiConfig{Family: &gobgpapi.Family{
-				Afi:  gobgpapi.Family_AFI_IP6,
-				Safi: gobgpapi.Family_SAFI_UNICAST,
-			}, Enabled: true}},
-		}
-	}
+	server := gobgpsrv.NewBgpServer()
+	go server.Serve()
 
-	require.NoError(t, fabricServer.AddPeer(ctx, &gobgpapi.AddPeerRequest{Peer: &gobgpapi.Peer{
-		Conf: &gobgpapi.PeerConf{
-			NeighborAddress: "127.0.0.1",
-			PeerAsn:         65001,
-		},
-		Transport: &gobgpapi.Transport{
-			LocalAddress: "127.0.0.2",
-			PassiveMode:  true,
-		},
-		AfiSafis: afiSafis(),
-	}}))
-	require.NoError(t, targetServer.AddPeer(ctx, &gobgpapi.AddPeerRequest{Peer: &gobgpapi.Peer{
-		Conf: &gobgpapi.PeerConf{
-			NeighborAddress: "127.0.0.2",
-			PeerAsn:         65000,
-		},
-		Transport: &gobgpapi.Transport{
-			LocalAddress: "127.0.0.1",
-			RemotePort:   uint32(fabricPort),
-		},
-		AfiSafis: afiSafis(),
+	require.NoError(t, server.StartBgp(t.Context(), &gobgpapi.StartBgpRequest{Global: &gobgpapi.Global{
+		Asn:        asn,
+		RouterId:   routerID,
+		ListenPort: listenPort,
 	}}))
 
-	require.Eventually(t, func() bool {
-		established := false
+	t.Cleanup(server.Stop)
 
-		require.NoError(t, targetServer.ListPeer(ctx, &gobgpapi.ListPeerRequest{}, func(peer *gobgpapi.Peer) {
-			established = peer.GetState().GetSessionState() == gobgpapi.PeerState_SESSION_STATE_ESTABLISHED
-		}))
-
-		return established
-	}, 5*time.Second, 10*time.Millisecond, "target and fabric BGP test servers did not establish")
+	return server
 }
 
-// newBGPImportTestPath builds an import candidate path from the numbered peer 192.0.2.10 with the given MED.
-func newBGPImportTestPath(t *testing.T, prefix netip.Prefix, med uint32) *apiutil.Path {
+// newBGPImportTestPath builds an import candidate path from the numbered peer 192.0.2.10 with MED 50.
+func newBGPImportTestPath(t *testing.T, prefix netip.Prefix) *apiutil.Path {
 	t.Helper()
 
 	peer := netip.MustParseAddr("192.0.2.10")
 
 	return newBGPNumberedTestPath(
 		t, prefix, peer, peer,
-		bgppacket.NewPathAttributeMultiExitDisc(med),
+		bgppacket.NewPathAttributeMultiExitDisc(50),
 		bgppacket.NewPathAttributeCommunities([]uint32{65000<<16 | 100}),
 	)
 }
@@ -462,17 +457,23 @@ func listBGPImportTestPath(t *testing.T, server *gobgpsrv.BgpServer, prefix neti
 	return result
 }
 
-func importedAttribute[T bgppacket.PathAttributeInterface](t *testing.T, path *apiutil.Path) T {
-	t.Helper()
-
+func findAttribute[T bgppacket.PathAttributeInterface](path *apiutil.Path) (T, bool) {
 	for _, attr := range path.Attrs {
 		if typed, ok := attr.(T); ok {
-			return typed
+			return typed, true
 		}
 	}
 
 	var zero T
-	t.Fatalf("attribute %T not found", zero)
 
-	return zero
+	return zero, false
+}
+
+func importedAttribute[T bgppacket.PathAttributeInterface](t *testing.T, path *apiutil.Path) T {
+	t.Helper()
+
+	attr, ok := findAttribute[T](path)
+	require.True(t, ok, "attribute not found")
+
+	return attr
 }
