@@ -26,9 +26,9 @@ ARTIFACTS := _out
 EMBED_TARGET ?= embed
 
 TOOLS_PREFIX ?= ghcr.io/siderolabs/tools
-TOOLS ?= v1.15.0-alpha.0-19-gddb73ab
+TOOLS ?= v1.15.0-alpha.0-20-g8bb1115
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.15.0-alpha.0-85-gca22d30
+PKGS ?= v1.15.0-alpha.0-90-g888015c
 GENERATE_VEX_PREFIX ?= ghcr.io/siderolabs/generate-vex
 GENERATE_VEX ?= latest
 
