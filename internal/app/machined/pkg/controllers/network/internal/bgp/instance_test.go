@@ -25,12 +25,13 @@ import (
 	"golang.org/x/sys/unix"
 
 	internalbgp "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/internal/bgp"
+	"github.com/siderolabs/talos/internal/pkg/testport"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 func TestOriginatedPathWithdrawalPropagates(t *testing.T) {
 	ctx := t.Context()
-	fabricPort := freeBGPImportTestPort(t)
+	fabricPort := int32(testport.Listenable(t))
 	originServer := startBGPImportTestServer(t, ctx, 65001, "192.0.2.1", -1, false)
 	fabricServer := startBGPImportTestServer(t, ctx, 65000, "192.0.2.2", fabricPort, false)
 	connectBGPImportTestFabric(t, ctx, originServer, fabricServer, fabricPort)
@@ -88,7 +89,7 @@ func TestInstanceAuthPasswordListenerKey(t *testing.T) {
 	instance := internalbgp.NewInstance()
 	t.Cleanup(instance.Stop)
 
-	port := freeBGPImportTestPort(t)
+	port := int32(testport.Listenable(t))
 	config := network.BGPInstanceConfigSpec{LocalASN: 65001}
 	peer := internalbgp.Peer{
 		Address: "127.0.0.2",
@@ -325,7 +326,7 @@ func TestChangedPeerIsUpdatedInPlace(t *testing.T) {
 	t.Parallel()
 
 	ctx := t.Context()
-	instancePort := freeBGPImportTestPort(t)
+	instancePort := int32(testport.Listenable(t))
 
 	instance := internalbgp.NewInstance()
 	t.Cleanup(instance.Stop)
@@ -504,7 +505,7 @@ func TestDerivedRouterIDIsKeptWhilePeerIsEstablished(t *testing.T) {
 			t.Parallel()
 
 			ctx := t.Context()
-			instancePort := freeBGPImportTestPort(t)
+			instancePort := int32(testport.Listenable(t))
 
 			instance := internalbgp.NewInstance()
 			t.Cleanup(instance.Stop)
@@ -645,7 +646,7 @@ func testEBGPPacketTTL(t *testing.T, ttl uint32) {
 	tv := unix.NsecToTimeval(int64(100 * time.Millisecond))
 	require.NoError(t, unix.SetsockoptTimeval(fd, unix.SOL_SOCKET, unix.SO_RCVTIMEO, &tv))
 
-	port := freeBGPImportTestPort(t)
+	port := int32(testport.Listenable(t))
 
 	instance := internalbgp.NewInstance()
 	t.Cleanup(instance.Stop)

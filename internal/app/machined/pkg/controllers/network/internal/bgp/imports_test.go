@@ -6,7 +6,6 @@ package bgp_test
 
 import (
 	"context"
-	"net"
 	"net/netip"
 	"sync/atomic"
 	"testing"
@@ -21,12 +20,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	internalbgp "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/internal/bgp"
+	"github.com/siderolabs/talos/internal/pkg/testport"
 	resourcenetwork "github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 func TestBGPRouteImportLifecycle(t *testing.T) {
 	ctx := t.Context()
-	fabricPort := freeBGPImportTestPort(t)
+	fabricPort := int32(testport.Listenable(t))
 	sourceServer := startBGPImportTestServer(t, ctx, 4200000000, "192.0.2.1", -1, false)
 	targetServer := startBGPImportTestServer(t, ctx, 65001, "192.0.2.2", -1, false)
 	fabricServer := startBGPImportTestServer(t, ctx, 65000, "192.0.2.3", fabricPort, false)
@@ -262,7 +262,7 @@ func startBGPImportTestServer(t *testing.T, ctx context.Context, asn uint32, rou
 
 func TestImportedPathChangeIsReplacedInPlace(t *testing.T) {
 	ctx := t.Context()
-	fabricPort := freeBGPImportTestPort(t)
+	fabricPort := int32(testport.Listenable(t))
 	sourceServer := startBGPImportTestServer(t, ctx, 4200000000, "192.0.2.1", -1, false)
 	targetServer := startBGPImportTestServer(t, ctx, 65001, "192.0.2.2", -1, false)
 	fabricServer := startBGPImportTestServer(t, ctx, 65000, "192.0.2.3", fabricPort, false)
@@ -381,20 +381,6 @@ func connectBGPImportTestFabric(
 
 		return established
 	}, 5*time.Second, 10*time.Millisecond, "target and fabric BGP test servers did not establish")
-}
-
-func freeBGPImportTestPort(t *testing.T) int32 {
-	t.Helper()
-
-	var listenConfig net.ListenConfig
-
-	listener, err := listenConfig.Listen(t.Context(), "tcp4", "0.0.0.0:0")
-	require.NoError(t, err)
-
-	port := listener.Addr().(*net.TCPAddr).Port //nolint:forcetypeassert
-	require.NoError(t, listener.Close())
-
-	return int32(port)
 }
 
 // newBGPImportTestPath builds an import candidate path from the numbered peer 192.0.2.10 with the given MED.

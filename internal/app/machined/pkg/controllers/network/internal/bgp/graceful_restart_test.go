@@ -19,6 +19,7 @@ import (
 	"go.uber.org/zap"
 
 	internalbgp "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/internal/bgp"
+	"github.com/siderolabs/talos/internal/pkg/testport"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
@@ -52,7 +53,7 @@ func newGracefulRestartFixture(t *testing.T, gracefulRestart *network.BGPGracefu
 
 	fixture := &gracefulRestartFixture{
 		workload:     internalbgp.NewInstance(),
-		workloadPort: freeBGPImportTestPort(t),
+		workloadPort: int32(testport.Listenable(t)),
 		fabric:       internalbgp.NewInstance(),
 	}
 
@@ -78,7 +79,7 @@ func newGracefulRestartFixture(t *testing.T, gracefulRestart *network.BGPGracefu
 		func() {},
 	))
 
-	fabricPort := freeBGPImportTestPort(t)
+	fabricPort := int32(testport.Listenable(t))
 	targetServer := startBGPImportTestServer(t, ctx, 65001, "192.0.2.2", -1, false)
 	fixture.fabricServer = startBGPImportTestServer(t, ctx, 65000, "192.0.2.3", fabricPort, false)
 	connectBGPImportTestFabric(t, ctx, targetServer, fixture.fabricServer, fabricPort)

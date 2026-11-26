@@ -6,9 +6,9 @@ package network_test
 
 import (
 	"fmt"
-	"net"
 	"net/netip"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -20,7 +20,6 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -29,6 +28,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
+	"github.com/siderolabs/talos/internal/pkg/testport"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
@@ -85,7 +85,7 @@ func (suite *DNSServer) TestResolvingDoH() {
 }
 
 func (suite *DNSServer) testResolving(nameservers []network.NameServerSpec) {
-	port := getDynamicPort(suite.T())
+	port := strconv.Itoa(testport.ListenableTCPUDP(suite.T()))
 
 	cfg := network.NewHostDNSConfig(network.HostDNSConfigID)
 	cfg.TypedSpec().Enabled = true
@@ -142,7 +142,7 @@ func (suite *DNSServer) testResolving(nameservers []network.NameServerSpec) {
 
 func (suite *DNSServer) TestSetupStartStop() {
 	dnsSlice := []string{"8.8.8.8", "1.1.1.1"}
-	port := getDynamicPort(suite.T())
+	port := strconv.Itoa(testport.ListenableTCPUDP(suite.T()))
 
 	resolverSpec := network.NewResolverStatus(network.NamespaceName, network.ResolverID)
 	resolverSpec.TypedSpec().NameServers = xslices.Map(dnsSlice, func(addr string) network.NameServerSpec {
@@ -188,7 +188,7 @@ func (suite *DNSServer) TestSetupStartStop() {
 }
 
 func (suite *DNSServer) TestResolveMembers() {
-	port := getDynamicPort(suite.T())
+	port := strconv.Itoa(testport.ListenableTCPUDP(suite.T()))
 
 	const (
 		id  = "talos-default-controlplane-1"
@@ -279,7 +279,7 @@ func (suite *DNSServer) assertResolverResponse(port, name string, qType uint16, 
 }
 
 func (suite *DNSServer) TestResolveStaticHost() {
-	port := getDynamicPort(suite.T())
+	port := strconv.Itoa(testport.ListenableTCPUDP(suite.T()))
 
 	const (
 		id  = "static-host-1"
@@ -335,7 +335,7 @@ type DNSServerLogLevel struct {
 }
 
 func (suite *DNSServerLogLevel) TestLogLevel() {
-	port := getDynamicPort(suite.T())
+	port := strconv.Itoa(testport.ListenableTCPUDP(suite.T()))
 
 	cfg := network.NewHostDNSConfig(network.HostDNSConfigID)
 	cfg.TypedSpec().Enabled = true
@@ -412,22 +412,6 @@ func TestDNSServerLogLevel(t *testing.T) {
 	})
 }
 
-func getDynamicPort(t *testing.T) string {
-	t.Helper()
-
-	l, err := (&net.ListenConfig{}).Listen(t.Context(), "tcp", net.JoinHostPort("127.0.0.53", "0"))
-	require.NoError(t, err)
-
-	addr := l.Addr().String()
-
-	require.NoError(t, l.Close())
-
-	_, port, err := net.SplitHostPort(addr)
-	require.NoError(t, err)
-
-	return port
-}
-
 func makeAddrs(port string) []netip.AddrPort {
 	return []netip.AddrPort{
 		netip.MustParseAddrPort("127.0.0.53:" + port),
@@ -440,7 +424,7 @@ type DNSUpstreams struct {
 }
 
 func (suite *DNSUpstreams) TestOrder() {
-	port := getDynamicPort(suite.T())
+	port := strconv.Itoa(testport.ListenableTCPUDP(suite.T()))
 
 	cfg := network.NewHostDNSConfig(network.HostDNSConfigID)
 	cfg.TypedSpec().Enabled = true
