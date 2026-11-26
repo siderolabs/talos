@@ -312,8 +312,14 @@ func PeerStatus(peer *gobgpapi.Peer, localASN uint32) network.BGPPeerStatusSpec 
 	state := peer.GetState()
 
 	id := conf.GetNeighborAddress()
-	if id == "" {
+
+	switch {
+	case id != "":
+	case conf.GetNeighborInterface() != "":
 		id = "link/" + conf.GetNeighborInterface()
+	default:
+		// dynamic neighbors have no configured address, only the one they connected from
+		id = state.GetNeighborAddress()
 	}
 
 	spec := network.BGPPeerStatusSpec{

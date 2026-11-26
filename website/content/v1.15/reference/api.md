@@ -12396,6 +12396,7 @@ BGPNeighborConfigSpec contains the runtime configuration for a BGP neighbor.
 | auth_password | [string](#string) |  |  |
 | ebgp_multi_hop | [uint32](#uint32) |  |  |
 | graceful_restart | [BGPGracefulRestartConfigSpec](#talos.resource.definitions.network.BGPGracefulRestartConfigSpec) |  | GracefulRestart enables graceful restart helper mode when set. |
+| prefix | [common.NetIPPrefix](#common.NetIPPrefix) |  |  |
 
 
 

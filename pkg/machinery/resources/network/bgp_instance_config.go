@@ -44,7 +44,7 @@ type BGPGracefulRestartConfigSpec struct {
 //
 //gotagsrewrite:gen
 type BGPNeighborConfigSpec struct {
-	Address      netip.Addr        `yaml:"address,omitempty" protobuf:"1"`
+	Address      netip.Addr        `yaml:"address" protobuf:"1"`
 	Link         string            `yaml:"link,omitempty" protobuf:"2"`
 	PeerASN      uint32            `yaml:"peerASN,omitempty" protobuf:"3"`
 	HoldTime     time.Duration     `yaml:"holdTime,omitempty" protobuf:"4"`
@@ -55,6 +55,7 @@ type BGPNeighborConfigSpec struct {
 	EBGPMultiHop uint32            `yaml:"eBgpMultiHop,omitempty" protobuf:"9"`
 	// GracefulRestart enables graceful restart helper mode when set.
 	GracefulRestart *BGPGracefulRestartConfigSpec `yaml:"gracefulRestart,omitempty" protobuf:"10"`
+	Prefix          netip.Prefix                  `yaml:"prefix" protobuf:"11"`
 }
 
 // BGPImportRouteSpec selects routes learned by another BGP instance for one-way import.
@@ -71,8 +72,8 @@ type BGPImportRouteSpec struct {
 //redactgen:gen
 type BGPInstanceConfigSpec struct {
 	LocalASN       uint32                  `yaml:"localASN" protobuf:"1"`
-	RouterID       netip.Addr              `yaml:"routerID,omitempty" protobuf:"2"`
-	RouteSource    netip.Addr              `yaml:"routeSource,omitempty" protobuf:"3"`
+	RouterID       netip.Addr              `yaml:"routerID" protobuf:"2"`
+	RouteSource    netip.Addr              `yaml:"routeSource" protobuf:"3"`
 	AdvertiseLinks []string                `yaml:"advertiseLinks,omitempty" protobuf:"4"`
 	Multipath      bool                    `yaml:"multipath,omitempty" protobuf:"5"`
 	MaxPaths       uint8                   `yaml:"maxPaths,omitempty" protobuf:"6"`
@@ -104,7 +105,7 @@ func (BGPInstanceConfigExtension) ResourceDefinition() meta.ResourceDefinitionSp
 			{Name: "Local ASN", JSONPath: "{.localASN}"},
 			{Name: "Router ID", JSONPath: "{.routerID}"},
 			{Name: "VRF", JSONPath: "{.vrf}"},
-			{Name: "Neighbors", JSONPath: "{range .neighbors[*]}{.address}{.link} {end}"},
+			{Name: "Neighbors", JSONPath: "{range .neighbors[*]}{.address}{.link}{.prefix} {end}"},
 		},
 		Sensitivity: meta.Sensitive,
 	}

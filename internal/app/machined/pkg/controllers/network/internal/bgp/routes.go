@@ -124,7 +124,7 @@ func LearnedNexthop(path *apiutil.Path, peerIfaces map[netip.Addr]string) (netwo
 func (instance *Instance) peerStatuses(ctx context.Context) []network.BGPPeerStatusSpec {
 	var peers []network.BGPPeerStatusSpec
 
-	if err := instance.server.ListPeer(ctx, &gobgpapi.ListPeerRequest{}, func(peer *gobgpapi.Peer) {
+	if err := instance.server.ListPeer(ctx, &gobgpapi.ListPeerRequest{EnableAdvertised: true}, func(peer *gobgpapi.Peer) {
 		peers = append(peers, PeerStatus(peer, instance.localASN))
 	}); err != nil {
 		return nil
