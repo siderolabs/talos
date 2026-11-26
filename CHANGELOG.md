@@ -1,3 +1,74 @@
+## [Talos 1.13.13](https://github.com/siderolabs/talos/releases/tag/v1.13.13) (2026-11-26)
+
+Welcome to the v1.13.13 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.18.65
+
+Talos is built with Go 1.26.11
+
+
+### Contributors
+
+* Andrey Smirnov
+* Kyle Tse
+* Mateusz Urbanek
+* Raphaël DUCOM
+
+### Changes
+<details><summary>8 commits</summary>
+<p>
+
+* [`dccab3e3b`](https://github.com/siderolabs/talos/commit/dccab3e3ba31f720fd0d334a1debdc283530319e) chore: bump dis-vulncheck
+* [`f7f5000dc`](https://github.com/siderolabs/talos/commit/f7f5000dc5ca9e5a91828d6ac789f57e964eeff1) fix: don't panic machined on bogus cpufreq sysfs reads
+* [`0fe910e0c`](https://github.com/siderolabs/talos/commit/0fe910e0c7590b451b5cf09a0f2c949a57dba3c1) fix: mask the SideroLink join token
+* [`72464838d`](https://github.com/siderolabs/talos/commit/72464838de3f1bb7b38df19191b650f919d93553) fix: open the files of pkg/xfs roots with O_CLOEXEC
+* [`efa19941d`](https://github.com/siderolabs/talos/commit/efa19941d62d901c07a3fd0791253d0adbf19141) fix: race with platform accessing metadata volumes
+* [`3b25e8a66`](https://github.com/siderolabs/talos/commit/3b25e8a66d65a35bd362cf7e73a11bdb997e8a9c) fix: pull images over HTTP/1.1
+* [`002234805`](https://github.com/siderolabs/talos/commit/002234805e9dff9fccc185c98b9b7015c3cebd8e) fix: preserve project quotas on temporary growfs mounts
+* [`22ff26325`](https://github.com/siderolabs/talos/commit/22ff263253ec0c88676c5bdb2118a05d3c316ce6) feat: update Linux to 6.18.65
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>3 commits</summary>
+<p>
+
+* [`6558de8`](https://github.com/siderolabs/pkgs/commit/6558de81c45e6b27ab89568891eeb26f650bdb36) fix: backport virtio UDP tunnel GSO outer protocol validation
+* [`9061646`](https://github.com/siderolabs/pkgs/commit/9061646569b95470372a8c1bc5ef5912ff255c96) feat: update backportable dependencies
+* [`47d13ce`](https://github.com/siderolabs/pkgs/commit/47d13ce6429f55173b719b720c529ab081bf6e3f) feat: update Linux 6.18.65
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`23de717`](https://github.com/siderolabs/tools/commit/23de7173a1fa8aa2dd199c4b0cc672cdf293d0d5) feat: update Go to 1.26.11
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/gopacket/gopacket**   v1.6.1 -> v1.7.2
+* **github.com/klauspost/compress**  v1.19.2 -> v1.20.2
+* **github.com/siderolabs/pkgs**     v1.13.0-80-g19e92dc -> v1.13.0-83-g6558de8
+* **github.com/siderolabs/tools**    v1.13.0-16-g38b4a6e -> v1.13.0-17-g23de717
+* **golang.org/x/net**               v0.60.0 -> v0.62.0
+* **golang.org/x/sync**              v0.23.0 -> v0.24.0
+* **golang.org/x/sys**               v0.48.0 -> v0.49.0
+* **golang.org/x/term**              v0.46.0 -> v0.47.0
+* **golang.org/x/text**              v0.42.0 -> v0.43.0
+* **k8s.io/utils**                   cf1189d6abe3 **_new_**
+
+Previous release can be found at [v1.13.12](https://github.com/siderolabs/talos/releases/tag/v1.13.12)
+
 ## [Talos 1.13.12](https://github.com/siderolabs/talos/releases/tag/v1.13.12) (2026-10-21)
 
 Welcome to the v1.13.12 release of Talos!
