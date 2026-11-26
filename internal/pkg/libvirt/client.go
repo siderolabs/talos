@@ -68,13 +68,7 @@ func (c *Client) StorageVolumes(ctx context.Context) (storage.VolumeClient, erro
 	return c.storage.OpenVolumes(ctx)
 }
 
-// Domain connects to the modular QEMU daemon with the caller's context.
-func (c *Client) Domain(ctx context.Context) (domain.Client, error) {
-	return c.domain.Open(ctx)
-}
-
-// DomainConnector exposes the configured QEMU endpoint for long-lived lifecycle
-// watches without changing the timeout of short-lived Domain sessions.
+// DomainConnector exposes the configured QEMU endpoint.
 func (c *Client) DomainConnector() *domain.Connector {
 	return c.domain
 }

@@ -34,7 +34,7 @@ func TestClientUsesConfiguredDaemonSockets(t *testing.T) {
 	_, err := client.Storage(t.Context())
 	require.ErrorContains(t, err, storageSocket)
 
-	_, err = client.Domain(t.Context())
+	_, err = client.DomainConnector().Open(t.Context())
 	require.ErrorContains(t, err, domainSocket)
 
 	_, err = client.DomainConnector().Watch(t.Context())
@@ -63,7 +63,7 @@ func TestClientUsesConfiguredDaemonURIs(t *testing.T) {
 	storageClient.Close()
 	require.NoError(t, <-storageDone)
 
-	domainClient, err := client.Domain(t.Context())
+	domainClient, err := client.DomainConnector().Open(t.Context())
 	require.NoError(t, err)
 	domainClient.Close()
 	require.NoError(t, <-domainDone)
@@ -160,7 +160,7 @@ func TestClientComposesIndependentDaemonSessions(t *testing.T) {
 	require.ErrorIs(t, err, context.Canceled)
 	require.Nil(t, poolClient)
 
-	domainClient, err := client.Domain(ctx)
+	domainClient, err := client.DomainConnector().Open(ctx)
 	require.ErrorIs(t, err, context.Canceled)
 	require.Nil(t, domainClient)
 }

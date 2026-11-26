@@ -19,14 +19,10 @@ import (
 	"libvirt.org/go/libvirtxml"
 )
 
-const operationTimeout = 5 * time.Second
-
-// VolumeOperationTimeout is the budget a session doing volume work is given.
-//
-// Larger than operationTimeout: creating a volume is real filesystem work behind an RPC, where pool
-// metadata calls are not. A session which expires mid-create has its transport closed while libvirt
-// carries on server-side, which is exactly what the staged name in volume.go exists to survive.
-const VolumeOperationTimeout = 2 * time.Minute
+const (
+	operationTimeout       = 5 * time.Second
+	volumeOperationTimeout = 2 * time.Minute
+)
 
 // Connector opens bounded sessions against one modular storage daemon.
 type Connector struct {
@@ -48,7 +44,7 @@ func (c *Connector) Open(ctx context.Context) (PoolClient, error) {
 
 // OpenVolumes opens a volume session with the budget provisioning needs.
 func (c *Connector) OpenVolumes(ctx context.Context) (VolumeClient, error) {
-	return c.openWithTimeout(ctx, VolumeOperationTimeout)
+	return c.openWithTimeout(ctx, volumeOperationTimeout)
 }
 
 // openWithTimeout bounds the shared transport session.

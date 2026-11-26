@@ -25,7 +25,10 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
-const operationTimeout = 5 * time.Second
+const (
+	operationTimeout          = 5 * time.Second
+	lifecycleOperationTimeout = 2 * time.Minute
+)
 
 // Connector opens bounded sessions against one modular QEMU daemon.
 type Connector struct {
@@ -41,7 +44,16 @@ func New(socket, uri string) *Connector {
 // Open bounds dialing, handshake, operations, and disconnect. go-libvirt RPCs
 // have no context argument, so cancellation closes the transport.
 func (c *Connector) Open(ctx context.Context) (Client, error) {
-	sessionCtx, cancel := context.WithTimeout(ctx, operationTimeout)
+	return c.openWithTimeout(ctx, operationTimeout)
+}
+
+// OpenLifecycle opens a session with the budget domain start and stop need.
+func (c *Connector) OpenLifecycle(ctx context.Context) (Client, error) {
+	return c.openWithTimeout(ctx, lifecycleOperationTimeout)
+}
+
+func (c *Connector) openWithTimeout(ctx context.Context, timeout time.Duration) (Client, error) {
+	sessionCtx, cancel := context.WithTimeout(ctx, timeout)
 
 	conn, err := (&net.Dialer{}).DialContext(sessionCtx, "unix", c.socket)
 	if err != nil {

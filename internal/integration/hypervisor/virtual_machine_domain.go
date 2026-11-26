@@ -95,6 +95,107 @@ func (suite *DomainSuite) TestDomainDefinition() {
 	suite.assertNoDomain(node, name)
 }
 
+// TestDomainChurn verifies repeated VM create/destroy cycles neither crash
+// virtqemud nor leave domain state behind which breaks later creates.
+func (suite *DomainSuite) TestDomainChurn() {
+	const (
+		flaps  = 10
+		cycles = 10
+		batch  = 8
+	)
+
+	node := suite.RandomDiscoveredNodeInternalIP()
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	suite.AssertServicesRunning(suite.ctx, node, map[string]string{"ext-virtqemud": "Running"})
+
+	virtqemudPID, err := safe.ReaderGetByID[*runtime.ServicePID](nodeCtx, suite.Client.State(), "ext-virtqemud")
+	suite.Require().NoError(err)
+
+	assertVirtqemudSurvived := func(phase string, round int) {
+		pid, err := safe.ReaderGetByID[*runtime.ServicePID](nodeCtx, suite.Client.State(), "ext-virtqemud")
+		suite.Require().NoError(err)
+		suite.Require().Equal(virtqemudPID.TypedSpec().PID, pid.TypedSpec().PID, "ext-virtqemud restarted in %s round %d", phase, round)
+	}
+
+	// Every name carries run, and is short enough that libvirt keeps it whole in domain-<id>-<name>.
+	run := uuid.NewString()[:8]
+
+	newBatch := func(phase string, round int) ([]string, []any) {
+		names := make([]string, 0, batch)
+		docs := make([]any, 0, batch)
+
+		for i := range batch {
+			doc := hypervisorcfg.NewVirtualMachineConfigV1Alpha1()
+			doc.MetaName = fmt.Sprintf("%s-%s-%d-%d", phase, run, round, i)
+			doc.PowerStateConfig = hypervisorhelpers.PowerStateRunning
+			doc.FirmwareConfig.FirmwareType = suite.guestArch(node).firmware
+			doc.CPUConfig.CPUCount = 1
+			doc.MemoryConfig.MemorySize = meta.MustByteSize("128MiB")
+
+			names = append(names, doc.MetaName)
+			docs = append(docs, doc)
+		}
+
+		suite.T().Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+			defer cancel()
+
+			suite.RemoveMachineConfigDocumentsByName(client.WithNode(ctx, node), hypervisorcfg.VirtualMachineConfigKind, names...)
+		})
+
+		return names, docs
+	}
+
+	for round := range flaps {
+		names, docs := newBatch("flap", round)
+
+		suite.PatchMachineConfig(nodeCtx, docs...)
+		suite.RemoveMachineConfigDocumentsByName(nodeCtx, hypervisorcfg.VirtualMachineConfigKind, names...)
+		assertVirtqemudSurvived("flap", round)
+	}
+
+	suite.assertNoDomainsLeft(nodeCtx, node, run)
+	assertVirtqemudSurvived("flap", flaps)
+
+	for round := range cycles {
+		names, docs := newBatch("cycle", round)
+
+		suite.PatchMachineConfig(nodeCtx, docs...)
+
+		for _, name := range names {
+			suite.assertVirtualMachineStatus(nodeCtx, name, hypervisorhelpers.VirtualMachinePowerStateRunning)
+		}
+
+		suite.RemoveMachineConfigDocumentsByName(nodeCtx, hypervisorcfg.VirtualMachineConfigKind, names...)
+
+		for _, name := range names {
+			rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](nodeCtx, suite.T(), suite.Client.State(), name)
+		}
+
+		suite.assertNoDomainsLeft(nodeCtx, node, run)
+		assertVirtqemudSurvived("cycle", round)
+	}
+}
+
+// assertNoDomainsLeft waits until neither libvirt nor its domain-<id>-<name>
+// directories know any domain whose name contains marker.
+func (suite *LibvirtSuite) assertNoDomainsLeft(ctx context.Context, node, marker string) {
+	suite.T().Helper()
+
+	script := "/usr/local/bin/virsh --connect '" + libvirtURI + "' list --all --name && " +
+		"/nix/var/nix/profiles/default/bin/busybox ls -1 /var/lib/libvirt/qemu"
+
+	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+		output, exitCode := suite.RunDebugContainer(ctx, node, "/nix/var/nix/profiles/default/bin/sh", "-c", script)
+		if !assert.EqualValues(collect, 0, exitCode, "listing domains failed: %s", output) {
+			return
+		}
+
+		assert.NotContains(collect, output, marker, "domains or domain directories left behind")
+	}, 2*time.Minute, time.Second)
+}
+
 // TestConsoleAttach verifies a live console session owns the managed VM's libvirt console.
 func (suite *DomainSuite) TestConsoleAttach() {
 	node := suite.RandomDiscoveredNodeInternalIP()
