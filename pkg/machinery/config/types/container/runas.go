@@ -53,7 +53,7 @@ type ContainerRunAs struct {
 // runAsMaxID is the highest user or group ID a container can run as.
 //
 // 4294967295 ((uid_t)-1) is not a valid ID: the kernel reads it as "leave unchanged".
-const runAsMaxID = 4294967294
+const runAsMaxID uint32 = 4294967294
 
 // Check interfaces.
 var _ config.ContainerRunAsConfig = &ContainerRunAs{}
