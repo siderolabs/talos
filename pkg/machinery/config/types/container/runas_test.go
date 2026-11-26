@@ -26,48 +26,55 @@ func TestContainerRunAsValidate(t *testing.T) {
 			runAs: container.ContainerRunAs{},
 		},
 		{
-			name: "valid non-negative uid and gid",
+			name: "valid uid and gid",
 			runAs: container.ContainerRunAs{
-				RunAsUID: new(int32(65534)),
-				RunAsGID: new(int32(65534)),
+				RunAsUID: new(uint32(65534)),
+				RunAsGID: new(uint32(65534)),
 			},
 		},
 		{
-			name: "valid non-negative uid and empty gid",
+			name: "valid uid and empty gid",
 			runAs: container.ContainerRunAs{
-				RunAsUID: new(int32(65534)),
+				RunAsUID: new(uint32(65534)),
 			},
 		},
 		{
 			name: "zero uid and gid",
 			runAs: container.ContainerRunAs{
-				RunAsUID: new(int32(0)),
-				RunAsGID: new(int32(0)),
+				RunAsUID: new(uint32(0)),
+				RunAsGID: new(uint32(0)),
 			},
 		},
 		{
-			name: "negative uid",
+			name: "highest valid uid and gid",
 			runAs: container.ContainerRunAs{
-				RunAsUID: new(int32(-1)),
+				RunAsUID: new(uint32(4294967294)),
+				RunAsGID: new(uint32(4294967294)),
 			},
-			expectedErrs: []string{"runAs.uid must be non-negative, got -1"},
 		},
 		{
-			name: "negative gid",
+			name: "reserved uid",
 			runAs: container.ContainerRunAs{
-				RunAsGID: new(int32(-1)),
+				RunAsUID: new(uint32(4294967295)),
 			},
-			expectedErrs: []string{"runAs.gid must be non-negative, got -1"},
+			expectedErrs: []string{"runAs.uid must be at most 4294967294, got 4294967295"},
 		},
 		{
-			name: "negative uid and gid",
+			name: "reserved gid",
 			runAs: container.ContainerRunAs{
-				RunAsUID: new(int32(-1)),
-				RunAsGID: new(int32(-2)),
+				RunAsGID: new(uint32(4294967295)),
+			},
+			expectedErrs: []string{"runAs.gid must be at most 4294967294, got 4294967295"},
+		},
+		{
+			name: "reserved uid and gid",
+			runAs: container.ContainerRunAs{
+				RunAsUID: new(uint32(4294967295)),
+				RunAsGID: new(uint32(4294967295)),
 			},
 			expectedErrs: []string{
-				"runAs.uid must be non-negative, got -1",
-				"runAs.gid must be non-negative, got -2",
+				"runAs.uid must be at most 4294967294, got 4294967295",
+				"runAs.gid must be at most 4294967294, got 4294967295",
 			},
 		},
 	} {

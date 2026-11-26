@@ -262,50 +262,50 @@ func TestRunAsEqual(t *testing.T) {
 		},
 		{
 			name:       "both UID set equal",
-			runAsSpecA: containers.ContainerRunAsSpec{UID: new(int32(1000))},
-			runAsSpecB: containers.ContainerRunAsSpec{UID: new(int32(1000))},
+			runAsSpecA: containers.ContainerRunAsSpec{UID: new(uint32(1000))},
+			runAsSpecB: containers.ContainerRunAsSpec{UID: new(uint32(1000))},
 			want:       true,
 		},
 		{
 			name:       "both UID set different",
-			runAsSpecA: containers.ContainerRunAsSpec{UID: new(int32(1000))},
-			runAsSpecB: containers.ContainerRunAsSpec{UID: new(int32(2000))},
+			runAsSpecA: containers.ContainerRunAsSpec{UID: new(uint32(1000))},
+			runAsSpecB: containers.ContainerRunAsSpec{UID: new(uint32(2000))},
 			want:       false,
 		},
 		{
 			name:       "UID nil vs set",
 			runAsSpecA: containers.ContainerRunAsSpec{UID: nil},
-			runAsSpecB: containers.ContainerRunAsSpec{UID: new(int32(1000))},
+			runAsSpecB: containers.ContainerRunAsSpec{UID: new(uint32(1000))},
 			want:       false,
 		},
 		{
 			name:       "both GID set equal",
-			runAsSpecA: containers.ContainerRunAsSpec{GID: new(int32(1000))},
-			runAsSpecB: containers.ContainerRunAsSpec{GID: new(int32(1000))},
+			runAsSpecA: containers.ContainerRunAsSpec{GID: new(uint32(1000))},
+			runAsSpecB: containers.ContainerRunAsSpec{GID: new(uint32(1000))},
 			want:       true,
 		},
 		{
 			name:       "both GID set different",
-			runAsSpecA: containers.ContainerRunAsSpec{GID: new(int32(1000))},
-			runAsSpecB: containers.ContainerRunAsSpec{GID: new(int32(2000))},
+			runAsSpecA: containers.ContainerRunAsSpec{GID: new(uint32(1000))},
+			runAsSpecB: containers.ContainerRunAsSpec{GID: new(uint32(2000))},
 			want:       false,
 		},
 		{
 			name:       "GID nil vs set",
 			runAsSpecA: containers.ContainerRunAsSpec{GID: nil},
-			runAsSpecB: containers.ContainerRunAsSpec{GID: new(int32(1000))},
+			runAsSpecB: containers.ContainerRunAsSpec{GID: new(uint32(1000))},
 			want:       false,
 		},
 		{
 			name:       "UID and GID both set equal",
-			runAsSpecA: containers.ContainerRunAsSpec{UID: new(int32(1000)), GID: new(int32(1001))},
-			runAsSpecB: containers.ContainerRunAsSpec{UID: new(int32(1000)), GID: new(int32(1001))},
+			runAsSpecA: containers.ContainerRunAsSpec{UID: new(uint32(1000)), GID: new(uint32(1001))},
+			runAsSpecB: containers.ContainerRunAsSpec{UID: new(uint32(1000)), GID: new(uint32(1001))},
 			want:       true,
 		},
 		{
 			name:       "UID equal but GID differs",
-			runAsSpecA: containers.ContainerRunAsSpec{UID: new(int32(1000)), GID: new(int32(1001))},
-			runAsSpecB: containers.ContainerRunAsSpec{UID: new(int32(1000)), GID: new(int32(2001))},
+			runAsSpecA: containers.ContainerRunAsSpec{UID: new(uint32(1000)), GID: new(uint32(1001))},
+			runAsSpecB: containers.ContainerRunAsSpec{UID: new(uint32(1000)), GID: new(uint32(2001))},
 			want:       false,
 		},
 	}
@@ -320,50 +320,50 @@ func TestRunAsEqual(t *testing.T) {
 	}
 }
 
-func TestInt32PtrEqual(t *testing.T) {
+func TestUint32PtrEqual(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name   string
-		int32A *int32
-		int32B *int32
-		want   bool
+		name    string
+		uint32A *uint32
+		uint32B *uint32
+		want    bool
 	}{
 		{
-			name:   "both nil",
-			int32A: nil,
-			int32B: nil,
-			want:   true,
+			name:    "both nil",
+			uint32A: nil,
+			uint32B: nil,
+			want:    true,
 		},
 		{
-			name:   "a nil b set",
-			int32A: nil,
-			int32B: new(int32(42)),
-			want:   false,
+			name:    "a nil b set",
+			uint32A: nil,
+			uint32B: new(uint32(42)),
+			want:    false,
 		},
 		{
-			name:   "a set b nil",
-			int32A: new(int32(42)),
-			int32B: nil,
-			want:   false,
+			name:    "a set b nil",
+			uint32A: new(uint32(42)),
+			uint32B: nil,
+			want:    false,
 		},
 		{
-			name:   "both set equal",
-			int32A: new(int32(42)),
-			int32B: new(int32(42)),
-			want:   true,
+			name:    "both set equal",
+			uint32A: new(uint32(42)),
+			uint32B: new(uint32(42)),
+			want:    true,
 		},
 		{
-			name:   "both set different",
-			int32A: new(int32(42)),
-			int32B: new(int32(99)),
-			want:   false,
+			name:    "both set different",
+			uint32A: new(uint32(42)),
+			uint32B: new(uint32(99)),
+			want:    false,
 		},
 		{
-			name:   "zero values equal",
-			int32A: new(int32(0)),
-			int32B: new(int32(0)),
-			want:   true,
+			name:    "zero values equal",
+			uint32A: new(uint32(0)),
+			uint32B: new(uint32(0)),
+			want:    true,
 		},
 	}
 
@@ -371,7 +371,7 @@ func TestInt32PtrEqual(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := containers.Int32PtrEqual(tt.int32A, tt.int32B)
+			got := containers.Uint32PtrEqual(tt.uint32A, tt.uint32B)
 			assert.Equal(t, tt.want, got)
 		})
 	}

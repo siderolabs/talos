@@ -635,14 +635,14 @@ func (ContainerRunAs) Doc() *encoder.Doc {
 		Fields: []encoder.Doc{
 			{
 				Name:        "uid",
-				Type:        "int32",
+				Type:        "uint32",
 				Note:        "",
 				Description: "UID to run the container's entrypoint as.\n\nUnset means use the image's own USER. There are no user namespaces, so uid 0 is host\nroot.\n\nRequired when the image's USER names its user rather than giving a numeric uid\n(e.g. `app` or `app:app`): Talos does not read the image's /etc/passwd, and rejects\nsuch a container instead of running it as root.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "UID to run the container's entrypoint as." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
 				Name:        "gid",
-				Type:        "int32",
+				Type:        "uint32",
 				Note:        "",
 				Description: "GID to run the container's entrypoint as.\n\nUnset means use the image's own USER.\n\nRequired when the image's USER names its group (e.g. `app:app`), or names only a user\n(e.g. `app`), whose primary group would come from the image's /etc/passwd: Talos does\nnot read it, and rejects such a container instead of running it as root.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "GID to run the container's entrypoint as." /* encoder.LineComment */, "" /* encoder.FootComment */},
@@ -650,8 +650,8 @@ func (ContainerRunAs) Doc() *encoder.Doc {
 		},
 	}
 
-	doc.Fields[0].AddExample("", pointer.To[int32](65534))
-	doc.Fields[1].AddExample("", pointer.To[int32](65534))
+	doc.Fields[0].AddExample("", pointer.To[uint32](65534))
+	doc.Fields[1].AddExample("", pointer.To[uint32](65534))
 
 	return doc
 }

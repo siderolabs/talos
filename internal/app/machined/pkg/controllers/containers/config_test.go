@@ -285,8 +285,8 @@ func (suite *ConfigSuite) TestResolvesSecurityNetworkAndResources() {
 		StopTimeoutConfig: new(30 * time.Second),
 	}
 	doc.RunAsConfig = &containercfg.ContainerRunAs{
-		RunAsUID: new(int32(1000)),
-		RunAsGID: new(int32(1000)),
+		RunAsUID: new(uint32(1000)),
+		RunAsGID: new(uint32(1000)),
 	}
 
 	suite.applyContainers(doc)
@@ -313,11 +313,11 @@ func (suite *ConfigSuite) TestResolvesSecurityNetworkAndResources() {
 		asrt.Equal(30*time.Second, spec.TypedSpec().StopTimeout)
 
 		if asrt.NotNil(spec.TypedSpec().RunAs.UID) {
-			asrt.Equal(int32(1000), *spec.TypedSpec().RunAs.UID)
+			asrt.Equal(uint32(1000), *spec.TypedSpec().RunAs.UID)
 		}
 
 		if asrt.NotNil(spec.TypedSpec().RunAs.GID) {
-			asrt.Equal(int32(1000), *spec.TypedSpec().RunAs.GID)
+			asrt.Equal(uint32(1000), *spec.TypedSpec().RunAs.GID)
 		}
 	})
 }

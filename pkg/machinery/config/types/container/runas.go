@@ -27,8 +27,12 @@ type ContainerRunAs struct {
 	//     (e.g. `app` or `app:app`): Talos does not read the image's /etc/passwd, and rejects
 	//     such a container instead of running it as root.
 	//   examples:
-	//     - value: pointer.To[int32](65534)
-	RunAsUID *int32 `yaml:"uid,omitempty"`
+	//     - value: pointer.To[uint32](65534)
+	//   schema:
+	//     type: integer
+	//     minimum: 0
+	//     maximum: 4294967294
+	RunAsUID *uint32 `yaml:"uid,omitempty"`
 	//   description: |
 	//     GID to run the container's entrypoint as.
 	//
@@ -38,26 +42,35 @@ type ContainerRunAs struct {
 	//     (e.g. `app`), whose primary group would come from the image's /etc/passwd: Talos does
 	//     not read it, and rejects such a container instead of running it as root.
 	//   examples:
-	//     - value: pointer.To[int32](65534)
-	RunAsGID *int32 `yaml:"gid,omitempty"`
+	//     - value: pointer.To[uint32](65534)
+	//   schema:
+	//     type: integer
+	//     minimum: 0
+	//     maximum: 4294967294
+	RunAsGID *uint32 `yaml:"gid,omitempty"`
 }
+
+// runAsMaxID is the highest user or group ID a container can run as.
+//
+// 4294967295 ((uid_t)-1) is not a valid ID: the kernel reads it as "leave unchanged".
+const runAsMaxID = 4294967294
 
 // Check interfaces.
 var _ config.ContainerRunAsConfig = &ContainerRunAs{}
 
 // UID implements config.ContainerRunAsConfig interface.
-func (r *ContainerRunAs) UID() optional.Optional[int32] {
+func (r *ContainerRunAs) UID() optional.Optional[uint32] {
 	if r.RunAsUID == nil {
-		return optional.None[int32]()
+		return optional.None[uint32]()
 	}
 
 	return optional.Some(*r.RunAsUID)
 }
 
 // GID implements config.ContainerRunAsConfig interface.
-func (r *ContainerRunAs) GID() optional.Optional[int32] {
+func (r *ContainerRunAs) GID() optional.Optional[uint32] {
 	if r.RunAsGID == nil {
-		return optional.None[int32]()
+		return optional.None[uint32]()
 	}
 
 	return optional.Some(*r.RunAsGID)
@@ -67,12 +80,12 @@ func (r *ContainerRunAs) GID() optional.Optional[int32] {
 func (r *ContainerRunAs) Validate() error {
 	var validationErrors error
 
-	if r.RunAsUID != nil && *r.RunAsUID < 0 {
-		validationErrors = errors.Join(validationErrors, fmt.Errorf("runAs.uid must be non-negative, got %d", *r.RunAsUID))
+	if r.RunAsUID != nil && *r.RunAsUID > runAsMaxID {
+		validationErrors = errors.Join(validationErrors, fmt.Errorf("runAs.uid must be at most %d, got %d", runAsMaxID, *r.RunAsUID))
 	}
 
-	if r.RunAsGID != nil && *r.RunAsGID < 0 {
-		validationErrors = errors.Join(validationErrors, fmt.Errorf("runAs.gid must be non-negative, got %d", *r.RunAsGID))
+	if r.RunAsGID != nil && *r.RunAsGID > runAsMaxID {
+		validationErrors = errors.Join(validationErrors, fmt.Errorf("runAs.gid must be at most %d, got %d", runAsMaxID, *r.RunAsGID))
 	}
 
 	return validationErrors

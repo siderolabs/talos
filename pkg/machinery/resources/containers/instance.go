@@ -371,8 +371,8 @@ func CurrentInstanceSpec(
 	return containerInstanceSpec, nil
 }
 
-// Int32PtrEqual compares two int32 pointers, treating nil as equal only to nil.
-func Int32PtrEqual(a, b *int32) bool {
+// Uint32PtrEqual compares two uint32 pointers, treating nil as equal only to nil.
+func Uint32PtrEqual(a, b *uint32) bool {
 	if a == nil || b == nil {
 		return a == b
 	}

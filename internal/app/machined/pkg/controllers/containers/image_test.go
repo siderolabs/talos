@@ -378,7 +378,7 @@ func (suite *ImageSuite) TestAllowsNamedUserCoveredByRunAs() {
 
 	spec := containers.NewContainerSpec(containers.NamespaceName, "named-user-covered")
 	spec.TypedSpec().Image = containers.ContainerImageSpec{Ref: ref}
-	spec.TypedSpec().RunAs = containers.ContainerRunAsSpec{UID: new(int32(1000))}
+	spec.TypedSpec().RunAs = containers.ContainerRunAsSpec{UID: new(uint32(1000))}
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), spec))
 
 	ctest.AssertResource(suite, "named-user-covered", func(status *containers.ContainerImageStatus, asrt *assert.Assertions) {
@@ -402,7 +402,7 @@ func (suite *ImageSuite) TestNamedUserRecoversOnceRunAsIsSet() {
 
 	ctest.UpdateWithConflicts(suite, containers.NewContainerSpec(containers.NamespaceName, "named-user-fixed"),
 		func(spec *containers.ContainerSpec) error {
-			spec.TypedSpec().RunAs = containers.ContainerRunAsSpec{UID: new(int32(1000)), GID: new(int32(1000))}
+			spec.TypedSpec().RunAs = containers.ContainerRunAsSpec{UID: new(uint32(1000)), GID: new(uint32(1000))}
 
 			return nil
 		})

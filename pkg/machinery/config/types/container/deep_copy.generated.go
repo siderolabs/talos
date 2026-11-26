@@ -25,11 +25,11 @@ func (o *ContainerConfigV1Alpha1) DeepCopy() *ContainerConfigV1Alpha1 {
 		cp.RunAsConfig = new(ContainerRunAs)
 		*cp.RunAsConfig = *o.RunAsConfig
 		if o.RunAsConfig.RunAsUID != nil {
-			cp.RunAsConfig.RunAsUID = new(int32)
+			cp.RunAsConfig.RunAsUID = new(uint32)
 			*cp.RunAsConfig.RunAsUID = *o.RunAsConfig.RunAsUID
 		}
 		if o.RunAsConfig.RunAsGID != nil {
-			cp.RunAsConfig.RunAsGID = new(int32)
+			cp.RunAsConfig.RunAsGID = new(uint32)
 			*cp.RunAsConfig.RunAsGID = *o.RunAsConfig.RunAsGID
 		}
 	}

@@ -203,8 +203,8 @@ message ContainerRestartSpec {
 //
 // Nil means use the image's own USER for that half.
 message ContainerRunAsSpec {
-  int32 uid = 1;
-  int32 gid = 2;
+  uint32 uid = 1;
+  uint32 gid = 2;
 }
 
 // ContainerRunStatusSpec is the spec for ContainerRunStatus.

@@ -761,13 +761,13 @@ func (ContainerDependsOnSpec) NetworkConditionMet(status *network.Status, condit
 //
 //gotagsrewrite:gen
 type ContainerRunAsSpec struct {
-	UID *int32 `yaml:"uid,omitempty" protobuf:"1"`
-	GID *int32 `yaml:"gid,omitempty" protobuf:"2"`
+	UID *uint32 `yaml:"uid,omitempty" protobuf:"1"`
+	GID *uint32 `yaml:"gid,omitempty" protobuf:"2"`
 }
 
 // Equal compares two RunAs specs, treating nil UID/GID halves as equal only to each other.
 func (a ContainerRunAsSpec) Equal(b ContainerRunAsSpec) bool {
-	return Int32PtrEqual(a.UID, b.UID) && Int32PtrEqual(a.GID, b.GID)
+	return Uint32PtrEqual(a.UID, b.UID) && Uint32PtrEqual(a.GID, b.GID)
 }
 
 // ContainerImageSpec is a resolved container image reference.

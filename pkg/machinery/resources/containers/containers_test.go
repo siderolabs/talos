@@ -56,8 +56,8 @@ func TestProtobufRoundTrip(t *testing.T) {
 		Args:       []string{"nginx", "-g", "daemon off;"},
 		WorkingDir: "/srv",
 		RunAs: containers.ContainerRunAsSpec{
-			UID: new(int32(65534)),
-			GID: new(int32(65534)),
+			UID: new(uint32(65534)),
+			GID: new(uint32(65534)),
 		},
 		Environment: []string{"NGINX_PORT=8080"},
 		Mounts: []containers.ContainerMountSpec{
@@ -144,8 +144,8 @@ func TestInstanceProtobufRoundTrip(t *testing.T) {
 		Args:        []string{"nginx", "-g", "daemon off;"},
 		WorkingDir:  "/srv",
 		RunAs: containers.ContainerRunAsSpec{
-			UID: new(int32(65534)),
-			GID: new(int32(65534)),
+			UID: new(uint32(65534)),
+			GID: new(uint32(65534)),
 		},
 		Environment: []string{"NGINX_PORT=8080"},
 		Mounts: []containers.ResolvedMountSpec{

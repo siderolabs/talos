@@ -777,8 +777,8 @@ func (suite *ContainersSuite) TestRunAs() {
 	ctx, name, _ := suite.setupContainer("runas")
 
 	var (
-		uid int32 = 1234
-		gid int32 = 5678
+		uid uint32 = 1234
+		gid uint32 = 5678
 	)
 
 	doc := suite.shellContainer(name, "echo uid=$(id -u) gid=$(id -g)")
@@ -856,8 +856,8 @@ func (suite *ContainersSuite) TestCapabilities() {
 		ctx, name, _ := suite.setupContainer("caps-non-root-add")
 
 		var (
-			uid int32 = 65534
-			gid int32 = 65534
+			uid uint32 = 65534
+			gid uint32 = 65534
 		)
 
 		doc := suite.shellContainer(name, readCapSets)
@@ -890,8 +890,8 @@ func (suite *ContainersSuite) TestCapabilities() {
 		ctx, name, _ := suite.setupContainer("caps-non-root-privileged")
 
 		var (
-			uid int32 = 65534
-			gid int32 = 65534
+			uid uint32 = 65534
+			gid uint32 = 65534
 		)
 
 		doc := suite.shellContainer(name, readCapSets)

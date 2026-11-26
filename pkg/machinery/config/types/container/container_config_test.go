@@ -290,11 +290,11 @@ lifecycle:
 
 	uid, ok := cfg.RunAs().UID().Get()
 	require.True(t, ok)
-	assert.Equal(t, int32(65534), uid)
+	assert.Equal(t, uint32(65534), uid)
 
 	gid, ok := cfg.RunAs().GID().Get()
 	require.True(t, ok)
-	assert.Equal(t, int32(65534), gid)
+	assert.Equal(t, uint32(65534), gid)
 
 	limit, ok := cfg.Resources().MemoryLimit().Get()
 	require.True(t, ok)
@@ -366,14 +366,14 @@ func TestContainerConfigValidationErrors(t *testing.T) {
 			expectedErr: "invalid image reference",
 		},
 		{
-			name:        "negative uid",
-			doc:         "name: nginx\nimage: nginx\nrunAs:\n  uid: -1",
-			expectedErr: "runAs.uid must be non-negative, got -1",
+			name:        "reserved uid",
+			doc:         "name: nginx\nimage: nginx\nrunAs:\n  uid: 4294967295",
+			expectedErr: "runAs.uid must be at most 4294967294, got 4294967295",
 		},
 		{
-			name:        "negative gid",
-			doc:         "name: nginx\nimage: nginx\nrunAs:\n  gid: -1",
-			expectedErr: "runAs.gid must be non-negative, got -1",
+			name:        "reserved gid",
+			doc:         "name: nginx\nimage: nginx\nrunAs:\n  gid: 4294967295",
+			expectedErr: "runAs.gid must be at most 4294967294, got 4294967295",
 		},
 		{
 			name:        "environment without =",

@@ -408,11 +408,11 @@ func WithRunAs(runAs containersres.ContainerRunAsSpec) oci.SpecOpts {
 		}
 
 		if runAs.UID != nil {
-			s.Process.User.UID = uint32(*runAs.UID) //nolint:gosec
+			s.Process.User.UID = *runAs.UID
 		}
 
 		if runAs.GID != nil {
-			s.Process.User.GID = uint32(*runAs.GID) //nolint:gosec
+			s.Process.User.GID = *runAs.GID
 		}
 
 		return nil

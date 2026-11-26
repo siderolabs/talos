@@ -187,9 +187,9 @@ type ContainerResourcesConfig interface {
 // ContainerRunAsConfig defines the uid/gid to run the container's entrypoint as.
 type ContainerRunAsConfig interface {
 	// UID overrides the image USER's uid; None means use the image.
-	UID() optional.Optional[int32]
+	UID() optional.Optional[uint32]
 	// GID overrides the image USER's gid; None means use the image.
-	GID() optional.Optional[int32]
+	GID() optional.Optional[uint32]
 }
 
 // ContainerDependsOnConfig defines the conditions gating container startup.

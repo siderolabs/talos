@@ -8662,8 +8662,8 @@ Nil means use the image's own USER for that half.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| uid | [int32](#int32) |  |  |
-| gid | [int32](#int32) |  |  |
+| uid | [uint32](#uint32) |  |  |
+| gid | [uint32](#uint32) |  |  |
 
 
 

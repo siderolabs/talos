@@ -23,9 +23,9 @@ import (
 func TestCheckImageUser(t *testing.T) {
 	t.Parallel()
 
-	uid := containers.ContainerRunAsSpec{UID: new(int32(1000))}
-	gid := containers.ContainerRunAsSpec{GID: new(int32(1000))}
-	both := containers.ContainerRunAsSpec{UID: new(int32(1000)), GID: new(int32(1000))}
+	uid := containers.ContainerRunAsSpec{UID: new(uint32(1000))}
+	gid := containers.ContainerRunAsSpec{GID: new(uint32(1000))}
+	both := containers.ContainerRunAsSpec{UID: new(uint32(1000)), GID: new(uint32(1000))}
 
 	for _, test := range []struct {
 		name        string
@@ -322,8 +322,8 @@ func TestWithRunAs(t *testing.T) {
 	// Test that WithRunAs returns an oci.SpecOpts (function)
 	t.Run("returns function", func(t *testing.T) {
 		var (
-			uid int32 = 1000
-			gid int32 = 1001
+			uid uint32 = 1000
+			gid uint32 = 1001
 		)
 
 		spec := containers.ContainerRunAsSpec{

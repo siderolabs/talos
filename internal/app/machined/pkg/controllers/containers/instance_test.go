@@ -295,7 +295,7 @@ func (suite *InstanceSuite) TestInstanceMirrorsFullSpec() {
 		spec.Entrypoint = []string{"/docker-entrypoint.sh"}
 		spec.Args = []string{"nginx", "-g", "daemon off;"}
 		spec.WorkingDir = "/srv"
-		spec.RunAs = containers.ContainerRunAsSpec{UID: new(int32(65534)), GID: new(int32(65533))}
+		spec.RunAs = containers.ContainerRunAsSpec{UID: new(uint32(65534)), GID: new(uint32(65533))}
 		spec.Environment = []string{"NGINX_PORT=8080", "TZ=UTC"}
 		spec.Mounts = []containers.ContainerMountSpec{
 			{
@@ -336,7 +336,7 @@ func (suite *InstanceSuite) TestInstanceMirrorsFullSpec() {
 			Entrypoint:  []string{"/docker-entrypoint.sh"},
 			Args:        []string{"nginx", "-g", "daemon off;"},
 			WorkingDir:  "/srv",
-			RunAs:       containers.ContainerRunAsSpec{UID: new(int32(65534)), GID: new(int32(65533))},
+			RunAs:       containers.ContainerRunAsSpec{UID: new(uint32(65534)), GID: new(uint32(65533))},
 			Environment: []string{"NGINX_PORT=8080", "TZ=UTC"},
 			Mounts: []containers.ResolvedMountSpec{
 				{
@@ -811,8 +811,8 @@ func (suite *InstanceSuite) TestEveryComparedFieldReplacesInstance() {
 		func(spec *containers.ContainerSpecSpec) { spec.Environment = []string{"NGINX_PORT=8080"} },
 		// Each RunAs half separately: nil is meaningful there, so a comparison that only looks at
 		// one half would miss the other.
-		func(spec *containers.ContainerSpecSpec) { spec.RunAs.UID = new(int32(65534)) },
-		func(spec *containers.ContainerSpecSpec) { spec.RunAs.GID = new(int32(65534)) },
+		func(spec *containers.ContainerSpecSpec) { spec.RunAs.UID = new(uint32(65534)) },
+		func(spec *containers.ContainerSpecSpec) { spec.RunAs.GID = new(uint32(65534)) },
 		func(spec *containers.ContainerSpecSpec) { spec.Security.Privileged = true },
 		func(spec *containers.ContainerSpecSpec) { spec.Security.CapabilitiesAdd = []string{"NET_ADMIN"} },
 		func(spec *containers.ContainerSpecSpec) { spec.Security.CapabilitiesDrop = []string{"ALL"} },

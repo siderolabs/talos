@@ -5423,7 +5423,7 @@ func (m *ContainerRunAsSpec) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Uid |= int32(b&0x7F) << shift
+				m.Uid |= uint32(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -5442,7 +5442,7 @@ func (m *ContainerRunAsSpec) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Gid |= int32(b&0x7F) << shift
+				m.Gid |= uint32(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}

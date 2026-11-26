@@ -1239,8 +1239,8 @@ func (x *ContainerRestartSpec) GetMaxDelay() *durationpb.Duration {
 // Nil means use the image's own USER for that half.
 type ContainerRunAsSpec struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Uid           int32                  `protobuf:"varint,1,opt,name=uid,proto3" json:"uid,omitempty"`
-	Gid           int32                  `protobuf:"varint,2,opt,name=gid,proto3" json:"gid,omitempty"`
+	Uid           uint32                 `protobuf:"varint,1,opt,name=uid,proto3" json:"uid,omitempty"`
+	Gid           uint32                 `protobuf:"varint,2,opt,name=gid,proto3" json:"gid,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1275,14 +1275,14 @@ func (*ContainerRunAsSpec) Descriptor() ([]byte, []int) {
 	return file_resource_definitions_containers_containers_proto_rawDescGZIP(), []int{16}
 }
 
-func (x *ContainerRunAsSpec) GetUid() int32 {
+func (x *ContainerRunAsSpec) GetUid() uint32 {
 	if x != nil {
 		return x.Uid
 	}
 	return 0
 }
 
-func (x *ContainerRunAsSpec) GetGid() int32 {
+func (x *ContainerRunAsSpec) GetGid() uint32 {
 	if x != nil {
 		return x.Gid
 	}
@@ -2106,8 +2106,8 @@ const file_resource_definitions_containers_containers_proto_rawDesc = "" +
 	"\tmax_delay\x18\x04 \x01(\v2\x19.google.protobuf.DurationR\bmaxDelayB\x0e\n" +
 	"\f_max_retries\"8\n" +
 	"\x12ContainerRunAsSpec\x12\x10\n" +
-	"\x03uid\x18\x01 \x01(\x05R\x03uid\x12\x10\n" +
-	"\x03gid\x18\x02 \x01(\x05R\x03gid\"\xe8\x03\n" +
+	"\x03uid\x18\x01 \x01(\rR\x03uid\x12\x10\n" +
+	"\x03gid\x18\x02 \x01(\rR\x03gid\"\xe8\x03\n" +
 	"\x16ContainerRunStatusSpec\x12%\n" +
 	"\x0eexecution_hash\x18\x01 \x01(\tR\rexecutionHash\x12'\n" +
 	"\x0fnext_generation\x18\x02 \x01(\x04R\x0enextGeneration\x12\x1a\n" +

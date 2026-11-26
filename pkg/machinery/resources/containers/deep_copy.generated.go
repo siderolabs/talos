@@ -18,11 +18,11 @@ func (o ContainerSpecSpec) DeepCopy() ContainerSpecSpec {
 		copy(cp.Args, o.Args)
 	}
 	if o.RunAs.UID != nil {
-		cp.RunAs.UID = new(int32)
+		cp.RunAs.UID = new(uint32)
 		*cp.RunAs.UID = *o.RunAs.UID
 	}
 	if o.RunAs.GID != nil {
-		cp.RunAs.GID = new(int32)
+		cp.RunAs.GID = new(uint32)
 		*cp.RunAs.GID = *o.RunAs.GID
 	}
 	if o.Environment != nil {
@@ -122,11 +122,11 @@ func (o ContainerInstanceSpecSpec) DeepCopy() ContainerInstanceSpecSpec {
 		copy(cp.Args, o.Args)
 	}
 	if o.RunAs.UID != nil {
-		cp.RunAs.UID = new(int32)
+		cp.RunAs.UID = new(uint32)
 		*cp.RunAs.UID = *o.RunAs.UID
 	}
 	if o.RunAs.GID != nil {
-		cp.RunAs.GID = new(int32)
+		cp.RunAs.GID = new(uint32)
 		*cp.RunAs.GID = *o.RunAs.GID
 	}
 	if o.Environment != nil {
