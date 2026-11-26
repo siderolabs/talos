@@ -25,9 +25,20 @@ const (
 //
 // At most one health check loop runs at a time.
 type Probe struct {
+	// stop is closed by Stop, created on first use so that the zero value is ready to use.
+	stop     chan struct{}
 	mu       sync.Mutex
 	state    state
 	interval time.Duration
+}
+
+// stopCh returns the channel closed by Stop; p.mu must be held.
+func (p *Probe) stopCh() chan struct{} {
+	if p.stop == nil {
+		p.stop = make(chan struct{})
+	}
+
+	return p.stop
 }
 
 // Do starts running the check in the background every interval until it returns nil.
@@ -43,6 +54,7 @@ func (p *Probe) Do(check func() error) {
 	}
 
 	p.state = active
+	stop := p.stopCh()
 
 	interval := p.interval
 	if interval <= 0 {
@@ -53,14 +65,10 @@ func (p *Probe) Do(check func() error) {
 
 	go func() {
 		for check() != nil {
-			time.Sleep(interval)
-
-			p.mu.Lock()
-			stop := p.state == stopped
-			p.mu.Unlock()
-
-			if stop {
+			select {
+			case <-stop:
 				return
+			case <-time.After(interval):
 			}
 		}
 
@@ -81,9 +89,15 @@ func (p *Probe) Start(interval time.Duration) {
 	p.mu.Unlock()
 }
 
-// Stop stops the running check loop (after the check in progress finishes), and prevents new ones.
+// Stop stops the running check loop without waiting for the next interval, and prevents new ones.
+//
+// A check in progress runs to completion.
 func (p *Probe) Stop() {
 	p.mu.Lock()
-	p.state = stopped
-	p.mu.Unlock()
+	defer p.mu.Unlock()
+
+	if p.state != stopped {
+		p.state = stopped
+		close(p.stopCh())
+	}
 }
