@@ -15,6 +15,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/siderolabs/gen/xerrors"
@@ -440,6 +441,13 @@ func (i *Installer) handleMeta(ctx context.Context, bd *block.Device, mode Mode,
 		if mode == ModeUpgrade {
 			if ok, err := metaState.SetTag(ctx, metaconsts.Upgrade, previousLabel); !ok || err != nil {
 				return fmt.Errorf("failed to set upgrade tag: %q", previousLabel)
+			}
+
+			// record the boot the upgrade was installed in, so that a failure of the current boot doesn't revert the upgrade
+			if bootID, err := os.ReadFile("/proc/sys/kernel/random/boot_id"); err != nil {
+				i.options.Printf("failed to read boot ID, skipping upgrade boot ID tag: %s", err)
+			} else if ok, err := metaState.SetTag(ctx, metaconsts.UpgradeBootID, strings.TrimSpace(string(bootID))); !ok || err != nil {
+				return errors.New("failed to set upgrade boot ID tag")
 			}
 		}
 

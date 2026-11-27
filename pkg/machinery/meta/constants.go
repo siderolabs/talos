@@ -29,6 +29,10 @@ const (
 	UniqueMachineToken
 	// DiskImageBootloader stores the bootloader used for the disk image, this key is wiped on first boot.
 	DiskImageBootloader
+	// UpgradeBootID stores the kernel boot ID of the boot in which the Upgrade tag was set.
+	//
+	// The bootloader is not reverted on a failure within that same boot, as the new version hasn't been booted yet.
+	UpgradeBootID
 )
 
 // IsAPIWriteable returns true if the given key is writeable via the API.
@@ -36,7 +40,7 @@ func IsAPIWriteable(key uint8) bool {
 	switch key {
 	case 0:
 		return false // used internally as empty slot marker, not settable
-	case Upgrade, StagedUpgradeImageRef, StagedUpgradeInstallOptions, StateEncryptionConfig, DiskImageBootloader:
+	case Upgrade, StagedUpgradeImageRef, StagedUpgradeInstallOptions, StateEncryptionConfig, DiskImageBootloader, UpgradeBootID:
 		return false
 	default:
 		return true
