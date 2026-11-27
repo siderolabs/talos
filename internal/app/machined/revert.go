@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
+	"os"
+	"strings"
 
 	"github.com/cosi-project/runtime/pkg/state"
 
@@ -66,9 +68,22 @@ func revertBootloadInternal(ctx context.Context, resourceState state.State) erro
 		return nil
 	}
 
+	if upgradeBootID, ok := metaState.ReadTag(metaconsts.UpgradeBootID); ok {
+		bootID, err := os.ReadFile("/proc/sys/kernel/random/boot_id")
+		if err == nil && strings.TrimSpace(string(bootID)) == upgradeBootID {
+			// the upgrade was installed during the current boot, so the new version hasn't booted yet,
+			// and the failure is not related to it: keep the upgrade, the revert still applies to the next boot
+			log.Printf("upgrade was installed during the current boot, not reverting")
+
+			return nil
+		}
+	}
+
 	if label == "" {
-		if _, err = metaState.DeleteTag(ctx, metaconsts.Upgrade); err != nil {
-			return err
+		for _, tag := range []uint8{metaconsts.Upgrade, metaconsts.UpgradeBootID} {
+			if _, err = metaState.DeleteTag(ctx, tag); err != nil {
+				return err
+			}
 		}
 
 		return metaState.Flush()
@@ -87,8 +102,10 @@ func revertBootloadInternal(ctx context.Context, resourceState state.State) erro
 		return err
 	}
 
-	if _, err = metaState.DeleteTag(ctx, metaconsts.Upgrade); err != nil {
-		return err
+	for _, tag := range []uint8{metaconsts.Upgrade, metaconsts.UpgradeBootID} {
+		if _, err = metaState.DeleteTag(ctx, tag); err != nil {
+			return err
+		}
 	}
 
 	return metaState.Flush()

@@ -80,7 +80,12 @@ func (ctrl *DropUpgradeFallbackController) Run(ctx context.Context, r controller
 			return err
 		}
 
-		if ok {
+		okBootID, err := ctrl.MetaProvider.Meta().DeleteTag(ctx, meta.UpgradeBootID)
+		if err != nil {
+			return err
+		}
+
+		if ok || okBootID {
 			logger.Info("removing fallback entry")
 
 			if err = ctrl.MetaProvider.Meta().Flush(); err != nil {

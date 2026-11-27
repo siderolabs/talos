@@ -67,6 +67,9 @@ func (suite *DropUpgradeFallbackControllerSuite) TestDropUpgradeFallback() {
 	_, err := suite.meta.SetTag(suite.Ctx(), metaconsts.Upgrade, "A")
 	suite.Require().NoError(err)
 
+	_, err = suite.meta.SetTag(suite.Ctx(), metaconsts.UpgradeBootID, "boot-id")
+	suite.Require().NoError(err)
+
 	machineStatus := runtimeres.NewMachineStatus()
 	machineStatus.TypedSpec().Stage = runtimeres.MachineStageBooting
 	machineStatus.TypedSpec().Status.Ready = false
@@ -85,9 +88,10 @@ func (suite *DropUpgradeFallbackControllerSuite) TestDropUpgradeFallback() {
 	suite.Require().NoError(suite.State().Update(suite.Ctx(), machineStatus))
 
 	suite.AssertWithin(time.Second, 10*time.Millisecond, func() error {
-		_, ok = suite.meta.ReadTag(metaconsts.Upgrade)
-		if ok {
-			return retry.ExpectedErrorf("tag is still present")
+		for _, tag := range []uint8{metaconsts.Upgrade, metaconsts.UpgradeBootID} {
+			if _, ok = suite.meta.ReadTag(tag); ok {
+				return retry.ExpectedErrorf("tag %d is still present", tag)
+			}
 		}
 
 		return nil
