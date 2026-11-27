@@ -230,3 +230,88 @@ func TestPhaseList_AppendWhen(t *testing.T) {
 		})
 	}
 }
+
+func TestKillWorkloadsPhaseOrdering(t *testing.T) {
+	t.Setenv("PLATFORM", "container")
+
+	state, err := NewState()
+	require.NoError(t, err)
+
+	metalPlatform := &metal.Metal{}
+	state.platform = metalPlatform
+	state.machine.platform = metalPlatform
+
+	rt := NewRuntime(
+		state,
+		NewEvents(1000, 10),
+		logging.NewCircularBufferLoggingManager(log.New(t.Output(), "fallback logger: ", log.Flags())),
+	)
+	sequencer := NewSequencer()
+
+	for _, tt := range []struct {
+		name   string
+		phases []runtime.Phase
+	}{
+		{
+			name:   "reboot",
+			phases: sequencer.Reboot(rt, &machineapi.RebootRequest{}),
+		},
+		{
+			name:   "reset",
+			phases: sequencer.Reset(rt, resetOptions{}),
+		},
+		{
+			name:   "shutdown",
+			phases: sequencer.Shutdown(rt, &machineapi.ShutdownRequest{}),
+		},
+		{
+			name:   "stage upgrade",
+			phases: sequencer.StageUpgrade(rt, &machineapi.UpgradeRequest{}),
+		},
+		{
+			name:   "upgrade",
+			phases: sequencer.Upgrade(rt, &machineapi.UpgradeRequest{}),
+		},
+		{
+			name:   "emergency cleanup",
+			phases: sequencer.EmergencyVolumeCleanup(rt),
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			names := make([]string, 0, len(tt.phases))
+			for _, phase := range tt.phases {
+				names = append(names, phase.Name)
+			}
+
+			killWorkloads := slices.Index(names, "killWorkloads")
+			require.NotEqual(t, -1, killWorkloads, "phases: %v", names)
+
+			// the workloads are killed after their runtimes are stopped...
+			if stopServices := slices.Index(names, "stopServices"); stopServices != -1 {
+				assert.Less(t, stopServices, killWorkloads, "phases: %v", names)
+			}
+
+			// ...and right before the mounts they leave behind are unmounted
+			require.Less(t, killWorkloads+1, len(names))
+			assert.Contains(t, []string{"umount", "unmount"}, names[killWorkloads+1], "phases: %v", names)
+		})
+	}
+}
+
+func TestIsPodMount(t *testing.T) {
+	t.Parallel()
+
+	for mountpoint, expected := range map[string]bool{
+		"/var":                     false,
+		"/var/lib/kubelet/pods/x":  true,
+		"/var/lib/containerd":      false, // promotable partition, unmounted later
+		"/var/lib/containerd/io.x": true,
+		"/var/log":                 false,
+		"/run/containerd/io.containerd.runtime.v2.task/k8s.io/d8e14569/rootfs": true,
+		"/run/containerd/io.containerd.grpc.v1.cri/sandboxes/d8e14569/shm":     false,
+		"/run/containerd": false,
+		"/system/run/containerd/io.containerd.runtime.v2.task/system/apid/rootfs": false,
+	} {
+		assert.Equal(t, expected, isPodMount(mountpoint), mountpoint)
+	}
+}

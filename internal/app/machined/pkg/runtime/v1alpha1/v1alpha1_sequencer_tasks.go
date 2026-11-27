@@ -45,6 +45,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/sandboxd"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
+	"github.com/siderolabs/talos/internal/pkg/cgroup"
 	"github.com/siderolabs/talos/internal/pkg/cri"
 	"github.com/siderolabs/talos/internal/pkg/environment"
 	"github.com/siderolabs/talos/internal/pkg/etcd"
@@ -420,6 +421,45 @@ func StopServicesEphemeral(runtime.Sequence, any) (runtime.TaskExecutionFunc, st
 	}, "stopServicesForUpgrade"
 }
 
+// killWorkloadsTimeout is how long KillWorkloads waits for the killed processes of a single cgroup to exit.
+const killWorkloadsTimeout = 10 * time.Second
+
+// KillWorkloads kills any workload processes left running after the graceful shutdown.
+//
+// Pods, Talos containers and virtual machines are stopped gracefully by the earlier phases, and their
+// runtimes (CRI containerd, its shims, sandboxd) by stopServices. Anything still running in the
+// workload cgroups at this point failed to stop, and it would keep the EPHEMERAL volume busy (e.g. via
+// a container rootfs overlay or files open under /var), so it is killed. The mounts left behind by
+// the killed container shims are unmounted by the following UnmountPodMounts.
+//
+// Every killed process is logged: if this task kills anything, the graceful shutdown failed.
+func KillWorkloads(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		for _, name := range []string{
+			constants.CgroupKubepods,
+			constants.CgroupPodRuntimeRoot,
+			constants.CgroupTalosContainersRoot,
+			constants.CgroupVirtualMachines,
+		} {
+			killCtx, cancel := context.WithTimeout(ctx, killWorkloadsTimeout)
+			killed, err := cgroup.KillCgroupProcesses(killCtx, name)
+
+			cancel()
+
+			for _, process := range killed {
+				logger.Printf("killed leftover workload process: %s", process)
+			}
+
+			if err != nil {
+				// not fatal: the volume teardown reports what is still holding the volumes
+				logger.Printf("error killing leftover workload processes in cgroup %q: %s", name, err)
+			}
+		}
+
+		return nil
+	}, "killWorkloads"
+}
+
 // StopAllServices represents the StopAllServices task.
 func StopAllServices(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
@@ -605,7 +645,35 @@ func existsAndIsFile(p string) (err error) {
 	return nil
 }
 
+// criContainerdTaskPath is the directory of the CRI containerd shims (runtime v2 tasks), which holds the container rootfs mounts.
+var criContainerdTaskPath = filepath.Join(filepath.Dir(constants.CRIContainerdAddress), "io.containerd.runtime.v2.task")
+
+// promotableMountpoints are the mountpoints of the promotable system-volume partitions (ETCD/CRI/KUBELET/LOG).
+//
+// They are COSI-managed and are unmounted by UnmountPromotableSystemPartitions after their consumers stop;
+// UnmountPodMounts skips the partition mountpoints themselves (their pod/overlay submounts are still unmounted)
+// so a still-busy mount, e.g. /var/log held by syslogd, doesn't abort the sequence.
+var promotableMountpoints = map[string]struct{}{
+	constants.EtcdDataPath:          {},
+	constants.CRIContainerdDataPath: {},
+	constants.KubeletDataPath:       {},
+	constants.LogMountPoint:         {},
+}
+
+// isPodMount reports whether the mountpoint should be unmounted by UnmountPodMounts.
+func isPodMount(mountpoint string) bool {
+	if _, isPromotable := promotableMountpoints[mountpoint]; isPromotable {
+		return false
+	}
+
+	return strings.HasPrefix(mountpoint, constants.EphemeralMountPoint+"/") || strings.HasPrefix(mountpoint, criContainerdTaskPath+"/")
+}
+
 // UnmountPodMounts represents the UnmountPodMounts task.
+//
+// It unmounts everything mounted under /var, and the container rootfs mounts left in the CRI containerd
+// shims directory: these are normally unmounted by the container shims, but a shim killed by KillWorkloads
+// leaves them behind, and a rootfs overlay backed by /var/lib/containerd keeps the EPHEMERAL volume busy.
 func UnmountPodMounts(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		var b []byte
@@ -615,17 +683,6 @@ func UnmountPodMounts(runtime.Sequence, any) (runtime.TaskExecutionFunc, string)
 		}
 
 		rdr := bytes.NewReader(b)
-
-		// promotable system-volume partitions (ETCD/CRI/KUBELET/LOG) are COSI-managed and are
-		// unmounted by UnmountPromotableSystemPartitions after their consumers stop; skip the
-		// partition mountpoints themselves here (their pod/overlay submounts are still unmounted
-		// below) so a still-busy mount, e.g. /var/log held by syslogd, doesn't abort the sequence.
-		promotableMountpoints := map[string]struct{}{
-			constants.EtcdDataPath:          {},
-			constants.CRIContainerdDataPath: {},
-			constants.KubeletDataPath:       {},
-			constants.LogMountPoint:         {},
-		}
 
 		var mountpoints []string
 
@@ -637,13 +694,7 @@ func UnmountPodMounts(runtime.Sequence, any) (runtime.TaskExecutionFunc, string)
 				continue
 			}
 
-			mountpoint := fields[1]
-
-			if _, isPromotable := promotableMountpoints[mountpoint]; isPromotable {
-				continue
-			}
-
-			if strings.HasPrefix(mountpoint, constants.EphemeralMountPoint+"/") {
+			if mountpoint := fields[1]; isPodMount(mountpoint) {
 				mountpoints = append(mountpoints, mountpoint)
 			}
 		}
@@ -889,27 +940,41 @@ func stopAndRemoveAllPods(stopAction cri.StopAction) runtime.TaskExecutionFunc {
 		//nolint:errcheck
 		defer client.Close()
 
-		ctx, cancel := context.WithTimeout(ctx, time.Minute*3)
-		defer cancel()
-
 		// We remove pods with POD network mode first so that the CNI can perform
 		// any cleanup tasks. If we don't do this, we run the risk of killing the
 		// CNI, preventing the CRI from cleaning up the pod's networking.
+		//
+		// Each pass gets its own timeout: if the CNI is already gone, the first pass
+		// hangs on the pod network teardown, and it must not use up the time of
+		// the second pass, which doesn't depend on the CNI.
+		podNetworkCtx, podNetworkCancel := context.WithTimeout(ctx, stopPodNetworkPodsTimeout)
+		defer podNetworkCancel()
 
-		if err = client.StopAndRemovePodSandboxes(ctx, stopAction, runtimeapi.NamespaceMode_POD, runtimeapi.NamespaceMode_CONTAINER); err != nil {
+		if err = client.StopAndRemovePodSandboxes(podNetworkCtx, stopAction, runtimeapi.NamespaceMode_POD, runtimeapi.NamespaceMode_CONTAINER); err != nil {
 			logger.Printf("failed to stop and remove pods with POD network mode: %s", err)
 		}
 
 		// With the POD network mode pods out of the way, we kill the remaining
 		// pods.
+		remainingCtx, remainingCancel := context.WithTimeout(ctx, stopRemainingPodsTimeout)
+		defer remainingCancel()
 
-		if err = client.StopAndRemovePodSandboxes(ctx, stopAction); err != nil {
+		if err = client.StopAndRemovePodSandboxes(remainingCtx, stopAction); err != nil {
 			logger.Printf("failed to stop and remove pods: %s", err)
 		}
 
+		// any pods which failed to stop are killed by KillWorkloads
 		return nil
 	}
 }
+
+const (
+	// stopPodNetworkPodsTimeout is the timeout to stop the pods with POD network mode.
+	stopPodNetworkPodsTimeout = 2 * time.Minute
+
+	// stopRemainingPodsTimeout is the timeout to stop the remaining (host network) pods.
+	stopRemainingPodsTimeout = time.Minute
+)
 
 // ResetSystemDiskPartitions represents the task for wiping the system disk partitions.
 func ResetSystemDiskPartitions(seq runtime.Sequence, _ any) (runtime.TaskExecutionFunc, string) {

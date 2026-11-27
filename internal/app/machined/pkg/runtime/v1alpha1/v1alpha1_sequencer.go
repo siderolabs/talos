@@ -471,6 +471,9 @@ func (*Sequencer) Upgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []ru
 			"stopServices",
 			StopServicesEphemeral,
 		).Append(
+			"killWorkloads",
+			KillWorkloads,
+		).Append(
 			"unmount",
 			UnmountPodMounts,
 		).Append(
@@ -536,6 +539,9 @@ func stopAllPhaselist(r runtime.Runtime, enableKexec bool) PhaseList {
 			"stopServices",
 			StopServicesEphemeral,
 		).Append(
+			"killWorkloads",
+			KillWorkloads,
+		).Append(
 			"umount",
 			UnmountPodMounts,
 		).Append(
@@ -581,6 +587,10 @@ func (*Sequencer) EmergencyVolumeCleanup(r runtime.Runtime) []runtime.Phase {
 		phases = phases.Append(
 			"denyNewServices",
 			DenyNewServices,
+		).Append(
+			// services are stopped by the time this sequence runs, kill any workloads left behind
+			"killWorkloads",
+			KillWorkloads,
 		).Append(
 			"umount",
 			UnmountPodMounts,
