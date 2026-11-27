@@ -241,6 +241,7 @@ func (suite *VirtualMachineSpecSuite) TestVNCDevices() {
 			for _, vnc := range []bool{false, true, false, true} {
 				ctest.UpdateWithConflicts(suite, spec, func(current *hypervisor.VirtualMachineSpec) error {
 					current.TypedSpec().Console.VNC = vnc
+					current.TypedSpec().Video.Enabled = vnc
 
 					return nil
 				})
@@ -918,7 +919,7 @@ func (suite *VirtualMachineSpecSuite) TestProfileTimers() {
 }
 
 // Video model + VRAM flow through to <video><model type="…" vram="…">; empty model falls
-// back to "vga" and zero vramMiB omits the attribute.
+// back to "vga" and zero vramMiB omits the attribute. Video renders without VNC when enabled.
 func (suite *VirtualMachineSpecSuite) TestVideoDevice() {
 	for _, tc := range []struct {
 		name    string
@@ -934,7 +935,12 @@ func (suite *VirtualMachineSpecSuite) TestVideoDevice() {
 		{name: "virtio-no-vram", video: hypervisor.VirtualMachineVideoSpec{Model: "virtio"}, model: "virtio"},
 		{name: "cirrus-no-vram", video: hypervisor.VirtualMachineVideoSpec{Model: "cirrus"}, model: "cirrus"},
 		{name: "no-vnc", video: hypervisor.VirtualMachineVideoSpec{Model: "bochs", VRAMMiB: 32}, noVNC: true},
+		{name: "video-only", video: hypervisor.VirtualMachineVideoSpec{Model: "bochs", VRAMMiB: 32, Enabled: true}, model: "bochs", vramKiB: 32 * 1024, noVNC: true},
 	} {
+		if !tc.noVNC {
+			tc.video.Enabled = true
+		}
+
 		spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "video-"+tc.name)
 		*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
 			CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
@@ -954,7 +960,7 @@ func (suite *VirtualMachineSpecSuite) TestVideoDevice() {
 
 			asrt.NoError(validateDomainXML([]byte(res.TypedSpec().DomainXML)))
 
-			if tc.noVNC || runtime.GOARCH != constants.ArchAmd64 {
+			if !tc.video.Enabled || runtime.GOARCH != constants.ArchAmd64 {
 				asrt.Empty(domain.Devices.Videos)
 
 				return

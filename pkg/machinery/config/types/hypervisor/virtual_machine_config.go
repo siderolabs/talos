@@ -120,14 +120,23 @@ type VirtualMachineConfigV1Alpha1 struct {
 	//     Optional; omitting it leaves the guest to boot its image unmodified.
 	GuestConfig VirtualMachineGuest `yaml:"guest,omitempty"`
 	//   description: |
-	//     Video device presented to the guest on amd64 when a VNC console is enabled.
-	//     Other architectures use libvirt's defaults; without VNC this block has no effect.
+	//     Video device presented to the guest.
+	//     By default it is attached only when a VNC console is enabled; `enabled` attaches it
+	//     without VNC.
+	//     Only amd64 renders the device so far; other architectures get libvirt's default,
+	//     which is added only alongside VNC, and ignore `model` and `vramMiB`.
 	//     Optional; omitting it uses `vga` with libvirt's default VRAM on amd64.
 	VideoConfig VirtualMachineVideo `yaml:"video,omitempty"`
 }
 
 // VirtualMachineVideo describes the virtual graphics device.
 type VirtualMachineVideo struct {
+	//   description: |
+	//     Attach a video device.
+	//
+	//     Optional; defaults to whether `console.vnc` is enabled. It cannot be disabled while VNC
+	//     is enabled, as a VNC console needs a display.
+	VideoEnabled *bool `yaml:"enabled,omitempty"`
 	//   description: |
 	//     Video model: `vga` (default), `virtio`, `bochs`, or `cirrus`.
 	//   examples:
@@ -455,6 +464,15 @@ func (c *VirtualMachineConfigV1Alpha1) Video() config.VirtualMachineVideoConfig 
 	return &c.VideoConfig
 }
 
+// Enabled implements config.VirtualMachineVideoConfig interface.
+func (v *VirtualMachineVideo) Enabled() optional.Optional[bool] {
+	if v.VideoEnabled == nil {
+		return optional.None[bool]()
+	}
+
+	return optional.Some(*v.VideoEnabled)
+}
+
 // Model implements config.VirtualMachineVideoConfig interface.
 func (v *VirtualMachineVideo) Model() string { return v.ModelConfig }
 
@@ -612,7 +630,14 @@ func (c *VirtualMachineConfigV1Alpha1) ValidateNetworking() error {
 
 // ValidateVideo checks the graphics device settings.
 func (c *VirtualMachineConfigV1Alpha1) ValidateVideo() error {
-	return hypervisorhelpers.ValidateVirtualMachineVideo(c.VideoConfig.ModelConfig, c.VideoConfig.VRAMMiBConfig)
+	var validationErrors error
+
+	if enabled, ok := c.Video().Enabled().Get(); ok && !enabled && c.Console().VNC().Enabled() {
+		validationErrors = errors.New("video.enabled cannot be false while console.vnc is enabled")
+	}
+
+	return errors.Join(validationErrors,
+		hypervisorhelpers.ValidateVirtualMachineVideo(c.VideoConfig.ModelConfig, c.VideoConfig.VRAMMiBConfig))
 }
 
 // ValidateFirmware checks the firmware the virtual machine boots.

@@ -24,6 +24,7 @@ func testInputs(platform domain.Platform) domain.Inputs {
 			Memory:     hypervisor.VirtualMachineMemorySpec{Size: 1024 * 1024},
 			Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
 			Console:    hypervisor.VirtualMachineConsoleSpec{Serial: true, VNC: true},
+			Video:      hypervisor.VirtualMachineVideoSpec{Enabled: true},
 			Guest:      hypervisor.VirtualMachineGuestSpec{Agent: hypervisor.VirtualMachineAgentSpec{Enabled: true}},
 			Interfaces: []hypervisor.VirtualMachineInterfaceSpec{{Name: "net0", Attachment: "bridge"}},
 		},

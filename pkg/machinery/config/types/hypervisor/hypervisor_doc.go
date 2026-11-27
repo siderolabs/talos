@@ -158,8 +158,8 @@ func (VirtualMachineConfigV1Alpha1) Doc() *encoder.Doc {
 				Name:        "video",
 				Type:        "VirtualMachineVideo",
 				Note:        "",
-				Description: "Video device presented to the guest on amd64 when a VNC console is enabled.\nOther architectures use libvirt's defaults; without VNC this block has no effect.\nOptional; omitting it uses `vga` with libvirt's default VRAM on amd64.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Video device presented to the guest on amd64 when a VNC console is enabled." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "Video device presented to the guest.\nBy default it is attached only when a VNC console is enabled; `enabled` attaches it\nwithout VNC.\nOnly amd64 renders the device so far; other architectures get libvirt's default,\nwhich is added only alongside VNC, and ignore `model` and `vramMiB`.\nOptional; omitting it uses `vga` with libvirt's default VRAM on amd64.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Video device presented to the guest." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}
@@ -182,6 +182,13 @@ func (VirtualMachineVideo) Doc() *encoder.Doc {
 		},
 		Fields: []encoder.Doc{
 			{
+				Name:        "enabled",
+				Type:        "bool",
+				Note:        "",
+				Description: "Attach a video device.\n\nOptional; defaults to whether `console.vnc` is enabled. It cannot be disabled while VNC\nis enabled, as a VNC console needs a display.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Attach a video device." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
 				Name:        "model",
 				Type:        "string",
 				Note:        "",
@@ -198,7 +205,7 @@ func (VirtualMachineVideo) Doc() *encoder.Doc {
 		},
 	}
 
-	doc.Fields[0].AddExample("", "vga")
+	doc.Fields[1].AddExample("", "vga")
 
 	return doc
 }

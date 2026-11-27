@@ -181,7 +181,10 @@ func renderVirtualMachineConsole(domain *libvirtxml.Domain, platform Platform, c
 				},
 			},
 		}
+	}
 
+	// A VNC console always has video enabled; video may also be enabled without one.
+	if video.Enabled {
 		platform.Video(domain, video)
 	}
 }

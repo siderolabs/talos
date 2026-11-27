@@ -3253,9 +3253,9 @@
         "video": {
           "$ref": "#/$defs/hypervisor.VirtualMachineVideo",
           "title": "video",
-          "description": "Video device presented to the guest on amd64 when a VNC console is enabled.\nOther architectures use libvirt’s defaults; without VNC this block has no effect.\nOptional; omitting it uses vga with libvirt’s default VRAM on amd64.\n",
-          "markdownDescription": "Video device presented to the guest on amd64 when a VNC console is enabled.\nOther architectures use libvirt's defaults; without VNC this block has no effect.\nOptional; omitting it uses `vga` with libvirt's default VRAM on amd64.",
-          "x-intellij-html-description": "\u003cp\u003eVideo device presented to the guest on amd64 when a VNC console is enabled.\nOther architectures use libvirt\u0026rsquo;s defaults; without VNC this block has no effect.\nOptional; omitting it uses \u003ccode\u003evga\u003c/code\u003e with libvirt\u0026rsquo;s default VRAM on amd64.\u003c/p\u003e\n"
+          "description": "Video device presented to the guest.\nBy default it is attached only when a VNC console is enabled; enabled attaches it\nwithout VNC.\nOnly amd64 renders the device so far; other architectures get libvirt’s default,\nwhich is added only alongside VNC, and ignore model and vramMiB.\nOptional; omitting it uses vga with libvirt’s default VRAM on amd64.\n",
+          "markdownDescription": "Video device presented to the guest.\nBy default it is attached only when a VNC console is enabled; `enabled` attaches it\nwithout VNC.\nOnly amd64 renders the device so far; other architectures get libvirt's default,\nwhich is added only alongside VNC, and ignore `model` and `vramMiB`.\nOptional; omitting it uses `vga` with libvirt's default VRAM on amd64.",
+          "x-intellij-html-description": "\u003cp\u003eVideo device presented to the guest.\nBy default it is attached only when a VNC console is enabled; \u003ccode\u003eenabled\u003c/code\u003e attaches it\nwithout VNC.\nOnly amd64 renders the device so far; other architectures get libvirt\u0026rsquo;s default,\nwhich is added only alongside VNC, and ignore \u003ccode\u003emodel\u003c/code\u003e and \u003ccode\u003evramMiB\u003c/code\u003e.\nOptional; omitting it uses \u003ccode\u003evga\u003c/code\u003e with libvirt\u0026rsquo;s default VRAM on amd64.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -3883,6 +3883,13 @@
     },
     "hypervisor.VirtualMachineVideo": {
       "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "enabled",
+          "description": "Attach a video device.\n\nOptional; defaults to whether console.vnc is enabled. It cannot be disabled while VNC\nis enabled, as a VNC console needs a display.\n",
+          "markdownDescription": "Attach a video device.\n\nOptional; defaults to whether `console.vnc` is enabled. It cannot be disabled while VNC\nis enabled, as a VNC console needs a display.",
+          "x-intellij-html-description": "\u003cp\u003eAttach a video device.\u003c/p\u003e\n\n\u003cp\u003eOptional; defaults to whether \u003ccode\u003econsole.vnc\u003c/code\u003e is enabled. It cannot be disabled while VNC\nis enabled, as a VNC console needs a display.\u003c/p\u003e\n"
+        },
         "model": {
           "enum": [
             "",

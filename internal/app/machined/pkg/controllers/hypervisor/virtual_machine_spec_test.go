@@ -364,6 +364,7 @@ func (suite *VirtualMachineProjectionSuite) TestProjectsRequiredAndOptionalInten
 			Guest: hypervisor.VirtualMachineGuestSpec{
 				Agent: hypervisor.VirtualMachineAgentSpec{Enabled: true},
 			},
+			Video: hypervisor.VirtualMachineVideoSpec{Enabled: true},
 		}, *res.TypedSpec())
 	})
 }
@@ -976,6 +977,7 @@ func (suite *VirtualMachineSpecSuite) TestInjectedInvalidVideo() {
 	} {
 		suite.logs.TakeAll()
 
+		video.Enabled = true
 		spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "video-invalid")
 		*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
 			CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
@@ -998,21 +1000,49 @@ func (suite *VirtualMachineSpecSuite) TestInjectedInvalidVideo() {
 	}
 }
 
+func (suite *VirtualMachineSpecSuite) TestInjectedVNCWithoutVideo() {
+	spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "vnc-no-video")
+	*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
+		CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
+		Memory:     hypervisor.VirtualMachineMemorySpec{Size: 512 << 20},
+		PowerState: "stopped",
+		Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+		Console:    hypervisor.VirtualMachineConsoleSpec{VNC: true},
+	}
+	suite.Create(spec)
+
+	suite.assertConversionError("vnc-no-video", "a VNC console requires a video device")
+	ctest.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](suite, "vnc-no-video")
+	suite.Destroy(spec)
+}
+
 func (suite *VirtualMachineSpecSuite) TestVideoLifecycle() {
 	doc := newVirtualMachine("video")
 	cfg, err := container.New(doc)
 	suite.Require().NoError(err)
 	suite.Create(config.NewMachineConfig(cfg))
 
-	for _, video := range []hypervisorcfg.VirtualMachineVideo{
-		{ModelConfig: "bochs", VRAMMiBConfig: 32},
-		{ModelConfig: "vga", VRAMMiBConfig: 64},
+	for _, tt := range []struct {
+		video   hypervisorcfg.VirtualMachineVideo
+		vnc     *bool
+		enabled bool
+	}{
+		{video: hypervisorcfg.VirtualMachineVideo{ModelConfig: "bochs", VRAMMiBConfig: 32}},
+		{video: hypervisorcfg.VirtualMachineVideo{ModelConfig: "vga", VRAMMiBConfig: 64}, vnc: new(true), enabled: true},
+		{video: hypervisorcfg.VirtualMachineVideo{VideoEnabled: new(true)}, enabled: true},
+		{video: hypervisorcfg.VirtualMachineVideo{VideoEnabled: new(false)}},
+		{vnc: new(true), enabled: true},
 		{},
 	} {
-		doc.VideoConfig = video
+		doc.VideoConfig = tt.video
+		doc.ConsoleConfig.VNCConfig.VNCEnabled = tt.vnc
 		suite.replaceConfig(doc)
 		ctest.AssertResource(suite, doc.Name(), func(res *hypervisor.VirtualMachineSpec, asrt *assert.Assertions) {
-			asrt.Equal(hypervisor.VirtualMachineVideoSpec{Model: video.ModelConfig, VRAMMiB: video.VRAMMiBConfig}, res.TypedSpec().Video)
+			asrt.Equal(hypervisor.VirtualMachineVideoSpec{
+				Model:   tt.video.ModelConfig,
+				VRAMMiB: tt.video.VRAMMiBConfig,
+				Enabled: tt.enabled,
+			}, res.TypedSpec().Video)
 		})
 	}
 }

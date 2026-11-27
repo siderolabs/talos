@@ -134,6 +134,7 @@ func projectVirtualMachineSpec(vm configcfg.VirtualMachineConfig) hypervisor.Vir
 		Video: hypervisor.VirtualMachineVideoSpec{
 			Model:   vm.Video().Model(),
 			VRAMMiB: vm.Video().VRAMMiB(),
+			Enabled: vm.Video().Enabled().ValueOr(vm.Console().VNC().Enabled()),
 		},
 	}
 

@@ -36,3 +36,30 @@ func TestAMD64PlatformHardware(t *testing.T) {
 		}
 	}
 }
+
+func TestAMD64VideoWithoutVNC(t *testing.T) {
+	for _, tt := range []struct {
+		name        string
+		vnc, video  bool
+		videos, gfx int
+	}{
+		{"video only", false, true, 1, 0},
+		{"neither", false, false, 0, 0},
+		{"VNC", true, true, 1, 1},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			inputs := testInputs(domain.AMD64{})
+			inputs.Spec.Console.VNC = tt.vnc
+			inputs.Spec.Video.Enabled = tt.video
+
+			definition, _, err := domain.Build(inputs)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if len(definition.Devices.Videos) != tt.videos || len(definition.Devices.Graphics) != tt.gfx {
+				t.Fatalf("videos %d graphics %d, want %d %d", len(definition.Devices.Videos), len(definition.Devices.Graphics), tt.videos, tt.gfx)
+			}
+		})
+	}
+}
