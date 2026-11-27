@@ -113,6 +113,7 @@ kernel/drivers/misc/ntsync.ko
 kernel/drivers/mmc/host/sdhci-acpi.ko
 kernel/drivers/mmc/host/sdhci-brcmstb.ko
 kernel/drivers/mmc/host/sdhci-cadence.ko
+kernel/drivers/mmc/host/sdhci-esdhc-imx.ko
 kernel/drivers/mmc/host/sdhci-iproc.ko
 kernel/drivers/mmc/host/sdhci-msm.ko
 kernel/drivers/mmc/host/sdhci-of-arasan.ko
@@ -136,6 +137,7 @@ kernel/drivers/net/ethernet/broadcom/bnxt/bnxt_en.ko
 kernel/drivers/net/ethernet/broadcom/tg3.ko
 kernel/drivers/net/ethernet/cavium/common/cavium_ptp.ko
 kernel/drivers/net/ethernet/cisco/enic/enic.ko
+kernel/drivers/net/ethernet/freescale/fec.ko
 kernel/drivers/net/ethernet/google/gve/gve.ko
 kernel/drivers/net/ethernet/hisilicon/hip04_eth.ko
 kernel/drivers/net/ethernet/hisilicon/hisi_femac.ko
