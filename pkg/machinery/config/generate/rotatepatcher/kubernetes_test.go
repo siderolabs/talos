@@ -13,10 +13,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate/rotatepatcher"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate/secrets"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/k8s"
 )
 
 // TestK8sCARotatePatchers verifies that the rotatepatcher methods produce the same result via the
@@ -270,4 +272,42 @@ func TestK8sCARotateComposed(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestK8sSetCAResetsRootCABundle checks that the root CA bundle built for the previous issuing CA
+// is not kept once the issuing CA is replaced.
+func TestK8sSetCAResetsRootCABundle(t *testing.T) {
+	t.Parallel()
+
+	bundle, err := secrets.NewBundle(secrets.NewFixedClock(time.Now()), config.TalosVersion1_14)
+	require.NoError(t, err)
+
+	in, err := generate.NewInput(
+		"test", "https://127.0.0.1:6443", "1.34.0",
+		generate.WithSecretsBundle(bundle),
+		generate.WithVersionContract(config.TalosVersion1_14),
+	)
+	require.NoError(t, err)
+
+	cfg, err := in.Config(machine.TypeControlPlane)
+	require.NoError(t, err)
+
+	cfg, err = container.PatchDocument(cfg, func(caCfg *k8s.KubeAPIServerCAConfigV1Alpha1) error {
+		caCfg.APIRootCABundle = string(bundle.Certs.K8s.Crt)
+
+		return nil
+	})
+	require.NoError(t, err)
+
+	require.NotNil(t, cfg.K8sAPIServerCAConfig().RootCABundle())
+
+	newCA := &x509.PEMEncodedCertificateAndKey{
+		Crt: []byte("-----BEGIN CERTIFICATE-----\nNEW-ISSUING-CA\n-----END CERTIFICATE-----"),
+		Key: []byte("-----BEGIN EC PRIVATE KEY-----\nNEW-ISSUING-KEY\n-----END EC PRIVATE KEY-----"),
+	}
+
+	patched, err := rotatepatcher.K8sSetCA(newCA)(cfg)
+	require.NoError(t, err)
+
+	assert.Nil(t, patched.K8sAPIServerCAConfig().RootCABundle())
 }

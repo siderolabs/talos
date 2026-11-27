@@ -18,3 +18,10 @@ acceptedCAs:
       -----BEGIN CERTIFICATE-----
       MIIACCEPTED2
       -----END CERTIFICATE-----
+rootCABundle: |
+    -----BEGIN CERTIFICATE-----
+    MIIC0DCCAbigAwIBAgIUI7z
+    -----END CERTIFICATE-----
+    -----BEGIN CERTIFICATE-----
+    MIIROOT
+    -----END CERTIFICATE-----

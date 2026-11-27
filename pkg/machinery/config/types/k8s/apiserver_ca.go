@@ -5,6 +5,8 @@
 package k8s
 
 import (
+	stdx509 "crypto/x509"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"slices"
@@ -74,6 +76,20 @@ type KubeAPIServerCAConfigV1Alpha1 struct {
 	//     The value should be a PEM encoded certificate.
 	//     The issuing CA certificate is automatically added to the list of accepted CAs.
 	APIAcceptedCAs []string `yaml:"acceptedCAs,omitempty"`
+	//   description: |
+	//     The CA bundle published to the pods as the `kube-root-ca.crt` ConfigMap.
+	//
+	//     By default, the issuing CA certificate is published.
+	//     When the issuing CA is an intermediate CA, the bundle can contain its parent chain,
+	//     so that clients which require a self-signed trust anchor (e.g. OpenSSL) can verify the API server.
+	//     The bundle is not trusted to authenticate clients, and it is reset when the issuing CA is rotated.
+	//
+	//     Publishing a parent CA expands the trust of the workloads to any certificate issued under it:
+	//     a dedicated self-signed CA per cluster (the default) is recommended.
+	//
+	//     This field should only be set for the controlplane machines.
+	//     The value should be PEM encoded certificates which allow to verify the issuing CA.
+	APIRootCABundle string `yaml:"rootCABundle,omitempty"`
 }
 
 // NewKubeAPIServerCAConfigV1Alpha1 creates a new KubeAPIServerCAConfig config document.
@@ -93,6 +109,7 @@ func exampleKubeAPIServerCAConfigV1Alpha1() *KubeAPIServerCAConfigV1Alpha1 {
 		Key:  "--- EXAMPLE KEY ---",
 	}
 	cfg.APIAcceptedCAs = []string{"--- EXAMPLE CA ---"}
+	cfg.APIRootCABundle = "--- EXAMPLE CA BUNDLE ---"
 
 	return cfg
 }
@@ -123,7 +140,59 @@ func (s *KubeAPIServerCAConfigV1Alpha1) Validate(validation.RuntimeMode, ...vali
 		}
 	}
 
+	if s.APIRootCABundle != "" {
+		if err := s.validateRootCABundle(); err != nil {
+			errs = errors.Join(errs, fmt.Errorf("root CA bundle: %w", err))
+		}
+	}
+
 	return warnings, errs
+}
+
+// validateRootCABundle checks that the bundle contains valid certificates which allow to verify the issuing CA.
+func (s *KubeAPIServerCAConfigV1Alpha1) validateRootCABundle() error {
+	if err := meta.AssertValidPEM([]byte(s.APIRootCABundle), meta.PEMTypeCertificate); err != nil {
+		return err
+	}
+
+	roots := stdx509.NewCertPool()
+
+	for rest := []byte(s.APIRootCABundle); ; {
+		var block *pem.Block
+
+		block, rest = pem.Decode(rest)
+		if block == nil {
+			break
+		}
+
+		cert, err := stdx509.ParseCertificate(block.Bytes)
+		if err != nil {
+			return fmt.Errorf("failed to parse certificate: %w", err)
+		}
+
+		roots.AddCert(cert)
+	}
+
+	if s.APIIssuingCA == nil {
+		return nil
+	}
+
+	issuingCA, err := s.APIIssuingCA.ToX509().GetCert()
+	if err != nil {
+		// reported by the issuing CA validation
+		return nil //nolint:nilerr
+	}
+
+	// only signatures are checked, expiration is not validated
+	if _, err = issuingCA.Verify(stdx509.VerifyOptions{
+		Roots:       roots,
+		CurrentTime: issuingCA.NotBefore,
+		KeyUsages:   []stdx509.ExtKeyUsage{stdx509.ExtKeyUsageAny},
+	}); err != nil {
+		return fmt.Errorf("the issuing CA can't be verified with the bundle: %w", err)
+	}
+
+	return nil
 }
 
 // V1Alpha1ConflictValidate implements container.V1Alpha1ConflictValidator interface.
@@ -160,6 +229,17 @@ func (s *KubeAPIServerCAConfigV1Alpha1) AcceptedCAs() []*x509.PEMEncodedCertific
 	}
 
 	return result
+}
+
+// RootCABundle implements config.K8sAPIServerCAConfig interface.
+func (s *KubeAPIServerCAConfigV1Alpha1) RootCABundle() *x509.PEMEncodedCertificate {
+	if s.APIRootCABundle == "" {
+		return nil
+	}
+
+	return &x509.PEMEncodedCertificate{
+		Crt: []byte(s.APIRootCABundle),
+	}
 }
 
 // Redact implements config.SecretDocument interface.
