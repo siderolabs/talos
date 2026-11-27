@@ -720,22 +720,20 @@ func (widget *ContainersGrid) stopWatch() {
 }
 
 // runWatch runs the watch event loop for all the container resource kinds at once.
-//
-// A single event channel keeps the three kinds in step: the list joins them, so rendering on every
-// event from any of them is both correct and simpler than reconciling three separate streams.
 func (widget *ContainersGrid) runWatch(ctx context.Context) {
 	nodeCtx := redactable.WithMode(utils.NodeContext(ctx, widget.selectedNode), redactable.ModeAccept)
 
-	eventCh := make(chan state.Event)
-
-	for _, resourceType := range []resource.Type{
-		containers.ContainerStatusType,
-		containers.ContainerSpecType,
-		containers.ContainerInstanceStatusType,
-	} {
-		md := resource.NewMetadata(containers.NamespaceName, resourceType, "", resource.VersionUndefined)
-
-		if err := widget.dashboard.cli.State().WatchKind(nodeCtx, &md, eventCh, state.WithBootstrapContents(true)); err != nil {
+	watchKinds(
+		nodeCtx,
+		widget.dashboard.cli.State(),
+		containers.NamespaceName,
+		[]resource.Type{
+			containers.ContainerStatusType,
+			containers.ContainerSpecType,
+			containers.ContainerInstanceStatusType,
+		},
+		func(event state.Event) { widget.handleWatchEvent(ctx, event) },
+		func(err error) {
 			widget.app.QueueUpdate(func() {
 				if ctx.Err() != nil {
 					return
@@ -743,19 +741,8 @@ func (widget *ContainersGrid) runWatch(ctx context.Context) {
 
 				widget.showListError(formatError(err))
 			})
-
-			return
-		}
-	}
-
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case event := <-eventCh:
-			widget.handleWatchEvent(ctx, event)
-		}
-	}
+		},
+	)
 }
 
 // handleWatchEvent applies a single watch event to the widget state, on the UI goroutine.
@@ -807,16 +794,6 @@ func (widget *ContainersGrid) storeResource(res resource.Resource, destroyed boo
 	case *containers.ContainerInstanceStatus:
 		storeOrDelete(widget.instances, id, typed, destroyed)
 	}
-}
-
-func storeOrDelete[T any](target map[string]T, id string, value T, destroyed bool) {
-	if destroyed {
-		delete(target, id)
-
-		return
-	}
-
-	target[id] = value
 }
 
 // containerInstances returns the retained instances of a container, newest generation first.
