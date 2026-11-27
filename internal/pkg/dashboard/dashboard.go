@@ -43,6 +43,17 @@ func init() {
 	tview.Styles.GraphicsColor = tcell.ColorDefault
 }
 
+// ownsNavigationKeys reports whether the focused primitive uses the arrow, h, l and q keys itself:
+// a text input, or a button of a dialog, which moves between its buttons with the arrows.
+func ownsNavigationKeys(focus tview.Primitive) bool {
+	switch focus.(type) {
+	case *tview.InputField, *tview.Button:
+		return true
+	default:
+		return false
+	}
+}
+
 // Screen is a dashboard screen.
 type Screen string
 
@@ -66,6 +77,9 @@ const (
 
 	// ScreenContainers is the containers screen.
 	ScreenContainers Screen = "Containers"
+
+	// ScreenVMs is the virtual machines screen.
+	ScreenVMs Screen = "VMs"
 )
 
 // APIDataListener is a listener which is notified when API-sourced data is updated.
@@ -212,10 +226,10 @@ func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*D
 
 		allowNodeNavigation := dashboard.selectedScreenConfig != nil && dashboard.selectedScreenConfig.allowNodeNavigation
 
-		// When a text input field has focus, pass all printable-character keys
-		// and navigation keys through so the field can consume them. Only global
-		// shortcuts (Ctrl+Z, Ctrl+C, function-key screen switches) remain active.
-		_, focusedIsInput := dashboard.app.GetFocus().(*tview.InputField)
+		// When a text input field or a dialog button has focus, pass all printable-character
+		// keys and navigation keys through so it can consume them. Only global shortcuts
+		// (Ctrl+Z, function-key screen switches) remain active.
+		focusedIsInput := ownsNavigationKeys(dashboard.app.GetFocus())
 
 		switch {
 		case screenOk:
@@ -321,6 +335,8 @@ func (d *Dashboard) newScreenPrimitive(ctx context.Context, screen Screen) scree
 		return NewResourceExplorerGrid(ctx, d)
 	case ScreenContainers:
 		return NewContainersGrid(ctx, d)
+	case ScreenVMs:
+		return NewVMsGrid(ctx, d)
 	default:
 		return nil
 	}

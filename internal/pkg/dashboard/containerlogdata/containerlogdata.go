@@ -2,10 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// Package containerlogdata implements the data source for the logs of a single container.
+// Package containerlogdata implements the data source for the logs of a single container or other
+// log target, such as a virtual machine console.
 //
 // It differs from the logdata package in that it is on-demand and single-target: the dashboard
-// tails exactly the container the user is looking at, and switches the stream over when the
+// tails exactly the entry the user is looking at, and switches the stream over when the
 // selection changes.
 package containerlogdata
 
@@ -23,15 +24,18 @@ import (
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/internal/pkg/dashboard/utils"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
+	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 )
 
-// Target identifies the container being tailed.
+// Target identifies the log being tailed.
 type Target struct {
 	Node      string
 	Namespace string
 	Driver    common.ContainerDriver
-	ID        string
+	// Kind selects the log source; the zero value keeps the legacy routing by Driver.
+	Kind machine.LogKind
+	ID   string
 }
 
 // Data is a log line from a container.
@@ -132,7 +136,7 @@ func (source *Source) tailWithRetries(ctx context.Context, target Target, sessio
 }
 
 func (source *Source) tail(ctx context.Context, target Target, session uint64) error {
-	stream, err := source.client.Logs(ctx, target.Namespace, target.Driver, target.ID, true, tailLines)
+	stream, err := source.client.LogsWithKind(ctx, target.Namespace, target.Driver, target.ID, true, tailLines, target.Kind)
 	if err != nil {
 		return fmt.Errorf("error opening log stream: %w", err)
 	}

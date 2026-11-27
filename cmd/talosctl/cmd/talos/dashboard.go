@@ -46,6 +46,19 @@ Containers screen:
  - <Space> - pause or resume log following
  - <Tab> - move the focus between the details and the logs
  - g, G - jump to the top or the bottom
+
+VMs screen:
+
+ - <Enter> - open the selected VM's details and console log
+ - <Esc> - go back one level
+ - / - filter the VM list, or the console log when viewing it
+ - s - cycle the list ordering: name, health, vcpus, memory
+ - y - view the selected VM's resources as YAML; <Tab> cycles between them
+ - i - toggle the disks and interfaces of the selected VM
+ - S, T, K, R - start, stop (graceful), force stop or reboot the selected VM; all but start ask for confirmation
+ - <Space> - pause or resume log following
+ - <Tab> - move the focus between the details and the log
+ - g, G - jump to the top or the bottom
 `,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -66,7 +79,7 @@ Containers screen:
 		return dashboard.Run(
 			ctx, c,
 			dashboard.WithInterval(dashboardCmdFlags.interval),
-			dashboard.WithScreens(dashboard.ScreenSummary, dashboard.ScreenMonitor, dashboard.ScreenContainers, dashboard.ScreenResourceExplorer),
+			dashboard.WithScreens(dashboard.ScreenSummary, dashboard.ScreenMonitor, dashboard.ScreenContainers, dashboard.ScreenVMs, dashboard.ScreenResourceExplorer),
 			dashboard.WithAllowExitKeys(true),
 			dashboard.WithNodes(clientFactory.Nodes()...),
 		)

@@ -220,24 +220,6 @@ func memoryMetric(row containerRow) float64 {
 	return float64(row.Memory)
 }
 
-// compareMetricDesc orders two metrics from the largest down, keeping unknown (NaN) values last:
-// a container the node reported no metric for is not the quietest one, it is one we know nothing
-// about, and it belongs at the bottom either way.
-func compareMetricDesc(a, b float64) int {
-	aKnown, bKnown := !math.IsNaN(a), !math.IsNaN(b)
-
-	switch {
-	case !aKnown && !bKnown:
-		return 0
-	case !aKnown:
-		return 1
-	case !bKnown:
-		return -1
-	default:
-		return cmp.Compare(b, a)
-	}
-}
-
 // healthSeverity orders health values by how much they want an operator's attention.
 func healthSeverity(health containers.ContainerHealth) int {
 	switch health {
@@ -271,11 +253,6 @@ func healthColor(health containers.ContainerHealth) string {
 	default:
 		return "white"
 	}
-}
-
-// colored wraps text in a tview color tag.
-func colored(color, text string) string {
-	return "[" + color + "]" + text + "[-]"
 }
 
 // containerLogsAvailable reports whether the container has a log to stream.
@@ -323,9 +300,6 @@ func formatMemory(row containerRow) string {
 
 	return humanize.Bytes(row.Memory)
 }
-
-// metricUnknown is displayed in place of a metric the node did not report.
-const metricUnknown = "—"
 
 // formatContainerDetail renders the field summary of one container.
 //
@@ -405,22 +379,6 @@ func formatTaskError(errText, lastLog string) string {
 	}
 
 	return errText + ": " + strings.Join(lines, " ⏎ ")
-}
-
-// renderFields renders label/value pairs with the labels padded to a common width.
-func renderFields(fields [][2]string) string {
-	width := 0
-	for _, field := range fields {
-		width = max(width, len(field[0]))
-	}
-
-	var sb strings.Builder
-
-	for _, field := range fields {
-		fmt.Fprintf(&sb, "[::b]%-*s[::-]  %s\n", width, field[0], field[1])
-	}
-
-	return sb.String()
 }
 
 // formatExitCode renders the exit code of the newest instance, which is only meaningful once it
@@ -601,17 +559,6 @@ func instanceRowCells(spec *containers.ContainerInstanceStatusSpec) []string {
 		errText,
 	}
 }
-
-func formatTimestamp(timestamp time.Time) string {
-	if timestamp.IsZero() {
-		return metricUnknown
-	}
-
-	return timestamp.Format(time.DateTime)
-}
-
-// none is displayed for an empty list of mounts or dependencies.
-const none = "<none>"
 
 // containerHealthSummary renders the counts by health shown under the list, so that a long list
 // still answers "is anything wrong" at a glance.
