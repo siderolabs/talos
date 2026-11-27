@@ -2624,11 +2624,15 @@ func (x *SchedulerConfigSpec) GetArgs() []string {
 
 // SecretsStatusSpec describes status of rendered secrets.
 type SecretsStatusSpec struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Ready         bool                   `protobuf:"varint,1,opt,name=ready,proto3" json:"ready,omitempty"`
-	Version       string                 `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Ready   bool                   `protobuf:"varint,1,opt,name=ready,proto3" json:"ready,omitempty"`
+	Version string                 `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
+	// EtcdCAFingerprint is the fingerprint of the set of the etcd CAs (the issuing CA and the accepted CAs) the secrets were rendered with.
+	EtcdCaFingerprint string `protobuf:"bytes,3,opt,name=etcd_ca_fingerprint,json=etcdCaFingerprint,proto3" json:"etcd_ca_fingerprint,omitempty"`
+	// EtcdIssuingCAFingerprint is the fingerprint of the etcd CA which issued the rendered etcd client certificate.
+	EtcdIssuingCaFingerprint string `protobuf:"bytes,4,opt,name=etcd_issuing_ca_fingerprint,json=etcdIssuingCaFingerprint,proto3" json:"etcd_issuing_ca_fingerprint,omitempty"`
+	unknownFields            protoimpl.UnknownFields
+	sizeCache                protoimpl.SizeCache
 }
 
 func (x *SecretsStatusSpec) Reset() {
@@ -2671,6 +2675,20 @@ func (x *SecretsStatusSpec) GetReady() bool {
 func (x *SecretsStatusSpec) GetVersion() string {
 	if x != nil {
 		return x.Version
+	}
+	return ""
+}
+
+func (x *SecretsStatusSpec) GetEtcdCaFingerprint() string {
+	if x != nil {
+		return x.EtcdCaFingerprint
+	}
+	return ""
+}
+
+func (x *SecretsStatusSpec) GetEtcdIssuingCaFingerprint() string {
+	if x != nil {
+		return x.EtcdIssuingCaFingerprint
 	}
 	return ""
 }
@@ -3117,10 +3135,12 @@ const file_resource_definitions_k8s_k8s_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1ag\n" +
 	"\x0eExtraArgsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12?\n" +
-	"\x05value\x18\x02 \x01(\v2).talos.resource.definitions.k8s.ArgValuesR\x05value:\x028\x01\"C\n" +
+	"\x05value\x18\x02 \x01(\v2).talos.resource.definitions.k8s.ArgValuesR\x05value:\x028\x01\"\xb2\x01\n" +
 	"\x11SecretsStatusSpec\x12\x14\n" +
 	"\x05ready\x18\x01 \x01(\bR\x05ready\x12\x18\n" +
-	"\aversion\x18\x02 \x01(\tR\aversion\"A\n" +
+	"\aversion\x18\x02 \x01(\tR\aversion\x12.\n" +
+	"\x13etcd_ca_fingerprint\x18\x03 \x01(\tR\x11etcdCaFingerprint\x12=\n" +
+	"\x1betcd_issuing_ca_fingerprint\x18\x04 \x01(\tR\x18etcdIssuingCaFingerprint\"A\n" +
 	"\x0eSingleManifest\x12/\n" +
 	"\x06object\x18\x01 \x01(\v2\x17.google.protobuf.StructR\x06object\"-\n" +
 	"\x19StaticPodServerStatusSpec\x12\x10\n" +

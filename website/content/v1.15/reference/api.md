@@ -9200,6 +9200,8 @@ PKIStatusSpec describes status of rendered secrets.
 | ----- | ---- | ----- | ----------- |
 | ready | [bool](#bool) |  |  |
 | version | [string](#string) |  |  |
+| ca_fingerprint | [string](#string) |  | CAFingerprint is the fingerprint of the set of the etcd CAs (the issuing CA and the accepted CAs) the PKI was rendered with. |
+| issuing_ca_fingerprint | [string](#string) |  | IssuingCAFingerprint is the fingerprint of the etcd CA which issued the rendered certificates. |
 
 
 
@@ -9217,6 +9219,7 @@ ServiceSpecSpec describes the image and the arguments of the etcd service.
 | image | [string](#string) |  | Image is the etcd container image reference. |
 | args | [string](#string) | repeated | Args is the full list of the etcd command line arguments. |
 | advertise_overrides | [string](#string) | repeated | AdvertiseOverrides is the list of the etcd arguments with the advertised URLs which are set explicitly via the extra arguments (and not derived from the addresses of the machine). |
+| ca_fingerprint | [string](#string) |  | CAFingerprint is the fingerprint of the set of the etcd CAs (the issuing CA and the accepted CAs) etcd was started with.<br><br>etcd loads the trusted CAs only on start, so it is restarted when the set of the CAs changes. |
 
 
 
@@ -11305,6 +11308,8 @@ SecretsStatusSpec describes status of rendered secrets.
 | ----- | ---- | ----- | ----------- |
 | ready | [bool](#bool) |  |  |
 | version | [string](#string) |  |  |
+| etcd_ca_fingerprint | [string](#string) |  | EtcdCAFingerprint is the fingerprint of the set of the etcd CAs (the issuing CA and the accepted CAs) the secrets were rendered with. |
+| etcd_issuing_ca_fingerprint | [string](#string) |  | EtcdIssuingCAFingerprint is the fingerprint of the etcd CA which issued the rendered etcd client certificate. |
 
 
 

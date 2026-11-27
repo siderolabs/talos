@@ -329,6 +329,10 @@ message SchedulerConfigSpec {
 message SecretsStatusSpec {
   bool ready = 1;
   string version = 2;
+  // EtcdCAFingerprint is the fingerprint of the set of the etcd CAs (the issuing CA and the accepted CAs) the secrets were rendered with.
+  string etcd_ca_fingerprint = 3;
+  // EtcdIssuingCAFingerprint is the fingerprint of the etcd CA which issued the rendered etcd client certificate.
+  string etcd_issuing_ca_fingerprint = 4;
 }
 
 // SingleManifest is a single manifest.

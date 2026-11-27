@@ -17,6 +17,7 @@ import (
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
+	etcdcli "github.com/siderolabs/talos/internal/pkg/etcd"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/filetree"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -90,6 +91,18 @@ func (ctrl *PKIController) Run(ctx context.Context, r controller.Runtime, _ *zap
 			return fmt.Errorf("error getting secrets: %w", err)
 		}
 
+		etcdCerts := scrts.TypedSpec()
+
+		// the certificates are issued asynchronously when the issuing CA changes, so wait for the PKI to be consistent
+		consistent, err := etcdcli.CertificatesIssuedBy(rootScrts.TypedSpec().EtcdCA, etcdCerts.Etcd, etcdCerts.EtcdPeer, etcdCerts.EtcdAdmin)
+		if err != nil {
+			return err
+		}
+
+		if !consistent {
+			continue
+		}
+
 		if err = os.MkdirAll(constants.EtcdPKIPath, 0o700); err != nil {
 			return err
 		}
@@ -108,8 +121,6 @@ func (ctrl *PKIController) Run(ctx context.Context, r controller.Runtime, _ *zap
 		if err = os.WriteFile(constants.EtcdCAKey, rootScrts.TypedSpec().EtcdCA.Key, 0o400); err != nil {
 			return fmt.Errorf("failed to write CA key: %w", err)
 		}
-
-		etcdCerts := scrts.TypedSpec()
 
 		for _, keypair := range []struct {
 			getter   func() *x509.PEMEncodedCertificateAndKey
@@ -148,6 +159,8 @@ func (ctrl *PKIController) Run(ctx context.Context, r controller.Runtime, _ *zap
 		if err = safe.WriterModify(ctx, r, etcd.NewPKIStatus(etcd.NamespaceName, etcd.PKIID), func(status *etcd.PKIStatus) error {
 			status.TypedSpec().Ready = true
 			status.TypedSpec().Version = scrts.Metadata().Version().String()
+			status.TypedSpec().CAFingerprint = pemutils.Fingerprint(rootScrts.TypedSpec().AcceptedCAs)
+			status.TypedSpec().IssuingCAFingerprint = pemutils.Fingerprint([]*x509.PEMEncodedCertificate{{Crt: rootScrts.TypedSpec().EtcdCA.Crt}})
 
 			return nil
 		}); err != nil {

@@ -112,14 +112,14 @@ func (ctrl *ControlPlaneStaticPodController) Run(ctx context.Context, r controll
 		// pre-condition to produce static pods
 		if etcdResource != nil && etcdResource.TypedSpec().Healthy && configStatusResource != nil && secretsStatusResource != nil {
 			configVersion := configStatusResource.TypedSpec().Version
-			secretsVersion := secretsStatusResource.TypedSpec().Version
+			secretsStatus := secretsStatusResource.TypedSpec()
 
-			for _, manageFunc := range []func(context.Context, controller.Runtime, *zap.Logger, string, string) error{
+			for _, manageFunc := range []func(context.Context, controller.Runtime, *zap.Logger, *k8s.SecretsStatusSpec, string) error{
 				ctrl.manageAPIServer,
 				ctrl.manageControllerManager,
 				ctrl.manageScheduler,
 			} {
-				if err = manageFunc(ctx, r, logger, secretsVersion, configVersion); err != nil {
+				if err = manageFunc(ctx, r, logger, secretsStatus, configVersion); err != nil {
 					return err
 				}
 			}
@@ -134,7 +134,7 @@ func (ctrl *ControlPlaneStaticPodController) Run(ctx context.Context, r controll
 
 //nolint:gocyclo
 func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context, r controller.Runtime, _ *zap.Logger,
-	secretsVersion, configVersion string,
+	secretsStatus *k8s.SecretsStatusSpec, configVersion string,
 ) error {
 	configResource, err := safe.ReaderGetByID[*k8s.APIServerConfig](ctx, r, k8s.FinalAPIServerConfigID)
 	if err != nil {
@@ -146,7 +146,7 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 		return fmt.Errorf("failed to get apiserver config: %w", err)
 	}
 
-	pod, err := k8stemplates.APIServerPod(configResource, secretsVersion, configVersion)
+	pod, err := k8stemplates.APIServerPod(configResource, secretsStatus.Version, secretsStatus.EtcdCAFingerprint, configVersion)
 	if err != nil {
 		return fmt.Errorf("error building apiserver pod: %w", err)
 	}
@@ -157,7 +157,7 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 }
 
 func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context.Context, r controller.Runtime,
-	_ *zap.Logger, secretsVersion, _ string,
+	_ *zap.Logger, secretsStatus *k8s.SecretsStatusSpec, _ string,
 ) error {
 	configResource, err := safe.ReaderGetByID[*k8s.ControllerManagerConfig](ctx, r, k8s.FinalControllerManagerConfigID)
 	if err != nil {
@@ -173,7 +173,7 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 		return nil
 	}
 
-	pod, err := k8stemplates.ControllerManagerPod(configResource, secretsVersion)
+	pod, err := k8stemplates.ControllerManagerPod(configResource, secretsStatus.Version)
 	if err != nil {
 		return fmt.Errorf("error building controller-manager pod: %w", err)
 	}
@@ -184,7 +184,7 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 }
 
 func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context, r controller.Runtime,
-	_ *zap.Logger, secretsVersion, _ string,
+	_ *zap.Logger, secretsStatus *k8s.SecretsStatusSpec, _ string,
 ) error {
 	configResource, err := safe.ReaderGetByID[*k8s.SchedulerConfig](ctx, r, k8s.FinalSchedulerConfigID)
 	if err != nil {
@@ -202,7 +202,7 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 		return nil
 	}
 
-	obj, err := k8stemplates.SchedulerPod(configResource, secretsVersion)
+	obj, err := k8stemplates.SchedulerPod(configResource, secretsStatus.Version)
 	if err != nil {
 		return fmt.Errorf("error building kube-scheduler pod: %w", err)
 	}

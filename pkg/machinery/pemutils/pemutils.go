@@ -6,6 +6,12 @@
 package pemutils
 
 import (
+	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/pem"
+	"slices"
+
 	"github.com/siderolabs/crypto/x509"
 )
 
@@ -70,4 +76,42 @@ func JoinKeys(keys []*x509.PEMEncodedKey) []byte {
 	}
 
 	return Join(blocks...)
+}
+
+// Fingerprint returns a fingerprint of the set of PEM-encoded certificates.
+//
+// The fingerprint is computed over the DER contents of the certificates, so it doesn't depend
+// on the PEM formatting (e.g. whitespace), on the order of the certificates and on the duplicates.
+func Fingerprint(certs []*x509.PEMEncodedCertificate) string {
+	var digests [][sha256.Size]byte
+
+	for _, cert := range certs {
+		if cert == nil {
+			continue
+		}
+
+		rest := cert.Crt
+
+		for {
+			var block *pem.Block
+
+			block, rest = pem.Decode(rest)
+			if block == nil {
+				break
+			}
+
+			digests = append(digests, sha256.Sum256(block.Bytes))
+		}
+	}
+
+	slices.SortFunc(digests, func(a, b [sha256.Size]byte) int { return bytes.Compare(a[:], b[:]) })
+	digests = slices.Compact(digests)
+
+	hash := sha256.New()
+
+	for _, digest := range digests {
+		hash.Write(digest[:])
+	}
+
+	return hex.EncodeToString(hash.Sum(nil))
 }

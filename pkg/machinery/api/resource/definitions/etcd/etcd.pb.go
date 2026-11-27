@@ -551,11 +551,15 @@ func (x *MembershipStatusSpec) GetError() string {
 
 // PKIStatusSpec describes status of rendered secrets.
 type PKIStatusSpec struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Ready         bool                   `protobuf:"varint,1,opt,name=ready,proto3" json:"ready,omitempty"`
-	Version       string                 `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Ready   bool                   `protobuf:"varint,1,opt,name=ready,proto3" json:"ready,omitempty"`
+	Version string                 `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
+	// CAFingerprint is the fingerprint of the set of the etcd CAs (the issuing CA and the accepted CAs) the PKI was rendered with.
+	CaFingerprint string `protobuf:"bytes,3,opt,name=ca_fingerprint,json=caFingerprint,proto3" json:"ca_fingerprint,omitempty"`
+	// IssuingCAFingerprint is the fingerprint of the etcd CA which issued the rendered certificates.
+	IssuingCaFingerprint string `protobuf:"bytes,4,opt,name=issuing_ca_fingerprint,json=issuingCaFingerprint,proto3" json:"issuing_ca_fingerprint,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
 func (x *PKIStatusSpec) Reset() {
@@ -602,6 +606,20 @@ func (x *PKIStatusSpec) GetVersion() string {
 	return ""
 }
 
+func (x *PKIStatusSpec) GetCaFingerprint() string {
+	if x != nil {
+		return x.CaFingerprint
+	}
+	return ""
+}
+
+func (x *PKIStatusSpec) GetIssuingCaFingerprint() string {
+	if x != nil {
+		return x.IssuingCaFingerprint
+	}
+	return ""
+}
+
 // ServiceSpecSpec describes the image and the arguments of the etcd service.
 type ServiceSpecSpec struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -612,8 +630,12 @@ type ServiceSpecSpec struct {
 	// AdvertiseOverrides is the list of the etcd arguments with the advertised URLs which are set explicitly
 	// via the extra arguments (and not derived from the addresses of the machine).
 	AdvertiseOverrides []string `protobuf:"bytes,3,rep,name=advertise_overrides,json=advertiseOverrides,proto3" json:"advertise_overrides,omitempty"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
+	// CAFingerprint is the fingerprint of the set of the etcd CAs (the issuing CA and the accepted CAs) etcd was started with.
+	//
+	// etcd loads the trusted CAs only on start, so it is restarted when the set of the CAs changes.
+	CaFingerprint string `protobuf:"bytes,4,opt,name=ca_fingerprint,json=caFingerprint,proto3" json:"ca_fingerprint,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ServiceSpecSpec) Reset() {
@@ -665,6 +687,13 @@ func (x *ServiceSpecSpec) GetAdvertiseOverrides() []string {
 		return x.AdvertiseOverrides
 	}
 	return nil
+}
+
+func (x *ServiceSpecSpec) GetCaFingerprint() string {
+	if x != nil {
+		return x.CaFingerprint
+	}
+	return ""
 }
 
 // SpecSpec describes (some) Specuration settings of etcd.
@@ -795,14 +824,17 @@ const file_resource_definitions_etcd_etcd_proto_rawDesc = "" +
 	"\x14MembershipStatusSpec\x12K\n" +
 	"\x05phase\x18\x01 \x01(\x0e25.talos.resource.definitions.enums.EtcdMembershipPhaseR\x05phase\x12\x1b\n" +
 	"\tmember_id\x18\x02 \x01(\tR\bmemberId\x12\x14\n" +
-	"\x05error\x18\x03 \x01(\tR\x05error\"?\n" +
+	"\x05error\x18\x03 \x01(\tR\x05error\"\x9c\x01\n" +
 	"\rPKIStatusSpec\x12\x14\n" +
 	"\x05ready\x18\x01 \x01(\bR\x05ready\x12\x18\n" +
-	"\aversion\x18\x02 \x01(\tR\aversion\"l\n" +
+	"\aversion\x18\x02 \x01(\tR\aversion\x12%\n" +
+	"\x0eca_fingerprint\x18\x03 \x01(\tR\rcaFingerprint\x124\n" +
+	"\x16issuing_ca_fingerprint\x18\x04 \x01(\tR\x14issuingCaFingerprint\"\x93\x01\n" +
 	"\x0fServiceSpecSpec\x12\x14\n" +
 	"\x05image\x18\x01 \x01(\tR\x05image\x12\x12\n" +
 	"\x04args\x18\x02 \x03(\tR\x04args\x12/\n" +
-	"\x13advertise_overrides\x18\x03 \x03(\tR\x12advertiseOverrides\"\xc3\x03\n" +
+	"\x13advertise_overrides\x18\x03 \x03(\tR\x12advertiseOverrides\x12%\n" +
+	"\x0eca_fingerprint\x18\x04 \x01(\tR\rcaFingerprint\"\xc3\x03\n" +
 	"\bSpecSpec\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12@\n" +
 	"\x14advertised_addresses\x18\x02 \x03(\v2\r.common.NetIPR\x13advertisedAddresses\x12\x14\n" +

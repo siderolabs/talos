@@ -97,6 +97,10 @@ message MembershipStatusSpec {
 message PKIStatusSpec {
   bool ready = 1;
   string version = 2;
+  // CAFingerprint is the fingerprint of the set of the etcd CAs (the issuing CA and the accepted CAs) the PKI was rendered with.
+  string ca_fingerprint = 3;
+  // IssuingCAFingerprint is the fingerprint of the etcd CA which issued the rendered certificates.
+  string issuing_ca_fingerprint = 4;
 }
 
 // ServiceSpecSpec describes the image and the arguments of the etcd service.
@@ -108,6 +112,10 @@ message ServiceSpecSpec {
   // AdvertiseOverrides is the list of the etcd arguments with the advertised URLs which are set explicitly
   // via the extra arguments (and not derived from the addresses of the machine).
   repeated string advertise_overrides = 3;
+  // CAFingerprint is the fingerprint of the set of the etcd CAs (the issuing CA and the accepted CAs) etcd was started with.
+  //
+  // etcd loads the trusted CAs only on start, so it is restarted when the set of the CAs changes.
+  string ca_fingerprint = 4;
 }
 
 // SpecSpec describes (some) Specuration settings of etcd.

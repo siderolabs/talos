@@ -28,6 +28,10 @@ type PKIStatus = typed.Resource[PKIStatusSpec, PKIStatusExtension]
 type PKIStatusSpec struct {
 	Ready   bool   `yaml:"ready" protobuf:"1"`
 	Version string `yaml:"version" protobuf:"2"`
+	// CAFingerprint is the fingerprint of the set of the etcd CAs (the issuing CA and the accepted CAs) the PKI was rendered with.
+	CAFingerprint string `yaml:"caFingerprint" protobuf:"3"`
+	// IssuingCAFingerprint is the fingerprint of the etcd CA which issued the rendered certificates.
+	IssuingCAFingerprint string `yaml:"issuingCAFingerprint" protobuf:"4"`
 }
 
 // NewPKIStatus initializes a PKIStatus resource.

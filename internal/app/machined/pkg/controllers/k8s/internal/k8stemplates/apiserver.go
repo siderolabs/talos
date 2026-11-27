@@ -84,7 +84,10 @@ func APIServerEncryptionConfig(rootK8sSecrets *secrets.KubernetesRootSpec) (runt
 }
 
 // APIServerPod builds a static pod for the kube-apiserver based on the config.
-func APIServerPod(configResource *k8s.APIServerConfig, secretsVersion, configVersion string) (runtime.Object, error) {
+//
+// The etcd CA fingerprint makes sure kube-apiserver is restarted when the set of the etcd CAs changes, as the trusted etcd CAs
+// are only loaded on start (while the etcd client certificate is reloaded on each connection).
+func APIServerPod(configResource *k8s.APIServerConfig, secretsVersion, etcdCAFingerprint, configVersion string) (runtime.Object, error) {
 	cfg := configResource.TypedSpec()
 
 	resources, err := Resources(cfg.Resources, "200m", "512Mi")
@@ -154,6 +157,7 @@ func APIServerPod(configResource *k8s.APIServerConfig, secretsVersion, configVer
 		Namespace:  "kube-system",
 		Annotations: map[string]string{
 			constants.AnnotationStaticPodSecretsVersion:    secretsVersion,
+			constants.AnnotationStaticPodEtcdCAFingerprint: etcdCAFingerprint,
 			constants.AnnotationStaticPodConfigFileVersion: configVersion,
 			constants.AnnotationStaticPodConfigVersion:     configResource.Metadata().Version().String(),
 		},

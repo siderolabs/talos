@@ -19,6 +19,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate/secrets"
+	"github.com/siderolabs/talos/pkg/rotate/pki/etcd"
 	"github.com/siderolabs/talos/pkg/rotate/pki/kubernetes"
 	"github.com/siderolabs/talos/pkg/rotate/pki/talos"
 )
@@ -32,18 +33,24 @@ var rotateCACmdFlags struct {
 	dryRun           bool
 	rotateTalos      bool
 	rotateKubernetes bool
+	rotateEtcd       bool
 }
 
 // rotateCACmd represents the rotate-ca command.
 var rotateCACmd = &cobra.Command{
 	Use:   "rotate-ca",
-	Short: "Rotate cluster CAs (Talos and Kubernetes APIs).",
-	Long: `The command can rotate both Talos and Kubernetes root CAs (for the API).
-By default both CAs are rotated, but you can choose to rotate just one or another.
+	Short: "Rotate cluster CAs (Talos API, Kubernetes API and etcd).",
+	Long: `The command can rotate Talos and Kubernetes root CAs (for the API), and the etcd CA.
+By default Talos and Kubernetes CAs are rotated, but you can choose which CAs to rotate.
 The command starts by generating new CAs, and gracefully applying it to the cluster.
 
 For Kubernetes, the command only rotates the API server issuing CA, and other Kubernetes
-PKI can be rotated by applying machine config changes to the controlplane nodes.`,
+PKI can be rotated by applying machine config changes to the controlplane nodes.
+
+The etcd CA rotation should be enabled explicitly with the '--etcd' flag, and it requires
+the etcd CA to be configured with the EtcdCAConfig machine configuration document.
+While the etcd CA is rotated, etcd and kube-apiserver are restarted twice on each
+control plane node (one node at a time).`,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		err := rotateCACmdFlags.clusterState.InitNodeInfos()
@@ -112,6 +119,12 @@ func rotateCA(ctx context.Context, c *client.Client) error {
 	if rotateCACmdFlags.rotateKubernetes {
 		if err = rotateKubernetesCA(ctx, c, encoderOpt, clusterInfo, newBundle); err != nil {
 			return fmt.Errorf("error rotating Kubernetes CA: %w", err)
+		}
+	}
+
+	if rotateCACmdFlags.rotateEtcd {
+		if err = rotateEtcdCA(ctx, c, encoderOpt, clusterInfo, newBundle); err != nil {
+			return fmt.Errorf("error rotating etcd CA: %w", err)
 		}
 	}
 
@@ -193,6 +206,37 @@ func rotateKubernetesCA(ctx context.Context, c *client.Client, encoderOpt encode
 	return nil
 }
 
+func rotateEtcdCA(ctx context.Context, c *client.Client, encoderOpt encoder.Option, clusterInfo cluster.Info, newBundle *secrets.Bundle) error {
+	options := etcd.Options{
+		DryRun: rotateCACmdFlags.dryRun,
+
+		TalosClient: c,
+		ClusterInfo: clusterInfo,
+
+		KubernetesEndpoint: rotateCACmdFlags.forceEndpoint,
+
+		NewEtcdCA: newBundle.Certs.Etcd,
+
+		EncoderOption: encoderOpt,
+
+		Printf: func(format string, args ...any) { safeout.Printf(format, args...) },
+	}
+
+	if err := etcd.Rotate(ctx, options); err != nil {
+		return err
+	}
+
+	if rotateCACmdFlags.dryRun {
+		safeout.Println("> Dry-run mode enabled, no changes were made to the cluster, re-run with `--dry-run=false` to apply the changes.")
+
+		return nil
+	}
+
+	safeout.Printf("> etcd CA rotation done.\n")
+
+	return nil
+}
+
 func init() {
 	addCommand(rotateCACmd)
 	rotateCACmd.Flags().StringVar(&rotateCACmdFlags.clusterState.InitNode, "init-node", "", "specify IPs of init node")
@@ -205,4 +249,5 @@ func init() {
 	rotateCACmd.Flags().BoolVarP(&rotateCACmdFlags.dryRun, "dry-run", "", true, "dry-run mode (no changes to the cluster)")
 	rotateCACmd.Flags().BoolVarP(&rotateCACmdFlags.rotateTalos, "talos", "", true, "rotate Talos API CA")
 	rotateCACmd.Flags().BoolVarP(&rotateCACmdFlags.rotateKubernetes, "kubernetes", "", true, "rotate Kubernetes API CA")
+	rotateCACmd.Flags().BoolVarP(&rotateCACmdFlags.rotateEtcd, "etcd", "", false, "rotate etcd CA")
 }

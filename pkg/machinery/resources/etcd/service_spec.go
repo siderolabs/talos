@@ -35,6 +35,10 @@ type ServiceSpecSpec struct {
 	// AdvertiseOverrides is the list of the etcd arguments with the advertised URLs which are set explicitly
 	// via the extra arguments (and not derived from the addresses of the machine).
 	AdvertiseOverrides []string `yaml:"advertiseOverrides,omitempty" protobuf:"3"`
+	// CAFingerprint is the fingerprint of the set of the etcd CAs (the issuing CA and the accepted CAs) etcd was started with.
+	//
+	// etcd loads the trusted CAs only on start, so it is restarted when the set of the CAs changes.
+	CAFingerprint string `yaml:"caFingerprint" protobuf:"4"`
 }
 
 // NewServiceSpec initializes a ServiceSpec resource.

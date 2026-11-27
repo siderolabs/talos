@@ -75,6 +75,20 @@ The `etcd` service is no longer listed in the `talosctl services` output until e
 (i.e. the machine either has the etcd data, the cluster is bootstrapped, or the machine joins an existing cluster).
 """
 
+    [notes.etcd_ca_rotation]
+        title = "etcd CA Rotation"
+        description = """\
+The etcd CA can now be rotated with `talosctl rotate-ca --etcd` (the etcd CA rotation is not enabled by default).
+
+The rotation follows the same flow as the Kubernetes API CA rotation: the new CA is added as accepted, the issuing CA is replaced with the new one
+(keeping the old CA accepted), and finally the old CA is removed.
+Each step is applied to the control plane machines one by one, waiting for etcd and `kube-apiserver` to come back healthy with the new PKI,
+so the rotation can be interrupted at any point without breaking the cluster, and started over to finish it.
+
+The rotation requires the etcd CA to be configured with the `EtcdCAConfig` machine configuration document, which accepts additional trusted CAs (`acceptedCAs`).
+Talos now restarts etcd and `kube-apiserver` when the set of the etcd CAs changes in the machine configuration, as the trusted CAs are only loaded on start.
+"""
+
     [notes.kubeprism_readiness_check]
         title = "KubePrism Readiness Check"
         description = """\

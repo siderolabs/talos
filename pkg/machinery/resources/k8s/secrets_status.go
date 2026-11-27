@@ -31,6 +31,10 @@ type SecretsStatus = typed.Resource[SecretsStatusSpec, SecretsStatusExtension]
 type SecretsStatusSpec struct {
 	Ready   bool   `yaml:"ready" protobuf:"1"`
 	Version string `yaml:"version" protobuf:"2"`
+	// EtcdCAFingerprint is the fingerprint of the set of the etcd CAs (the issuing CA and the accepted CAs) the secrets were rendered with.
+	EtcdCAFingerprint string `yaml:"etcdCAFingerprint,omitempty" protobuf:"3"`
+	// EtcdIssuingCAFingerprint is the fingerprint of the etcd CA which issued the rendered etcd client certificate.
+	EtcdIssuingCAFingerprint string `yaml:"etcdIssuingCAFingerprint,omitempty" protobuf:"4"`
 }
 
 // NewSecretsStatus initializes a SecretsStatus resource.

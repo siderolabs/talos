@@ -4,6 +4,7 @@ metadata:
   annotations:
     talos.dev/config-file-version: "222"
     talos.dev/config-version: undefined
+    talos.dev/etcd-ca-fingerprint: abc
     talos.dev/secrets-version: "111"
   labels:
     app.kubernetes.io/component: control-plane
