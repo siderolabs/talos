@@ -11,14 +11,11 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 )
 
-// watchKinds watches all the given resource kinds of a namespace, with their bootstrap contents,
-// and passes every event to onEvent until ctx is canceled.
+// watchKinds watches all the given kinds of a namespace, with bootstrap contents, and passes every
+// event to onEvent until ctx is canceled.
 //
-// A single event channel keeps the kinds in step: screens join the kinds, so rendering on every
-// event from any of them is both correct and simpler than reconciling separate streams. onEvent
-// is called from the watch goroutine, and callers hand the work over to the UI goroutine.
-//
-// If a watch cannot be set up, onSetupError is called once and the function returns.
+// One channel keeps the kinds in step. onEvent runs on the watch goroutine, so callers hand off to
+// the UI goroutine. onSetupError is called once if a watch cannot be set up.
 func watchKinds(
 	ctx context.Context,
 	st state.State,

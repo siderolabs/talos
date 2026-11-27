@@ -59,13 +59,8 @@ type ContainersGrid struct {
 	level int // 0=list, 1=detail, 2=yaml
 
 	// Level 0: container list
-	listWrapper  *tview.Grid
-	table        *tview.Table
-	summary      *tview.TextView
-	filterInput  *tview.InputField
-	filterActive bool
-	filterText   string
-	sortBy       containerSort
+	*listPane
+	sortBy containerSort
 
 	// Watched resources, keyed by resource ID.
 	statuses     map[string]*containers.ContainerStatus
@@ -154,35 +149,7 @@ func NewContainersGrid(ctx context.Context, dashboard *Dashboard) *ContainersGri
 }
 
 func (widget *ContainersGrid) initList() {
-	widget.table = tview.NewTable()
-	widget.table.SetBorder(true)
-	widget.table.SetFixed(1, 0)
-	widget.table.SetSelectable(true, false)
-	widget.table.SetSelectedStyle(tcell.StyleDefault.Attributes(tcell.AttrReverse))
-	widget.table.SetSelectedFunc(func(row, _ int) {
-		widget.openDetail(row)
-	})
-
-	widget.summary = tview.NewTextView()
-	widget.summary.SetDynamicColors(true)
-	widget.summary.SetBorderPadding(0, 0, 1, 1)
-
-	widget.filterInput = tview.NewInputField()
-	widget.filterInput.SetLabel("filter: ")
-	widget.filterInput.SetLabelColor(tcell.ColorYellow)
-	widget.filterInput.SetFieldBackgroundColor(tcell.ColorDefault)
-	widget.filterInput.SetChangedFunc(func(text string) {
-		widget.filterText = text
-		widget.renderList()
-	})
-	widget.filterInput.SetDoneFunc(func(key tcell.Key) {
-		widget.deactivateFilter(key == tcell.KeyEscape)
-	})
-
-	widget.listWrapper = tview.NewGrid()
-	widget.listWrapper.SetRows(0, 1).SetColumns(0)
-	widget.listWrapper.AddItem(widget.table, 0, 0, 1, 1, 0, 0, true)
-	widget.listWrapper.AddItem(widget.summary, 1, 0, 1, 1, 0, 0, false)
+	widget.listPane = newListPane(widget.openDetail, widget.renderList, widget.deactivateFilter)
 }
 
 func (widget *ContainersGrid) initDetail() {
@@ -190,19 +157,12 @@ func (widget *ContainersGrid) initDetail() {
 	widget.detailView.SetDynamicColors(true)
 	widget.detailView.SetBorder(true)
 
-	widget.instanceTable = tview.NewTable()
-	widget.instanceTable.SetBorder(true)
+	widget.instanceTable = newSelectableTable()
 	widget.instanceTable.SetTitle(" Instances (i: back to details) ")
-	widget.instanceTable.SetFixed(1, 0)
-	widget.instanceTable.SetSelectable(true, false)
-	widget.instanceTable.SetSelectedStyle(tcell.StyleDefault.Attributes(tcell.AttrReverse))
 
 	widget.logViewer = components.NewLogViewer(widget.app)
 
-	widget.detailWrapper = tview.NewGrid()
-	widget.detailWrapper.SetRows(containerDetailRows, 0).SetColumns(0)
-	widget.detailWrapper.AddItem(widget.detailView, 0, 0, 1, 1, 0, 0, false)
-	widget.detailWrapper.AddItem(widget.logViewer, 1, 0, 1, 1, 0, 0, true)
+	widget.detailWrapper = newDetailGrid(widget.detailView, containerDetailRows, widget.logViewer)
 }
 
 func (widget *ContainersGrid) initYAML() {
@@ -458,43 +418,18 @@ func (widget *ContainersGrid) toggleDetailFocus() {
 
 // activateFilter shows the filter input below the list.
 func (widget *ContainersGrid) activateFilter() {
-	if widget.filterActive {
-		return
-	}
-
-	widget.filterActive = true
-	widget.filterInput.SetText(widget.filterText)
-	widget.listWrapper.SetRows(0, 1, 1)
-	widget.listWrapper.AddItem(widget.filterInput, 2, 0, 1, 1, 0, 0, true)
-	widget.app.SetFocus(widget.filterInput)
+	widget.showFilter(widget.app)
 }
 
 // deactivateFilter hides the filter input. If clearText is true, the filter is also cleared.
 func (widget *ContainersGrid) deactivateFilter(clearText bool) {
-	if !widget.filterActive {
-		if clearText && widget.filterText != "" {
-			widget.filterText = ""
-			widget.filterInput.SetText("")
-			widget.renderList()
-		}
+	wasActive, rerender := widget.hideFilter(clearText)
 
-		return
-	}
-
-	if clearText {
-		widget.filterText = ""
-		widget.filterInput.SetText("")
-	}
-
-	widget.filterActive = false
-	widget.listWrapper.RemoveItem(widget.filterInput)
-	widget.listWrapper.SetRows(0, 1)
-
-	if clearText {
+	if rerender {
 		widget.renderList()
 	}
 
-	if widget.active && widget.level == 0 {
+	if wasActive && widget.active && widget.level == 0 {
 		widget.app.SetFocus(widget.table)
 	}
 }
@@ -503,24 +438,9 @@ func (widget *ContainersGrid) deactivateFilter(clearText bool) {
 func (widget *ContainersGrid) goBack() {
 	switch widget.level {
 	case 2:
-		widget.level = widget.yamlReturn
-
-		if widget.level == 1 {
-			widget.pages.SwitchToPage(pageContainerDetail)
-		} else {
-			// The list is not rendered while it is hidden, so catch up on what changed meanwhile.
-			widget.pages.SwitchToPage(pageContainerList)
-			widget.renderList()
-		}
+		widget.leaveYAML()
 	case 1:
-		widget.stopLogs()
-		widget.logViewer.Reset()
-
-		widget.level = 0
-		widget.selected = ""
-		widget.showInstances = false
-
-		widget.pages.SwitchToPage(pageContainerList)
+		widget.leaveDetail()
 	default:
 		if widget.filterText != "" {
 			widget.deactivateFilter(true)
@@ -528,6 +448,33 @@ func (widget *ContainersGrid) goBack() {
 	}
 
 	widget.focusLevel()
+}
+
+// leaveYAML returns from the YAML to the level it was opened from.
+func (widget *ContainersGrid) leaveYAML() {
+	widget.level = widget.yamlReturn
+
+	if widget.level == 1 {
+		widget.pages.SwitchToPage(pageContainerDetail)
+
+		return
+	}
+
+	// The list is not rendered while it is hidden, so catch up on what changed meanwhile.
+	widget.pages.SwitchToPage(pageContainerList)
+	widget.renderList()
+}
+
+// leaveDetail returns from the detail to the list, and stops following the logs.
+func (widget *ContainersGrid) leaveDetail() {
+	widget.stopLogs()
+	widget.logViewer.Reset()
+
+	widget.level = 0
+	widget.selected = ""
+	widget.showInstances = false
+
+	widget.pages.SwitchToPage(pageContainerList)
 }
 
 // initTableHeader sets the header row of the container list.
@@ -996,36 +943,8 @@ func (widget *ContainersGrid) stopLogs() {
 }
 
 // runLogConsumer drains the container log source into the log viewer.
-//
-// The screen owns its log stream rather than routing it through the dashboard's data handler,
-// because the stream follows the selected container rather than the selected node. The batching
-// mirrors what the dashboard does for node logs: a burst of lines produces one queued update
-// instead of one per line.
 func (widget *ContainersGrid) runLogConsumer(ctx context.Context) {
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case data := <-widget.logSource.LogCh:
-			batch := []containerlogdata.Data{data}
-
-		drain:
-			for {
-				select {
-				case more := <-widget.logSource.LogCh:
-					batch = append(batch, more)
-				default:
-					break drain
-				}
-			}
-
-			widget.app.QueueUpdate(func() {
-				for _, entry := range batch {
-					widget.writeLog(entry)
-				}
-			})
-		}
-	}
+	consumeLogs(ctx, widget.app, widget.logSource.LogCh, widget.writeLog)
 }
 
 // writeLog writes a log line into the log viewer, dropping the lines that belong to a stream the

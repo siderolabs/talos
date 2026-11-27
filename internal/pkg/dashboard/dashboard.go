@@ -66,6 +66,9 @@ const (
 
 	// ScreenContainers is the containers screen.
 	ScreenContainers Screen = "Containers"
+
+	// ScreenVMs is the virtual machines screen.
+	ScreenVMs Screen = "VMs"
 )
 
 // APIDataListener is a listener which is notified when API-sourced data is updated.
@@ -321,6 +324,8 @@ func (d *Dashboard) newScreenPrimitive(ctx context.Context, screen Screen) scree
 		return NewResourceExplorerGrid(ctx, d)
 	case ScreenContainers:
 		return NewContainersGrid(ctx, d)
+	case ScreenVMs:
+		return NewVMsGrid(ctx, d)
 	default:
 		return nil
 	}

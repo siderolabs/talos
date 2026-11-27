@@ -120,6 +120,14 @@ The `KubeFlannelCNIConfig` document has a new `kubeNetworkPoliciesArgs` field wh
 kube-network-policies serves metrics on `:9080` on all node addresses by default; use `--metrics-bind-address=127.0.0.1:9080` to restrict it to the loopback interface.
 """
 
+    [notes.dashboard_vms]
+        title = "Dashboard Virtual Machines Tab"
+        description = """\
+`talosctl dashboard` ships a new `VMs` tab: a list of the virtual machines of the node with their power state, stage, resources and guest addresses.
+Drilling into a virtual machine shows its configuration, its disks and interfaces, and follows its serial console log.
+The tab is read-only: use `talosctl hypervisor start`, `stop` and `reboot` to change the power state.
+"""
+
     [notes.vm_vnc]
         title = "Virtual Machine VNC Console"
         description = """\
