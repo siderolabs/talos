@@ -5,7 +5,7 @@
 package k8stemplates
 
 import (
-	apiextensions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apiextensionsv1 "k8s.io/apiextensions-api/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -14,39 +14,39 @@ import (
 // TalosServiceAccountCRDTemplate returns the template of the CRD which
 // allows injecting Talos API credentials for Kubernetes pods.
 func TalosServiceAccountCRDTemplate() runtime.Object {
-	return &apiextensions.CustomResourceDefinition{
-		APIVersion: apiextensions.SchemeGroupVersion.String(),
+	return &apiextensionsv1.CustomResourceDefinition{
+		APIVersion: apiextensionsv1.SchemeGroupVersion.String(),
 		Kind:       "CustomResourceDefinition",
 		Name:       constants.ServiceAccountResourcePlural + "." + constants.ServiceAccountResourceGroup,
-		Spec: apiextensions.CustomResourceDefinitionSpec{
-			Conversion: &apiextensions.CustomResourceConversion{
-				Strategy: apiextensions.NoneConverter,
+		Spec: apiextensionsv1.CustomResourceDefinitionSpec{
+			Conversion: &apiextensionsv1.CustomResourceConversion{
+				Strategy: apiextensionsv1.NoneConverter,
 			},
 			Group: constants.ServiceAccountResourceGroup,
-			Names: apiextensions.CustomResourceDefinitionNames{
+			Names: apiextensionsv1.CustomResourceDefinitionNames{
 				Kind:       constants.ServiceAccountResourceKind,
 				ListKind:   constants.ServiceAccountResourceKind + "List",
 				Plural:     constants.ServiceAccountResourcePlural,
 				Singular:   constants.ServiceAccountResourceSingular,
 				ShortNames: []string{constants.ServiceAccountResourceShortName},
 			},
-			Scope: apiextensions.NamespaceScoped,
-			Versions: []apiextensions.CustomResourceDefinitionVersion{
+			Scope: apiextensionsv1.NamespaceScoped,
+			Versions: []apiextensionsv1.CustomResourceDefinitionVersion{
 				{
 					Name:    constants.ServiceAccountResourceVersion,
 					Served:  true,
 					Storage: true,
-					Schema: &apiextensions.CustomResourceValidation{
-						OpenAPIV3Schema: &apiextensions.JSONSchemaProps{
+					Schema: &apiextensionsv1.CustomResourceValidation{
+						OpenAPIV3Schema: &apiextensionsv1.JSONSchemaProps{
 							Type: "object",
-							Properties: map[string]apiextensions.JSONSchemaProps{
+							Properties: map[string]apiextensionsv1.JSONSchemaProps{
 								"spec": {
 									Type: "object",
-									Properties: map[string]apiextensions.JSONSchemaProps{
+									Properties: map[string]apiextensionsv1.JSONSchemaProps{
 										"roles": {
 											Type: "array",
-											Items: &apiextensions.JSONSchemaPropsOrArray{
-												Schema: &apiextensions.JSONSchemaProps{
+											Items: &apiextensionsv1.JSONSchemaPropsOrArray{
+												Schema: &apiextensionsv1.JSONSchemaProps{
 													Type: "string",
 												},
 											},
@@ -55,7 +55,7 @@ func TalosServiceAccountCRDTemplate() runtime.Object {
 								},
 								"status": {
 									Type: "object",
-									Properties: map[string]apiextensions.JSONSchemaProps{
+									Properties: map[string]apiextensionsv1.JSONSchemaProps{
 										"failureReason": {
 											Type: "string",
 										},

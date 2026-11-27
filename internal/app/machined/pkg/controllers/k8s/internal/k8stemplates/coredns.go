@@ -45,19 +45,19 @@ func CoreDNSService(spec *k8s.BootstrapManifestsConfigSpec) runtime.Object {
 					Name:       "dns",
 					Port:       53,
 					Protocol:   corev1.ProtocolUDP,
-					TargetPort: intstr.FromInt(53),
+					TargetPort: intstr.FromInt32(53),
 				},
 				{
 					Name:       "dns-tcp",
 					Port:       53,
 					Protocol:   corev1.ProtocolTCP,
-					TargetPort: intstr.FromInt(53),
+					TargetPort: intstr.FromInt32(53),
 				},
 				{
 					Name:       "metrics",
 					Port:       9153,
 					Protocol:   corev1.ProtocolTCP,
-					TargetPort: intstr.FromInt(9153),
+					TargetPort: intstr.FromInt32(9153),
 				},
 			},
 		},
@@ -209,7 +209,7 @@ func CoreDNSDeployment(spec *k8s.BootstrapManifestsConfigSpec) runtime.Object {
 			Strategy: appsv1.DeploymentStrategy{
 				Type: appsv1.RollingUpdateDeploymentStrategyType,
 				RollingUpdate: &appsv1.RollingUpdateDeployment{
-					MaxUnavailable: new(intstr.FromInt(1)),
+					MaxUnavailable: new(intstr.FromInt32(1)),
 				},
 			},
 			Selector: &metav1.LabelSelector{
@@ -311,7 +311,7 @@ func CoreDNSDeployment(spec *k8s.BootstrapManifestsConfigSpec) runtime.Object {
 							LivenessProbe: &corev1.Probe{
 								HTTPGet: &corev1.HTTPGetAction{
 									Path:   "/health",
-									Port:   intstr.FromInt(8080),
+									Port:   intstr.FromInt32(8080),
 									Scheme: corev1.URISchemeHTTP,
 								},
 								InitialDelaySeconds: 60,
@@ -322,7 +322,7 @@ func CoreDNSDeployment(spec *k8s.BootstrapManifestsConfigSpec) runtime.Object {
 							ReadinessProbe: &corev1.Probe{
 								HTTPGet: &corev1.HTTPGetAction{
 									Path:   "/ready",
-									Port:   intstr.FromInt(8181),
+									Port:   intstr.FromInt32(8181),
 									Scheme: corev1.URISchemeHTTP,
 								},
 							},

@@ -186,7 +186,7 @@ func KubeProxyDaemonSetTemplate(spec *k8s.BootstrapManifestsConfigSpec) (runtime
 			UpdateStrategy: appsv1.DaemonSetUpdateStrategy{
 				Type: appsv1.RollingUpdateDaemonSetStrategyType,
 				RollingUpdate: &appsv1.RollingUpdateDaemonSet{
-					MaxUnavailable: new(intstr.FromInt(1)),
+					MaxUnavailable: new(intstr.FromInt32(1)),
 				},
 			},
 			Template: corev1.PodTemplateSpec{

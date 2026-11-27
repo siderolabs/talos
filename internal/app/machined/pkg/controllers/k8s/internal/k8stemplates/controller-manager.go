@@ -81,7 +81,7 @@ func ControllerManagerPod(configResource *k8s.ControllerManagerConfig, secretsVe
 						HTTPGet: &corev1.HTTPGetAction{
 							Path:   "/healthz",
 							Host:   "localhost",
-							Port:   intstr.FromInt(10257),
+							Port:   intstr.FromInt32(10257),
 							Scheme: corev1.URISchemeHTTPS,
 						},
 						// Give 60 seconds for the container to start up
@@ -94,7 +94,7 @@ func ControllerManagerPod(configResource *k8s.ControllerManagerConfig, secretsVe
 						HTTPGet: &corev1.HTTPGetAction{
 							Path:   "/healthz",
 							Host:   "localhost",
-							Port:   intstr.FromInt(10257),
+							Port:   intstr.FromInt32(10257),
 							Scheme: corev1.URISchemeHTTPS,
 						},
 						TimeoutSeconds: 15,

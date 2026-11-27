@@ -23,7 +23,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	policy "k8s.io/api/policy/v1beta1"
+	policyv1 "k8s.io/api/policy/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -295,11 +295,11 @@ func (h *Client) Drain(ctx context.Context, node string) error {
 
 func (h *Client) evict(ctx context.Context, p corev1.Pod, gracePeriod int64) error {
 	for {
-		pol := &policy.Eviction{
+		pol := &policyv1.Eviction{
 			Namespace: p.GetNamespace(), Name: p.GetName(),
 			DeleteOptions: &metav1.DeleteOptions{GracePeriodSeconds: &gracePeriod},
 		}
-		err := h.CoreV1().Pods(p.GetNamespace()).Evict(ctx, pol)
+		err := h.CoreV1().Pods(p.GetNamespace()).EvictV1(ctx, pol)
 
 		switch {
 		case apierrors.IsTooManyRequests(err):

@@ -357,7 +357,7 @@ func (ctrl *MachineStatusController) staticPodsCheck(ctx context.Context, r cont
 		}
 
 		switch status.Phase {
-		case corev1.PodPending, corev1.PodFailed, corev1.PodUnknown:
+		case corev1.PodPending, corev1.PodFailed, corev1.PodUnknown: //nolint:staticcheck // kept for the exhaustive switch
 			problems = append(problems, fmt.Sprintf("%s %s", staticPod.Metadata().ID(), strings.ToLower(string(status.Phase))))
 		case corev1.PodSucceeded:
 			// do nothing, terminal phase

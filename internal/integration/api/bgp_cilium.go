@@ -410,10 +410,12 @@ func (suite *BGPCiliumSuite) ciliumCreateService() {
 		Labels: map[string]string{
 			ciliumServiceLabel: ciliumTestLabelValue,
 		},
+		Annotations: map[string]string{
+			"lbipam.cilium.io/ips": ciliumVIPPrefix.Addr().String(),
+		},
 		Spec: corev1.ServiceSpec{
 			Selector:              map[string]string{"app": ciliumBackendName},
 			Type:                  corev1.ServiceTypeLoadBalancer,
-			LoadBalancerIP:        ciliumVIPPrefix.Addr().String(),
 			ExternalTrafficPolicy: corev1.ServiceExternalTrafficPolicyLocal,
 			Ports: []corev1.ServicePort{{
 				Name:       "http",

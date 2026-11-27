@@ -432,12 +432,12 @@ func (suite *BGPMetalLBSuite) metalLBCreateService() {
 	_, err := suite.Clientset.CoreV1().Services(corev1.NamespaceDefault).Create(suite.ctx, &corev1.Service{
 		Name: metalLBServiceName,
 		Annotations: map[string]string{
-			"metallb.io/address-pool": metalLBPoolName,
+			"metallb.io/address-pool":    metalLBPoolName,
+			"metallb.io/loadBalancerIPs": metalLBVIPPrefix.Addr().String(),
 		},
 		Spec: corev1.ServiceSpec{
 			Selector:              map[string]string{"app": metalLBBackendName},
 			Type:                  corev1.ServiceTypeLoadBalancer,
-			LoadBalancerIP:        metalLBVIPPrefix.Addr().String(),
 			ExternalTrafficPolicy: corev1.ServiceExternalTrafficPolicyLocal,
 			Ports: []corev1.ServicePort{{
 				Name:       "http",

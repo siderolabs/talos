@@ -311,7 +311,7 @@ func TestValidateRejects(t *testing.T) {
 		{
 			name: "preferences",
 			mutate: func(config *clientcmdapi.Config) {
-				config.Preferences.Colors = true
+				config.Preferences.Colors = true //nolint:staticcheck
 			},
 			expectedError: `top-level field "preferences" is not allowed`,
 		},

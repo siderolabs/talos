@@ -497,8 +497,9 @@ func NewKubeletConfiguration(
 		config.ShutdownGracePeriodCriticalPods = metav1.Duration{Duration: constants.KubeletShutdownGracePeriodCriticalPods}
 	}
 
-	if config.StreamingConnectionIdleTimeout.Duration == 0 {
-		config.StreamingConnectionIdleTimeout = metav1.Duration{Duration: 5 * time.Minute}
+	// the setting has no effect since Kubernetes 1.38, but it still applies to the older kubelets Talos supports
+	if config.StreamingConnectionIdleTimeout.Duration == 0 { //nolint:staticcheck
+		config.StreamingConnectionIdleTimeout = metav1.Duration{Duration: 5 * time.Minute} //nolint:staticcheck
 	}
 
 	if config.TLSMinVersion == "" {

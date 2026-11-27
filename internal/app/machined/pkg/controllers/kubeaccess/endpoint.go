@@ -188,7 +188,7 @@ func (ctrl *EndpointController) ensureTalosService(ctx context.Context, client *
 					Name:       "apid",
 					Port:       constants.ApidPort,
 					Protocol:   corev1.ProtocolTCP,
-					TargetPort: intstr.FromInt(constants.ApidPort),
+					TargetPort: intstr.FromInt32(constants.ApidPort),
 				},
 			},
 		},

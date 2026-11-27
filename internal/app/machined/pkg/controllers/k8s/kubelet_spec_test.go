@@ -397,7 +397,7 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 		},
 		ShutdownGracePeriod:             metav1.Duration{Duration: constants.KubeletShutdownGracePeriod},
 		ShutdownGracePeriodCriticalPods: metav1.Duration{Duration: constants.KubeletShutdownGracePeriodCriticalPods},
-		StreamingConnectionIdleTimeout:  metav1.Duration{Duration: 5 * time.Minute},
+		StreamingConnectionIdleTimeout:  metav1.Duration{Duration: 5 * time.Minute}, //nolint:staticcheck
 		TLSMinVersion:                   "VersionTLS13",
 		StaticPodPath:                   constants.ManifestsDirectory,
 		ContainerRuntimeEndpoint:        "unix://" + constants.CRIContainerdAddress,

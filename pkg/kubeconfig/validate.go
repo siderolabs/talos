@@ -64,7 +64,8 @@ func Validate(config *clientcmdapi.Config) error {
 		multiErr = append(multiErr, fmt.Errorf("unexpected apiVersion %q", config.APIVersion))
 	}
 
-	if config.Preferences.Colors || len(config.Preferences.Extensions) > 0 {
+	// the field is deprecated and ignored by Kubernetes components, but it is still decoded, so keep rejecting it
+	if config.Preferences.Colors || len(config.Preferences.Extensions) > 0 { //nolint:staticcheck
 		multiErr = append(multiErr, errors.New("top-level field \"preferences\" is not allowed"))
 	}
 

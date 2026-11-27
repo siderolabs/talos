@@ -111,7 +111,7 @@ func APIServerPod(configResource *k8s.APIServerConfig, secretsVersion, configVer
 			HTTPGet: &corev1.HTTPGetAction{
 				Path:   "/livez",
 				Host:   "localhost",
-				Port:   intstr.FromInt(cfg.LocalPort),
+				Port:   intstr.FromInt32(int32(cfg.LocalPort)),
 				Scheme: corev1.URISchemeHTTPS,
 			},
 			InitialDelaySeconds: 10,
@@ -124,7 +124,7 @@ func APIServerPod(configResource *k8s.APIServerConfig, secretsVersion, configVer
 			HTTPGet: &corev1.HTTPGetAction{
 				Path:   "/readyz",
 				Host:   "localhost",
-				Port:   intstr.FromInt(cfg.LocalPort),
+				Port:   intstr.FromInt32(int32(cfg.LocalPort)),
 				Scheme: corev1.URISchemeHTTPS,
 			},
 			InitialDelaySeconds: 0,
@@ -137,7 +137,7 @@ func APIServerPod(configResource *k8s.APIServerConfig, secretsVersion, configVer
 			HTTPGet: &corev1.HTTPGetAction{
 				Path:   "/livez",
 				Host:   "localhost",
-				Port:   intstr.FromInt(cfg.LocalPort),
+				Port:   intstr.FromInt32(int32(cfg.LocalPort)),
 				Scheme: corev1.URISchemeHTTPS,
 			},
 			InitialDelaySeconds: 10,

@@ -37,7 +37,7 @@ func SchedulerPod(configResource *k8s.SchedulerConfig, secretsVersion string) (r
 		HTTPGet: &corev1.HTTPGetAction{
 			Path:   kubeSchedulerVersion.KubeSchedulerHealthLivenessEndpoint(),
 			Host:   "localhost",
-			Port:   intstr.FromInt(10259),
+			Port:   intstr.FromInt32(10259),
 			Scheme: corev1.URISchemeHTTPS,
 		},
 		TimeoutSeconds: 15,
@@ -47,7 +47,7 @@ func SchedulerPod(configResource *k8s.SchedulerConfig, secretsVersion string) (r
 		HTTPGet: &corev1.HTTPGetAction{
 			Path:   kubeSchedulerVersion.KubeSchedulerHealthReadinessEndpoint(),
 			Host:   "localhost",
-			Port:   intstr.FromInt(10259),
+			Port:   intstr.FromInt32(10259),
 			Scheme: corev1.URISchemeHTTPS,
 		},
 		TimeoutSeconds: 15,
@@ -57,7 +57,7 @@ func SchedulerPod(configResource *k8s.SchedulerConfig, secretsVersion string) (r
 		HTTPGet: &corev1.HTTPGetAction{
 			Path:   kubeSchedulerVersion.KubeSchedulerHealthStartupEndpoint(),
 			Host:   "localhost",
-			Port:   intstr.FromInt(10259),
+			Port:   intstr.FromInt32(10259),
 			Scheme: corev1.URISchemeHTTPS,
 		},
 		// Give 60 seconds for the container to start up
