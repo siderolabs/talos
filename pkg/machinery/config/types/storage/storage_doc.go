@@ -39,6 +39,8 @@ func (LVMVolumeGroupConfigV1Alpha1) Doc() *encoder.Doc {
 
 	doc.AddExample("", exampleLVMVolumeGroupConfigV1Alpha1())
 
+	doc.AddExample("", exampleLVMVolumeGroupConfigParentsV1Alpha1())
+
 	return doc
 }
 
@@ -58,8 +60,40 @@ func (ProvisioningSpec) Doc() *encoder.Doc {
 				Name:        "volumeSelector",
 				Type:        "LVMVolumeSelectorSpec",
 				Note:        "",
-				Description: "Matches disks to initialize as physical volumes.",
+				Description: "Matches disks to initialize as physical volumes.\n\nMutually exclusive with `parents`.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Matches disks to initialize as physical volumes." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "parents",
+				Type:        "[]LVMVolumeGroupParent",
+				Note:        "",
+				Description: "Talos volumes to initialize as physical volumes.\n\nMutually exclusive with `volumeSelector`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Talos volumes to initialize as physical volumes." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (LVMVolumeGroupParent) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "LVMVolumeGroupParent",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "LVMVolumeGroupParent references a Talos volume backing the volume group." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "LVMVolumeGroupParent references a Talos volume backing the volume group.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "ProvisioningSpec",
+				FieldName: "parents",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "rawVolume",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the `RawVolumeConfig` document.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the `RawVolumeConfig` document." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}
@@ -363,6 +397,7 @@ func GetFileDoc() *encoder.FileDoc {
 		Structs: []*encoder.Doc{
 			LVMVolumeGroupConfigV1Alpha1{}.Doc(),
 			ProvisioningSpec{}.Doc(),
+			LVMVolumeGroupParent{}.Doc(),
 			LVMVolumeSelectorSpec{}.Doc(),
 			LVMLogicalVolumeConfigV1Alpha1{}.Doc(),
 			LVMLogicalVolumeProvisioningSpec{}.Doc(),

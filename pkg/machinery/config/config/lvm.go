@@ -13,7 +13,12 @@ import (
 type LVMVolumeGroupConfig interface {
 	NamedDocument
 	LVMVolumeGroupConfigSignal()
+	// PhysicalVolumeSelector returns the selector matching disks to use as PVs,
+	// zero when ParentVolumeIDs is used instead.
 	PhysicalVolumeSelector() cel.Expression
+	// ParentVolumeIDs returns the IDs of the Talos volumes to use as PVs,
+	// empty when PhysicalVolumeSelector is used instead.
+	ParentVolumeIDs() []string
 }
 
 // LVMLogicalVolumeConfig exposes an LVM logical volume config document.
