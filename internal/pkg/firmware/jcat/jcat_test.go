@@ -7,150 +7,26 @@ package jcat_test
 import (
 	"bytes"
 	"compress/gzip"
-	"crypto/ecdsa"
-	"crypto/elliptic"
-	"crypto/fips140"
-	"crypto/rand"
 	"crypto/sha256"
-	"crypto/x509"
-	"crypto/x509/pkix"
 	"encoding/base64"
 	"encoding/hex"
-	"encoding/json"
-	"math/big"
 	"testing"
-	"time"
 
-	"github.com/digitorus/pkcs7"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/internal/pkg/firmware/jcat"
+	"github.com/siderolabs/talos/internal/pkg/firmware/jcat/jcattest"
 )
-
-type testPKI struct {
-	roots      *x509.CertPool
-	signerCert *x509.Certificate
-	signerKey  *ecdsa.PrivateKey
-}
-
-func newTestPKI(t *testing.T) *testPKI {
-	t.Helper()
-
-	caKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-	require.NoError(t, err)
-
-	caTemplate := &x509.Certificate{
-		SerialNumber:          big.NewInt(1),
-		Subject:               pkix.Name{CommonName: "Test CA"},
-		NotBefore:             time.Now().Add(-time.Hour),
-		NotAfter:              time.Now().Add(time.Hour),
-		IsCA:                  true,
-		KeyUsage:              x509.KeyUsageCertSign,
-		BasicConstraintsValid: true,
-	}
-
-	caDER, err := x509.CreateCertificate(rand.Reader, caTemplate, caTemplate, &caKey.PublicKey, caKey)
-	require.NoError(t, err)
-
-	caCert, err := x509.ParseCertificate(caDER)
-	require.NoError(t, err)
-
-	signerKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-	require.NoError(t, err)
-
-	signerTemplate := &x509.Certificate{
-		SerialNumber: big.NewInt(2),
-		Subject:      pkix.Name{CommonName: "Test Signer"},
-		NotBefore:    time.Now().Add(-time.Hour),
-		NotAfter:     time.Now().Add(time.Hour),
-		KeyUsage:     x509.KeyUsageDigitalSignature,
-	}
-
-	signerDER, err := x509.CreateCertificate(rand.Reader, signerTemplate, caCert, &signerKey.PublicKey, caKey)
-	require.NoError(t, err)
-
-	signerCert, err := x509.ParseCertificate(signerDER)
-	require.NoError(t, err)
-
-	roots := x509.NewCertPool()
-	roots.AddCert(caCert)
-
-	return &testPKI{
-		roots:      roots,
-		signerCert: signerCert,
-		signerKey:  signerKey,
-	}
-}
-
-func (pki *testPKI) sign(t *testing.T, payload []byte) []byte {
-	t.Helper()
-
-	var signature []byte
-
-	// pkcs7 signing hits SHA-1 internally for signer-identity fields; bypass
-	// FIPS enforcement so this test fixture can be generated in FIPS-strict builds.
-	fips140.WithoutEnforcement(func() {
-		sd, err := pkcs7.NewSignedData(payload)
-		require.NoError(t, err)
-
-		require.NoError(t, sd.AddSigner(pki.signerCert, pki.signerKey, pkcs7.SignerInfoConfig{}))
-
-		sd.Detach()
-
-		signature, err = sd.Finish()
-		require.NoError(t, err)
-	})
-
-	return signature
-}
-
-func buildJcat(t *testing.T, itemID string, aliasIDs []string, blobs []jcat.Blob) []byte {
-	t.Helper()
-
-	doc := map[string]any{
-		"JcatVersionMajor": 0,
-		"JcatVersionMinor": 1,
-		"Items": []map[string]any{
-			{
-				"Id":       itemID,
-				"AliasIds": aliasIDs,
-				"Blobs":    blobs,
-			},
-		},
-	}
-
-	encoded, err := json.Marshal(doc)
-	require.NoError(t, err)
-
-	var buf bytes.Buffer
-
-	gz := gzip.NewWriter(&buf)
-
-	_, err = gz.Write(encoded)
-	require.NoError(t, err)
-	require.NoError(t, gz.Close())
-
-	// libjcat-produced files carry trailing bytes after the gzip member
-	buf.Write([]byte{0xde, 0xad, 0xbe, 0xef})
-
-	return buf.Bytes()
-}
 
 func TestVerify(t *testing.T) {
 	t.Parallel()
 
-	pki := newTestPKI(t)
+	pki := jcattest.NewPKI(t)
 
 	payload := []byte("firmware metadata payload")
-	sum := sha256.Sum256(payload)
 
-	signature := pki.sign(t, payload)
-
-	jcatData := buildJcat(t, "firmware-12345-stable.xml.zst", []string{"firmware.xml.zst"}, []jcat.Blob{
-		{Kind: jcat.KindSHA256, Flags: 1, Data: hex.EncodeToString(sum[:])},
-		{Kind: jcat.KindPKCS7, Data: base64.StdEncoding.EncodeToString(signature)},
-	})
+	jcatData := jcattest.Build(t, pki.Item(t, "firmware-12345-stable.xml.zst", []string{"firmware.xml.zst"}, payload))
 
 	f, err := jcat.Parse(bytes.NewReader(jcatData))
 	require.NoError(t, err)
@@ -161,24 +37,61 @@ func TestVerify(t *testing.T) {
 	item, ok := f.Item("firmware.xml.zst")
 	require.True(t, ok)
 
-	assert.NoError(t, item.Verify(payload, pki.roots))
+	assert.NoError(t, item.Verify(payload, pki.Roots))
 
-	assert.ErrorContains(t, item.Verify([]byte("tampered payload"), pki.roots), "checksum mismatch")
+	assert.ErrorContains(t, item.Verify([]byte("tampered payload"), pki.Roots), "checksum mismatch")
 
-	otherPKI := newTestPKI(t)
-	assert.ErrorContains(t, item.Verify(payload, otherPKI.roots), "no valid PKCS7 signature")
+	otherPKI := jcattest.NewPKI(t)
+	assert.ErrorContains(t, item.Verify(payload, otherPKI.Roots), "no valid PKCS7 signature")
+}
+
+func TestParseSizeLimit(t *testing.T) {
+	t.Parallel()
+
+	// valid JSON padded past the limit compresses to a few kilobytes
+	var buf bytes.Buffer
+
+	gz := gzip.NewWriter(&buf)
+
+	_, err := gz.Write([]byte(`{"JcatVersionMajor":0,"JcatVersionMinor":1,"Items":[]}`))
+	require.NoError(t, err)
+
+	_, err = gz.Write(bytes.Repeat([]byte(" "), jcat.MaxSize))
+	require.NoError(t, err)
+	require.NoError(t, gz.Close())
+
+	require.Less(t, buf.Len(), 1<<20)
+
+	_, err = jcat.Parse(&buf)
+	require.ErrorContains(t, err, "expands to more than")
+}
+
+func TestParseTruncated(t *testing.T) {
+	t.Parallel()
+
+	data := jcattest.Build(t, jcat.Item{ID: "firmware.bin"})
+
+	_, err := jcat.Parse(bytes.NewReader(data))
+	require.NoError(t, err)
+
+	// cut into the gzip trailer; Build appends 4 bytes after the member
+	_, err = jcat.Parse(bytes.NewReader(data[:len(data)-8]))
+	require.ErrorContains(t, err, "error reading jcat gzip stream")
 }
 
 func TestVerifyNoSignature(t *testing.T) {
 	t.Parallel()
 
-	pki := newTestPKI(t)
+	pki := jcattest.NewPKI(t)
 
 	payload := []byte("payload")
 	sum := sha256.Sum256(payload)
 
-	jcatData := buildJcat(t, "firmware.xml.zst", nil, []jcat.Blob{
-		{Kind: jcat.KindSHA256, Flags: 1, Data: hex.EncodeToString(sum[:])},
+	jcatData := jcattest.Build(t, jcat.Item{
+		ID: "firmware.xml.zst",
+		Blobs: []jcat.Blob{
+			{Kind: jcat.KindSHA256, Flags: 1, Data: hex.EncodeToString(sum[:])},
+		},
 	})
 
 	f, err := jcat.Parse(bytes.NewReader(jcatData))
@@ -187,24 +100,63 @@ func TestVerifyNoSignature(t *testing.T) {
 	item, ok := f.Item("firmware.xml.zst")
 	require.True(t, ok)
 
-	assert.ErrorContains(t, item.Verify(payload, pki.roots), "no PKCS7 signatures found")
+	assert.ErrorContains(t, item.Verify(payload, pki.Roots), "no PKCS7 signatures found")
+	assert.NotErrorIs(t, item.Verify(payload, pki.Roots), jcat.ErrUnsupportedSignature)
+}
+
+func TestVerifyUnsupportedSignature(t *testing.T) {
+	t.Parallel()
+
+	pki := jcattest.NewPKI(t)
+
+	payload := []byte("payload")
+
+	// an item signed only with GPG is told apart from one whose signature failed
+	gpgOnly := jcat.Item{
+		ID:    "firmware.xml.zst",
+		Blobs: []jcat.Blob{{Kind: jcat.KindGPG, Flags: 1, Data: "-----BEGIN PGP SIGNATURE-----"}},
+	}
+
+	assert.ErrorIs(t, gpgOnly.Verify(payload, pki.Roots), jcat.ErrUnsupportedSignature)
+
+	// a PKCS7 signature that fails is reported as such, GPG blob or not
+	both := jcat.Item{
+		ID: "firmware.xml.zst",
+		Blobs: []jcat.Blob{
+			{Kind: jcat.KindGPG, Flags: 1, Data: "-----BEGIN PGP SIGNATURE-----"},
+			{Kind: jcat.KindPKCS7, Data: "not valid base64!"},
+		},
+	}
+
+	err := both.Verify(payload, pki.Roots)
+	require.ErrorContains(t, err, "error decoding blob data")
+	assert.NotErrorIs(t, err, jcat.ErrUnsupportedSignature)
+
+	// and a valid PKCS7 signature is enough alongside a GPG one
+	signed := pki.Item(t, "firmware.xml.zst", nil, payload)
+	signed.Blobs = append(signed.Blobs, jcat.Blob{Kind: jcat.KindGPG, Flags: 1, Data: "-----BEGIN PGP SIGNATURE-----"})
+
+	assert.NoError(t, signed.Verify(payload, pki.Roots))
 }
 
 func TestVerifyMalformedSignatureBlob(t *testing.T) {
 	t.Parallel()
 
-	pki := newTestPKI(t)
+	pki := jcattest.NewPKI(t)
 
 	payload := []byte("payload")
 	sum := sha256.Sum256(payload)
 
-	signature := pki.sign(t, payload)
+	signature := pki.Sign(t, payload)
 
 	// a malformed PKCS7 blob must not prevent a later valid signature from verifying
-	jcatData := buildJcat(t, "firmware.xml.zst", nil, []jcat.Blob{
-		{Kind: jcat.KindSHA256, Flags: 1, Data: hex.EncodeToString(sum[:])},
-		{Kind: jcat.KindPKCS7, Data: "not valid base64!"},
-		{Kind: jcat.KindPKCS7, Data: base64.StdEncoding.EncodeToString(signature)},
+	jcatData := jcattest.Build(t, jcat.Item{
+		ID: "firmware.xml.zst",
+		Blobs: []jcat.Blob{
+			{Kind: jcat.KindSHA256, Flags: 1, Data: hex.EncodeToString(sum[:])},
+			{Kind: jcat.KindPKCS7, Data: "not valid base64!"},
+			{Kind: jcat.KindPKCS7, Data: base64.StdEncoding.EncodeToString(signature)},
+		},
 	})
 
 	f, err := jcat.Parse(bytes.NewReader(jcatData))
@@ -213,12 +165,15 @@ func TestVerifyMalformedSignatureBlob(t *testing.T) {
 	item, ok := f.Item("firmware.xml.zst")
 	require.True(t, ok)
 
-	assert.NoError(t, item.Verify(payload, pki.roots))
+	assert.NoError(t, item.Verify(payload, pki.Roots))
 
 	// with only the malformed blob, verification fails
-	jcatData = buildJcat(t, "firmware.xml.zst", nil, []jcat.Blob{
-		{Kind: jcat.KindSHA256, Flags: 1, Data: hex.EncodeToString(sum[:])},
-		{Kind: jcat.KindPKCS7, Data: "not valid base64!"},
+	jcatData = jcattest.Build(t, jcat.Item{
+		ID: "firmware.xml.zst",
+		Blobs: []jcat.Blob{
+			{Kind: jcat.KindSHA256, Flags: 1, Data: hex.EncodeToString(sum[:])},
+			{Kind: jcat.KindPKCS7, Data: "not valid base64!"},
+		},
 	})
 
 	f, err = jcat.Parse(bytes.NewReader(jcatData))
@@ -227,5 +182,5 @@ func TestVerifyMalformedSignatureBlob(t *testing.T) {
 	item, ok = f.Item("firmware.xml.zst")
 	require.True(t, ok)
 
-	assert.ErrorContains(t, item.Verify(payload, pki.roots), "error decoding blob data")
+	assert.ErrorContains(t, item.Verify(payload, pki.Roots), "error decoding blob data")
 }
