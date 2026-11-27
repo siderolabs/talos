@@ -36,7 +36,7 @@ const (
 )
 
 // VMsGrid implements the VMs screen: a VM list, a detail pane with the serial console log, and raw
-// YAML. It mirrors ContainersGrid and is read-only.
+// YAML, with power actions on the selected VM. It mirrors ContainersGrid.
 type VMsGrid struct {
 	tview.Grid
 
@@ -76,6 +76,12 @@ type VMsGrid struct {
 	yamlKind   int
 	yamlName   string
 	yamlReturn int
+
+	// message is the outcome of the last action, shown for a while; messageSeq tells which message
+	// the timer that clears it belongs to.
+	message    string
+	messageSeq uint64
+	confirming bool
 
 	selectedNode string
 	active       bool
@@ -147,6 +153,7 @@ func (widget *VMsGrid) onScreenSelect(active bool) {
 		widget.stopWatch()
 		widget.stopLogs()
 		widget.deactivateFilter(false)
+		widget.dismissConfirm()
 
 		return
 	}
@@ -172,7 +179,9 @@ func (widget *VMsGrid) OnNodeSelect(node string) {
 	widget.stopWatch()
 	widget.stopLogs()
 	widget.deactivateFilter(false)
+	widget.dismissConfirm()
 
+	widget.message = ""
 	widget.res = newVMResources()
 	widget.selected = ""
 	widget.level = 0
@@ -205,12 +214,18 @@ func (widget *VMsGrid) focusLevel() {
 //
 //nolint:gocyclo,cyclop
 func (widget *VMsGrid) handleKey(event *tcell.EventKey) *tcell.EventKey {
-	if _, isInput := widget.app.GetFocus().(*tview.InputField); isInput {
+	if _, isInput := widget.app.GetFocus().(*tview.InputField); isInput || widget.confirming {
 		return event
 	}
 
 	if event.Key() == tcell.KeyEscape {
 		widget.goBack()
+
+		return nil
+	}
+
+	if action, ok := vmActionForKey(event.Rune()); ok && widget.level <= 1 {
+		widget.runAction(action)
 
 		return nil
 	}
@@ -413,7 +428,7 @@ func (widget *VMsGrid) initTableHeader() {
 // renderList rebuilds the VM list from the watched resources.
 func (widget *VMsGrid) renderList() {
 	widget.table.SetTitle(fmt.Sprintf(
-		" VMs — by %s (Enter: details, /: filter, s: sort, y: YAML) ", widget.sortBy,
+		" VMs — by %s (Enter: details, /: filter, s: sort, y: YAML, S/T/K/R: start/stop/kill/reboot) ", widget.sortBy,
 	))
 
 	// Remember the selected VM rather than the row: sorting and updates move rows.
@@ -444,7 +459,7 @@ func (widget *VMsGrid) renderList() {
 		}
 	}
 
-	widget.summary.SetText(vmSummary(widget.rows, widget.res.shuttingDown()))
+	widget.summary.SetText(joinMessage(vmSummary(widget.rows, widget.res.shuttingDown()), widget.message))
 
 	if len(widget.rows) == 0 {
 		widget.table.SetCell(1, 0, &tview.TableCell{
@@ -689,7 +704,12 @@ func (widget *VMsGrid) renderDetailView() {
 		title = fmt.Sprintf("%s — %s / %s", widget.selected, status.TypedSpec().PowerState, status.TypedSpec().Stage)
 	}
 
-	widget.detailView.SetTitle(fmt.Sprintf(" %s (i: devices, y: YAML, Tab: focus, Esc: back) ", tview.Escape(title)))
+	hints := "i: devices, y: YAML, S/T/K/R: power, Tab: focus, Esc: back"
+	if widget.message != "" {
+		hints = widget.message
+	}
+
+	widget.detailView.SetTitle(fmt.Sprintf(" %s (%s) ", tview.Escape(title), hints))
 	widget.detailView.SetText(formatVMDetail(widget.res, widget.selected))
 	widget.detailView.ScrollToBeginning()
 }

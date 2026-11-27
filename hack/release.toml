@@ -125,7 +125,8 @@ kube-network-policies serves metrics on `:9080` on all node addresses by default
         description = """\
 `talosctl dashboard` ships a new `VMs` tab: a list of the virtual machines of the node with their power state, stage, resources and guest addresses.
 Drilling into a virtual machine shows its configuration, its disks and interfaces, and follows its serial console log.
-The tab is read-only: use `talosctl hypervisor start`, `stop` and `reboot` to change the power state.
+The selected virtual machine can be started, stopped (gracefully or forced) and rebooted with the `S`, `T`, `K` and `R` keys; stopping and rebooting ask for confirmation.
+These are the same operations as `talosctl hypervisor start`, `stop` and `reboot`, and need the `os:operator` or `os:admin` role.
 """
 
     [notes.vm_vnc]
