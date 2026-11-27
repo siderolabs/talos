@@ -368,11 +368,38 @@ exit 1
 	assert.False(t, called, "callback must not fire for the no-array condition")
 }
 
+// scriptWrapper is the only executable the fake mdadm scripts run through. It is
+// written before any test runs: an executable written while parallel tests fork
+// can be held open by a forked child, and exec of it then fails with ETXTBSY.
+var scriptWrapper string
+
+func TestMain(m *testing.M) {
+	dir, err := os.MkdirTemp("", "md-test")
+	if err != nil {
+		panic(err)
+	}
+
+	scriptWrapper = filepath.Join(dir, "wrapper")
+
+	if err = os.WriteFile(scriptWrapper, []byte("#!/bin/sh\nexec /bin/sh \"$0.sh\" \"$@\"\n"), 0o700); err != nil {
+		panic(err)
+	}
+
+	code := m.Run()
+
+	os.RemoveAll(dir) //nolint:errcheck
+
+	os.Exit(code)
+}
+
+// newScriptMD fakes mdadm with a shell script body. The body is plain data run by
+// the wrapper through a per-test symlink, so no test writes a file it executes.
 func newScriptMD(t *testing.T, body string) *md.MD {
 	t.Helper()
 
 	script := filepath.Join(t.TempDir(), "mdadm")
-	require.NoError(t, os.WriteFile(script, []byte("#!/bin/sh\n"+body), 0o700))
+	require.NoError(t, os.WriteFile(script+".sh", []byte(body), 0o600))
+	require.NoError(t, os.Symlink(scriptWrapper, script))
 
 	m, err := md.New(md.WithMdadmPath(script))
 	require.NoError(t, err)
