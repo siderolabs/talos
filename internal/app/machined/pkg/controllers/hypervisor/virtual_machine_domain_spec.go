@@ -1024,6 +1024,10 @@ func validateVirtualMachineDomainSpec(name string, spec *hypervisor.VirtualMachi
 		return fmt.Errorf("virtual machine %q: %w", name, err)
 	}
 
+	if spec.Console.VNC && !spec.Video.Enabled {
+		return fmt.Errorf("virtual machine %q: a VNC console requires a video device", name)
+	}
+
 	if err := validateVirtualMachineInterfaces(name, spec.Interfaces); err != nil {
 		return err
 	}

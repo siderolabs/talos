@@ -43,11 +43,13 @@ type VirtualMachineConfig interface {
 	Video() VirtualMachineVideoConfig
 }
 
-// VirtualMachineVideoConfig is the graphics device attached when a VNC console is enabled.
-// Observed on amd64 only; other architectures use libvirt's defaults.
+// VirtualMachineVideoConfig is the graphics device presented to the guest.
+// Model and VRAM are observed on amd64 only.
 //
 //nolint:iface
 type VirtualMachineVideoConfig interface {
+	// Enabled attaches a video device; when absent, it follows whether a VNC console is enabled.
+	Enabled() optional.Optional[bool]
 	// Model is the video model: "vga", "virtio", "cirrus", or "bochs".
 	// Empty falls back to "vga".
 	Model() string

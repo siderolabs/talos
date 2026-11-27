@@ -101,6 +101,10 @@ func (o *VirtualMachineConfigV1Alpha1) DeepCopy() *VirtualMachineConfigV1Alpha1 
 			*cp.GuestConfig.AgentConfig.AgentEnabled = *o.GuestConfig.AgentConfig.AgentEnabled
 		}
 	}
+	if o.VideoConfig.VideoEnabled != nil {
+		cp.VideoConfig.VideoEnabled = new(bool)
+		*cp.VideoConfig.VideoEnabled = *o.VideoConfig.VideoEnabled
+	}
 	return &cp
 }
 

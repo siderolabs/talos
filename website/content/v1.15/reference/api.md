@@ -10266,7 +10266,7 @@ VirtualMachineSpecSpec is the spec for VirtualMachineSpec.
 | interfaces | [VirtualMachineInterfaceSpec](#talos.resource.definitions.hypervisor.VirtualMachineInterfaceSpec) | repeated |  |
 | cloud_init | [VirtualMachineCloudInitSpec](#talos.resource.definitions.hypervisor.VirtualMachineCloudInitSpec) |  |  |
 | guest | [VirtualMachineGuestSpec](#talos.resource.definitions.hypervisor.VirtualMachineGuestSpec) |  |  |
-| video | [VirtualMachineVideoSpec](#talos.resource.definitions.hypervisor.VirtualMachineVideoSpec) |  | Video is the graphics device presented when a VNC console is enabled. |
+| video | [VirtualMachineVideoSpec](#talos.resource.definitions.hypervisor.VirtualMachineVideoSpec) |  | Video is the graphics device presented to the guest. |
 | profile | [string](#string) |  | Profile names the guest hardware profile; empty selects the builtin host profile. |
 
 
@@ -10320,6 +10320,7 @@ VirtualMachineVideoSpec describes the virtual graphics device.
 | ----- | ---- | ----- | ----------- |
 | model | [string](#string) |  |  |
 | vram_mi_b | [uint32](#uint32) |  |  |
+| enabled | [bool](#bool) |  | Enabled is resolved from the configuration: a VNC console always enables it. |
 
 
 

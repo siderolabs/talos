@@ -41,7 +41,7 @@ type VirtualMachineSpecSpec struct {
 	Interfaces []VirtualMachineInterfaceSpec `yaml:"interfaces,omitempty" protobuf:"7"`
 	CloudInit  *VirtualMachineCloudInitSpec  `yaml:"cloudInit,omitempty" protobuf:"8"`
 	Guest      VirtualMachineGuestSpec       `yaml:"guest" protobuf:"9"`
-	// Video is the graphics device presented when a VNC console is enabled.
+	// Video is the graphics device presented to the guest.
 	Video VirtualMachineVideoSpec `yaml:"video" protobuf:"10"`
 	// Profile names the guest hardware profile; empty selects the builtin host profile.
 	Profile string `yaml:"profile,omitempty" protobuf:"11"`
@@ -53,6 +53,8 @@ type VirtualMachineSpecSpec struct {
 type VirtualMachineVideoSpec struct {
 	Model   string `yaml:"model,omitempty" protobuf:"1"`
 	VRAMMiB uint32 `yaml:"vramMiB,omitempty" protobuf:"2"`
+	// Enabled is resolved from the configuration: a VNC console always enables it.
+	Enabled bool `yaml:"enabled,omitempty" protobuf:"3"`
 }
 
 // VirtualMachineCloudInitSpec is backend-neutral guest seed intent.

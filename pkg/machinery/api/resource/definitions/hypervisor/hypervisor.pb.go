@@ -2049,7 +2049,7 @@ type VirtualMachineSpecSpec struct {
 	Interfaces []*VirtualMachineInterfaceSpec `protobuf:"bytes,7,rep,name=interfaces,proto3" json:"interfaces,omitempty"`
 	CloudInit  *VirtualMachineCloudInitSpec   `protobuf:"bytes,8,opt,name=cloud_init,json=cloudInit,proto3" json:"cloud_init,omitempty"`
 	Guest      *VirtualMachineGuestSpec       `protobuf:"bytes,9,opt,name=guest,proto3" json:"guest,omitempty"`
-	// Video is the graphics device presented when a VNC console is enabled.
+	// Video is the graphics device presented to the guest.
 	Video *VirtualMachineVideoSpec `protobuf:"bytes,10,opt,name=video,proto3" json:"video,omitempty"`
 	// Profile names the guest hardware profile; empty selects the builtin host profile.
 	Profile       string `protobuf:"bytes,11,opt,name=profile,proto3" json:"profile,omitempty"`
@@ -2310,9 +2310,11 @@ func (x *VirtualMachineVCPUPinSpec) GetCpUs() string {
 
 // VirtualMachineVideoSpec describes the virtual graphics device.
 type VirtualMachineVideoSpec struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Model         string                 `protobuf:"bytes,1,opt,name=model,proto3" json:"model,omitempty"`
-	VramMiB       uint32                 `protobuf:"varint,2,opt,name=vram_mi_b,json=vramMiB,proto3" json:"vram_mi_b,omitempty"`
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Model   string                 `protobuf:"bytes,1,opt,name=model,proto3" json:"model,omitempty"`
+	VramMiB uint32                 `protobuf:"varint,2,opt,name=vram_mi_b,json=vramMiB,proto3" json:"vram_mi_b,omitempty"`
+	// Enabled is resolved from the configuration: a VNC console always enables it.
+	Enabled       bool `protobuf:"varint,3,opt,name=enabled,proto3" json:"enabled,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2359,6 +2361,13 @@ func (x *VirtualMachineVideoSpec) GetVramMiB() uint32 {
 		return x.VramMiB
 	}
 	return 0
+}
+
+func (x *VirtualMachineVideoSpec) GetEnabled() bool {
+	if x != nil {
+		return x.Enabled
+	}
+	return false
 }
 
 var File_resource_definitions_hypervisor_hypervisor_proto protoreflect.FileDescriptor
@@ -2555,10 +2564,11 @@ const file_resource_definitions_hypervisor_hypervisor_proto_rawDesc = "" +
 	"\x13observed_generation\x18\x06 \x01(\tR\x12observedGeneration\"D\n" +
 	"\x19VirtualMachineVCPUPinSpec\x12\x12\n" +
 	"\x04vcpu\x18\x01 \x01(\rR\x04vcpu\x12\x13\n" +
-	"\x05cp_us\x18\x02 \x01(\tR\x04cpUs\"K\n" +
+	"\x05cp_us\x18\x02 \x01(\tR\x04cpUs\"e\n" +
 	"\x17VirtualMachineVideoSpec\x12\x14\n" +
 	"\x05model\x18\x01 \x01(\tR\x05model\x12\x1a\n" +
-	"\tvram_mi_b\x18\x02 \x01(\rR\avramMiBB~\n" +
+	"\tvram_mi_b\x18\x02 \x01(\rR\avramMiB\x12\x18\n" +
+	"\aenabled\x18\x03 \x01(\bR\aenabledB~\n" +
 	"-dev.talos.api.resource.definitions.hypervisorZMgithub.com/siderolabs/talos/pkg/machinery/api/resource/definitions/hypervisorb\x06proto3"
 
 var (

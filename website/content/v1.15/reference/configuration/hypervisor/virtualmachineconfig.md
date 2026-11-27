@@ -150,7 +150,7 @@ guest:
 |`console` |<a href="#VirtualMachineConfig.console">VirtualMachineConsole</a> |Consoles attached to the virtual machine.<br><br>Optional; omitting it leaves both consoles detached.  | |
 |`networking` |<a href="#VirtualMachineConfig.networking">VirtualMachineNetworking</a> |Networking settings for the virtual machine.<br><br>Optional; a virtual machine with no interfaces has no network connectivity at all.  | |
 |`guest` |<a href="#VirtualMachineConfig.guest">VirtualMachineGuest</a> |Settings which apply inside the guest.<br><br>Optional; omitting it leaves the guest to boot its image unmodified.  | |
-|`video` |<a href="#VirtualMachineConfig.video">VirtualMachineVideo</a> |Video device presented to the guest on amd64 when a VNC console is enabled.<br>Other architectures use libvirt's defaults; without VNC this block has no effect.<br>Optional; omitting it uses `vga` with libvirt's default VRAM on amd64.  | |
+|`video` |<a href="#VirtualMachineConfig.video">VirtualMachineVideo</a> |Video device presented to the guest.<br>By default it is attached only when a VNC console is enabled; `enabled` attaches it<br>without VNC.<br>Only amd64 renders the device so far; other architectures get libvirt's default,<br>which is added only alongside VNC, and ignore `model` and `vramMiB`.<br>Optional; omitting it uses `vga` with libvirt's default VRAM on amd64.  | |
 
 
 
@@ -576,6 +576,7 @@ VirtualMachineVideo describes the virtual graphics device.
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
+|`enabled` |bool |Attach a video device.<br><br>Optional; defaults to whether `console.vnc` is enabled. It cannot be disabled while VNC<br>is enabled, as a VNC console needs a display.  | |
 |`model` |string |Video model: `vga` (default), `virtio`, `bochs`, or `cirrus`. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 model: vga
 {{< /highlight >}}</details> | |

@@ -24,7 +24,7 @@ type Platform interface {
 	RequiresUEFI() bool
 	// Clock renders the guest clock and platform timers.
 	Clock(timers hypervisor.VirtualMachineProfileTimersSpec) *libvirtxml.DomainClock
-	// Video adds the display devices of a VNC console.
+	// Video adds the display devices: the video device, and the input devices a VNC console drives.
 	Video(domain *libvirtxml.Domain, video hypervisor.VirtualMachineVideoSpec)
 	// DiskController adds any controller a disk on the bus needs.
 	DiskController(domain *libvirtxml.Domain, bus string)

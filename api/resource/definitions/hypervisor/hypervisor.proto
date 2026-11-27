@@ -316,7 +316,7 @@ message VirtualMachineSpecSpec {
   repeated VirtualMachineInterfaceSpec interfaces = 7;
   VirtualMachineCloudInitSpec cloud_init = 8;
   VirtualMachineGuestSpec guest = 9;
-  // Video is the graphics device presented when a VNC console is enabled.
+  // Video is the graphics device presented to the guest.
   VirtualMachineVideoSpec video = 10;
   // Profile names the guest hardware profile; empty selects the builtin host profile.
   string profile = 11;
@@ -348,5 +348,7 @@ message VirtualMachineVCPUPinSpec {
 message VirtualMachineVideoSpec {
   string model = 1;
   uint32 vram_mi_b = 2;
+  // Enabled is resolved from the configuration: a VNC console always enables it.
+  bool enabled = 3;
 }
 
