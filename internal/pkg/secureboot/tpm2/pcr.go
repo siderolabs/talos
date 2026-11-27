@@ -68,34 +68,24 @@ func ReadPCR(t transport.TPM, pcr int) ([]byte, error) {
 }
 
 // PCRExtend hashes the input and extends the PCR with the hash.
+//
+// If there is no TPM 2.0 device, the extension is skipped.
+// Any failure of a TPM 2.0 device is returned: skipping the extension
+// would leave the PCR in a state which doesn't match the signed PCR policy.
 func PCRExtend(pcr int, data []byte) error {
-	t, err := tpm.Open()
+	t, err := tpm.OpenTPM2()
 	if err != nil {
-		// if the TPM is not available we can skip the PCR extension
+		// if the TPM 2.0 is not available we can skip the PCR extension
 		if errors.Is(err, fs.ErrNotExist) {
-			log.Printf("TPM device is not available, skipping PCR extension")
+			log.Printf("TPM 2.0 device is not available, skipping PCR extension")
 
 			return nil
 		}
 
-		return err
+		return fmt.Errorf("error opening TPM device: %w", err)
 	}
 
 	defer t.Close() //nolint:errcheck
-
-	// now we need to check if the TPM is a 2.0 device
-	// we can do this by checking the manufacturer,
-	// if it fails, we can skip the PCR extension
-	_, err = tpm2.GetCapability{
-		Capability:    tpm2.TPMCapTPMProperties,
-		Property:      uint32(tpm2.TPMPTManufacturer),
-		PropertyCount: 1,
-	}.Execute(t)
-	if err != nil {
-		log.Printf("TPM device is not a TPM 2.0, skipping PCR extension")
-
-		return nil
-	}
 
 	// since we are using SHA256, we can assume that the PCR bank is SHA256
 	digest := sha256.Sum256(data)
@@ -116,7 +106,7 @@ func PCRExtend(pcr int, data []byte) error {
 	}
 
 	if _, err = pcrHandle.Execute(t); err != nil {
-		return err
+		return fmt.Errorf("error extending PCR %d: %w", pcr, err)
 	}
 
 	return nil
