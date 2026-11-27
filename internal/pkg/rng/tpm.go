@@ -20,11 +20,11 @@ import (
 //
 //nolint:gocyclo
 func TPMSeed() error {
-	t, err := tpm.Open()
+	t, err := tpm.OpenTPM2()
 	if err != nil {
-		// if the TPM is not available we can skip seeding random pool
+		// if the TPM 2.0 is not available we can skip seeding random pool
 		if errors.Is(err, fs.ErrNotExist) {
-			log.Printf("TPM device is not available")
+			log.Printf("TPM 2.0 device is not available")
 
 			return nil
 		}
@@ -34,18 +34,13 @@ func TPMSeed() error {
 
 	defer t.Close() //nolint:errcheck
 
-	// now we need to check if the TPM is a 2.0 device
-	// we can do this by checking the manufacturer,
-	// if it fails, we can skip trying to seed the pool
 	caps, err := tpm2.GetCapability{
 		Capability:    tpm2.TPMCapTPMProperties,
 		Property:      uint32(tpm2.TPMPTManufacturer),
 		PropertyCount: 1,
 	}.Execute(t)
 	if err != nil {
-		log.Printf("TPM device is not a TPM 2.0, skipping seeding entropy pool from TPM")
-
-		return nil
+		return fmt.Errorf("error getting TPM manufacturer: %w", err)
 	}
 
 	props, err := caps.CapabilityData.Data.TPMProperties()

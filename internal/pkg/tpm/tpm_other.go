@@ -9,11 +9,20 @@ package tpm
 
 import (
 	"errors"
+	"fmt"
+	"os"
 
 	"github.com/google/go-tpm/tpm2/transport"
 )
 
+var errNotAvailable = fmt.Errorf("TPM device is not available: %w", os.ErrNotExist)
+
 // Open a TPM device.
 func Open() (transport.TPMCloser, error) {
 	return nil, errors.New("TPM device is not available")
+}
+
+// OpenTPM2 opens the TPM 2.0 device.
+func OpenTPM2() (transport.TPMCloser, error) {
+	return nil, errNotAvailable
 }
