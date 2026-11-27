@@ -622,7 +622,8 @@ func init() {
 
 	upgradeCmd.Flags().StringVar(
 		&upgradeCmdFlags.namespace, "namespace", "system",
-		"namespace to use: \"system\" (etcd and kubelet images), \"cri\" for all Kubernetes workloads, \"inmem\" for in-memory containerd instance",
+		"namespace to use: \"system\" (etcd and kubelet images), \"cri\" for all Kubernetes workloads, \"inmem\" "+
+			"for in-memory containerd instance (the only one supported when SELinux is in enforcing mode)",
 	)
 	upgradeCmd.Flags().VarP(
 		upgradeCmdFlags.rebootMode, "reboot-mode", "m",

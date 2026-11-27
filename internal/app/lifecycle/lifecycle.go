@@ -6,21 +6,28 @@
 package lifecycle
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"sync"
 
+	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/siderolabs/talos/internal/app/internal/ctrhelper"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/pid"
 	"github.com/siderolabs/talos/internal/pkg/install"
+	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	blockres "github.com/siderolabs/talos/pkg/machinery/resources/block"
 	crires "github.com/siderolabs/talos/pkg/machinery/resources/cri"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 // Service implements machine.LifecycleService.
@@ -196,6 +203,10 @@ func (s *Service) Upgrade(req *machine.LifecycleServiceUpgradeRequest, ss grpc.S
 		return status.Error(codes.InvalidArgument, "installer image name is required")
 	}
 
+	if err := s.checkUpgradeContainerd(ctx, req.GetContainerd()); err != nil {
+		return err
+	}
+
 	systemDisk, err := blockres.GetSystemDisk(ctx, s.runtime.State().V1Alpha2().Resources())
 	if err != nil {
 		return status.Error(codes.Internal, fmt.Sprintf("failed to get system disk: %v", err))
@@ -279,6 +290,40 @@ func (s *Service) checkSupported(feature runtime.ModeCapability) error {
 
 	if !mode.Supports(feature) {
 		return status.Errorf(codes.FailedPrecondition, "method is not supported in %s mode", mode.String())
+	}
+
+	return nil
+}
+
+// checkUpgradeContainerd rejects running the installer via the CRI containerd instance when SELinux is enforcing.
+func (s *Service) checkUpgradeContainerd(ctx context.Context, inst *common.ContainerdInstance) error {
+	securityState, err := safe.ReaderGetByID[*runtimeres.SecurityState](ctx, s.runtime.State().V1Alpha2().Resources(), runtimeres.SecurityStateID)
+	if err != nil && !state.IsNotFoundError(err) {
+		return status.Errorf(codes.Internal, "failed to get security state: %v", err)
+	}
+
+	if securityState == nil {
+		return nil
+	}
+
+	return ValidateUpgradeContainerd(securityState.TypedSpec().SELinuxState, inst)
+}
+
+func ValidateUpgradeContainerd(selinuxState runtimeres.SELinuxState, inst *common.ContainerdInstance) error {
+	if selinuxState != runtimeres.SELinuxStateEnforcing {
+		return nil
+	}
+
+	address, err := ctrhelper.ContainerdInstanceAddress(inst.GetDriver(), inst.GetNamespace())
+	if err != nil {
+		return err
+	}
+
+	if address == constants.CRIContainerdAddress {
+		return status.Error(
+			codes.FailedPrecondition,
+			"upgrade using the CRI containerd instance is not supported when SELinux is in enforcing mode, use the in-memory containerd instance instead (talosctl upgrade --namespace inmem)",
+		)
 	}
 
 	return nil
