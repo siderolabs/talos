@@ -3789,7 +3789,7 @@ talosctl upgrade -n <NODE(S)> --image=factory.talos.dev/metal-installer-securebo
       --image-factory-host string   Image Factory host to use for the installer image, e.g. factory.talos.dev (defaults to the node's factory)
       --k8s-endpoint string         use endpoint instead of kubeconfig default when draining the Kubernetes node
       --legacy[=true|false]         force use of legacy upgrade method
-      --namespace string            namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "system")
+      --namespace string            namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (the only one supported when SELinux is in enforcing mode) (default "system")
       --no-reboot[=true|false]      do not reboot the node after upgrade (skip reboot and drain)
   -n, --nodes strings               target the specified nodes
       --progress string             output mode for upgrade progress. Values: [auto plain] (default "auto")
