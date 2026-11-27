@@ -948,7 +948,18 @@ RUN <<END
     ln -s /etc/ssl /rootfs/etc/ca-certificates
 END
 
+FROM build-go AS sbom-builder-unit-tests
+ENV CGO_ENABLED=1
+COPY ./Dockerfile ./Dockerfile
+RUN --mount=type=cache,target=/.cache,id=talos/.cache \
+    go test -race -count=1 -v github.com/siderolabs/talos/tools/sbom-builder
+
 FROM build-go AS build-sbom
+# The cache mount may compile the tool, but license archives are complete,
+# sum-verified layer inputs outside that mutable compiler cache.
+RUN --mount=type=cache,target=/.cache,id=talos/.cache \
+    go tool github.com/siderolabs/talos/tools/sbom-builder \
+    --source-dir /src --prepare-license-inputs /sbom-license-inputs
 ARG SOURCE_DATE_EPOCH
 ARG NAME
 ARG TAG
@@ -963,6 +974,7 @@ cp -r /mnt/spdx/. /tmp/sbom-src/
 cp go.mod go.sum /tmp/sbom-src/
 go tool github.com/siderolabs/talos/tools/sbom-builder \
     --source-dir /tmp/sbom-src/ \
+    --license-inputs /sbom-license-inputs \
     --source-name "$NAME" \
     --source-version "$TAG" \
     --source-date-epoch "${SOURCE_DATE_EPOCH:-0}" \
@@ -982,6 +994,7 @@ cp -r /mnt/spdx/. /tmp/sbom-src/
 cp go.mod go.sum /tmp/sbom-src/
 go tool github.com/siderolabs/talos/tools/sbom-builder \
     --source-dir /tmp/sbom-src/ \
+    --license-inputs /sbom-license-inputs \
     --source-name "$NAME" \
     --source-version "$TAG" \
     --source-date-epoch "${SOURCE_DATE_EPOCH:-0}" \
@@ -1003,6 +1016,7 @@ cp /mnt/kernel.spdx.json /tmp/sbom-src/
 cp go.mod go.sum /tmp/sbom-src/
 go tool github.com/siderolabs/talos/tools/sbom-builder \
     --source-dir /tmp/sbom-src/ \
+    --license-inputs /sbom-license-inputs \
     --source-name "$NAME" \
     --source-version "$TAG" \
     --source-date-epoch "${SOURCE_DATE_EPOCH:-0}" \
@@ -1024,6 +1038,7 @@ cp /mnt/kernel.spdx.json /tmp/sbom-src/
 cp go.mod go.sum /tmp/sbom-src/
 go tool github.com/siderolabs/talos/tools/sbom-builder \
     --source-dir /tmp/sbom-src/ \
+    --license-inputs /sbom-license-inputs \
     --source-name "$NAME" \
     --source-version "$TAG" \
     --source-date-epoch "${SOURCE_DATE_EPOCH:-0}" \
