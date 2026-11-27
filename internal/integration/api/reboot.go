@@ -7,9 +7,11 @@
 package api
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"math/rand"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -87,6 +89,124 @@ func (suite *RebootSuite) TestRebootDefault() {
 			suite.CleanupFailedPods,
 		)
 	}
+}
+
+// TestRebootKillsLeftoverWorkloads verifies that a workload process the graceful shutdown can't stop
+// is killed before the volumes are torn down.
+//
+// The process escapes its container: it moves itself to a cgroup of its own under kubepods, so neither
+// the kubelet nor the CRI know about it, ignores SIGTERM, and keeps the pod mount namespace (with the
+// EPHEMERAL volume mounted) alive.
+//
+// With workload isolation, the container plane (and a host PID pod) runs in the sandbox PID namespace,
+// so the process is killed along with the namespace when sandboxd is stopped, before killWorkloads runs.
+// Without it (e.g. a cluster with Talos 1.13 config defaults), killWorkloads must kill the process.
+func (suite *RebootSuite) TestRebootKillsLeftoverWorkloads() {
+	if !suite.Capabilities().SupportsReboot {
+		suite.T().Skip("cluster doesn't support reboots")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	cfg, err := suite.ReadConfigFromNode(nodeCtx)
+	suite.Require().NoError(err)
+
+	workloadIsolation := cfg.SecurityProfileConfig() != nil && cfg.SecurityProfileConfig().WorkloadIsolation()
+
+	suite.T().Logf("workload isolation enabled on node %s: %v", node, workloadIsolation)
+
+	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
+	suite.Require().NoError(err)
+
+	pod, err := suite.NewPrivilegedPod("straggler")
+	suite.Require().NoError(err)
+
+	pod = pod.WithNodeName(k8sNode.Name)
+
+	suite.Require().NoError(pod.Create(suite.ctx, 5*time.Minute))
+
+	suite.T().Cleanup(func() {
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), time.Minute)
+		defer cleanupCancel()
+
+		suite.Assert().NoError(pod.Delete(cleanupCtx))
+	})
+
+	const stragglerCgroup = constants.CgroupKubepods + "/talos-straggler"
+
+	// the host root is mounted at /host in the privileged pod
+	_, _, err = pod.Exec(suite.ctx, fmt.Sprintf(
+		`mkdir -p /host/sys/fs/cgroup/%[1]s && `+
+			`nohup sh -c 'echo $$ > /host/sys/fs/cgroup/%[1]s/cgroup.procs && trap "" TERM && cd /host/var && exec sleep 2147483647' `+
+			`</dev/null >/dev/null 2>&1 &`,
+		stragglerCgroup,
+	))
+	suite.Require().NoError(err)
+
+	// make sure the straggler is running before the reboot
+	suite.Require().NoError(retry.Constant(30*time.Second, retry.WithUnits(time.Second)).Retry(func() error {
+		stdout, _, err := pod.Exec(suite.ctx, fmt.Sprintf("cat /host/sys/fs/cgroup/%s/cgroup.procs", stragglerCgroup))
+		if err != nil {
+			return err
+		}
+
+		if strings.TrimSpace(stdout) == "" {
+			return retry.ExpectedErrorf("straggler is not running yet")
+		}
+
+		return nil
+	}))
+
+	// watch the kernel log for the killWorkloads report and the sequence result while the node is shutting down
+	dmesgCtx, dmesgCancel := context.WithCancel(nodeCtx)
+	defer dmesgCancel()
+
+	dmesgStream, err := suite.Client.Dmesg(dmesgCtx, true, false)
+	suite.Require().NoError(err)
+
+	logReader, err := client.ReadStream(dmesgStream)
+	suite.Require().NoError(err)
+
+	var sawKill, sawSequenceFailure atomic.Bool
+
+	go func() {
+		scanner := bufio.NewScanner(logReader)
+
+		for scanner.Scan() {
+			line := scanner.Text()
+
+			switch {
+			case strings.Contains(line, "killed leftover workload process") && strings.Contains(line, stragglerCgroup):
+				suite.T().Log(line)
+
+				sawKill.Store(true)
+			case strings.Contains(line, "reboot sequence: failed"):
+				suite.T().Log(line)
+
+				sawSequenceFailure.Store(true)
+			}
+		}
+	}()
+
+	suite.AssertRebooted(
+		suite.ctx, node, func(nodeCtx context.Context) error {
+			return base.IgnoreGRPCUnavailable(suite.Client.Reboot(nodeCtx))
+		}, 10*time.Minute,
+		suite.CleanupFailedPods,
+	)
+
+	dmesgCancel()
+
+	// a failed sequence still reboots the node via the emergency path, so check it explicitly
+	suite.Require().False(sawSequenceFailure.Load(), "the reboot sequence should not fail")
+
+	if workloadIsolation {
+		// the straggler is killed with the sandbox PID namespace, killWorkloads has nothing left to kill
+		return
+	}
+
+	suite.Require().True(sawKill.Load(), "the straggler process should have been killed by killWorkloads")
 }
 
 // TestForcedReboot force-reboots cluster node by node,

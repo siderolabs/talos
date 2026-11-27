@@ -15,6 +15,7 @@
 package cgroup
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -326,7 +327,7 @@ func CreateCgroupWithResources(name string, resources *cgroup2.Resources) (Commo
 	return cg, nil
 }
 
-// KillCgroup kills all processes in the cgroup.
+// KillCgroup kills all processes in the cgroup and deletes it.
 //
 // This method is only supported for cgroupv2, as cgroupv1 is legacy and only in container mode.
 func KillCgroup(log *zap.Logger, name string) error {
@@ -339,40 +340,38 @@ func KillCgroup(log *zap.Logger, name string) error {
 		return fmt.Errorf("failed to load cgroup: %w", err)
 	}
 
-	for i := range 10 {
-		pids, err := cg.Procs(true)
-		if err != nil {
-			if errors.Is(err, fs.ErrNotExist) {
-				return nil
-			}
+	ctx, cancel := context.WithTimeout(context.Background(), killCgroupTimeout)
+	defer cancel()
 
-			return fmt.Errorf("failed to get processes in cgroup: %w", err)
-		}
+	killed, err := KillCgroupProcesses(ctx, name)
 
-		if len(pids) == 0 {
-			break
-		}
-
-		if i == 0 {
-			log.Info(
-				"killing processes in cgroup",
-				zap.String("cgroup", name),
-				zap.Int("num_processes", len(pids)),
-			)
-
-			if err := cg.Kill(); err != nil {
-				return fmt.Errorf("failed to kill processes in cgroup: %w", err)
-			}
-		} else {
-			log.Info(
-				"waiting for processes in cgroup to exit",
-				zap.String("cgroup", name),
-				zap.Int("num_processes", len(pids)),
-			)
-		}
-
-		<-time.After(time.Second)
+	for _, process := range killed {
+		log.Info("killed process in cgroup", zap.String("cgroup", name), zap.Stringer("process", process))
 	}
 
-	return cg.Delete()
+	if err != nil {
+		return fmt.Errorf("failed to kill processes in cgroup: %w", err)
+	}
+
+	if err = cg.Delete(); err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return err
+	}
+
+	return nil
+}
+
+// killCgroupTimeout is how long KillCgroup waits for the killed processes to exit.
+const killCgroupTimeout = 10 * time.Second
+
+// KillCgroupProcesses kills all processes in the named cgroup and its descendants, and waits for them to exit.
+//
+// Unlike KillCgroup, the cgroup is kept. See KillProcesses for the details.
+//
+// This method is only supported for cgroupv2, as cgroupv1 is legacy and only in container mode.
+func KillCgroupProcesses(ctx context.Context, name string) ([]Process, error) {
+	if cgroups.Mode() != cgroups.Unified {
+		return nil, nil
+	}
+
+	return KillProcesses(ctx, filepath.Join(constants.CgroupMountPath, Path(name)))
 }
