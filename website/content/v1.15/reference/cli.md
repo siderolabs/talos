@@ -2327,6 +2327,40 @@ talosctl hypervisor reboot <vm-name> [flags]
 
 * [talosctl hypervisor](#talosctl-hypervisor)	 - Manage the Talos hypervisor
 
+## talosctl hypervisor screenshot
+
+Capture the display of a virtual machine
+
+### Synopsis
+
+Captures the current display of a running virtual machine with VNC enabled and writes the image as produced by libvirt (usually PNG).
+
+```
+talosctl hypervisor screenshot <vm-name> [flags]
+```
+
+### Options
+
+```
+  -h, --help[=true|false]   help for screenshot
+  -o, --output string       output file path (defaults to <vm-name> with an extension matching the image format)
+```
+
+### Options inherited from parent commands
+
+```
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
+  -e, --endpoints strings          override default endpoints in Talos configuration
+  -n, --nodes strings              target the specified nodes
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
+```
+
+### SEE ALSO
+
+* [talosctl hypervisor](#talosctl-hypervisor)	 - Manage the Talos hypervisor
+
 ## talosctl hypervisor start
 
 Start a virtual machine
@@ -2450,6 +2484,7 @@ Manage the Talos hypervisor
 * [talosctl hypervisor console](#talosctl-hypervisor-console)	 - Attach to a virtual machine's live serial console
 * [talosctl hypervisor content-library](#talosctl-hypervisor-content-library)	 - Manage the contents of content libraries
 * [talosctl hypervisor reboot](#talosctl-hypervisor-reboot)	 - Reboot a running virtual machine
+* [talosctl hypervisor screenshot](#talosctl-hypervisor-screenshot)	 - Capture the display of a virtual machine
 * [talosctl hypervisor start](#talosctl-hypervisor-start)	 - Start a virtual machine
 * [talosctl hypervisor stop](#talosctl-hypervisor-stop)	 - Stop a virtual machine
 * [talosctl hypervisor vnc](#talosctl-hypervisor-vnc)	 - Expose a virtual machine's VNC console on a local TCP port

@@ -8,4 +8,7 @@ var (
 	DomainDefinition = domainDefinition
 	OpenVNCConn      = (*Connector).openVNCConn
 	VNCSocket        = vncSocket
+	TakeScreenshot   = screenshot
 )
+
+type ScreenshotRPC = screenshotRPC

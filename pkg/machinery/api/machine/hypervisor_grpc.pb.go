@@ -25,6 +25,7 @@ const (
 	HypervisorService_Start_FullMethodName         = "/machine.HypervisorService/Start"
 	HypervisorService_Stop_FullMethodName          = "/machine.HypervisorService/Stop"
 	HypervisorService_Reboot_FullMethodName        = "/machine.HypervisorService/Reboot"
+	HypervisorService_Screenshot_FullMethodName    = "/machine.HypervisorService/Screenshot"
 )
 
 // HypervisorServiceClient is the client API for HypervisorService service.
@@ -52,6 +53,9 @@ type HypervisorServiceClient interface {
 	Stop(ctx context.Context, in *VirtualMachineStopRequest, opts ...grpc.CallOption) (*VirtualMachineStopResponse, error)
 	// Reboot restarts a running virtual machine, leaving the machine configuration alone.
 	Reboot(ctx context.Context, in *VirtualMachineRebootRequest, opts ...grpc.CallOption) (*VirtualMachineRebootResponse, error)
+	// Screenshot captures the current display of a running virtual machine with VNC enabled.
+	// The image is returned as produced by libvirt, at the guest's native resolution, without scaling.
+	Screenshot(ctx context.Context, in *VirtualMachineScreenshotRequest, opts ...grpc.CallOption) (*VirtualMachineScreenshotResponse, error)
 }
 
 type hypervisorServiceClient struct {
@@ -118,6 +122,16 @@ func (c *hypervisorServiceClient) Reboot(ctx context.Context, in *VirtualMachine
 	return out, nil
 }
 
+func (c *hypervisorServiceClient) Screenshot(ctx context.Context, in *VirtualMachineScreenshotRequest, opts ...grpc.CallOption) (*VirtualMachineScreenshotResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(VirtualMachineScreenshotResponse)
+	err := c.cc.Invoke(ctx, HypervisorService_Screenshot_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // HypervisorServiceServer is the server API for HypervisorService service.
 // All implementations must embed UnimplementedHypervisorServiceServer
 // for forward compatibility.
@@ -143,6 +157,9 @@ type HypervisorServiceServer interface {
 	Stop(context.Context, *VirtualMachineStopRequest) (*VirtualMachineStopResponse, error)
 	// Reboot restarts a running virtual machine, leaving the machine configuration alone.
 	Reboot(context.Context, *VirtualMachineRebootRequest) (*VirtualMachineRebootResponse, error)
+	// Screenshot captures the current display of a running virtual machine with VNC enabled.
+	// The image is returned as produced by libvirt, at the guest's native resolution, without scaling.
+	Screenshot(context.Context, *VirtualMachineScreenshotRequest) (*VirtualMachineScreenshotResponse, error)
 	mustEmbedUnimplementedHypervisorServiceServer()
 }
 
@@ -167,6 +184,9 @@ func (UnimplementedHypervisorServiceServer) Stop(context.Context, *VirtualMachin
 }
 func (UnimplementedHypervisorServiceServer) Reboot(context.Context, *VirtualMachineRebootRequest) (*VirtualMachineRebootResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Reboot not implemented")
+}
+func (UnimplementedHypervisorServiceServer) Screenshot(context.Context, *VirtualMachineScreenshotRequest) (*VirtualMachineScreenshotResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Screenshot not implemented")
 }
 func (UnimplementedHypervisorServiceServer) mustEmbedUnimplementedHypervisorServiceServer() {}
 func (UnimplementedHypervisorServiceServer) testEmbeddedByValue()                           {}
@@ -257,6 +277,24 @@ func _HypervisorService_Reboot_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _HypervisorService_Screenshot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VirtualMachineScreenshotRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HypervisorServiceServer).Screenshot(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HypervisorService_Screenshot_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HypervisorServiceServer).Screenshot(ctx, req.(*VirtualMachineScreenshotRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // HypervisorService_ServiceDesc is the grpc.ServiceDesc for HypervisorService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -275,6 +313,10 @@ var HypervisorService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Reboot",
 			Handler:    _HypervisorService_Reboot_Handler,
+		},
+		{
+			MethodName: "Screenshot",
+			Handler:    _HypervisorService_Screenshot_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

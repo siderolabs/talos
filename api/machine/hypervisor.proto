@@ -28,6 +28,21 @@ service HypervisorService {
   rpc Stop(VirtualMachineStopRequest) returns (VirtualMachineStopResponse);
   // Reboot restarts a running virtual machine, leaving the machine configuration alone.
   rpc Reboot(VirtualMachineRebootRequest) returns (VirtualMachineRebootResponse);
+  // Screenshot captures the current display of a running virtual machine with VNC enabled.
+  // The image is returned as produced by libvirt, at the guest's native resolution, without scaling.
+  rpc Screenshot(VirtualMachineScreenshotRequest) returns (VirtualMachineScreenshotResponse);
+}
+
+message VirtualMachineScreenshotRequest {
+  // Name of the virtual machine, which must be running and have VNC enabled.
+  string name = 1;
+}
+
+message VirtualMachineScreenshotResponse {
+  // Encoded image data.
+  bytes image = 1;
+  // MIME type of the image as reported by libvirt, e.g. "image/png".
+  string mime_type = 2;
 }
 
 message VNCRequest {

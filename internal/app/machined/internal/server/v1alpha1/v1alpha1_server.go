@@ -175,6 +175,7 @@ func (s *Server) Register(obj *grpc.Server) {
 		resourceState,
 		connector.OpenConsole,
 		hypervisord.WithVNCConnector(connector.OpenVNC),
+		hypervisord.WithScreenshotConnector(connector.Screenshot),
 		hypervisord.WithDomainConnector(connector.OpenLifecycle),
 		// Raw rather than the client-facing filtered state, and only for the power operations: they
 		// write power overrides, which no client may write for itself, and read the sensitive spec
