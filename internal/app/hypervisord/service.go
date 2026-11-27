@@ -37,6 +37,7 @@ type Service struct {
 	attached    map[string]struct{}
 	openVNC     func(context.Context, domain.Domain) (io.ReadWriteCloser, error)
 	vncAttached map[string]struct{}
+	screenshot  func(context.Context, domain.Domain) ([]byte, string, error)
 	domains     func(context.Context) (domain.Client, error)
 	power       state.State
 	powerMu     sync.Mutex
@@ -136,6 +137,11 @@ func (s *Service) ConsoleStream(stream grpc.BidiStreamingServer[machine.ConsoleR
 }
 
 func openConsoleError(err error) error {
+	return domainError(err, "open virtual machine console")
+}
+
+// domainError maps a libvirt connector failure to a gRPC status.
+func domainError(err error, action string) error {
 	if rpcStatus, ok := status.FromError(err); ok {
 		return rpcStatus.Err()
 	}
@@ -157,7 +163,7 @@ func openConsoleError(err error) error {
 		}
 	}
 
-	return status.Errorf(code, "open virtual machine console: %v", err)
+	return status.Errorf(code, "%s: %v", action, err)
 }
 
 func (s *Service) identity(ctx context.Context, name string) (domain.Domain, error) {

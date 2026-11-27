@@ -74,6 +74,8 @@ description: Talos gRPC API reference.
     - [VNCResponse](#machine.VNCResponse)
     - [VirtualMachineRebootRequest](#machine.VirtualMachineRebootRequest)
     - [VirtualMachineRebootResponse](#machine.VirtualMachineRebootResponse)
+    - [VirtualMachineScreenshotRequest](#machine.VirtualMachineScreenshotRequest)
+    - [VirtualMachineScreenshotResponse](#machine.VirtualMachineScreenshotResponse)
     - [VirtualMachineStartRequest](#machine.VirtualMachineStartRequest)
     - [VirtualMachineStartResponse](#machine.VirtualMachineStartResponse)
     - [VirtualMachineStopRequest](#machine.VirtualMachineStopRequest)
@@ -1743,6 +1745,37 @@ DebugService provides debugging and inspection capabilities for a Talos node.
 
 
 
+<a name="machine.VirtualMachineScreenshotRequest"></a>
+
+### VirtualMachineScreenshotRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | Name of the virtual machine, which must be running and have VNC enabled. |
+
+
+
+
+
+
+<a name="machine.VirtualMachineScreenshotResponse"></a>
+
+### VirtualMachineScreenshotResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| image | [bytes](#bytes) |  | Encoded image data. |
+| mime_type | [string](#string) |  | MIME type of the image as reported by libvirt, e.g. "image/png". |
+
+
+
+
+
+
 <a name="machine.VirtualMachineStartRequest"></a>
 
 ### VirtualMachineStartRequest
@@ -1812,6 +1845,7 @@ HypervisorService exposes virtual machine APIs.
 | Start | [VirtualMachineStartRequest](#machine.VirtualMachineStartRequest) | [VirtualMachineStartResponse](#machine.VirtualMachineStartResponse) | Start temporarily overrides a virtual machine's power state to running for the current host boot. The machine configuration is unchanged; a host reboot drops the override. |
 | Stop | [VirtualMachineStopRequest](#machine.VirtualMachineStopRequest) | [VirtualMachineStopResponse](#machine.VirtualMachineStopResponse) | Stop temporarily overrides a virtual machine's power state to stopped for the current host boot. The machine configuration is unchanged; a host reboot drops the override. |
 | Reboot | [VirtualMachineRebootRequest](#machine.VirtualMachineRebootRequest) | [VirtualMachineRebootResponse](#machine.VirtualMachineRebootResponse) | Reboot restarts a running virtual machine, leaving the machine configuration alone. |
+| Screenshot | [VirtualMachineScreenshotRequest](#machine.VirtualMachineScreenshotRequest) | [VirtualMachineScreenshotResponse](#machine.VirtualMachineScreenshotResponse) | Screenshot captures the current display of a running virtual machine with VNC enabled. The image is returned as produced by libvirt, at the guest's native resolution, without scaling. |
 
  <!-- end services -->
 
