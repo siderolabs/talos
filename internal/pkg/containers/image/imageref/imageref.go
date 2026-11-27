@@ -33,6 +33,13 @@ const (
 	// the very same image as one written against `docker.io`.
 	endpointDockerHubDomain = "registry-1.docker.io"
 
+	// hubDockerHubDomain is one more name the Docker Hub registry endpoint is served under.
+	hubDockerHubDomain = "registry.hub.docker.com"
+
+	// defaultPort is the port a registry is reached on when the reference carries none: an
+	// image is always pulled over HTTPS unless a registry mirror is configured to do otherwise.
+	defaultPort = "443"
+
 	// officialRepoPrefix is the implicit namespace of the official Docker Hub images.
 	officialRepoPrefix = "library/"
 
@@ -46,9 +53,11 @@ const (
 // On top of the normalization done by github.com/distribution/reference (defaulting the domain,
 // adding the implicit `library/` namespace on Docker Hub, defaulting the tag to `latest` and
 // dropping the tag from a reference carrying both a tag and a digest), the registry domain is
-// lower-cased, as registry domains are DNS names and DNS is case-insensitive, and the alternative
-// spellings of the Docker Hub domain, `index.docker.io` and `registry-1.docker.io`, are folded
-// into `docker.io`.
+// lower-cased, as registry domains are DNS names and DNS is case-insensitive, the port is reduced to
+// its canonical decimal spelling and dropped when it is the default one (`registry:443/image` and
+// `registry:0443/image` are both `registry/image`), and the alternative spellings of the Docker Hub
+// domain, `index.docker.io`, `registry-1.docker.io` and `registry.hub.docker.com`, are folded into
+// `docker.io`.
 //
 // Normalization is idempotent: parsing the result again yields the same reference.
 func Parse(imageRef string) (reference.Named, error) {
@@ -104,14 +113,14 @@ func RepositoryKey(namedRef reference.Named) string {
 	return reference.TrimNamed(namedRef).String()
 }
 
-// NormalizePattern normalizes the registry domain of an image reference glob pattern, so that the
-// pattern is matched in the same namespace the output of [RepositoryKey] is in.
+// NormalizePattern normalizes an image reference glob pattern, so that the pattern is matched in
+// the same namespace the output of [RepositoryKey] is in.
 //
-// Only the domain part of the pattern is normalized: the repository part of a canonical reference
-// is always lower-case already, so folding its case would make a pattern match references it was
-// not written for.
+// The pattern is lower-cased as a whole: a repository key is always lower-case, so a pattern
+// written in any other case would match nothing at all. The registry domain of the pattern is then
+// normalized the way the domain of a reference is.
 func NormalizePattern(pattern string) string {
-	domain, repository, hasRepository := strings.Cut(pattern, "/")
+	domain, repository, hasRepository := strings.Cut(strings.ToLower(pattern), "/")
 
 	// a pattern which carries no `/` yet is still a pattern on the domain: the domain is the
 	// first thing the normalized reference starts with, so `index.docker.io*` has to be folded
@@ -125,29 +134,85 @@ func NormalizePattern(pattern string) string {
 	return normalizedDomain + "/" + repository
 }
 
-// normalizeDomainPattern normalizes the glob pattern matched against a registry domain.
+// normalizeDomainPattern normalizes the (lower-case) glob pattern matched against a registry domain.
 func normalizeDomainPattern(domain string) string {
-	globIdx := strings.IndexRune(domain, '*')
+	globIdx := strings.IndexByte(domain, '*')
 	if globIdx < 0 {
 		return normalizeDomain(domain)
 	}
 
+	// a port spelled out behind the glob is normalized just as the port of a reference is: a
+	// reference never carries the default port, so `*.example.com:443/*` would match nothing.
+	//
+	// A port is all digits, so the glob is always in the host part, and globIdx stays valid.
+	if host, port, hasPort := splitPort(domain); hasPort {
+		domain = host
+
+		if port = canonicalPort(port); port != defaultPort {
+			domain += ":" + port
+		}
+	}
+
 	// the glob matcher anchors the literal in front of the first `*` at the start of the
-	// reference, so that literal is normalized, while whatever the glob itself covers is matched
-	// as written
-	return normalizeDomain(domain[:globIdx]) + domain[globIdx:]
+	// reference, so the Docker Hub spellings are folded in that literal, while whatever the glob
+	// itself covers is matched as written
+	return foldDockerHubDomain(domain[:globIdx]) + domain[globIdx:]
 }
 
 // normalizeDomain normalizes a registry domain to its canonical spelling.
 func normalizeDomain(domain string) string {
 	domain = strings.ToLower(domain)
 
+	host, port, hasPort := splitPort(domain)
+	if !hasPort {
+		return foldDockerHubDomain(domain)
+	}
+
+	port = canonicalPort(port)
+
+	// A single-label host is taken for a registry domain only because of its port: without the
+	// port it would turn into a Docker Hub namespace, so the port is kept there.
+	if port == defaultPort && isExplicitDomain(host) {
+		return foldDockerHubDomain(host)
+	}
+
+	return host + ":" + port
+}
+
+// foldDockerHubDomain folds the alternative spellings of the Docker Hub domain into the canonical one.
+func foldDockerHubDomain(domain string) string {
 	switch domain {
-	case legacyDockerHubDomain, endpointDockerHubDomain:
+	case legacyDockerHubDomain, endpointDockerHubDomain, hubDockerHubDomain:
 		return dockerHubDomain
 	default:
 		return domain
 	}
+}
+
+// splitPort splits a registry domain into the host and the port.
+//
+// The host of an IPv6 registry is left in its brackets.
+func splitPort(domain string) (host, port string, ok bool) {
+	host, port, ok = strings.CutLast(domain, ":")
+
+	// with no port, the last colon of an IPv6 address is inside of the brackets
+	if !ok || port == "" || strings.ContainsFunc(port, func(r rune) bool { return r < '0' || r > '9' }) {
+		return domain, "", false
+	}
+
+	return host, port, true
+}
+
+// canonicalPort returns the canonical decimal spelling of a port.
+//
+// Leading zeros are accepted both by the reference grammar and by the dialer, so `0443` is the
+// very same port as `443`.
+func canonicalPort(port string) string {
+	if port = strings.TrimLeft(port, "0"); port != "" {
+		return port
+	}
+
+	return "0"
 }
 
 // isExplicitDomain reports whether the component is recognized as a registry domain by

@@ -40,6 +40,26 @@ var (
 
 // ImageVerificationConfigV1Alpha1 configures image signature verification policy.
 //
+//	description: |
+//	  Rules are evaluated in order, and the first rule matching the image applies.
+//	  An image which matches no rule is allowed without verification.
+//
+//	  This makes a policy which only lists the registries to verify or to deny a way to
+//	  catch mistakes, not a security boundary: the same image can be pulled under a different
+//	  name from a registry alias, from a pull-through mirror, or from a copy pushed to any other
+//	  registry, and none of those names match the rule.
+//	  To enforce the policy against anyone able to choose the image reference (e.g. to create a pod),
+//	  end the list with a catch-all rule denying every image not matched by the rules in front of it:
+//
+//	  ```yaml
+//	  rules:
+//	    # ... the rules for the allowed images
+//	    - image: "*"
+//	      deny: true
+//	  ```
+//
+//	  With such a rule in place, the images Talos itself runs (e.g. the kubelet, etcd, the installer)
+//	  have to be matched by one of the rules in front of it as well.
 //	examples:
 //	  - value: exampleImageVerificationConfigV1Alpha1()
 //	alias: ImageVerificationConfig
@@ -51,6 +71,8 @@ type ImageVerificationConfigV1Alpha1 struct {
 	//   description: |
 	//     List of verification rules.
 	//     Rules are evaluated in order; first matching rule applies.
+	//     An image matching no rule is allowed without verification: end the list with
+	//     a catch-all `image: "*"` rule with `deny: true` to deny any other image.
 	ConfigRules ImageVerificationRules `yaml:"rules,omitempty"`
 }
 
@@ -101,6 +123,8 @@ type ImageVerificationRuleV1Alpha1 struct {
 	//     domain: `docker.io/library/nginx*` matches `nginx:latest`, while `library/nginx*` matches nothing.
 	//     The Docker Hub domain is always normalized to `docker.io`, so a pattern written against
 	//     `index.docker.io` or `registry-1.docker.io` matches the same images a `docker.io` one does.
+	//     The default registry port is dropped as well: `registry.k8s.io/*` matches `registry.k8s.io:443/pause`,
+	//     and so does `registry.k8s.io:443/*`.
 	//   examples:
 	//     - value: >
 	//         "docker.io/library/nginx"

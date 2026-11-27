@@ -25,6 +25,7 @@ func TestRuleMatcher(t *testing.T) {
 		"docker.io/library/busybox*",
 		"index.docker.io/library/alpine*",
 		"ghcr.io/siderolabs/*",
+		"*.Example.COM:443/*",
 		"index.docker.io*",
 	}
 
@@ -95,7 +96,45 @@ func TestRuleMatcher(t *testing.T) {
 		{ // a rule pattern carrying no `/` is anchored at the registry domain and is folded
 			// just like one written as `index.docker.io/*`
 			imageRef:       "nginx:latest",
+			expectedRuleID: "0005",
+		},
+		{ // the default port is not a different registry, so spelling it out must not evade the rule
+			imageRef:       "registry.k8s.io:443/pause:3.9",
+			expectedRuleID: "0000",
+		},
+		{
+			imageRef:       "registry.k8s.io:0443/pause:3.9",
+			expectedRuleID: "0000",
+		},
+		{
+			imageRef:       "REGISTRY.K8S.IO:00443/pause@sha256:7031c1b283388d2c2e09b57badb803c05ebed362dc88d84b480cc47f72a21097",
+			expectedRuleID: "0000",
+		},
+		{
+			imageRef:       "registry-1.docker.io:443/library/busybox:1.36",
+			expectedRuleID: "0001",
+		},
+		{
+			imageRef:       "index.docker.io:0443/busybox:1.36",
+			expectedRuleID: "0001",
+		},
+		{
+			imageRef:       "registry.hub.docker.com/library/busybox:1.36",
+			expectedRuleID: "0001",
+		},
+		{ // a rule which spells out the default port behind a glob, in mixed case
+			imageRef:       "registry.example.com/team/app:v1",
 			expectedRuleID: "0004",
+		},
+		{
+			imageRef:       "Registry.Example.Com:443/team/app:v1",
+			expectedRuleID: "0004",
+		},
+		{ // a different port is a different registry
+			imageRef: "registry.k8s.io:5000/pause:3.9",
+		},
+		{
+			imageRef: "registry.example.com:8443/team/app:v1",
 		},
 		{
 			imageRef: "quay.io/some/image:v1.0.0",

@@ -41,6 +41,103 @@ func TestParse(t *testing.T) {
 			expected:    "registry.k8s.io:5000/pause:3.9",
 			expectedKey: "registry.k8s.io:5000/pause",
 		},
+		{ // the default port is not a part of the canonical reference
+			imageRef: "registry.k8s.io:443/pause:3.9",
+
+			expected:    "registry.k8s.io/pause:3.9",
+			expectedKey: "registry.k8s.io/pause",
+		},
+		{ // leading zeros are valid in a port, and the dialer ignores them
+			imageRef: "registry.k8s.io:0443/pause:3.9",
+
+			expected:    "registry.k8s.io/pause:3.9",
+			expectedKey: "registry.k8s.io/pause",
+		},
+		{
+			imageRef: "REGISTRY.K8S.IO:00000443/pause@sha256:7031c1b283388d2c2e09b57badb803c05ebed362dc88d84b480cc47f72a21097",
+
+			expected:    "registry.k8s.io/pause@sha256:7031c1b283388d2c2e09b57badb803c05ebed362dc88d84b480cc47f72a21097",
+			expectedKey: "registry.k8s.io/pause",
+		},
+		{ // any other port gets its canonical spelling
+			imageRef: "registry.k8s.io:05000/pause:3.9",
+
+			expected:    "registry.k8s.io:5000/pause:3.9",
+			expectedKey: "registry.k8s.io:5000/pause",
+		},
+		{
+			imageRef: "registry.k8s.io:4430/pause:3.9",
+
+			expected:    "registry.k8s.io:4430/pause:3.9",
+			expectedKey: "registry.k8s.io:4430/pause",
+		},
+		{
+			imageRef: "localhost:443/foo",
+
+			expected:    "localhost/foo:latest",
+			expectedKey: "localhost/foo",
+		},
+		{
+			imageRef: "[::1]:443/foo",
+
+			expected:    "[::1]/foo:latest",
+			expectedKey: "[::1]/foo",
+		},
+		{
+			imageRef: "[::1]/foo",
+
+			expected:    "[::1]/foo:latest",
+			expectedKey: "[::1]/foo",
+		},
+		{
+			imageRef: "[FE80::1]:05000/foo",
+
+			expected:    "[fe80::1]:5000/foo:latest",
+			expectedKey: "[fe80::1]:5000/foo",
+		},
+		{ // a single-label host is a registry domain only because of its port: dropping the
+			// port would turn it into a Docker Hub namespace
+			imageRef: "registry:443/foo",
+
+			expected:    "registry:443/foo:latest",
+			expectedKey: "registry:443/foo",
+		},
+		{
+			imageRef: "Registry:0443/foo",
+
+			expected:    "registry:443/foo:latest",
+			expectedKey: "registry:443/foo",
+		},
+		{ // the Docker Hub spellings fold once the default port is dropped
+			imageRef: "registry-1.docker.io:443/library/alpine:3.19",
+
+			expected:    "docker.io/library/alpine:3.19",
+			expectedKey: "docker.io/library/alpine",
+		},
+		{
+			imageRef: "INDEX.DOCKER.IO:0443/alpine",
+
+			expected:    "docker.io/library/alpine:latest",
+			expectedKey: "docker.io/library/alpine",
+		},
+		{
+			imageRef: "docker.io:443/alpine:3.19",
+
+			expected:    "docker.io/library/alpine:3.19",
+			expectedKey: "docker.io/library/alpine",
+		},
+		{
+			imageRef: "registry.hub.docker.com/library/alpine:3.19",
+
+			expected:    "docker.io/library/alpine:3.19",
+			expectedKey: "docker.io/library/alpine",
+		},
+		{ // on any other port it is not known to be Docker Hub
+			imageRef: "index.docker.io:5000/library/alpine:3.19",
+
+			expected:    "index.docker.io:5000/library/alpine:3.19",
+			expectedKey: "index.docker.io:5000/library/alpine",
+		},
 		{
 			imageRef: "docker.io/library/alpine:3.19",
 
@@ -194,6 +291,62 @@ func TestNormalizePattern(t *testing.T) {
 		{ // a glob in the domain is matched as written
 			pattern:  "*.docker.io/library/*",
 			expected: "*.docker.io/library/*",
+		},
+		{ // the whole pattern is lower-cased, as the repository key always is
+			pattern:  "*.Example.COM/Team/*",
+			expected: "*.example.com/team/*",
+		},
+		{ // the default port is dropped, just as it is from a reference
+			pattern:  "registry.k8s.io:443/*",
+			expected: "registry.k8s.io/*",
+		},
+		{
+			pattern:  "REGISTRY.K8S.IO:0443/*",
+			expected: "registry.k8s.io/*",
+		},
+		{
+			pattern:  "registry.k8s.io:443",
+			expected: "registry.k8s.io",
+		},
+		{ // including the port behind a glob
+			pattern:  "*.example.com:443/*",
+			expected: "*.example.com/*",
+		},
+		{
+			pattern:  "*.example.com:0443/team/*",
+			expected: "*.example.com/team/*",
+		},
+		{
+			pattern:  "*.example.com:05000/*",
+			expected: "*.example.com:5000/*",
+		},
+		{
+			pattern:  "*:443/*",
+			expected: "*/*",
+		},
+		{ // the port is under the glob, so it is matched as written
+			pattern:  "registry.k8s.io:44*",
+			expected: "registry.k8s.io:44*",
+		},
+		{
+			pattern:  "registry.k8s.io:*/pause",
+			expected: "registry.k8s.io:*/pause",
+		},
+		{
+			pattern:  "registry-1.docker.io:443/library/*",
+			expected: "docker.io/library/*",
+		},
+		{
+			pattern:  "registry.hub.docker.com/library/*",
+			expected: "docker.io/library/*",
+		},
+		{ // a single-label host keeps its port in a reference, and so it does in a pattern
+			pattern:  "registry:0443/*",
+			expected: "registry:443/*",
+		},
+		{
+			pattern:  "[::1]:443/*",
+			expected: "[::1]/*",
 		},
 		{
 			pattern:  "*/library/*",

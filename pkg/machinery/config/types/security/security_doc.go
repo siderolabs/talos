@@ -46,7 +46,7 @@ func (ImageVerificationConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "ImageVerificationConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "ImageVerificationConfig configures image signature verification policy." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ImageVerificationConfig configures image signature verification policy.",
+		Description: "ImageVerificationConfig configures image signature verification policy.\nRules are evaluated in order, and the first rule matching the image applies.\nAn image which matches no rule is allowed without verification.\n\nThis makes a policy which only lists the registries to verify or to deny a way to\ncatch mistakes, not a security boundary: the same image can be pulled under a different\nname from a registry alias, from a pull-through mirror, or from a copy pushed to any other\nregistry, and none of those names match the rule.\nTo enforce the policy against anyone able to choose the image reference (e.g. to create a pod),\nend the list with a catch-all rule denying every image not matched by the rules in front of it:\n\n```yaml\nrules:\n  # ... the rules for the allowed images\n  - image: \"*\"\n    deny: true\n```\n\nWith such a rule in place, the images Talos itself runs (e.g. the kubelet, etcd, the installer)\nhave to be matched by one of the rules in front of it as well.\n",
 		Fields: []encoder.Doc{
 			{
 				Type:   "Meta",
@@ -56,7 +56,7 @@ func (ImageVerificationConfigV1Alpha1) Doc() *encoder.Doc {
 				Name:        "rules",
 				Type:        "[]ImageVerificationRuleV1Alpha1",
 				Note:        "",
-				Description: "List of verification rules.\nRules are evaluated in order; first matching rule applies.",
+				Description: "List of verification rules.\nRules are evaluated in order; first matching rule applies.\nAn image matching no rule is allowed without verification: end the list with\na catch-all `image: \"*\"` rule with `deny: true` to deny any other image.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "List of verification rules." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
@@ -83,7 +83,7 @@ func (ImageVerificationRuleV1Alpha1) Doc() *encoder.Doc {
 				Name:        "image",
 				Type:        "string",
 				Note:        "",
-				Description: "Image reference pattern to match for this rule.\nSupports glob patterns, matches only on the image registry and repository, not on the tag or digest.\n\nThe pattern is matched against the normalized image reference, which always starts with a registry\ndomain: `docker.io/library/nginx*` matches `nginx:latest`, while `library/nginx*` matches nothing.\nThe Docker Hub domain is always normalized to `docker.io`, so a pattern written against\n`index.docker.io` or `registry-1.docker.io` matches the same images a `docker.io` one does.",
+				Description: "Image reference pattern to match for this rule.\nSupports glob patterns, matches only on the image registry and repository, not on the tag or digest.\n\nThe pattern is matched against the normalized image reference, which always starts with a registry\ndomain: `docker.io/library/nginx*` matches `nginx:latest`, while `library/nginx*` matches nothing.\nThe Docker Hub domain is always normalized to `docker.io`, so a pattern written against\n`index.docker.io` or `registry-1.docker.io` matches the same images a `docker.io` one does.\nThe default registry port is dropped as well: `registry.k8s.io/*` matches `registry.k8s.io:443/pause`,\nand so does `registry.k8s.io:443/*`.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Image reference pattern to match for this rule." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
